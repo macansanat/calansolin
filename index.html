@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>دستیار آموزشی دیابت — ماشین‌حساب و برنامه‌ی هفتگی</title>
 <style>
 @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
@@ -158,6 +161,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </h2>
   <div class="profile-saved" id="profileSaved">
     <div class="chips">
+      <span class="chip">دیابت: <b id="s-dtype">—</b></span>
       <span class="chip">سن: <b id="s-age">—</b></span>
       <span class="chip">وزن: <b id="s-weight">—</b> کیلو</span>
       <span class="chip">انسولین: <b id="s-ins">—</b></span>
@@ -170,16 +174,60 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <div class="profile-form" id="profileForm">
     <div class="row-3">
       <div>
-        <label>نوع انسولین سریع</label>
-        <select id="insulinType">
-          <option value="rapid">اپیدرا / نووراپید / هومالوگ (سریع)</option>
-          <option value="regular">رگولار / معمولی (کندتر)</option>
+        <label>نوع دیابت</label>
+        <select id="diabetesType">
+          <option value="">— انتخاب —</option>
+          <option value="type1">نوع ۱</option>
+          <option value="type2">نوع ۲</option>
+          <option value="lada">LADA (خودایمنی دیررس)</option>
+          <option value="mody">MODY</option>
+          <option value="gestational">بارداری</option>
+          <option value="other">سایر / نامشخص</option>
         </select>
       </div>
       <div><label>سن (سال)</label><input type="number" id="age" placeholder="مثلاً 33" min="1" max="120"></div>
       <div><label>وزن (کیلوگرم)</label><input type="number" id="weight" placeholder="مثلاً 80" min="10" max="300"></div>
     </div>
-    <label>کل انسولین روزانه — TDD (پایه + همه‌ی وعده‌ها، واحد)</label>
+
+    <label>نوع انسولین سریع (برای محاسبه‌ی زمان و نسبت‌ها)</label>
+    <select id="insulinType">
+      <optgroup label="سریع‌الاثر (Rapid)">
+        <option value="rapid">اپیدرا (گلولیزین)</option>
+        <option value="rapid">نووراپید / نووولاگ (آسپارت)</option>
+        <option value="rapid">هومالوگ (لیسپرو)</option>
+        <option value="rapid">فیاسپ (آسپارت سریع‌تر)</option>
+        <option value="rapid">لیومجو (لیسپرو سریع‌تر)</option>
+        <option value="rapid">اپیدرا/آپیدرا</option>
+      </optgroup>
+      <optgroup label="کوتاه‌اثر (Regular/Short)">
+        <option value="regular">رگولار / اکترپید (R)</option>
+        <option value="regular">هومولین R</option>
+      </optgroup>
+    </select>
+    <div class="formula-note" style="margin-top:6px">توجه: انسولین‌های پایه و مخلوط را در فیلد TDD جمع کنید؛ محاسبه‌ی وعده فقط با انسولین سریع/کوتاه است.</div>
+
+    <label style="margin-top:14px">انسولین پایه‌ی مصرفی (اختیاری — فقط برای ثبت)</label>
+    <select id="basalInsulin">
+      <option value="">— ندارم / انتخاب —</option>
+      <optgroup label="طولانی‌اثر (Long / Basal)">
+        <option>لانتوس (گلارژین U100)</option>
+        <option>توجئو (گلارژین U300)</option>
+        <option>لومیر (دتمیر)</option>
+        <option>ترسیبا (دگلودک U100/U200)</option>
+        <option>بازاگلار (گلارژین)</option>
+      </optgroup>
+      <optgroup label="متوسط‌اثر (Intermediate)">
+        <option>NPH / هومولین N</option>
+        <option>اینسولاتارد</option>
+      </optgroup>
+      <optgroup label="مخلوط (Premixed)">
+        <option>نوومیکس ۳۰</option>
+        <option>هومولین ۷۰/۳۰</option>
+        <option>میکستارد ۳۰</option>
+      </optgroup>
+    </select>
+
+    <label style="margin-top:14px">کل انسولین روزانه — TDD (پایه + همه‌ی وعده‌ها، واحد)</label>
     <input type="number" id="tdd" placeholder="مثلاً 24" min="1" max="200" oninput="calcRatios()">
     <div class="formula-note" id="ratioOut">برای محاسبه‌ی خودکار نسبت‌ها، TDD را وارد کنید.</div>
     <div class="row" style="margin-top:14px">
@@ -328,8 +376,18 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <span class="big">⚠ این یک نرم‌افزار آموزشی است، نه یک نرم‌افزار درمانی واقعی</span>
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
+<div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
+  آخرین بارگذاری صفحه: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+</div>
 </div>
 <script>
+// نشانگر زمان بارگذاری — کمک می‌کند مطمئن شوید نسخه‌ی تازه لود شده
+(function(){
+  var d=new Date();
+  var s=d.toLocaleString('fa-IR');
+  var el=document.getElementById('loadStamp');
+  if(el) el.textContent=s;
+})();
 const DB = {
   "پروتئین (کربوهیدرات ناچیز)":{
     "مرغ سینه گریل/آب‌پز":{ "گرم":0,"کف دست (۱۰۰گ)":0,"سینه کامل":0 },
@@ -951,17 +1009,20 @@ function switchTab(name,btn){
 
 /* ====== پروفایل ====== */
 async function saveProfile(){
-  const p={insulinType:val('insulinType'),age:val('age'),weight:val('weight'),tdd:val('tdd'),ic:val('icRatio'),isf:val('isf')};
+  const p={diabetesType:val('diabetesType'),basalInsulin:val('basalInsulin'),insulinType:val('insulinType'),age:val('age'),weight:val('weight'),tdd:val('tdd'),ic:val('icRatio'),isf:val('isf')};
   await storageSet(PKEY,JSON.stringify(p)); showSaved(p);
 }
 function val(id){return document.getElementById(id).value;}
+const DTYPE_FA={type1:'نوع ۱',type2:'نوع ۲',lada:'LADA',mody:'MODY',gestational:'بارداری',other:'سایر'};
 function showSaved(p){
   document.getElementById('s-age').textContent=p.age||'—';
   document.getElementById('s-weight').textContent=p.weight||'—';
-  document.getElementById('s-ins').textContent=(p.insulinType==='regular')?'معمولی':'سریع';
+  document.getElementById('s-ins').textContent=(p.insulinType==='regular')?'کوتاه':'سریع';
   document.getElementById('s-tdd').textContent=p.tdd||'—';
   document.getElementById('s-ic').textContent=p.ic||'—';
   document.getElementById('s-isf').textContent=p.isf||'—';
+  const dt=document.getElementById('s-dtype');
+  if(dt) dt.textContent=p.diabetesType?(DTYPE_FA[p.diabetesType]||p.diabetesType):'—';
   document.getElementById('profileSaved').classList.add('show');
   document.getElementById('profileForm').classList.add('hide');
   document.getElementById('editBtn').style.display='inline-block';
@@ -974,6 +1035,8 @@ function editProfile(){
 async function loadProfile(){
   const raw=await storageGet(PKEY); if(!raw) return;
   try{ const p=JSON.parse(raw);
+    if(p.diabetesType) document.getElementById('diabetesType').value=p.diabetesType;
+    if(p.basalInsulin) document.getElementById('basalInsulin').value=p.basalInsulin;
     document.getElementById('insulinType').value=p.insulinType||'rapid';
     document.getElementById('age').value=p.age||'';
     document.getElementById('weight').value=p.weight||'';
