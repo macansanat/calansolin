@@ -58,6 +58,17 @@ select{cursor:pointer}
 .mini-btn:hover{background:rgba(63,185,163,.08)}
 .carb-total{display:flex;justify-content:space-between;align-items:center;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:14px}
 .carb-total .v{font-size:24px;font-weight:800;color:var(--teal);direction:ltr}
+.macro-box{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:12px}
+.macro-title{font-size:13.5px;font-weight:800;color:var(--ink);margin-bottom:12px}
+.macro-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.macro-cell{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:12px 6px;text-align:center}
+.macro-cell .mv{font-size:20px;font-weight:800;direction:ltr;line-height:1.2}
+.macro-cell .ml{font-size:10.5px;color:var(--muted);margin-top:3px}
+.macro-cell.carb .mv{color:var(--blue)}
+.macro-cell.prot .mv{color:var(--teal)}
+.macro-cell.fat .mv{color:var(--amber)}
+.macro-cell.kcal .mv{color:var(--violet)}
+.macro-note{font-size:12.5px;color:var(--ink);margin-top:12px;line-height:1.8;padding-top:10px;border-top:1px dashed var(--line)}
 .result{background:linear-gradient(180deg,#16212e,#12202c);border:1px solid var(--teal-dim);border-radius:16px;padding:22px;margin-top:6px}
 .result h2{border-right-color:var(--amber)}
 .dose-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:8px}
@@ -119,6 +130,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 @media(max-width:560px){
   .row,.row-3,.dose-grid,.food-grid,.meal-block .meta{grid-template-columns:1fr}
   .food-grid-2{grid-template-columns:1fr auto}
+  .macro-grid{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
@@ -182,6 +194,17 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <div id="foodRows"></div>
   <button class="add-btn" onclick="addFoodRow()">+ افزودن خوراکی</button>
   <div class="carb-total"><span>کل کربوهیدرات وعده:</span><span><span class="v" id="carbTotal">0</span> گرم</span></div>
+
+  <div class="macro-box" id="macroBox">
+    <div class="macro-title">📊 ارزش تغذیه‌ای تقریبی این وعده</div>
+    <div class="macro-grid">
+      <div class="macro-cell carb"><div class="mv" id="mCarb">0</div><div class="ml">کربوهیدرات (گ)</div></div>
+      <div class="macro-cell prot"><div class="mv" id="mProt">0</div><div class="ml">پروتئین (گ)</div></div>
+      <div class="macro-cell fat"><div class="mv" id="mFat">0</div><div class="ml">چربی (گ)</div></div>
+      <div class="macro-cell kcal"><div class="mv" id="mKcal">0</div><div class="ml">کالری تقریبی</div></div>
+    </div>
+    <div class="macro-note" id="macroNote">برای ارزیابی نسبت به نیاز بدن، وزن را در پروفایل وارد کنید.</div>
+  </div>
 </div>
 <div class="card">
   <h2><span><span class="step-num">3</span>قند فعلی و هدف</span></h2>
@@ -1045,19 +1068,114 @@ document.addEventListener('click',e=>{
     document.querySelectorAll('.search-results').forEach(b=>b.classList.remove('show'));
   }
 });
+/* ===== تخمین پروتئین و چربی بر اساس دسته/آیتم (تقریبی و آموزشی) ===== */
+const MACRO_BY_CAT={
+  "پروتئین (کربوهیدرات ناچیز)":[22,12],
+  "کباب‌ها":[20,14],
+  "احشا و اجزای گوشتی":[18,10],
+  "غذاهای دریایی":[20,6],
+  "برنج و پلوها":[3,1],
+  "خورش و غذای اصلی":[9,11],
+  "غذاهای سنتی ایرانی":[9,10],
+  "غلات و نان":[3,1],
+  "حبوبات":[6,1],
+  "سوپ و آش":[5,4],
+  "میوه":[1,0],
+  "میوه‌های بیشتر":[1,0],
+  "خشکبار و مغزها":[4,12],
+  "میوه‌ی خشک و چیپس میوه":[1,0],
+  "سبزیجات":[1,0],
+  "لبنیات":[4,4],
+  "پنیر و لبنیات ویژه":[7,7],
+  "نوشیدنی":[1,1],
+  "فست‌فود":[9,12],
+  "تنقلات و چیپس":[3,10],
+  "صبحانه":[8,9],
+  "صبحانه‌ی فرنگی":[6,8],
+  "غذای بین‌المللی":[12,12],
+  "کیک و دسر":[4,12],
+  "شیرینی و قند":[2,8],
+  "دستی":[0,0]
+};
+function unitFactor(unit){
+  const u=normalizeFa(unit);
+  if(u.includes('قاشق چای')) return 0.15;
+  if(u.includes('قاشق')) return 0.3;
+  if(u.includes('نصف کف دست')) return 0.3;
+  if(u.includes('کف دست')) return 0.6;
+  if(u.includes('لنگه')||u.includes('دانه')||u.includes('حبه')||u.includes('برگ')) return 0.1;
+  if(u.includes('عدد بزرگ')) return 1.3;
+  if(u.includes('عدد کوچک')) return 0.6;
+  if(u.includes('عدد')) return 1;
+  if(u.includes('سیخ')) return 1;
+  if(u.includes('پرس')) return 1.5;
+  if(u.includes('بشقاب پر')) return 2;
+  if(u.includes('بشقاب کوچک')) return 0.9;
+  if(u.includes('بشقاب')) return 1.4;
+  if(u.includes('کاسه')) return 1.4;
+  if(u.includes('لیوان')) return 1.2;
+  if(u.includes('فنجان')) return 0.8;
+  if(u.includes('کفگیر')||u.includes('ملاقه')) return 1;
+  if(u.includes('قاچ')) return 0.8;
+  if(u.includes('برش')) return 1;
+  if(u.includes('قطعه')||u.includes('تکه')||u.includes('مربع')) return 0.7;
+  if(u.includes('گرم')) return 0.01;
+  if(u.includes('وعده')) return 1.5;
+  if(u.includes('رول')) return 1.5;
+  if(u.includes('قوطی')||u.includes('بطری')) return 1.3;
+  if(u.includes('اسکوپ')||u.includes('حلقه')||u.includes('نوار')||u.includes('خوشه')) return 0.8;
+  if(u.includes('سینه کامل')) return 2;
+  return 1;
+}
+function pf(cat,item,unit,amt){
+  const base=MACRO_BY_CAT[cat]||[3,3];
+  const f=unitFactor(unit)*amt;
+  return { p: base[0]*f, fat: base[1]*f };
+}
+
 function calcCarbs(){
-  let total=0, hasFast=false, hasSlow=false;
+  let total=0, hasFast=false, hasSlow=false, totP=0, totF=0;
   document.querySelectorAll('.food-row').forEach(row=>{
     const cat=row.querySelector('.sel-cat').value,item=row.querySelector('.sel-item').value;
     const unit=row.querySelector('.sel-unit').value,amt=parseFloat(row.querySelector('.in-amt').value)||0;
     const per=(DB[cat]&&DB[cat][item]&&DB[cat][item][unit]!=null)?DB[cat][item][unit]:0;
     const carb=per*amt; row.querySelector('.c-val').textContent=Math.round(carb); total+=carb;
+    const m=pf(cat,item,unit,amt); totP+=m.p; totF+=m.fat;
     if(["برنج و پلوها","نوشیدنی","شیرینی و قند","میوه","فست‌فود","غلات و نان"].includes(cat)&&carb>10) hasFast=true;
     if(["حبوبات","سبزیجات","خشکبار و مغزها"].includes(cat)&&carb>5) hasSlow=true;
   });
   document.getElementById('carbTotal').textContent=Math.round(total);
   window._mealFast=hasFast; window._mealSlow=hasSlow;
+  window._macro={carb:total,p:totP,fat:totF};
+  updateMacros(total,totP,totF);
   calcDose();
+}
+function updateMacros(carb,p,fat){
+  const kcal=Math.round(carb*4 + p*4 + fat*9);
+  const el=document.getElementById('macroBox'); if(!el) return;
+  document.getElementById('mCarb').textContent=Math.round(carb);
+  document.getElementById('mProt').textContent=Math.round(p);
+  document.getElementById('mFat').textContent=Math.round(fat);
+  document.getElementById('mKcal').textContent=kcal;
+  // ارزیابی نسبت به رنج روزانه‌ی این وعده (بر اساس وزن)
+  const w=parseFloat(val('weight'));
+  const note=document.getElementById('macroNote');
+  if(!w){ note.innerHTML='برای ارزیابی نسبت به نیاز بدن، وزن را در پروفایل وارد کنید.'; return; }
+  // نیاز روزانه‌ی تقریبی و سهم یک وعده (~۳۰٪ روز)
+  const dayProt=[1.2*w,1.6*w];          // گرم پروتئین در روز (متوسط فعالیت)
+  const dayFat=[0.8*w,1.0*w];           // گرم چربی در روز
+  const dayCarb=[3*w,4*w];              // گرم کربوهیدرات در روز (قابل تنظیم بر اساس هدف)
+  const mealShare=0.3;
+  function tag(v,range){
+    const lo=range[0]*mealShare, hi=range[1]*mealShare;
+    if(v<lo*0.6) return '<span style="color:var(--blue)">کم</span>';
+    if(v>hi*1.3) return '<span style="color:var(--red)">زیاد</span>';
+    return '<span style="color:var(--teal)">متعادل</span>';
+  }
+  note.innerHTML=
+    `نسبت به یک وعده‌ی متعادل برای وزن ${Math.round(w)} کیلو: `+
+    `کربوهیدرات ${tag(carb,dayCarb)} · پروتئین ${tag(p,dayProt)} · چربی ${tag(fat,dayFat)}`+
+    `<div style="color:var(--muted);margin-top:6px;font-size:12px">این ارزیابی تقریبی و آموزشی است؛ نیاز واقعی هر فرد با پزشک/متخصص تغذیه تعیین می‌شود.</div>`;
 }
 function calcRatios(){
   const tdd=parseFloat(val('tdd')),type=val('insulinType'),out=document.getElementById('ratioOut');
