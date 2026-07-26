@@ -7,6 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>دستیار آموزشی دیابت — ماشین‌حساب و برنامه‌ی هفتگی</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
 :root{
@@ -32,15 +33,21 @@ h1{font-size:22px;font-weight:800;line-height:1.5}
 .card h2{font-size:16px;font-weight:800;margin-bottom:16px;padding-right:12px;border-right:3px solid var(--teal);line-height:1.4;display:flex;justify-content:space-between;align-items:center}
 .step-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:var(--teal-dim);color:#cdefe6;font-size:12px;font-weight:800;margin-left:8px;direction:ltr}
 label{display:block;font-size:13.5px;color:var(--muted);margin:14px 0 6px}
-input,select{width:100%;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px 13px;font-family:inherit;font-size:15px}
+input,select{width:100%;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px 13px;font-family:inherit;font-size:15px;max-width:100%}
 input:focus,select:focus{outline:none;border-color:var(--teal)}
-select{cursor:pointer}
+select{cursor:pointer;text-overflow:ellipsis;padding-right:10px;padding-left:28px;background-position:left 10px center}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .row-3{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:12px}
 .food-row{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
 .food-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
 .food-head .idx{font-size:12.5px;color:var(--muted);font-weight:700}
 .food-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.food-grid-2{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;margin-top:10px}
+.stepper{display:flex;align-items:stretch;gap:0;background:var(--field);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.stepper button{background:var(--panel-2);border:none;color:var(--teal);width:38px;font-size:20px;font-weight:800;cursor:pointer;font-family:inherit;flex:0 0 auto;-webkit-tap-highlight-color:transparent;user-select:none}
+.stepper button:active{background:var(--teal-dim);color:#fff}
+.stepper input{border:none;background:transparent;text-align:center;width:100%;min-width:0;color:var(--ink);font-family:inherit;font-size:15px;padding:11px 4px;-moz-appearance:textfield}
+.stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.stepper input:focus{outline:none}
 .food-search-wrap{position:relative;margin-bottom:10px}
 .food-search{width:100%;background:var(--field);border:1px solid var(--teal-dim);border-radius:10px;padding:11px 13px;font-family:inherit;font-size:14.5px;color:var(--ink)}
 .food-search::placeholder{color:var(--muted)}
@@ -60,6 +67,13 @@ select{cursor:pointer}
 .mini-btn{background:transparent;border:1px solid var(--line);color:var(--teal);border-radius:8px;padding:6px 12px;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
 .mini-btn:hover{background:rgba(63,185,163,.08)}
 .carb-total{display:flex;justify-content:space-between;align-items:center;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:14px}
+.food-summary{background:var(--panel-2);border:1px solid var(--teal-dim);border-radius:12px;padding:14px 16px;margin-top:14px}
+.fs-title{font-size:13.5px;font-weight:800;color:var(--teal);margin-bottom:10px}
+.fs-item{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+.fs-item:last-child{border-bottom:none}
+.fs-item .fs-name{color:var(--ink)}
+.fs-item .fs-carb{color:var(--blue);font-weight:700;direction:ltr}
+.fs-item .fs-amt{color:var(--muted);font-size:12px;margin-right:6px}
 .carb-total .v{font-size:24px;font-weight:800;color:var(--teal);direction:ltr}
 .macro-box{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:12px}
 .macro-title{font-size:13.5px;font-weight:800;color:var(--ink);margin-bottom:12px}
@@ -94,6 +108,40 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .disclaimer b{color:var(--ink)}
 .final-warn{margin-top:26px;padding:20px;background:rgba(224,104,95,.1);border:2px solid var(--red);border-radius:14px;font-size:14px;color:var(--ink);line-height:1.9;text-align:center}
 .final-warn .big{display:block;font-size:16px;font-weight:800;color:var(--red);margin-bottom:8px}
+.cgm-upload{display:block;background:var(--teal-dim);color:#d6f5ee;border-radius:12px;padding:16px;text-align:center;font-weight:700;font-size:14.5px;cursor:pointer;border:2px dashed var(--teal)}
+.cgm-upload:hover{filter:brightness(1.1)}
+.log-import{margin-bottom:14px}
+.log-upload{display:block;background:var(--panel-2);color:var(--blue);border-radius:12px;padding:14px;text-align:center;font-weight:700;font-size:13.5px;cursor:pointer;border:2px dashed var(--blue)}
+.log-upload:hover{filter:brightness(1.15)}
+.log-day-group{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.log-day-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.log-day-title{font-weight:800;color:var(--teal);font-size:14px}
+.log-meal-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+.log-meal-row:last-child{border-bottom:none}
+.log-meal-row input[type=checkbox]{width:20px;height:20px;flex:0 0 auto;margin-top:2px;accent-color:var(--teal)}
+.log-meal-info{flex:1}
+.log-meal-type{font-weight:700;color:var(--amber)}
+.log-meal-time{color:var(--teal);direction:ltr;font-size:12px;margin-right:6px}
+.log-meal-note{color:var(--ink);margin-top:3px;line-height:1.7}
+.log-meal-ins{color:var(--blue);font-size:12px;margin-top:3px}
+.log-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.log-btn{flex:1;min-width:130px;background:var(--teal-dim);border:none;color:#d6f5ee;border-radius:10px;padding:11px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer}
+.log-btn.sec{background:var(--panel-2);border:1px solid var(--line);color:var(--muted)}
+.log-btn:hover{filter:brightness(1.15)}
+.cgm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.cgm-stat{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:14px 8px;text-align:center}
+.cgm-stat .sv{font-size:22px;font-weight:800;direction:ltr;line-height:1.2}
+.cgm-stat .sl{font-size:11px;color:var(--muted);margin-top:4px}
+.cgm-bar{display:flex;height:34px;border-radius:8px;overflow:hidden;margin:8px 0 4px;border:1px solid var(--line)}
+.cgm-bar>div{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+.cgm-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:14px}
+.cgm-legend span{display:flex;align-items:center;gap:4px}
+.cgm-dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+.crit-list{margin-top:6px}
+.crit-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:8px;margin-bottom:6px;font-size:13px}
+.crit-low{background:rgba(224,104,95,.12);border:1px solid var(--red)}
+.crit-high{background:rgba(224,163,85,.12);border:1px solid var(--amber)}
+.crit-item .ct{direction:ltr;font-weight:700}
 .profile-saved{display:none;background:var(--panel-2);border:1px solid var(--teal-dim);border-radius:12px;padding:14px 16px}
 .profile-saved.show{display:block}
 .profile-form.hide{display:none}
@@ -115,6 +163,27 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .meal-block .meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
 .meal-block input{font-size:14px}
 .add-meal-form{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:8px}
+.basal-card{background:var(--panel-2);border:1px solid var(--violet);border-right:4px solid var(--violet);border-radius:12px;padding:16px;margin-bottom:14px}
+.calib-card{background:linear-gradient(180deg,#16212e,#12202c);border:1px solid var(--teal-dim);border-radius:14px;padding:18px;margin-top:18px}
+.calib-empty{font-size:13px;color:var(--muted);text-align:center;padding:14px;line-height:1.9}
+.calib-result{text-align:center}
+.calib-big{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.calib-num{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:14px 18px;min-width:130px}
+.calib-num .cv{font-size:26px;font-weight:800;direction:ltr;line-height:1.2}
+.calib-num .cl{font-size:11.5px;color:var(--muted);margin-top:4px}
+.calib-num.exp{border-color:var(--teal)}
+.calib-num.exp .cv{color:var(--teal)}
+.calib-num.cur .cv{color:var(--muted)}
+.calib-compare{font-size:13.5px;color:var(--ink);line-height:1.9;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.calib-compare b{color:var(--teal);direction:ltr;display:inline-block}
+.calib-apply{background:var(--teal-dim);border:none;color:#d6f5ee;border-radius:10px;padding:11px 16px;font-family:inherit;font-weight:700;font-size:13.5px;cursor:pointer;width:100%}
+.calib-apply:hover{filter:brightness(1.15)}
+.calib-warn{font-size:12px;color:var(--amber);margin-top:10px;line-height:1.8}
+.doctor-alert{background:rgba(224,104,95,.12);border:2px solid var(--red);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.da-title{font-size:15px;font-weight:800;color:var(--red);margin-bottom:8px}
+.da-body{font-size:13.5px;color:var(--ink);line-height:1.9}
+.da-body b{color:var(--red)}
+.calib-n{font-size:12px;color:var(--muted);margin-bottom:12px}
 .picked-foods{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .picked-chip{background:var(--teal-dim);color:#d6f5ee;border-radius:20px;padding:6px 12px;font-size:13px;display:flex;align-items:center;gap:8px}
 .picked-chip .x{cursor:pointer;font-weight:800;color:#ffd0cc}
@@ -127,13 +196,36 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .saved-meal .ins b{color:var(--blue)}
 .saved-meal .del-meal{background:transparent;border:1px solid var(--line);color:var(--red);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit}
 .saved-meal .del-meal:hover{background:rgba(224,104,95,.1)}
+.saved-meal .edit-meal{background:transparent;border:1px solid var(--line);color:var(--teal);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+.saved-meal .edit-meal:hover{background:rgba(63,185,163,.1)}
+.meal-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.mchip{background:var(--field);border:1px solid var(--line);border-radius:14px;padding:3px 10px;font-size:11.5px;color:var(--muted);direction:rtl}
+.saved-meal.editing{border-color:var(--teal)}
+.edit-ta{width:100%;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:9px;font-family:inherit;font-size:13.5px;min-height:60px;resize:vertical;margin-bottom:4px}
+.edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.edit-grid input{font-size:13.5px;padding:9px}
 .empty-day{text-align:center;color:var(--muted);font-size:13.5px;padding:20px}
 .rem-hint{font-size:12px;color:var(--blue);margin-top:8px;display:none}
 .rem-hint.show{display:block}
 @media(max-width:560px){
+  body{padding:16px 10px 60px}
   .row,.row-3,.dose-grid,.food-grid,.meal-block .meta{grid-template-columns:1fr}
-  .food-grid-2{grid-template-columns:1fr auto}
+  .food-grid-2{grid-template-columns:1.6fr 1fr;gap:10px}
+  .food-grid-2>div:first-child{grid-column:1/-1}
   .macro-grid{grid-template-columns:repeat(2,1fr)}
+  input,select{font-size:14px;padding:10px 11px}
+  select{padding-left:26px;font-size:14px}
+  .card{padding:16px 14px}
+  .add-meal-form,.basal-card{padding:14px 12px}
+  .stepper button{width:38px;font-size:19px}
+  .stepper input{font-size:15px;padding:11px 2px}
+  .carb-out{min-width:0;font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px;height:100%}
+  .carb-out small{display:inline}
+  h1{font-size:20px}
+  .day-tab{min-width:58px;font-size:12px}
+}
+@media(max-width:380px){
+  .macro-grid{grid-template-columns:1fr 1fr}
 }
 </style>
 </head>
@@ -148,8 +240,9 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <b>⚠ هشدار ایمنی:</b> اعداد کربوهیدرات و زمان‌بندی‌ها تقریبی و آموزشی‌اند. دوز و زمان واقعی انسولین را فقط پزشک تعیین می‌کند. هرگز بر اساس این صفحه به کسی انسولین تزریق نکنید.
 </div>
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('calc',this)">🧮 ماشین‌حساب دوز</button>
+  <button class="tab active" onclick="switchTab('calc',this)">🧮 ماشین‌حساب</button>
   <button class="tab" onclick="switchTab('plan',this)">📅 برنامه‌ی هفتگی</button>
+  <button class="tab" onclick="switchTab('cgm',this)">📈 تحلیل CGM</button>
 </div>
 
 <!-- ============ صفحه‌ی ماشین‌حساب ============ -->
@@ -221,8 +314,11 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
         <option>اینسولاتارد</option>
       </optgroup>
       <optgroup label="مخلوط (Premixed)">
+        <option>رایزودگ ۷۰/۳۰ (دگلودک/آسپارت)</option>
         <option>نوومیکس ۳۰</option>
+        <option>نوومیکس ۵۰</option>
         <option>هومولین ۷۰/۳۰</option>
+        <option>هومالوگ‌میکس ۲۵</option>
         <option>میکستارد ۳۰</option>
       </optgroup>
     </select>
@@ -241,6 +337,12 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <h2><span><span class="step-num">2</span>محاسبه‌ی کربوهیدرات وعده</span></h2>
   <div id="foodRows"></div>
   <button class="add-btn" onclick="addFoodRow()">+ افزودن خوراکی</button>
+
+  <div class="food-summary" id="foodSummary" style="display:none">
+    <div class="fs-title">📋 خلاصه‌ی این وعده</div>
+    <div id="fsList"></div>
+  </div>
+
   <div class="carb-total"><span>کل کربوهیدرات وعده:</span><span><span class="v" id="carbTotal">0</span> گرم</span></div>
 
   <div class="macro-box" id="macroBox">
@@ -257,8 +359,20 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 <div class="card">
   <h2><span><span class="step-num">3</span>قند فعلی و هدف</span></h2>
   <div class="row">
-    <div><label>قند فعلی (mg/dL)</label><input type="number" id="currentBG" placeholder="مثلاً 140" min="20" max="600" oninput="calcDose()"></div>
-    <div><label>قند هدف (mg/dL)</label><input type="number" id="targetBG" value="110" min="70" max="200" oninput="calcDose()"></div>
+    <div><label>قند فعلی (mg/dL)</label>
+      <div class="stepper">
+        <button type="button" onclick="stepById('currentBG',-1,5,'calcDose')">−</button>
+        <input type="number" id="currentBG" placeholder="مثلاً 140" min="20" max="600" inputmode="numeric" oninput="calcDose()">
+        <button type="button" onclick="stepById('currentBG',1,5,'calcDose')">+</button>
+      </div>
+    </div>
+    <div><label>قند هدف (mg/dL)</label>
+      <div class="stepper">
+        <button type="button" onclick="stepById('targetBG',-1,5,'calcDose')">−</button>
+        <input type="number" id="targetBG" value="110" min="70" max="200" inputmode="numeric" oninput="calcDose()">
+        <button type="button" onclick="stepById('targetBG',1,5,'calcDose')">+</button>
+      </div>
+    </div>
   </div>
 </div>
 <div class="result">
@@ -315,6 +429,15 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
   <div class="day-tabs" id="dayTabs"></div>
 
+  <div class="log-import">
+    <label class="log-upload">
+      <input type="file" id="logFile" accept=".xlsx,.xls" style="display:none" onchange="handleLogFile(this)">
+      <span id="logUploadText">📥 وارد کردن از فایل لاگ CGM (وعده + انسولین)</span>
+    </label>
+    <div class="formula-note" style="margin-top:6px">فایل خروجی اپ CGM (شیت‌های Meal و Insulin) را وارد کن. برنامه وعده‌ها و انسولین‌ها را نمایش می‌دهد و می‌توانی انتخاب کنی کدام‌ها در برنامه‌ی هفتگی ثبت شوند.</div>
+  </div>
+  <div id="logPreview"></div>
+
   <div class="add-meal-form">
     <h3 style="font-size:14px;font-weight:800;color:var(--teal);margin-bottom:12px">➕ افزودن وعده به این روز</h3>
     <div class="row">
@@ -344,27 +467,147 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
         <label>نوع انسولین</label>
         <select id="mealInsulinType">
           <option value="">—</option>
-          <option value="اپیدرا">اپیدرا</option>
-          <option value="نووراپید">نووراپید</option>
-          <option value="هومالوگ">هومالوگ</option>
-          <option value="رگولار">رگولار</option>
-          <option value="توجئو">توجئو (پایه)</option>
-          <option value="لانتوس">لانتوس (پایه)</option>
+          <optgroup label="سریع‌الاثر">
+            <option value="اپیدرا">اپیدرا (گلولیزین)</option>
+            <option value="نووراپید">نووراپید / نووولاگ (آسپارت)</option>
+            <option value="هومالوگ">هومالوگ (لیسپرو)</option>
+            <option value="فیاسپ">فیاسپ (آسپارت سریع‌تر)</option>
+            <option value="لیومجو">لیومجو (لیسپرو سریع‌تر)</option>
+          </optgroup>
+          <optgroup label="کوتاه‌اثر">
+            <option value="رگولار">رگولار / اکترپید (R)</option>
+            <option value="هومولین R">هومولین R</option>
+          </optgroup>
         </select>
       </div>
       <div>
         <label>دوز انسولین (واحد)</label>
-        <input type="number" id="mealInsulinDose" min="0" step="0.5" placeholder="مثلاً 6">
+        <div class="stepper">
+          <button type="button" onclick="stepById('mealInsulinDose',-1,0.5)">−</button>
+          <input type="number" id="mealInsulinDose" min="0" step="0.5" placeholder="مثلاً 6" inputmode="decimal">
+          <button type="button" onclick="stepById('mealInsulinDose',1,0.5)">+</button>
+        </div>
       </div>
     </div>
+    <div class="row" style="margin-top:10px">
+      <div>
+        <label>کربوهیدرات وعده (گرم)</label>
+        <div class="stepper">
+          <button type="button" onclick="stepById('mealCarb',-1,5)">−</button>
+          <input type="number" id="mealCarb" min="0" step="5" placeholder="مثلاً 55" inputmode="numeric">
+          <button type="button" onclick="stepById('mealCarb',1,5)">+</button>
+        </div>
+      </div>
+      <div>
+        <label>قند قبل غذا (mg/dL)</label>
+        <div class="stepper">
+          <button type="button" onclick="stepById('mealBGbefore',-1,5)">−</button>
+          <input type="number" id="mealBGbefore" min="20" max="600" placeholder="مثلاً 90" inputmode="numeric">
+          <button type="button" onclick="stepById('mealBGbefore',1,5)">+</button>
+        </div>
+      </div>
+    </div>
+    <label style="margin-top:10px">قند ۲ ساعت بعد غذا (mg/dL) — برای کالیبراسیون</label>
+    <div class="stepper">
+      <button type="button" onclick="stepById('mealBGafter',-1,5)">−</button>
+      <input type="number" id="mealBGafter" min="20" max="600" placeholder="مثلاً 120" inputmode="numeric">
+      <button type="button" onclick="stepById('mealBGafter',1,5)">+</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div>
+        <label>پیک (بالاترین قند) — اختیاری</label>
+        <div class="stepper">
+          <button type="button" onclick="stepById('mealPeak',-1,5)">−</button>
+          <input type="number" id="mealPeak" min="20" max="600" placeholder="مثلاً 149" inputmode="numeric">
+          <button type="button" onclick="stepById('mealPeak',1,5)">+</button>
+        </div>
+      </div>
+      <div>
+        <label>کمترین قند تا ۴ ساعت — اختیاری</label>
+        <div class="stepper">
+          <button type="button" onclick="stepById('mealTrough',-1,5)">−</button>
+          <input type="number" id="mealTrough" min="20" max="600" placeholder="مثلاً 95" inputmode="numeric">
+          <button type="button" onclick="stepById('mealTrough',1,5)">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="formula-note" style="margin-top:6px">💡 وارد کردن کربوهیدرات و قند قبل/بعد، به برنامه کمک می‌کند «کالیبراسیون I:C» را از تجربه‌ی واقعی بدنت یاد بگیرد. پیک و کمترین قند (اختیاری) دقت را بالا می‌برند: وعده‌های با پیک بالای ۱۸۰ یا افت زیر ۷۰ از کالیبراسیون کنار گذاشته می‌شوند.</div>
     <button class="add-btn" style="margin-top:14px;width:100%" onclick="saveMealEntry()">💾 ذخیره‌ی وعده</button>
   </div>
 
   <h3 style="font-size:14px;font-weight:800;margin:22px 0 12px;padding-right:10px;border-right:3px solid var(--amber)">وعده‌های ثبت‌شده‌ی این روز</h3>
   <div id="savedMeals"></div>
+
+  <div class="basal-card" style="margin-top:18px">
+    <h3 style="font-size:14px;font-weight:800;color:var(--violet);margin-bottom:10px">💉 انسولین پایه‌ی این روز</h3>
+    <div class="row">
+      <div>
+        <label>نوع انسولین پایه</label>
+        <select id="basalDayType" onchange="saveBasalDay()">
+          <option value="">— ثبت نشده —</option>
+          <optgroup label="طولانی‌اثر">
+            <option>لانتوس (گلارژین U100)</option>
+            <option>توجئو (گلارژین U300)</option>
+            <option>لومیر (دتمیر)</option>
+            <option>ترسیبا (دگلودک)</option>
+            <option>بازاگلار</option>
+          </optgroup>
+          <optgroup label="متوسط‌اثر">
+            <option>NPH / هومولین N</option>
+            <option>اینسولاتارد</option>
+          </optgroup>
+          <optgroup label="مخلوط">
+            <option>رایزودگ ۷۰/۳۰ (دگلودک/آسپارت)</option>
+            <option>نوومیکس ۳۰</option>
+            <option>نوومیکس ۵۰</option>
+            <option>هومولین ۷۰/۳۰</option>
+            <option>هومالوگ‌میکس ۲۵</option>
+            <option>میکستارد ۳۰</option>
+          </optgroup>
+        </select>
+      </div>
+      <div>
+        <label>دوز (واحد)</label>
+        <div class="stepper">
+          <button type="button" onclick="stepById('basalDayDose',-1,1,'saveBasalDay')">−</button>
+          <input type="number" id="basalDayDose" min="0" step="1" placeholder="مثلاً 4" inputmode="decimal" oninput="saveBasalDay()">
+          <button type="button" onclick="stepById('basalDayDose',1,1,'saveBasalDay')">+</button>
+        </div>
+      </div>
+    </div>
+    <label style="margin-top:12px">ساعت تزریق</label>
+    <input type="time" id="basalDayTime" onchange="saveBasalDay()">
+    <div class="formula-note" style="margin-top:8px">انسولین پایه معمولاً روزی یک‌بار (شب یا صبح) زده می‌شود و مستقل از وعده‌هاست.</div>
+  </div>
+
+  <div class="calib-card" id="calibCard">
+    <h3 style="font-size:15px;font-weight:800;color:var(--teal);margin-bottom:6px">🎯 کالیبراسیون I:C از روی تجربه</h3>
+    <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">برنامه از وعده‌هایی که کربوهیدرات + انسولین + قند قبل و بعد دارند، الگوی واقعی بدنت را کشف می‌کند.</div>
+    <div id="calibBody"></div>
+  </div>
 </div>
 <div class="disclaimer">
   <b>یادداشت:</b> برنامه‌ی هفتگی و زمان‌های تزریق صرفاً برای یادآوری و نظم شخصی‌اند. تصمیم درباره‌ی نوع و زمان و دوز انسولین با پزشک است. تاریخ‌ها به تقویم شمسی نمایش داده می‌شوند.
+</div>
+</div>
+
+<!-- ============ صفحه‌ی تحلیل CGM ============ -->
+<div class="page" id="page-cgm">
+<div class="card">
+  <h2><span><span class="step-num">📈</span>تحلیل خروجی CGM</span></h2>
+  <p style="font-size:13.5px;color:var(--muted);line-height:1.9;margin-bottom:14px">
+    فایل خروجی اکسل دستگاه CGM را وارد کن (ستون زمان و ستون قند mg/dL).
+    برنامه کنترل قندت را تحلیل می‌کند، نقاط بحرانی را پیدا می‌کند و اگر لازم بود، هشدار مراجعه به پزشک می‌دهد.
+  </p>
+  <label class="cgm-upload" id="cgmUploadLabel">
+    <input type="file" id="cgmFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleCGMFile(this)">
+    <span id="cgmUploadText">📂 انتخاب فایل CGM (اکسل یا CSV)</span>
+  </label>
+  <div class="formula-note" style="margin-top:8px">فایل باید دو ستون داشته باشد: زمان، و قند بر حسب mg/dL. اکثر دستگاه‌ها (میدترونیک، لیبره، دکسکام و...) چنین خروجی‌ای می‌دهند.</div>
+</div>
+<div id="cgmResult"></div>
+<div class="disclaimer">
+  <b>یادداشت:</b> این تحلیل تصویری کلی از کنترل قند می‌دهد و آموزشی است. تفسیر نهایی و هر تغییر درمانی با پزشک است. فایل شما فقط در همین مرورگر پردازش می‌شود و جایی ارسال نمی‌شود.
 </div>
 </div>
 
@@ -951,10 +1194,128 @@ const DB = {
     "خرمای کبکاب":{ "عدد":15 },
     "خرمای پیارم":{ "عدد":13 }
   },
+  "سس‌ها و چاشنی‌ها":{
+    "سس مایونز":{ "قاشق غذاخوری":1 },
+    "سس کچاپ/گوجه":{ "قاشق غذاخوری":4 },
+    "سس هزار جزیره":{ "قاشق غذاخوری":3 },
+    "سس سزار":{ "قاشق غذاخوری":1 },
+    "سس فرانسوی":{ "قاشق غذاخوری":3 },
+    "سس باربیکیو":{ "قاشق غذاخوری":6 },
+    "سس خردل":{ "قاشق غذاخوری":1 },
+    "سس سیر":{ "قاشق غذاخوری":2 },
+    "سس تند/چیلی":{ "قاشق غذاخوری":2 },
+    "سس سویا":{ "قاشق غذاخوری":1 },
+    "سس پستو":{ "قاشق غذاخوری":1 },
+    "سس آلفردو":{ "قاشق غذاخوری":2 },
+    "سس قارچ":{ "قاشق غذاخوری":2 },
+    "رب گوجه":{ "قاشق غذاخوری":3 },
+    "رب انار":{ "قاشق غذاخوری":8 },
+    "آبلیمو":{ "قاشق غذاخوری":1 },
+    "آبغوره":{ "قاشق غذاخوری":1 },
+    "سرکه":{ "قاشق غذاخوری":0 },
+    "سرکه بالزامیک":{ "قاشق غذاخوری":3 },
+    "روغن زیتون":{ "قاشق غذاخوری":0 },
+    "کره بادام‌زمینی":{ "قاشق غذاخوری":3 },
+    "تاهینی (ارده)":{ "قاشق غذاخوری":1 }
+  },
+  "آبمیوه و اسموتی":{
+    "آب‌پرتقال طبیعی":{ "لیوان":26,"میلی‌لیتر":0.13,"لیتر":130 },
+    "آب‌سیب":{ "لیوان":29,"میلی‌لیتر":0.15,"لیتر":145 },
+    "آب‌هویج":{ "لیوان":20,"میلی‌لیتر":0.1,"لیتر":100 },
+    "آب‌هندوانه":{ "لیوان":18,"میلی‌لیتر":0.09 },
+    "آب‌انار":{ "لیوان":30,"میلی‌لیتر":0.15 },
+    "آب‌آناناس":{ "لیوان":32,"میلی‌لیتر":0.16 },
+    "آب‌انگور":{ "لیوان":36,"میلی‌لیتر":0.18 },
+    "آب‌گریپ‌فروت":{ "لیوان":22 },
+    "آب‌طالبی":{ "لیوان":20 },
+    "لیموناد":{ "لیوان":25 },
+    "اسموتی موز":{ "لیوان":35 },
+    "اسموتی توت‌فرنگی":{ "لیوان":28 },
+    "اسموتی انبه":{ "لیوان":33 },
+    "اسموتی سبز (سبزیجات)":{ "لیوان":18 },
+    "شیک میوه":{ "لیوان":40 },
+    "معجون":{ "لیوان":40 },
+    "آب‌سبزیجات":{ "لیوان":12 }
+  },
+  "صبحانه‌ی کامل":{
+    "نان و پنیر و چای":{ "وعده":20 },
+    "نان و پنیر و گردو":{ "وعده":18 },
+    "نان و پنیر و گوجه":{ "وعده":18 },
+    "نان و کره و مربا":{ "وعده":25 },
+    "نان و کره و عسل":{ "وعده":26 },
+    "نان و خامه و عسل":{ "وعده":24 },
+    "نان و تخم‌مرغ":{ "وعده":16 },
+    "املت و نان":{ "وعده":22 },
+    "نیمرو و نان":{ "وعده":18 },
+    "عدسی و نان":{ "وعده":40 },
+    "حلیم":{ "کاسه":45 },
+    "کله‌پاچه و نان":{ "وعده":18 },
+    "پنکیک و عسل":{ "پرس":40 },
+    "کورن‌فلکس و شیر":{ "کاسه":37 },
+    "جو دوسر و شیر و موز":{ "کاسه":45 },
+    "ماست و گرانولا":{ "کاسه":35 },
+    "تخم‌مرغ آب‌پز و نان":{ "وعده":14 },
+    "کره بادام‌زمینی و نان":{ "وعده":22 },
+    "پن‌کیک ساده":{ "عدد":15 },
+    "فرنی":{ "کاسه":35 },
+    "شیربرنج":{ "کاسه":40 },
+    "حریره بادام":{ "کاسه":30 }
+  },
   "دستی":{
     "کربوهیدرات دستی":{ "گرم":1 }
   }
 };
+
+/* ====== غنی‌سازی خودکار واحدها ======
+   برای هر آیتم، واحد «گرم» و واحدهای رایج دسته را (اگر نبود) اضافه می‌کند.
+   کربوهیدرات هر گرم از روی داده‌های موجود آیتم یا وزن تقریبی واحد حساب می‌شود. */
+
+// وزن تقریبی هر واحد به گرم (برای تبدیل)
+const UNIT_WEIGHT={
+  "قاشق چای‌خوری":5,"قاشق غذاخوری":15,"کف دست":50,"نصف کف دست":25,"کف دست (۱۰۰گ)":100,
+  "لیوان":200,"فنجان":120,"کاسه":250,"بشقاب کوچک":150,"بشقاب متوسط":250,"بشقاب پر":350,"بشقاب":250,
+  "کفگیر":80,"ملاقه":100,"قاچ متوسط":150,"قاچ کوچک":90,"قاچ بزرگ":250,"قاچ":150,"برش":40,"یک برش":40,
+  "قطعه":50,"تکه":40,"مربع کوچک":10,"مربع":10,"عدد":80,"عدد کوچک":50,"عدد متوسط":80,"عدد بزرگ":120,
+  "سیخ":90,"پرس":200,"وعده":250,"رول":150,"قوطی":330,"بطری کوچک":250,"اسکوپ":60,"حلقه":40,
+  "دانه":8,"لنگه":5,"حبه":4,"برگ":15,"خوشه کوچک":120,"نوار":15,"سینه کامل":250,"ران":120,"فیله":120,
+  "نصف":40,"لیتر":1000,"میلی‌لیتر":1
+};
+
+// دسته‌های مایع → واحد میلی‌لیتر و لیتر بگیرند
+const LIQUID_CATS=["نوشیدنی"];
+// دسته‌هایی که واحد گرم برایشان خیلی کاربردی است (پروتئین، گوشت)
+const GRAM_PRIORITY=["پروتئین (کربوهیدرات ناچیز)","کباب‌ها","احشا و اجزای گوشتی","غذاهای دریایی"];
+
+function carbPerGram(units){
+  // از روی واحدهای موجود، کربوهیدرات هر گرم را تخمین بزن
+  for(const u in units){
+    const w=UNIT_WEIGHT[u];
+    if(w && w>0) return units[u]/w;
+  }
+  return null;
+}
+
+function enrichUnits(){
+  for(const cat in DB){
+    if(cat==="دستی") continue;
+    const isLiquid=LIQUID_CATS.includes(cat);
+    for(const item in DB[cat]){
+      const units=DB[cat][item];
+      const cpg=carbPerGram(units);
+      if(cpg===null) continue;
+      // واحد گرم
+      if(!("گرم" in units)){
+        units["گرم"]=Math.round(cpg*100)/100; // کربوهیدرات هر ۱ گرم
+      }
+      // برای مایعات: میلی‌لیتر و لیتر (فرض چگالی ~۱)
+      if(isLiquid){
+        if(!("میلی‌لیتر" in units)) units["میلی‌لیتر"]=Math.round(cpg*100)/100;
+        if(!("لیتر" in units)) units["لیتر"]=Math.round(cpg*1000*10)/10;
+      }
+    }
+  }
+}
+enrichUnits();
 
 /* ====== تبدیل تاریخ شمسی ====== */
 function g2j(gy,gm,gd){
@@ -1004,7 +1365,15 @@ function switchTab(name,btn){
   btn.classList.add('active');
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
-  if(name==='plan') renderWeek();
+  if(name==='plan'){ goToToday(); }
+}
+function goToToday(){
+  const today=new Date(); today.setHours(0,0,0,0);
+  curWeekStart=weekStart(today);
+  // اندیس امروز در هفته (شنبه=۰)
+  const diff=Math.round((today-curWeekStart)/86400000);
+  selectedDayIdx=Math.max(0,Math.min(6,diff));
+  renderWeek();
 }
 
 /* ====== پروفایل ====== */
@@ -1050,9 +1419,73 @@ async function loadProfile(){
 /* ====== غذا ====== */
 const foodRows=document.getElementById('foodRows');
 let rowCount=0;
-function catOptions(){return Object.keys(DB).map(c=>`<option value="${c}">${c}</option>`).join('');}
-function itemOptions(cat){return Object.keys(DB[cat]).map(i=>`<option value="${i}">${i}</option>`).join('');}
+/* ===== ایموجی برای دسته‌ها و آیتم‌ها ===== */
+const CAT_EMOJI={
+  "پروتئین (کربوهیدرات ناچیز)":"🍗","کباب‌ها":"🍢","احشا و اجزای گوشتی":"🫀","غذاهای دریایی":"🐟",
+  "برنج و پلوها":"🍚","خورش و غذای اصلی":"🍲","غذاهای سنتی ایرانی":"🥘","غلات و نان":"🍞",
+  "حبوبات":"🫘","سوپ و آش":"🍜","میوه":"🍎","میوه‌های بیشتر":"🍏","خشکبار و مغزها":"🥜",
+  "میوه‌ی خشک و چیپس میوه":"🍇","سبزیجات":"🥗","لبنیات":"🥛","پنیر و لبنیات ویژه":"🧀",
+  "نوشیدنی":"🥤","فست‌فود":"🍔","تنقلات و چیپس":"🍿","صبحانه":"🍳","صبحانه‌ی فرنگی":"🥞",
+  "غذای بین‌المللی":"🍱","کیک و دسر":"🍰","شیرینی و قند":"🍬","سس‌ها و چاشنی‌ها":"🥫",
+  "آبمیوه و اسموتی":"🧃","صبحانه‌ی کامل":"🍽️","دستی":"✏️"
+};
+// ایموجی خاص بعضی آیتم‌ها بر اساس کلمه‌ی کلیدی
+const ITEM_EMOJI=[
+  ["مرغ","🍗"],["جوجه","🍗"],["ماهی","🐟"],["میگو","🦐"],["تخم‌مرغ","🥚"],["تخم مرغ","🥚"],
+  ["گوشت","🥩"],["کباب","🍢"],["برنج","🍚"],["پلو","🍚"],["نان","🍞"],["نون","🍞"],
+  ["سیب‌زمینی","🥔"],["سیب زمینی","🥔"],["ماکارونی","🍝"],["پاستا","🍝"],["اسپاگتی","🍝"],
+  ["سیب","🍎"],["موز","🍌"],["پرتقال","🍊"],["نارنگی","🍊"],["انگور","🍇"],["هندوانه","🍉"],
+  ["توت‌فرنگی","🍓"],["توت فرنگی","🍓"],["گیلاس","🍒"],["آلبالو","🍒"],["هلو","🍑"],["گلابی","🍐"],
+  ["انبه","🥭"],["آناناس","🍍"],["کیوی","🥝"],["لیمو","🍋"],["نارگیل","🥥"],["آووکادو","🥑"],
+  ["خرما","🌴"],["انجیر","🫐"],["انار","🔴"],["شیر","🥛"],["ماست","🥛"],["پنیر","🧀"],
+  ["دوغ","🥛"],["کره","🧈"],["بستنی","🍦"],["کشمش","🍇"],["بادام","🌰"],["گردو","🌰"],["پسته","🌰"],
+  ["فندق","🌰"],["آجیل","🥜"],["سالاد","🥗"],["گوجه","🍅"],["خیار","🥒"],["هویج","🥕"],
+  ["قارچ","🍄"],["ذرت","🌽"],["فلفل","🫑"],["کلم","🥦"],["بروکلی","🥦"],["زیتون","🫒"],
+  ["پیتزا","🍕"],["همبرگر","🍔"],["برگر","🍔"],["ساندویچ","🥪"],["هات‌داگ","🌭"],["هات داگ","🌭"],
+  ["فلافل","🧆"],["سیب‌زمینی سرخ","🍟"],["سوسیس","🌭"],["کالباس","🥓"],["سوشی","🍣"],
+  ["نوشابه","🥤"],["آبمیوه","🧃"],["آب‌","💧"],["چای","🍵"],["قهوه","☕"],["نسکافه","☕"],
+  ["شربت","🥤"],["اسموتی","🥤"],["شیک","🥤"],["معجون","🥤"],["دلستر","🍺"],["ماءالشعیر","🍺"],
+  ["شکلات","🍫"],["کیک","🍰"],["بیسکویت","🍪"],["کلوچه","🍪"],["دونات","🍩"],["عسل","🍯"],
+  ["قند","🍬","شکر"],["پاستیل","🍬"],["آبنبات","🍬"],["مربا","🍯"],["ژله","🍮"],["فرنی","🍮"],
+  ["شیربرنج","🍚"],["حلوا","🍮"],["سوپ","🍜"],["آش","🍜"],["حلیم","🥣"],["عدس","🫘"],["لوبیا","🫘"],
+  ["نخود","🫛"],["سس","🥫"],["رب","🥫"],["کره بادام","🥜"],["پن‌کیک","🥞"],["پنکیک","🥞"],
+  ["وافل","🧇"],["کورن‌فلکس","🥣"],["جو","🥣"],["گرانولا","🥣"],["املت","🍳"],["نیمرو","🍳"],
+  ["کله‌پاچه","🍲"],["جگر","🫀"],["دل","🫀"],["زبان","👅"],["مغز","🧠"]
+];
+function itemEmoji(cat,item){
+  const n=normalizeFa(item);
+  for(const e of ITEM_EMOJI){ if(n.includes(normalizeFa(e[0]))) return e[1]; }
+  return CAT_EMOJI[cat]||"🍽️";
+}
+
+function catOptions(){return Object.keys(DB).map(c=>`<option value="${c}">${(CAT_EMOJI[c]||'')} ${c}</option>`).join('');}
+function itemOptions(cat){return Object.keys(DB[cat]).map(i=>`<option value="${i}">${itemEmoji(cat,i)} ${i}</option>`).join('');}
 function unitOptions(cat,item){return Object.keys(DB[cat][item]).map(u=>`<option value="${u}">${u}</option>`).join('');}
+function stepAmt(btn,dir){
+  const row=btn.closest('.stepper');
+  const inp=row.querySelector('.in-amt');
+  const unit=btn.closest('.food-row').querySelector('.sel-unit').value||'';
+  // گام هوشمند: برای گرم/میلی‌لیتر ۱۰تایی، بقیه ۰.۵تایی
+  let step=0.5;
+  if(unit.includes('گرم')||unit.includes('میلی')) step=10;
+  else if(unit.includes('لیتر')) step=0.25;
+  let v=parseFloat(inp.value)||0;
+  v=Math.round((v+dir*step)*100)/100;
+  if(v<0) v=0;
+  inp.value=v;
+  calcCarbs();
+}
+function stepById(id,dir,step,cb){
+  const inp=document.getElementById(id);
+  if(!inp) return;
+  let v=parseFloat(inp.value)||0;
+  v=Math.round((v+dir*step)*100)/100;
+  const min=(inp.min!=='')?parseFloat(inp.min):null;
+  if(min!==null&&v<min) v=min;
+  if(v<0) v=0;
+  inp.value=v;
+  if(cb&&window[cb]) window[cb]();
+}
 function addFoodRow(){
   rowCount++;
   const cat0=Object.keys(DB)[0], item0=Object.keys(DB[cat0])[0];
@@ -1069,7 +1502,13 @@ function addFoodRow(){
     </div>
     <div class="food-grid-2">
       <div><label>واحد</label><select class="sel-unit" onchange="calcCarbs()">${unitOptions(cat0,item0)}</select></div>
-      <div><label>مقدار</label><input type="number" class="in-amt" min="0" step="0.5" value="1" oninput="calcCarbs()"></div>
+      <div><label>مقدار</label>
+        <div class="stepper">
+          <button type="button" onclick="stepAmt(this,-1)">−</button>
+          <input type="number" class="in-amt" min="0" step="0.5" value="1" inputmode="decimal" oninput="calcCarbs()">
+          <button type="button" onclick="stepAmt(this,1)">+</button>
+        </div>
+      </div>
       <div><label>کربوهیدرات</label><div class="carb-out"><span class="c-val">0</span><small>گرم</small></div></div>
     </div>
     <div style="text-align:left;margin-top:10px"><button class="del" onclick="this.closest('.food-row').remove();calcCarbs()">×</button></div>`;
@@ -1110,7 +1549,7 @@ function doSearch(input){
   }
   box.innerHTML=matches.map(m=>
     `<div class="search-item" onclick="pickSearch(this,'${m.cat.replace(/'/g,"\\'")}','${m.item.replace(/'/g,"\\'")}')">
-       <span>${m.item}</span><span class="cat">${m.cat}</span>
+       <span>${itemEmoji(m.cat,m.item)} ${m.item}</span><span class="cat">${(CAT_EMOJI[m.cat]||'')} ${m.cat}</span>
      </div>`).join('');
   box.classList.add('show');
 }
@@ -1158,6 +1597,9 @@ const MACRO_BY_CAT={
   "غذای بین‌المللی":[12,12],
   "کیک و دسر":[4,12],
   "شیرینی و قند":[2,8],
+  "سس‌ها و چاشنی‌ها":[1,9],
+  "آبمیوه و اسموتی":[1,1],
+  "صبحانه‌ی کامل":[8,9],
   "دستی":[0,0]
 };
 function unitFactor(unit){
@@ -1195,19 +1637,33 @@ function pf(cat,item,unit,amt){
   const f=unitFactor(unit)*amt;
   return { p: base[0]*f, fat: base[1]*f };
 }
+function renderFoodSummary(list){
+  const box=document.getElementById('foodSummary');
+  const c=document.getElementById('fsList');
+  if(!list||list.length===0){ box.style.display='none'; c.innerHTML=''; return; }
+  box.style.display='block';
+  c.innerHTML=list.map(f=>
+    `<div class="fs-item">
+      <span class="fs-name">${f.emoji} ${f.name}<span class="fs-amt">(${f.amt} ${f.unit})</span></span>
+      <span class="fs-carb">${f.carb} گ</span>
+    </div>`).join('');
+}
 
 function calcCarbs(){
   let total=0, hasFast=false, hasSlow=false, totP=0, totF=0;
+  let summary=[];
   document.querySelectorAll('.food-row').forEach(row=>{
     const cat=row.querySelector('.sel-cat').value,item=row.querySelector('.sel-item').value;
     const unit=row.querySelector('.sel-unit').value,amt=parseFloat(row.querySelector('.in-amt').value)||0;
     const per=(DB[cat]&&DB[cat][item]&&DB[cat][item][unit]!=null)?DB[cat][item][unit]:0;
     const carb=per*amt; row.querySelector('.c-val').textContent=Math.round(carb); total+=carb;
     const m=pf(cat,item,unit,amt); totP+=m.p; totF+=m.fat;
+    if(amt>0) summary.push({emoji:itemEmoji(cat,item),name:item,amt:amt,unit:unit,carb:Math.round(carb)});
     if(["برنج و پلوها","نوشیدنی","شیرینی و قند","میوه","فست‌فود","غلات و نان"].includes(cat)&&carb>10) hasFast=true;
     if(["حبوبات","سبزیجات","خشکبار و مغزها"].includes(cat)&&carb>5) hasSlow=true;
   });
   document.getElementById('carbTotal').textContent=Math.round(total);
+  renderFoodSummary(summary);
   window._mealFast=hasFast; window._mealSlow=hasSlow;
   window._macro={carb:total,p:totP,fat:totF};
   updateMacros(total,totP,totF);
@@ -1320,7 +1776,13 @@ async function loadPlan(){
   if(raw){ try{ planData=JSON.parse(raw); }catch(e){ planData={}; } }
 }
 async function savePlan(){ await storageSet(WKEY,JSON.stringify(planData)); }
-function dayKey(d){ return d.toISOString().slice(0,10); }
+function dayKey(d){
+  // تاریخ محلی (نه UTC) تا با منطقه‌ی زمانی ایران درست کار کند
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,'0');
+  const day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
 function changeWeek(dir){
   curWeekStart.setDate(curWeekStart.getDate()+dir*7);
   curWeekStart=new Date(curWeekStart); renderWeek();
@@ -1342,8 +1804,31 @@ function renderWeek(){
 }
 function renderDay(){
   renderSavedMeals();
+  loadBasalDay();
+  updateCalibration();
   document.getElementById('planPickedFoods').innerHTML='';
   window._planPicked=[];
+}
+function dayKeySel(){
+  const d=new Date(curWeekStart); d.setDate(d.getDate()+selectedDayIdx);
+  return dayKey(d);
+}
+function saveBasalDay(){
+  const key=dayKeySel();
+  if(!planData['_basal']) planData['_basal']={};
+  planData['_basal'][key]={
+    type:document.getElementById('basalDayType').value,
+    dose:document.getElementById('basalDayDose').value,
+    time:document.getElementById('basalDayTime').value
+  };
+  savePlan();
+}
+function loadBasalDay(){
+  const key=dayKeySel();
+  const b=(planData['_basal']&&planData['_basal'][key])?planData['_basal'][key]:{type:'',dose:'',time:''};
+  document.getElementById('basalDayType').value=b.type||'';
+  document.getElementById('basalDayDose').value=b.dose||'';
+  document.getElementById('basalDayTime').value=b.time||'';
 }
 
 /* لیست غذاهای انتخاب‌شده برای وعده‌ی در حال ساخت */
@@ -1356,11 +1841,11 @@ function doSearchPlan(input){
   if(matches.length===0){ box.innerHTML='<div class="search-empty">موردی پیدا نشد</div>'; box.classList.add('show'); return; }
   box.innerHTML=matches.map(m=>
     `<div class="search-item" onclick="pickPlanFood('${m.cat.replace(/'/g,"\\'")}','${m.item.replace(/'/g,"\\'")}')">
-       <span>${m.item}</span><span class="cat">${m.cat}</span></div>`).join('');
+       <span>${itemEmoji(m.cat,m.item)} ${m.item}</span><span class="cat">${(CAT_EMOJI[m.cat]||'')} ${m.cat}</span></div>`).join('');
   box.classList.add('show');
 }
 function pickPlanFood(cat,item){
-  window._planPicked.push(item);
+  window._planPicked.push(itemEmoji(cat,item)+' '+item);
   document.getElementById('planSearchResults').classList.remove('show');
   document.getElementById('planFoodSearch').value='';
   renderPickedFoods();
@@ -1379,18 +1864,22 @@ function saveMealEntry(){
   const time=document.getElementById('mealTime').value;
   const insType=document.getElementById('mealInsulinType').value;
   const insDose=document.getElementById('mealInsulinDose').value;
+  const carb=document.getElementById('mealCarb').value;
+  const bgBefore=document.getElementById('mealBGbefore').value;
+  const bgAfter=document.getElementById('mealBGafter').value;
+  const peak=document.getElementById('mealPeak').value;
+  const trough=document.getElementById('mealTrough').value;
   const foods=window._planPicked.slice();
   if(foods.length===0 && !time){ alert('حداقل یک غذا یا ساعت وارد کنید.'); return; }
   if(!planData[key]) planData[key]=[];
   if(!Array.isArray(planData[key])) planData[key]=[]; // مهاجرت از فرمت قدیمی
-  planData[key].push({type,time,insType,insDose,foods,id:Date.now()});
+  planData[key].push({type,time,insType,insDose,carb,bgBefore,bgAfter,peak,trough,foods,id:Date.now()});
   savePlan();
   // ریست فرم
   window._planPicked=[]; renderPickedFoods();
-  document.getElementById('mealTime').value='';
-  document.getElementById('mealInsulinDose').value='';
-  document.getElementById('mealInsulinType').value='';
+  ['mealTime','mealInsulinDose','mealInsulinType','mealCarb','mealBGbefore','mealBGafter','mealPeak','mealTrough'].forEach(id=>document.getElementById(id).value='');
   renderSavedMeals();
+  updateCalibration();
 }
 function renderSavedMeals(){
   const d=new Date(curWeekStart); d.setDate(d.getDate()+selectedDayIdx);
@@ -1398,25 +1887,167 @@ function renderSavedMeals(){
   const list=Array.isArray(planData[key])?planData[key]:[];
   const c=document.getElementById('savedMeals');
   if(list.length===0){ c.innerHTML='<div class="empty-day">هنوز وعده‌ای برای این روز ثبت نشده.</div>'; return; }
-  // مرتب بر اساس ساعت
   const sorted=list.slice().sort((a,b)=>(a.time||'99').localeCompare(b.time||'99'));
   c.innerHTML=sorted.map(m=>{
+    if(window._editingMeal===m.id) return editMealForm(key,m);
     const foodsTxt=(m.foods&&m.foods.length)?m.foods.join(' + '):'—';
-    const insTxt=(m.insType||m.insDose)?`انسولین: <b>${m.insType||''} ${m.insDose?m.insDose+' واحد':''}</b>`:'';
+    const insTxt=(m.insType||m.insDose)?`💉 <b>${m.insType||''} ${m.insDose?m.insDose+' واحد':''}</b>`:'';
+    // نمایش اطلاعات کالیبراسیون اگر موجود
+    let dataChips=[];
+    if(m.carb) dataChips.push(`کرب: ${m.carb}گ`);
+    if(m.bgBefore) dataChips.push(`قند قبل: ${m.bgBefore}`);
+    if(m.bgAfter) dataChips.push(`قند بعد: ${m.bgAfter}`);
+    if(m.peak) dataChips.push(`پیک: ${m.peak}`);
+    if(m.trough) dataChips.push(`کمترین: ${m.trough}`);
+    const chipsHtml=dataChips.length?`<div class="meal-chips">${dataChips.map(x=>`<span class="mchip">${x}</span>`).join('')}</div>`:'';
     return `<div class="saved-meal">
       <div class="top">
         <span class="mtype">${m.type}${m.time?` <span class="mtime">${m.time}</span>`:''}</span>
-        <button class="del-meal" onclick="delMeal('${key}',${m.id})">حذف</button>
+        <div style="display:flex;gap:6px">
+          <button class="edit-meal" onclick="startEditMeal('${key}',${m.id})">ویرایش</button>
+          <button class="del-meal" onclick="delMeal('${key}',${m.id})">حذف</button>
+        </div>
       </div>
       <div class="foods">${foodsTxt}</div>
       ${insTxt?`<div class="ins">${insTxt}</div>`:''}
+      ${chipsHtml}
     </div>`;
   }).join('');
+}
+function editMealForm(key,m){
+  return `<div class="saved-meal editing">
+    <div class="top"><span class="mtype">✏️ ویرایش: ${m.type}</span></div>
+    <label>غذاها (هر کدام در یک خط)</label>
+    <textarea id="edit-foods" class="edit-ta">${(m.foods||[]).join('\n')}</textarea>
+    <div class="edit-grid">
+      <div><label>ساعت</label><input type="time" id="edit-time" value="${m.time||''}"></div>
+      <div><label>دوز انسولین</label><input type="number" id="edit-insDose" step="0.5" value="${m.insDose||''}"></div>
+    </div>
+    <div class="edit-grid">
+      <div><label>کربوهیدرات (گ)</label><input type="number" id="edit-carb" value="${m.carb||''}"></div>
+      <div><label>قند قبل</label><input type="number" id="edit-bgBefore" value="${m.bgBefore||''}"></div>
+    </div>
+    <div class="edit-grid">
+      <div><label>قند ۲ ساعت بعد</label><input type="number" id="edit-bgAfter" value="${m.bgAfter||''}"></div>
+      <div><label>پیک</label><input type="number" id="edit-peak" value="${m.peak||''}"></div>
+    </div>
+    <div class="edit-grid">
+      <div><label>کمترین قند</label><input type="number" id="edit-trough" value="${m.trough||''}"></div>
+      <div><label>نوع انسولین</label><input type="text" id="edit-insType" value="${m.insType||''}" placeholder="اپیدرا"></div>
+    </div>
+    <div class="log-actions">
+      <button class="log-btn" onclick="saveEditMeal('${key}',${m.id})">✓ ذخیره‌ی تغییرات</button>
+      <button class="log-btn sec" onclick="cancelEditMeal()">لغو</button>
+    </div>
+  </div>`;
+}
+function startEditMeal(key,id){ window._editingMeal=id; renderSavedMeals(); }
+function cancelEditMeal(){ window._editingMeal=null; renderSavedMeals(); }
+function saveEditMeal(key,id){
+  const list=planData[key]; if(!Array.isArray(list)) return;
+  const m=list.find(x=>x.id===id); if(!m) return;
+  const foodsRaw=document.getElementById('edit-foods').value;
+  m.foods=foodsRaw.split('\n').map(s=>s.trim()).filter(Boolean);
+  m.time=document.getElementById('edit-time').value;
+  m.insDose=document.getElementById('edit-insDose').value;
+  m.insType=document.getElementById('edit-insType').value;
+  m.carb=document.getElementById('edit-carb').value;
+  m.bgBefore=document.getElementById('edit-bgBefore').value;
+  m.bgAfter=document.getElementById('edit-bgAfter').value;
+  m.peak=document.getElementById('edit-peak').value;
+  m.trough=document.getElementById('edit-trough').value;
+  window._editingMeal=null;
+  savePlan(); renderSavedMeals(); updateCalibration();
 }
 function delMeal(key,id){
   if(!Array.isArray(planData[key])) return;
   planData[key]=planData[key].filter(m=>m.id!==id);
-  savePlan(); renderSavedMeals();
+  savePlan(); renderSavedMeals(); updateCalibration();
+}
+
+/* ===== کالیبراسیون I:C از روی تجربه‌ی وعده‌های ثبت‌شده ===== */
+function collectCalibMeals(){
+  const out=[];
+  for(const key in planData){
+    if(key==='_basal') continue;
+    const list=planData[key];
+    if(!Array.isArray(list)) continue;
+    list.forEach(m=>{
+      const carb=parseFloat(m.carb), ins=parseFloat(m.insDose);
+      const bgB=parseFloat(m.bgBefore), bgA=parseFloat(m.bgAfter);
+      const peak=parseFloat(m.peak), trough=parseFloat(m.trough);
+      if(carb>0 && ins>0 && !isNaN(bgA) && !isNaN(bgB)){
+        // وعده‌ی «موفق»: قند ۲ ساعته ۷۰-۱۸۰ باشد
+        let good = bgA>=70 && bgA<=180;
+        // اگر پیک وارد شده و بالای ۱۸۰ است → موفق نیست (اوج خطرناک)
+        if(!isNaN(peak) && peak>180) good=false;
+        // اگر کمترین قند وارد شده و زیر ۷۰ است → موفق نیست (افت، یعنی دوز زیاد بوده)
+        if(!isNaN(trough) && trough<70) good=false;
+        out.push({carb,ins,bgB,bgA,peak,trough,good});
+      }
+    });
+  }
+  return out;
+}
+function updateCalibration(){
+  const body=document.getElementById('calibBody');
+  if(!body) return;
+  const meals=collectCalibMeals();
+  const goodMeals=meals.filter(m=>m.good);
+  if(goodMeals.length<3){
+    body.innerHTML=`<div class="calib-empty">
+      برای کالیبراسیون، حداقل <b style="color:var(--teal)">۳ وعده‌ی موفق</b> با این اطلاعات لازم است:
+      کربوهیدرات + دوز انسولین + قند قبل و ۲ ساعت بعد (که قند بعد بین ۷۰ تا ۱۸۰ مانده باشد).
+      <br><br>تا حالا <b style="color:var(--teal)">${goodMeals.length}</b> وعده‌ی معتبر ثبت شده. با ادامه‌ی ثبت وعده‌ها در برنامه‌ی هفتگی، این بخش خودکار فعال می‌شود.
+    </div>`;
+    return;
+  }
+  // میانگین I:C واقعی = میانگین (کربوهیدرات ÷ انسولین) وعده‌های موفق
+  let sumIC=0;
+  goodMeals.forEach(m=>{ sumIC += m.carb/m.ins; });
+  const realIC = sumIC/goodMeals.length;
+  const curIC = parseFloat(document.getElementById('icRatio').value)||0;
+  // تحلیل هشدار پزشک
+  const allMeals=meals.length;
+  const badMeals=meals.filter(m=>!m.good).length;
+  const badRatio = allMeals>0 ? badMeals/allMeals : 0;
+  const bigDiff = curIC>0 && Math.abs(realIC-curIC)/curIC > 0.3; // اختلاف بیش از ۳۰٪
+  let doctorAlert='';
+  if(bigDiff || badRatio>0.35){
+    let reasons=[];
+    if(bigDiff) reasons.push('نسبت واقعی I:C بدنت به‌طور محسوسی با تنظیمات فعلی فرق دارد');
+    if(badRatio>0.35) reasons.push(`حدود ${Math.round(badRatio*100)}٪ وعده‌ها کنترل خوبی نداشتند (پیک بالا یا افت)`);
+    doctorAlert=`
+      <div class="doctor-alert">
+        <div class="da-title">🩺 وقت گفتگو با پزشک است</div>
+        <div class="da-body">
+          ${reasons.join(' و ')}. این یعنی ممکن است بدنت تغییر کرده باشد و لازم است پزشکت
+          <b>دوباره آزمایش بگیرد و انسولین‌هایت را بازبینی کند</b>.
+          می‌توانی همین تاریخچه و الگوها را به پزشکت نشان دهی.
+        </div>
+      </div>`;
+  }
+  body.innerHTML=`
+    <div class="calib-n">بر اساس <b>${goodMeals.length}</b> وعده‌ی موفق از <b>${allMeals}</b> وعده‌ی ثبت‌شده</div>
+    <div class="calib-big">
+      <div class="calib-num exp"><div class="cv">1:${realIC.toFixed(1)}</div><div class="cl">I:C واقعی (از تجربه)</div></div>
+      <div class="calib-num cur"><div class="cv">1:${curIC.toFixed(1)}</div><div class="cl">I:C فعلی برنامه</div></div>
+    </div>
+    <div class="calib-compare">
+      تجربه‌ی واقعی بدنت نشان می‌دهد هر <b>۱ واحد</b> انسولین حدود <b>${realIC.toFixed(1)} گرم</b> کربوهیدرات را پوشش می‌دهد.
+      ${Math.abs(realIC-curIC)>2 ? `این با تخمین فعلی برنامه (${curIC.toFixed(1)}) تفاوت دارد.` : 'این نزدیک به تخمین فعلی برنامه است. 👍'}
+    </div>
+    ${doctorAlert}
+    <button class="calib-apply" onclick="applyCalibIC(${realIC.toFixed(1)})">✓ استفاده از I:C واقعی (${realIC.toFixed(1)}) در پروفایل</button>
+    <div class="calib-warn">⚠ این عدد از میانگین چند وعده به‌دست آمده و فقط یک راهنماست. حتماً قبل از تغییر واقعی، با پزشکت درباره‌اش گفتگو کن — چون ورزش، استرس، بیماری و نوع غذا می‌توانند آن را تغییر دهند.</div>`;
+}
+function applyCalibIC(ic){
+  if(!confirm('آیا مطمئنی می‌خواهی I:C پروفایل را به '+ic+' تغییر دهی؟ (این تصمیم بهتر است با پزشک هماهنگ شود)')) return;
+  document.getElementById('icRatio').value=ic;
+  // ذخیره در پروفایل
+  if(typeof saveProfile==='function') saveProfile();
+  if(typeof calcDose==='function') calcDose();
+  alert('I:C پروفایل به '+ic+' تغییر کرد. یادت باشه با پزشکت چکش کنی.');
 }
 document.addEventListener('click',e=>{
   if(!e.target.closest('#planFoodSearch')&&!e.target.closest('#planSearchResults')){
@@ -1425,6 +2056,359 @@ document.addEventListener('click',e=>{
 });
 
 /* ====== شروع ====== */
+/* ===== تحلیل CGM ===== */
+function handleCGMFile(input){
+  const file=input.files[0];
+  if(!file) return;
+  document.getElementById('cgmUploadText').textContent='⏳ در حال خواندن...';
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=new Uint8Array(e.target.result);
+      const wb=XLSX.read(data,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+      analyzeCGM(rows);
+      document.getElementById('cgmUploadText').textContent='📂 انتخاب فایل دیگر';
+    }catch(err){
+      document.getElementById('cgmUploadText').textContent='📂 انتخاب فایل CGM (اکسل یا CSV)';
+      alert('خطا در خواندن فایل. مطمئن شو فایل اکسل یا CSV با ستون زمان و قند است.');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+function analyzeCGM(rows){
+  // پیدا کردن ستون قند: عددی بین 20 تا 600
+  let readings=[];
+  for(let i=0;i<rows.length;i++){
+    const r=rows[i]; if(!r) continue;
+    let time=null,glu=null;
+    for(let j=0;j<r.length;j++){
+      const cell=r[j];
+      const num=parseFloat(cell);
+      if(!isNaN(num)&&num>=20&&num<=600&&Number.isFinite(num)){
+        // احتمال قند
+        if(glu===null) glu=num;
+      } else if(cell&&glu===null){
+        time=cell;
+      }
+    }
+    // ستون‌بندی دقیق‌تر: اگر ردیف دو ستون دارد، اولی زمان دومی قند
+    if(r.length>=2){
+      const g=parseFloat(r[1]);
+      if(!isNaN(g)&&g>=20&&g<=600){ readings.push({time:r[0],glu:g}); continue; }
+    }
+    if(glu!==null) readings.push({time:time,glu:glu});
+  }
+  if(readings.length<10){
+    document.getElementById('cgmResult').innerHTML='<div class="card"><p style="color:var(--red)">داده‌ی کافی پیدا نشد. مطمئن شو فایل ستون قند (mg/dL) دارد.</p></div>';
+    return;
+  }
+  // ذخیره‌ی سراسری برای تطبیق با وعده‌ها (قابلیت وصل قند به لاگ)
+  window._cgmReadings = readings.map(r=>({t:parseLogTime(r.time),glu:r.glu})).filter(r=>r.t);
+  const vals=readings.map(r=>r.glu);
+  const n=vals.length;
+  const avg=vals.reduce((a,b)=>a+b,0)/n;
+  const tir=vals.filter(v=>v>=70&&v<=180).length/n*100;
+  const tar=vals.filter(v=>v>180).length/n*100;
+  const tbr=vals.filter(v=>v<70).length/n*100;
+  const veryLow=vals.filter(v=>v<54).length/n*100;
+  const veryHigh=vals.filter(v=>v>250).length/n*100;
+  const gmi=3.31+0.02392*avg;
+  const mean=avg;
+  const sd=Math.sqrt(vals.reduce((a,v)=>a+(v-mean)*(v-mean),0)/n);
+  const cv=sd/avg*100;
+  const mn=Math.min(...vals), mx=Math.max(...vals);
+  // شمارش رویدادهای افت و اوج (نقاط بحرانی)
+  let critical=[];
+  let inLow=false,inHigh=false;
+  for(let i=0;i<readings.length;i++){
+    const v=readings[i].glu;
+    if(v<70&&!inLow){ critical.push({type:'low',time:readings[i].time,glu:v}); inLow=true; }
+    else if(v>=70) inLow=false;
+    if(v>250&&!inHigh){ critical.push({type:'high',time:readings[i].time,glu:v}); inHigh=true; }
+    else if(v<=250) inHigh=false;
+  }
+  renderCGMResult({n,avg,tir,tar,tbr,veryLow,veryHigh,gmi,cv,mn,mx,critical});
+}
+function renderCGMResult(s){
+  // ارزیابی و هشدارها
+  let alerts=[];
+  if(s.tir<70) alerts.push({lvl:'warn',txt:`زمان در محدوده (TIR) تو ${s.tir.toFixed(0)}٪ است — هدف معمول بالای ۷۰٪ است. با پزشکت درباره‌ی تنظیم درمان صحبت کن.`});
+  if(s.tbr>4) alerts.push({lvl:'danger',txt:`زمان افت قند (زیر ۷۰) ${s.tbr.toFixed(1)}٪ است — بالاتر از حد ایمن (۴٪). این نشانه‌ی مهمی است؛ حتماً با پزشک درباره‌ی کاهش دوز صحبت کن.`});
+  if(s.veryLow>0) alerts.push({lvl:'danger',txt:`قند تو ${s.veryLow.toFixed(1)}٪ وقت زیر ۵۴ (افت شدید) بوده — این خطرناک است و نیاز به بازبینی فوری با پزشک دارد.`});
+  if(s.cv>36) alerts.push({lvl:'warn',txt:`نوسان قندت (CV) ${s.cv.toFixed(0)}٪ است — بالای ۳۶٪ یعنی قند ناپایدار است. این را با پزشکت در میان بگذار.`});
+  if(s.tar>25) alerts.push({lvl:'warn',txt:`زمان بالای ۱۸۰ حدود ${s.tar.toFixed(0)}٪ است — کنترل قند بالا نیاز به بهبود دارد.`});
+  if(alerts.length===0) alerts.push({lvl:'ok',txt:`کنترل کلی قندت در این بازه خوب بوده 👍 ولی ادامه‌ی پایش و پیگیری با پزشک همیشه مهم است.`});
+
+  const tirColor='#3fb9a3', tarColor='#e0a355', tbrColor='#e0685f';
+  let html=`<div class="card">
+    <h2><span>📊 خلاصه‌ی کنترل قند (${s.n} داده)</span></h2>
+    <div class="cgm-stats">
+      <div class="cgm-stat"><div class="sv" style="color:var(--teal)">${s.avg.toFixed(0)}</div><div class="sl">میانگین قند</div></div>
+      <div class="cgm-stat"><div class="sv" style="color:var(--blue)">${s.gmi.toFixed(1)}%</div><div class="sl">GMI (تخمین A1c)</div></div>
+      <div class="cgm-stat"><div class="sv" style="color:var(--violet)">${s.cv.toFixed(0)}%</div><div class="sl">نوسان (CV)</div></div>
+    </div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:4px">زمان در محدوده‌ها:</div>
+    <div class="cgm-bar">
+      <div style="width:${s.tbr}%;background:${tbrColor}" title="زیر ۷۰">${s.tbr>7?s.tbr.toFixed(0)+'%':''}</div>
+      <div style="width:${s.tir}%;background:${tirColor}">${s.tir.toFixed(0)}%</div>
+      <div style="width:${s.tar}%;background:${tarColor}" title="بالای ۱۸۰">${s.tar>7?s.tar.toFixed(0)+'%':''}</div>
+    </div>
+    <div class="cgm-legend">
+      <span><span class="cgm-dot" style="background:${tbrColor}"></span>افت (زیر ۷۰): ${s.tbr.toFixed(1)}%</span>
+      <span><span class="cgm-dot" style="background:${tirColor}"></span>در محدوده: ${s.tir.toFixed(1)}%</span>
+      <span><span class="cgm-dot" style="background:${tarColor}"></span>بالا (بالای ۱۸۰): ${s.tar.toFixed(1)}%</span>
+    </div>
+    <div class="cgm-stats">
+      <div class="cgm-stat"><div class="sv" style="color:var(--red)">${s.mn.toFixed(0)}</div><div class="sl">کمترین</div></div>
+      <div class="cgm-stat"><div class="sv" style="color:var(--amber)">${s.mx.toFixed(0)}</div><div class="sl">بیشترین</div></div>
+      <div class="cgm-stat"><div class="sv">${s.critical.length}</div><div class="sl">نقطه‌ی بحرانی</div></div>
+    </div>
+  </div>`;
+
+  // هشدارها
+  html+=`<div class="card"><h2><span>🔔 ارزیابی و هشدارها</span></h2>`;
+  alerts.forEach(a=>{
+    const border=a.lvl==='danger'?'var(--red)':(a.lvl==='warn'?'var(--amber)':'var(--teal)');
+    const bg=a.lvl==='danger'?'rgba(224,104,95,.1)':(a.lvl==='warn'?'rgba(224,163,85,.1)':'rgba(63,185,163,.1)');
+    const icon=a.lvl==='danger'?'🚨':(a.lvl==='warn'?'⚠️':'✅');
+    html+=`<div style="background:${bg};border:1px solid ${border};border-right:4px solid ${border};border-radius:10px;padding:12px 14px;margin-bottom:10px;font-size:13.5px;line-height:1.9">${icon} ${a.txt}</div>`;
+  });
+  html+=`</div>`;
+
+  // نقاط بحرانی
+  if(s.critical.length>0){
+    html+=`<div class="card"><h2><span>⚡ نقاط بحرانی (${s.critical.length})</span></h2><div class="crit-list">`;
+    s.critical.slice(0,20).forEach(c=>{
+      const cls=c.type==='low'?'crit-low':'crit-high';
+      const label=c.type==='low'?'افت قند':'قند خیلی بالا';
+      const emoji=c.type==='low'?'🔻':'🔺';
+      html+=`<div class="crit-item ${cls}"><span>${emoji} ${label}</span><span class="ct">${c.glu.toFixed(0)} mg/dL — ${c.time||''}</span></div>`;
+    });
+    if(s.critical.length>20) html+=`<div style="font-size:12px;color:var(--muted);text-align:center;margin-top:8px">و ${s.critical.length-20} مورد دیگر...</div>`;
+    html+=`</div></div>`;
+  }
+
+  document.getElementById('cgmResult').innerHTML=html;
+}
+
+/* ===== وارد کردن فایل لاگ (وعده + انسولین) ===== */
+let _logData=null;
+function parseLogTime(str){
+  // '26-07-2026 08:35 GMT+3:30' → Date + اجزا
+  if(!str) return null;
+  const m=String(str).match(/(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2})/);
+  if(!m) return null;
+  const [_,dd,MM,yyyy,hh,mm]=m;
+  return {y:+yyyy,mo:+MM,d:+dd,h:+hh,min:+mm,hhmm:hh+':'+mm,dateObj:new Date(+yyyy,+MM-1,+dd,+hh,+mm)};
+}
+const MEAL_FA={Breakfast:'صبحانه',Lunch:'ناهار',Dinner:'شام',Snack:'میان‌وعده'};
+function handleLogFile(input){
+  const file=input.files[0]; if(!file) return;
+  document.getElementById('logUploadText').textContent='⏳ در حال خواندن...';
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+      const meals=wb.Sheets['Meal']?XLSX.utils.sheet_to_json(wb.Sheets['Meal'],{header:1}):[];
+      const ins=wb.Sheets['Insulin']?XLSX.utils.sheet_to_json(wb.Sheets['Insulin'],{header:1}):[];
+      processLog(meals,ins);
+      document.getElementById('logUploadText').textContent='📥 انتخاب فایل دیگر';
+    }catch(err){
+      document.getElementById('logUploadText').textContent='📥 وارد کردن از فایل لاگ CGM (وعده + انسولین)';
+      alert('خطا در خواندن فایل لاگ. مطمئن شو فایل خروجی اپ CGM با شیت‌های Meal و Insulin است.');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+function processLog(mealRows,insRows){
+  // پارس انسولین‌ها
+  let insList=[];
+  for(let i=1;i<insRows.length;i++){
+    const r=insRows[i]; if(!r||!r[0]) continue;
+    const t=parseLogTime(r[0]); if(!t) continue;
+    const dose=parseFloat(r[2]); if(isNaN(dose)) continue;
+    insList.push({t,type:r[1]||'',dose});
+  }
+  // پارس وعده‌ها و حذف تکراری‌ها
+  let meals=[]; let seen=new Set();
+  for(let i=1;i<mealRows.length;i++){
+    const r=mealRows[i]; if(!r||!r[0]) continue;
+    const t=parseLogTime(r[0]); if(!t) continue;
+    const note=(r[4]||'').trim();
+    const type=MEAL_FA[r[1]]||r[1]||'وعده';
+    const key=r[0]+'|'+type+'|'+note;
+    if(seen.has(key)) continue; seen.add(key);
+    // تطبیق با نزدیک‌ترین انسولین (تا ۹۰ دقیقه قبل/بعد وعده)
+    let bestIns=null,bestDiff=91*60000;
+    insList.forEach(ins=>{
+      const diff=Math.abs(ins.t.dateObj-t.dateObj);
+      if(diff<bestDiff){ bestDiff=diff; bestIns=ins; }
+    });
+    meals.push({t,type,note,ins:bestIns});
+  }
+  // مرتب بر اساس تاریخ (جدید به قدیم)
+  meals.sort((a,b)=>b.t.dateObj-a.t.dateObj);
+  _logData=meals;
+  renderLogPreview(meals);
+}
+function renderLogPreview(meals){
+  const box=document.getElementById('logPreview');
+  if(!meals||meals.length===0){ box.innerHTML='<div class="card"><p style="color:var(--muted)">وعده‌ای در فایل پیدا نشد.</p></div>'; return; }
+  // گروه‌بندی بر اساس روز
+  let groups={};
+  meals.forEach((m,idx)=>{
+    const dayKeyStr=m.t.y+'-'+m.t.mo+'-'+m.t.d;
+    if(!groups[dayKeyStr]) groups[dayKeyStr]={jalali:jalaliStr(m.t.dateObj),items:[]};
+    groups[dayKeyStr].items.push({...m,idx});
+  });
+  let html=`<div class="card"><h2><span>📋 پیش‌نمایش لاگ (${meals.length} وعده)</span></h2>
+    <p style="font-size:12.5px;color:var(--muted);margin-bottom:12px">وعده‌هایی که می‌خواهی در برنامه‌ی هفتگی ثبت شوند را تیک بزن، سپس دکمه‌ی ثبت را بزن.</p>`;
+  for(const dk in groups){
+    const g=groups[dk];
+    html+=`<div class="log-day-group">
+      <div class="log-day-head">
+        <span class="log-day-title">${g.jalali}</span>
+        <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer">
+          <input type="checkbox" onchange="toggleDayLog(this,'${dk}')" style="width:16px;height:16px;accent-color:var(--teal)"> کل روز
+        </label>
+      </div>`;
+    g.items.forEach(m=>{
+      const insTxt=m.ins?`💉 ${m.ins.dose} واحد ${m.ins.type||''} (${m.ins.t.hhmm})`:'بدون انسولین ثبت‌شده';
+      html+=`<div class="log-meal-row">
+        <input type="checkbox" class="log-check" data-idx="${m.idx}" data-day="${dk}">
+        <div class="log-meal-info">
+          <span class="log-meal-type">${m.type}</span><span class="log-meal-time">${m.t.hhmm}</span>
+          ${m.note?`<div class="log-meal-note">${m.note}</div>`:'<div class="log-meal-note" style="color:var(--muted)">بدون توضیح</div>'}
+          <div class="log-meal-ins">${insTxt}</div>
+        </div>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+  html+=`<div class="log-actions">
+    <button class="log-btn" onclick="importSelectedLog()">✓ ثبت موارد انتخاب‌شده</button>
+    <button class="log-btn sec" onclick="selectAllLog(true)">انتخاب همه</button>
+    <button class="log-btn sec" onclick="selectAllLog(false)">لغو انتخاب</button>
+  </div></div>`;
+  box.innerHTML=html;
+}
+function toggleDayLog(cb,dk){
+  document.querySelectorAll(`.log-check[data-day="${dk}"]`).forEach(c=>c.checked=cb.checked);
+}
+function selectAllLog(v){
+  document.querySelectorAll('.log-check').forEach(c=>c.checked=v);
+}
+/* ===== تشخیص غذا از متن نوت فارسی و تخمین کربوهیدرات ===== */
+// اعداد فارسی/عربی → لاتین
+function faNum(s){
+  return String(s).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+                  .replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+}
+function matchNoteFoods(note){
+  // نوت را با / یا ، یا خط تیره می‌شکنیم و هر تکه را در دیتابیس می‌گردیم
+  if(!note) return {items:[],carb:0};
+  const parts=note.split(/[\/،,\n\-]+/).map(s=>s.trim()).filter(Boolean);
+  let items=[], totalCarb=0;
+  parts.forEach(part=>{
+    const norm=normalizeFa(faNum(part));
+    // استخراج عدد (مقدار) از متن
+    const numMatch=norm.match(/(\d+(\.\d+)?)/);
+    const qty=numMatch?parseFloat(numMatch[1]):1;
+    // جستجو در ایندکس: بهترین تطبیق کلمه‌ای
+    let best=null,bestScore=0;
+    SEARCH_INDEX.forEach(entry=>{
+      const words=entry.norm.split(/\s+/);
+      let score=0;
+      words.forEach(w=>{ if(w.length>1 && norm.includes(w)) score+=w.length; });
+      // اگر خود آیتم در متن باشد امتیاز بیشتر
+      if(norm.includes(entry.norm)) score+=entry.norm.length*2;
+      if(score>bestScore){ bestScore=score; best=entry; }
+    });
+    if(best && bestScore>=2){
+      // پیدا کردن واحد مناسب: اگر متن واحدی دارد استفاده کن، وگرنه اولین واحد
+      const units=DB[best.cat][best.item];
+      let unit=Object.keys(units)[0];
+      // تطبیق واحد از روی کلمات متن
+      for(const u of Object.keys(units)){
+        if(norm.includes(normalizeFa(u))){ unit=u; break; }
+      }
+      const per=units[unit]||0;
+      const carb=per*qty;
+      totalCarb+=carb;
+      items.push({cat:best.cat,item:best.item,unit,qty,carb:Math.round(carb),raw:part,emoji:itemEmoji(best.cat,best.item)});
+    } else {
+      items.push({raw:part,unmatched:true});
+    }
+  });
+  return {items,carb:Math.round(totalCarb)};
+}
+function cgmStatsForMeal(mealTime){
+  // از داده‌های CGM، قند قبل/بعد/پیک/کمترین را حول زمان وعده پیدا کن
+  if(!window._cgmReadings || !mealTime) return null;
+  const mt=mealTime.dateObj.getTime();
+  const before=[], after2h=[], window4h=[];
+  window._cgmReadings.forEach(r=>{
+    const diff=(r.t.dateObj.getTime()-mt)/60000; // دقیقه
+    if(diff>=-30 && diff<0) before.push(r.glu);       // نیم‌ساعت قبل
+    if(diff>=0 && diff<=120) after2h.push(r.glu);      // تا ۲ ساعت بعد
+    if(diff>=0 && diff<=240) window4h.push(r.glu);     // تا ۴ ساعت بعد
+  });
+  if(before.length===0 && after2h.length===0) return null;
+  const bgBefore = before.length? Math.round(before[before.length-1]) : '';
+  const bgAfter = after2h.length? Math.round(after2h[after2h.length-1]) : '';
+  const peak = window4h.length? Math.round(Math.max(...window4h)) : '';
+  const trough = window4h.length? Math.round(Math.min(...window4h)) : '';
+  return {bgBefore,bgAfter,peak,trough};
+}
+function importSelectedLog(){
+  const checks=document.querySelectorAll('.log-check:checked');
+  if(checks.length===0){ alert('حداقل یک وعده را انتخاب کن.'); return; }
+  const hasCGM = !!(window._cgmReadings && window._cgmReadings.length);
+  let count=0, filledCount=0, dupCount=0;
+  checks.forEach(c=>{
+    const m=_logData[parseInt(c.dataset.idx)];
+    if(!m) return;
+    const key=dayKey(m.t.dateObj);
+    if(!planData[key]) planData[key]=[];
+    if(!Array.isArray(planData[key])) planData[key]=[];
+    // بررسی تکراری: وعده‌ای با همان ساعت و نوع در همان روز وجود دارد؟
+    const isDup=planData[key].some(x=>x.time===m.t.hhmm && x.type===m.type);
+    if(isDup){ dupCount++; return; }
+    // تلاش برای پر کردن قند از CGM
+    let bg={bgBefore:'',bgAfter:'',peak:'',trough:''};
+    if(hasCGM){ const s=cgmStatsForMeal(m.t); if(s){ bg=s; filledCount++; } }
+    // تلاش برای تشخیص غذا و کربوهیدرات از نوت
+    let carbVal='', foodsArr=m.note?[m.note]:[];
+    if(m.note){
+      const matched=matchNoteFoods(m.note);
+      if(matched.carb>0){ carbVal=String(matched.carb); }
+      if(matched.items.length){
+        foodsArr=matched.items.map(it=> it.unmatched ? it.raw : `${it.emoji} ${it.item} (${it.qty} ${it.unit})`);
+      }
+    }
+    planData[key].push({
+      type:m.type, time:m.t.hhmm,
+      insType:m.ins?(m.ins.type||'اپیدرا'):'', insDose:m.ins?String(m.ins.dose):'',
+      carb:carbVal, bgBefore:String(bg.bgBefore), bgAfter:String(bg.bgAfter), peak:String(bg.peak), trough:String(bg.trough),
+      foods:foodsArr, id:Date.now()+count
+    });
+    count++;
+  });
+  savePlan();
+  let msg=count+' وعده‌ی جدید در برنامه‌ی هفتگی ثبت شد.';
+  if(dupCount>0) msg+='\n♻️ '+dupCount+' وعده‌ی تکراری (که قبلاً ثبت شده بود) رد شد.';
+  if(hasCGM && filledCount>0) msg+='\n✓ قند قبل/بعد '+filledCount+' وعده از فایل CGM خودکار پر شد.';
+  else if(!hasCGM && count>0) msg+='\n💡 اگر اول فایل قند را در تب «تحلیل CGM» وارد کنی، قند وعده‌ها هم خودکار پر می‌شود.';
+  if(count>0) msg+='\nکربوهیدرات را می‌توانی برای هر وعده کامل کنی تا کالیبراسیون فعال شود.';
+  alert(msg);
+  document.getElementById('logPreview').innerHTML='';
+  document.getElementById('logFile').value='';
+  document.getElementById('logUploadText').textContent='📥 وارد کردن از فایل لاگ CGM (وعده + انسولین)';
+  goToToday();
+}
+
 buildSearchIndex();
 addFoodRow();
 (async()=>{ await loadProfile(); await loadPlan(); })();
