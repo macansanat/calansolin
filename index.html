@@ -111,6 +111,9 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .cgm-upload{display:block;background:var(--teal-dim);color:#d6f5ee;border-radius:12px;padding:16px;text-align:center;font-weight:700;font-size:14.5px;cursor:pointer;border:2px dashed var(--teal)}
 .cgm-upload:hover{filter:brightness(1.1)}
 .log-import{margin-bottom:14px}
+.reset-btn{flex:1;min-width:150px;background:var(--panel-2);border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:9px;font-family:inherit;font-size:12.5px;cursor:pointer}
+.reset-btn:hover{border-color:var(--amber);color:var(--amber)}
+.reset-btn.danger:hover{border-color:var(--red);color:var(--red)}
 .log-upload{display:block;background:var(--panel-2);color:var(--blue);border-radius:12px;padding:14px;text-align:center;font-weight:700;font-size:13.5px;cursor:pointer;border:2px dashed var(--blue)}
 .log-upload:hover{filter:brightness(1.15)}
 .log-day-group{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
@@ -435,6 +438,10 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <span id="logUploadText">📥 وارد کردن از فایل لاگ CGM (وعده + انسولین)</span>
     </label>
     <div class="formula-note" style="margin-top:6px">فایل خروجی اپ CGM (شیت‌های Meal و Insulin) را وارد کن. برنامه وعده‌ها و انسولین‌ها را نمایش می‌دهد و می‌توانی انتخاب کنی کدام‌ها در برنامه‌ی هفتگی ثبت شوند.</div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <button class="reset-btn" onclick="resetDayMeals()">🗑 پاک کردن وعده‌های این روز</button>
+      <button class="reset-btn danger" onclick="resetAllMeals()">⚠ پاک کردن کل برنامه‌ی هفتگی</button>
+    </div>
   </div>
   <div id="logPreview"></div>
 
@@ -604,6 +611,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <span id="cgmUploadText">📂 انتخاب فایل CGM (اکسل یا CSV)</span>
   </label>
   <div class="formula-note" style="margin-top:8px">فایل باید دو ستون داشته باشد: زمان، و قند بر حسب mg/dL. اکثر دستگاه‌ها (میدترونیک، لیبره، دکسکام و...) چنین خروجی‌ای می‌دهند.</div>
+  <button class="reset-btn" style="margin-top:8px;width:100%" onclick="resetCGM()">🗑 پاک کردن تحلیل CGM</button>
 </div>
 <div id="cgmResult"></div>
 <div class="disclaimer">
@@ -620,7 +628,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  آخرین بارگذاری صفحه: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱.۴</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -1771,11 +1779,13 @@ let curWeekStart=weekStart(new Date());
 let selectedDayIdx=0;
 let planData={};
 const MEALS=[["breakfast","صبحانه"],["snack1","میان‌وعده صبح"],["lunch","ناهار"],["snack2","میان‌وعده عصر"],["dinner","شام"],["snack3","میان‌وعده شب"]];
+let _planTouched=false; // اگر کاربر قبل از پایان بارگذاری چیزی تغییر داد
 async function loadPlan(){
   const raw=await storageGet(WKEY);
+  if(_planTouched) return; // کاربر داده را تغییر داده — داده‌ی قدیمی را برنگردان
   if(raw){ try{ planData=JSON.parse(raw); }catch(e){ planData={}; } }
 }
-async function savePlan(){ await storageSet(WKEY,JSON.stringify(planData)); }
+async function savePlan(){ _planTouched=true; await storageSet(WKEY,JSON.stringify(planData)); }
 function dayKey(d){
   // تاریخ محلی (نه UTC) تا با منطقه‌ی زمانی ایران درست کار کند
   const y=d.getFullYear();
@@ -1983,7 +1993,7 @@ function collectCalibMeals(){
         if(!isNaN(peak) && peak>180) good=false;
         // اگر کمترین قند وارد شده و زیر ۷۰ است → موفق نیست (افت، یعنی دوز زیاد بوده)
         if(!isNaN(trough) && trough<70) good=false;
-        out.push({carb,ins,bgB,bgA,peak,trough,good});
+        out.push({carb,ins,bgB,bgA,peak,trough,good,dayKey:key});
       }
     });
   }
@@ -1995,10 +2005,40 @@ function updateCalibration(){
   const meals=collectCalibMeals();
   const goodMeals=meals.filter(m=>m.good);
   if(goodMeals.length<3){
+    // شمارش وضعیت واقعی همه‌ی وعده‌ها برای راهنمایی دقیق
+    let totalMeals=0, withCarb=0, withIns=0, withBG=0, missingBG=0;
+    for(const k in planData){
+      if(k==='_basal') continue;
+      const list=planData[k]; if(!Array.isArray(list)) continue;
+      list.forEach(m=>{
+        totalMeals++;
+        const hasC=parseFloat(m.carb)>0, hasI=parseFloat(m.insDose)>0;
+        const hasBG=!isNaN(parseFloat(m.bgBefore))&&!isNaN(parseFloat(m.bgAfter));
+        if(hasC) withCarb++;
+        if(hasI) withIns++;
+        if(hasBG) withBG++;
+        if(hasC&&hasI&&!hasBG) missingBG++;
+      });
+    }
+    let statusMsg='';
+    if(totalMeals===0){
+      statusMsg='هنوز هیچ وعده‌ای ثبت نشده. با ثبت وعده‌ها (دستی یا از فایل لاگ)، این بخش فعال می‌شود.';
+    } else {
+      statusMsg=`<b style="color:var(--teal)">${totalMeals}</b> وعده ثبت شده`;
+      let needs=[];
+      if(missingBG>0) needs.push(`<b style="color:var(--amber)">${missingBG}</b> وعده کربوهیدرات و انسولین دارند ولی <b>قند قبل/بعد ندارند</b>`);
+      if(withCarb<totalMeals) needs.push(`${totalMeals-withCarb} وعده کربوهیدرات ندارند`);
+      if(needs.length){
+        statusMsg+='، ولی برای کالیبراسیون کامل نیستند:<br>• '+needs.join('<br>• ');
+        if(missingBG>0){
+          statusMsg+='<br><br>💡 <b>راه سریع:</b> فایل قند CGM را در تب «تحلیل CGM» وارد کن، سپس دوباره فایل لاگ را وارد کن تا قند وعده‌ها خودکار پر شود. یا قند قبل/بعد را دستی در «ویرایش» هر وعده وارد کن.';
+        }
+      }
+    }
     body.innerHTML=`<div class="calib-empty">
-      برای کالیبراسیون، حداقل <b style="color:var(--teal)">۳ وعده‌ی موفق</b> با این اطلاعات لازم است:
-      کربوهیدرات + دوز انسولین + قند قبل و ۲ ساعت بعد (که قند بعد بین ۷۰ تا ۱۸۰ مانده باشد).
-      <br><br>تا حالا <b style="color:var(--teal)">${goodMeals.length}</b> وعده‌ی معتبر ثبت شده. با ادامه‌ی ثبت وعده‌ها در برنامه‌ی هفتگی، این بخش خودکار فعال می‌شود.
+      برای کالیبراسیون، حداقل <b style="color:var(--teal)">۳ وعده‌ی موفق</b> لازم است — وعده‌ای که کربوهیدرات + دوز انسولین + قند قبل و ۲ ساعت بعد داشته باشد (و قند بعد بین ۷۰ تا ۱۸۰ مانده باشد).
+      <br><br>${statusMsg}
+      <br><br>تا حالا <b style="color:var(--teal)">${goodMeals.length}</b> وعده‌ی کامل و موفق داری.
     </div>`;
     return;
   }
@@ -2027,8 +2067,15 @@ function updateCalibration(){
         </div>
       </div>`;
   }
+  // بازه‌ی تاریخی وعده‌های موفق (برای شفافیت)
+  const dayKeys=[...new Set(goodMeals.map(m=>m.dayKey))].sort();
+  let rangeTxt='';
+  if(dayKeys.length){
+    const toJ=k=>{ const [y,mo,d]=k.split('-').map(Number); return jalaliShort(new Date(y,mo-1,d)); };
+    rangeTxt = dayKeys.length===1 ? `از تاریخ ${toJ(dayKeys[0])}` : `از ${toJ(dayKeys[0])} تا ${toJ(dayKeys[dayKeys.length-1])} (${dayKeys.length} روز)`;
+  }
   body.innerHTML=`
-    <div class="calib-n">بر اساس <b>${goodMeals.length}</b> وعده‌ی موفق از <b>${allMeals}</b> وعده‌ی ثبت‌شده</div>
+    <div class="calib-n">بر اساس <b>${goodMeals.length}</b> وعده‌ی موفق از <b>${allMeals}</b> وعده‌ی دارای قند${rangeTxt?` · ${rangeTxt}`:''}</div>
     <div class="calib-big">
       <div class="calib-num exp"><div class="cv">1:${realIC.toFixed(1)}</div><div class="cl">I:C واقعی (از تجربه)</div></div>
       <div class="calib-num cur"><div class="cv">1:${curIC.toFixed(1)}</div><div class="cl">I:C فعلی برنامه</div></div>
@@ -2409,9 +2456,50 @@ function importSelectedLog(){
   goToToday();
 }
 
+async function resetDayMeals(){
+  const key=dayKeySel();
+  const list=Array.isArray(planData[key])?planData[key]:[];
+  if(list.length===0){
+    // شمارش وعده‌های سایر روزها برای راهنمایی
+    let other=0;
+    for(const k in planData){ if(k==='_basal')continue; if(Array.isArray(planData[k])) other+=planData[k].length; }
+    if(other>0) alert(`این روز (${jalaliShort(new Date(key))}) وعده‌ای ندارد.\nولی ${other} وعده در روزهای دیگر ثبت شده — برای پاک کردن همه، دکمه‌ی «پاک کردن کل برنامه» را بزن، یا به روز موردنظر برو.`);
+    else alert('هیچ وعده‌ای ثبت نشده.');
+    return;
+  }
+  if(!confirm(`تمام ${list.length} وعده‌ی این روز پاک شود؟ (انسولین پایه‌ی این روز پاک نمی‌شود)`)) return;
+  delete planData[key];
+  await savePlan();
+  renderWeek(); updateCalibration();
+}
+async function resetAllMeals(){
+  // فقط یک confirm — سافاری iOS دیالوگ دوم پشت‌سرهم را مسدود می‌کند
+  let n=0; for(const k in planData){ if(k==='_basal')continue; if(Array.isArray(planData[k])) n+=planData[k].length; }
+  if(n===0){ alert('هیچ وعده‌ای برای پاک کردن نیست.'); return; }
+  if(!confirm(`⚠ تمام ${n} وعده‌ی کل برنامه‌ی هفتگی پاک شوند؟\nاین کار قابل بازگشت نیست. (انسولین پایه حفظ می‌شود)`)) return;
+  const basal=planData['_basal'];
+  planData={};
+  if(basal) planData['_basal']=basal;
+  await savePlan();
+  renderWeek(); updateCalibration();
+}
+function resetCGM(){
+  if(!confirm('تحلیل CGM و داده‌های قند بارگذاری‌شده پاک شوند؟')) return;
+  window._cgmReadings=null;
+  document.getElementById('cgmResult').innerHTML='';
+  document.getElementById('cgmFile').value='';
+  document.getElementById('cgmUploadText').textContent='📂 انتخاب فایل CGM (اکسل یا CSV)';
+}
+
 buildSearchIndex();
 addFoodRow();
-(async()=>{ await loadProfile(); await loadPlan(); })();
+(async()=>{
+  await loadProfile();
+  await loadPlan();
+  // اگر کاربر همان لحظه در تب برنامه است، بعد از بارگذاری دوباره رندر کن
+  const p=document.getElementById('page-plan');
+  if(p&&p.classList.contains('active')) renderWeek();
+})();
 </script>
 </body>
 </html>
