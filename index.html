@@ -677,7 +677,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲.۰</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲.۱</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2362,7 +2362,7 @@ function agpSVG(pts,w,h,forPrint){
     return d+'Z';
   }
   function line(key){ return 'M'+valid.map(p=>`${X(p.x).toFixed(1)},${Y(p[key]).toFixed(1)}`).join(' L'); }
-  let svg=`<svg viewBox="0 0 ${w} ${h}" width="100%" style="display:block" font-family="Vazirmatn,sans-serif">`;
+  let svg=`<svg viewBox="0 0 ${w} ${h}" width="100%" style="display:block" font-family="Vazirmatn,sans-serif" direction="ltr">`;
   // ناحیه‌ی هدف
   svg+=`<rect x="${padL}" y="${Y(180).toFixed(1)}" width="${plotW}" height="${(Y(70)-Y(180)).toFixed(1)}" fill="rgba(63,185,163,.06)"/>`;
   // شبکه و برچسب‌های محور Y (برچسب‌ها سمت چپ ناحیه‌ی نمودار، با فاصله)
@@ -2423,7 +2423,7 @@ function dailyProfilesSVG(){
     byDay[key].pts.push({min:d.getHours()*60+d.getMinutes(), glu:r.glu});
   });
   const keys=Object.keys(byDay).sort((a,b)=>byDay[a].label-byDay[b].label);
-  const W=180,H=110,padL=24,padB=16,padT=30,maxY=300;
+  const W=180,H=86,padL=24,padB=16,padT=8,maxY=300;
   const WD=['یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه','شنبه']; // getDay: 0=یکشنبه
   let html='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px">';
   keys.forEach(k=>{
@@ -2437,10 +2437,7 @@ function dailyProfilesSVG(){
     const jDate=`${faDigits(j[2])} ${J_MONTHS[j[1]-1]}`;
     const gDate=`${faDigits(String(d.getDate()).padStart(2,'0'))}/${faDigits(String(d.getMonth()+1).padStart(2,'0'))}`;
     const wd=WD[d.getDay()];
-    let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block" font-family="Vazirmatn,sans-serif">`;
-    // سربرگ کادر: روز هفته + تاریخ شمسی (راست) و تاریخ میلادی (چپ)
-    svg+=`<text x="${W-6}" y="12" font-size="9" fill="#333" font-weight="bold" text-anchor="end">${wd} ${jDate}</text>`;
-    svg+=`<text x="${padL-2}" y="12" font-size="8" fill="#aaa" text-anchor="start" direction="ltr">${gDate}</text>`;
+    let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block" font-family="Vazirmatn,sans-serif" direction="ltr">`;
     // ناحیه هدف ۷۰-۱۸۰
     svg+=`<rect x="${padL}" y="${Y(180).toFixed(1)}" width="${plotW}" height="${(Y(70)-Y(180)).toFixed(1)}" fill="#eaeaea"/>`;
     // خطوط ۷۰ و ۱۸۰ با برچسب
@@ -2453,7 +2450,14 @@ function dailyProfilesSVG(){
     // برچسب زمان وسط (۱۲:۰۰)
     svg+=`<text x="${X(720).toFixed(1)}" y="${(H-4).toFixed(1)}" font-size="7.5" fill="#999" text-anchor="middle">۱۲:۰۰</text>`;
     svg+=`</svg>`;
-    html+=`<div style="border:1px solid #e5e5e5;border-radius:8px;padding:4px 6px;background:#fdfdfd">${svg}</div>`;
+    // سربرگ به‌صورت HTML (نه SVG) تا راست‌به‌چپ درست نمایش داده شود
+    html+=`<div style="border:1px solid #e5e5e5;border-radius:8px;padding:6px;background:#fdfdfd">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;padding:0 2px">
+        <span style="font-size:10px;font-weight:800;color:#333">${wd} ${jDate}</span>
+        <span style="font-size:9px;color:#aaa;direction:ltr">${gDate}</span>
+      </div>
+      ${svg}
+    </div>`;
   });
   html+='</div>';
   html+='<div style="font-size:10px;color:#999;margin-top:8px;text-align:center">محور عمودی: قند (mg/dL) · محور افقی: ساعت شبانه‌روز (۰۰:۰۰ تا ۲۴:۰۰) · نوار خاکستری: محدوده‌ی هدف ۷۰–۱۸۰</div>';
