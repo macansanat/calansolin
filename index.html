@@ -468,6 +468,8 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <span id="logUploadText">📥 وارد کردن از فایل لاگ CGM (وعده + انسولین)</span>
     </label>
     <div class="formula-note" style="margin-top:6px">فایل خروجی اپ CGM (شیت‌های Meal و Insulin) را وارد کن. برنامه وعده‌ها و انسولین‌ها را نمایش می‌دهد و می‌توانی انتخاب کنی کدام‌ها در برنامه‌ی هفتگی ثبت شوند.</div>
+    <div class="formula-note" style="margin-top:4px;color:var(--amber)">💡 ترتیب درست: اول فایل قند را در تب «تحلیل CGM» وارد کن، بعد فایل لاگ را — تا قند وعده‌ها خودکار پر شود.</div>
+    <button class="reset-btn" style="width:100%;margin-top:8px;border-color:var(--teal);color:var(--teal)" onclick="fillGlucoseFromCGM()">🩸 پر کردن قند وعده‌ها از فایل CGM</button>
     <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
       <button class="reset-btn" onclick="resetDayMeals()">🗑 پاک کردن وعده‌های این روز</button>
       <button class="reset-btn danger" onclick="resetAllMeals()">⚠ پاک کردن کل برنامه‌ی هفتگی</button>
@@ -677,7 +679,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲.۱</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲.۲</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2814,6 +2816,35 @@ function cgmStatsForMeal(mealTime){
   const peak = window4h.length? Math.round(Math.max(...window4h)) : '';
   const trough = window4h.length? Math.round(Math.min(...window4h)) : '';
   return {bgBefore,bgAfter,peak,trough};
+}
+async function fillGlucoseFromCGM(){
+  if(!window._cgmReadings||!window._cgmReadings.length){
+    alert('اول فایل قند را در تب «تحلیل CGM» وارد کن، بعد این دکمه را بزن.');
+    return;
+  }
+  let updated=0, noMatch=0;
+  for(const key in planData){
+    if(key==='_basal') continue;
+    const list=planData[key]; if(!Array.isArray(list)) continue;
+    list.forEach(m=>{
+      if(!m.time) return;
+      // ساخت زمان کامل وعده از تاریخ روز + ساعت
+      const parts=key.split('-').map(Number);
+      const [hh,mm]=m.time.split(':').map(Number);
+      const dObj=new Date(parts[0],parts[1]-1,parts[2],hh||0,mm||0);
+      const s=cgmStatsForMeal({dateObj:dObj});
+      if(s){
+        m.bgBefore=String(s.bgBefore); m.bgAfter=String(s.bgAfter);
+        m.peak=String(s.peak); m.trough=String(s.trough);
+        updated++;
+      } else noMatch++;
+    });
+  }
+  await savePlan();
+  renderWeek(); updateCalibration();
+  let msg=`قند ${updated} وعده از فایل CGM پر شد.`;
+  if(noMatch>0) msg+=`\n${noMatch} وعده در بازه‌ی زمانی فایل CGM نبود (قندشان پر نشد).`;
+  alert(msg);
 }
 function importSelectedLog(){
   const checks=document.querySelectorAll('.log-check:checked');
