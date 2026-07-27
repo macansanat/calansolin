@@ -31,6 +31,18 @@ h1{font-size:22px;font-weight:800;line-height:1.5}
 .page{display:none}.page.active{display:block}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:18px}
 .card h2{font-size:16px;font-weight:800;margin-bottom:16px;padding-right:12px;border-right:3px solid var(--teal);line-height:1.4;display:flex;justify-content:space-between;align-items:center}
+/* ===== کارت‌های کشویی ===== */
+.card.coll>h2{cursor:pointer;margin-bottom:0;user-select:none;-webkit-tap-highlight-color:transparent;position:relative;padding-left:26px}
+.card.coll>h2::after{content:'▾';position:absolute;left:0;font-size:15px;color:var(--teal);transition:transform .2s}
+.card.coll.closed>h2::after{transform:rotate(-90deg)}
+.card.coll>h2:active{opacity:.75}
+.card-body{margin-top:16px}
+.card.coll.closed>.card-body{display:none}
+.card.coll.closed{padding-bottom:16px}
+.coll-hint{font-size:11.5px;color:var(--muted);font-weight:500;margin-right:8px}
+.coll-all{display:flex;gap:8px;margin-bottom:14px}
+.coll-all button{flex:1;background:var(--panel-2);border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:9px;font-family:inherit;font-size:12.5px;cursor:pointer}
+.coll-all button:hover{border-color:var(--teal);color:var(--teal)}
 .step-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:var(--teal-dim);color:#cdefe6;font-size:12px;font-weight:800;margin-left:8px;direction:ltr}
 label{display:block;font-size:13.5px;color:var(--muted);margin:14px 0 6px}
 input,select{width:100%;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px 13px;font-family:inherit;font-size:15px;max-width:100%}
@@ -138,6 +150,9 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .cgm-bar{display:flex;height:34px;border-radius:8px;overflow:hidden;margin:8px 0 4px;border:1px solid var(--line)}
 .cgm-bar>div{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
 .cgm-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:14px}
+.agp-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px;justify-content:center}
+.agp-legend span{display:flex;align-items:center;gap:5px}
+.agp-dot{width:14px;height:10px;border-radius:2px;display:inline-block}
 .cgm-legend span{display:flex;align-items:center;gap:4px}
 .cgm-dot{width:10px;height:10px;border-radius:2px;display:inline-block}
 .crit-list{margin-top:6px}
@@ -250,11 +265,12 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 
 <!-- ============ صفحه‌ی ماشین‌حساب ============ -->
 <div class="page active" id="page-calc">
-<div class="card">
-  <h2>
+<div class="card coll" id="c-profile">
+  <h2 onclick="toggleCard('c-profile')">
     <span><span class="step-num">1</span>پروفایل و انسولین روزانه</span>
-    <button class="mini-btn" id="editBtn" onclick="editProfile()" style="display:none">ویرایش</button>
+    <button class="mini-btn" id="editBtn" onclick="event.stopPropagation();editProfile()" style="display:none">ویرایش</button>
   </h2>
+  <div class="card-body">
   <div class="profile-saved" id="profileSaved">
     <div class="chips">
       <span class="chip">دیابت: <b id="s-dtype">—</b></span>
@@ -335,9 +351,11 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     </div>
     <button class="add-btn" style="margin-top:16px" onclick="saveProfile()">💾 ذخیره‌ی مشخصات</button>
   </div>
+  </div>
 </div>
-<div class="card">
-  <h2><span><span class="step-num">2</span>محاسبه‌ی کربوهیدرات وعده</span></h2>
+<div class="card coll" id="c-carb">
+  <h2 onclick="toggleCard('c-carb')"><span><span class="step-num">2</span>محاسبه‌ی کربوهیدرات وعده</span></h2>
+  <div class="card-body">
   <div id="foodRows"></div>
   <button class="add-btn" onclick="addFoodRow()">+ افزودن خوراکی</button>
 
@@ -358,9 +376,11 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     </div>
     <div class="macro-note" id="macroNote">برای ارزیابی نسبت به نیاز بدن، وزن را در پروفایل وارد کنید.</div>
   </div>
+  </div>
 </div>
-<div class="card">
-  <h2><span><span class="step-num">3</span>قند فعلی و هدف</span></h2>
+<div class="card coll" id="c-bg">
+  <h2 onclick="toggleCard('c-bg')"><span><span class="step-num">3</span>قند فعلی و هدف</span></h2>
+  <div class="card-body">
   <div class="row">
     <div><label>قند فعلی (mg/dL)</label>
       <div class="stepper">
@@ -376,6 +396,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
         <button type="button" onclick="stepById('targetBG',1,5,'calcDose')">+</button>
       </div>
     </div>
+  </div>
   </div>
 </div>
 <div class="result">
@@ -431,7 +452,11 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <button class="mini-btn" onclick="changeWeek(1)">هفته‌ی بعد ›</button>
   </div>
   <div class="day-tabs" id="dayTabs"></div>
+</div>
 
+<div class="card coll closed" id="c-log">
+  <h2 onclick="toggleCard('c-log')"><span>📥 وارد کردن از فایل + پاک کردن</span></h2>
+  <div class="card-body">
   <div class="log-import">
     <label class="log-upload">
       <input type="file" id="logFile" accept=".xlsx,.xls" style="display:none" onchange="handleLogFile(this)">
@@ -444,9 +469,13 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     </div>
   </div>
   <div id="logPreview"></div>
+  </div>
+</div>
 
-  <div class="add-meal-form">
-    <h3 style="font-size:14px;font-weight:800;color:var(--teal);margin-bottom:12px">➕ افزودن وعده به این روز</h3>
+<div class="card coll closed" id="c-addmeal">
+  <h2 onclick="toggleCard('c-addmeal')"><span>➕ افزودن وعده به این روز</span></h2>
+  <div class="card-body">
+  <div class="add-meal-form" style="background:transparent;border:none;padding:0;margin:0">
     <div class="row">
       <div>
         <label>نوع وعده</label>
@@ -541,12 +570,20 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <div class="formula-note" style="margin-top:6px">💡 وارد کردن کربوهیدرات و قند قبل/بعد، به برنامه کمک می‌کند «کالیبراسیون I:C» را از تجربه‌ی واقعی بدنت یاد بگیرد. پیک و کمترین قند (اختیاری) دقت را بالا می‌برند: وعده‌های با پیک بالای ۱۸۰ یا افت زیر ۷۰ از کالیبراسیون کنار گذاشته می‌شوند.</div>
     <button class="add-btn" style="margin-top:14px;width:100%" onclick="saveMealEntry()">💾 ذخیره‌ی وعده</button>
   </div>
+  </div>
+</div>
 
-  <h3 style="font-size:14px;font-weight:800;margin:22px 0 12px;padding-right:10px;border-right:3px solid var(--amber)">وعده‌های ثبت‌شده‌ی این روز</h3>
+<div class="card coll" id="c-meals">
+  <h2 onclick="toggleCard('c-meals')"><span>🍽 وعده‌های ثبت‌شده‌ی این روز</span></h2>
+  <div class="card-body">
   <div id="savedMeals"></div>
+  </div>
+</div>
 
-  <div class="basal-card" style="margin-top:18px">
-    <h3 style="font-size:14px;font-weight:800;color:var(--violet);margin-bottom:10px">💉 انسولین پایه‌ی این روز</h3>
+<div class="card coll closed" id="c-basal">
+  <h2 onclick="toggleCard('c-basal')"><span>💉 انسولین پایه‌ی این روز</span></h2>
+  <div class="card-body">
+  <div class="basal-card" style="background:transparent;border:none;padding:0;margin:0">
     <div class="row">
       <div>
         <label>نوع انسولین پایه</label>
@@ -586,11 +623,16 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <input type="time" id="basalDayTime" onchange="saveBasalDay()">
     <div class="formula-note" style="margin-top:8px">انسولین پایه معمولاً روزی یک‌بار (شب یا صبح) زده می‌شود و مستقل از وعده‌هاست.</div>
   </div>
+  </div>
+</div>
 
-  <div class="calib-card" id="calibCard">
-    <h3 style="font-size:15px;font-weight:800;color:var(--teal);margin-bottom:6px">🎯 کالیبراسیون I:C از روی تجربه</h3>
+<div class="card coll closed" id="c-calib">
+  <h2 onclick="toggleCard('c-calib')"><span>🎯 کالیبراسیون I:C از روی تجربه</span></h2>
+  <div class="card-body">
+  <div class="calib-card" id="calibCard" style="background:transparent;border:none;padding:0;margin:0">
     <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">برنامه از وعده‌هایی که کربوهیدرات + انسولین + قند قبل و بعد دارند، الگوی واقعی بدنت را کشف می‌کند.</div>
     <div id="calibBody"></div>
+  </div>
   </div>
 </div>
 <div class="disclaimer">
@@ -600,8 +642,9 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 
 <!-- ============ صفحه‌ی تحلیل CGM ============ -->
 <div class="page" id="page-cgm">
-<div class="card">
-  <h2><span><span class="step-num">📈</span>تحلیل خروجی CGM</span></h2>
+<div class="card coll" id="c-cgmup">
+  <h2 onclick="toggleCard('c-cgmup')"><span><span class="step-num">📈</span>تحلیل خروجی CGM</span></h2>
+  <div class="card-body">
   <p style="font-size:13.5px;color:var(--muted);line-height:1.9;margin-bottom:14px">
     فایل خروجی اکسل دستگاه CGM را وارد کن (ستون زمان و ستون قند mg/dL).
     برنامه کنترل قندت را تحلیل می‌کند، نقاط بحرانی را پیدا می‌کند و اگر لازم بود، هشدار مراجعه به پزشک می‌دهد.
@@ -612,6 +655,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </label>
   <div class="formula-note" style="margin-top:8px">فایل باید دو ستون داشته باشد: زمان، و قند بر حسب mg/dL. اکثر دستگاه‌ها (میدترونیک، لیبره، دکسکام و...) چنین خروجی‌ای می‌دهند.</div>
   <button class="reset-btn" style="margin-top:8px;width:100%" onclick="resetCGM()">🗑 پاک کردن تحلیل CGM</button>
+  </div>
 </div>
 <div id="cgmResult"></div>
 <div class="disclaimer">
@@ -628,7 +672,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱.۴</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱.۶</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2176,7 +2220,8 @@ function analyzeCGM(rows){
     if(v>250&&!inHigh){ critical.push({type:'high',time:readings[i].time,glu:v}); inHigh=true; }
     else if(v<=250) inHigh=false;
   }
-  renderCGMResult({n,avg,tir,tar,tbr,veryLow,veryHigh,gmi,cv,mn,mx,critical});
+  window._cgmStats={n,avg,tir,tar,tbr,veryLow,veryHigh,gmi,cv,mn,mx,critical};
+  renderCGMResult(window._cgmStats);
 }
 function renderCGMResult(s){
   // ارزیابی و هشدارها
@@ -2189,8 +2234,9 @@ function renderCGMResult(s){
   if(alerts.length===0) alerts.push({lvl:'ok',txt:`کنترل کلی قندت در این بازه خوب بوده 👍 ولی ادامه‌ی پایش و پیگیری با پزشک همیشه مهم است.`});
 
   const tirColor='#3fb9a3', tarColor='#e0a355', tbrColor='#e0685f';
-  let html=`<div class="card">
-    <h2><span>📊 خلاصه‌ی کنترل قند (${s.n} داده)</span></h2>
+  let html=`<div class="card coll" id="c-cgmsum">
+    <h2 onclick="toggleCard('c-cgmsum')"><span>📊 خلاصه‌ی کنترل قند (${s.n} داده)</span></h2>
+    <div class="card-body">
     <div class="cgm-stats">
       <div class="cgm-stat"><div class="sv" style="color:var(--teal)">${s.avg.toFixed(0)}</div><div class="sl">میانگین قند</div></div>
       <div class="cgm-stat"><div class="sv" style="color:var(--blue)">${s.gmi.toFixed(1)}%</div><div class="sl">GMI (تخمین A1c)</div></div>
@@ -2212,21 +2258,34 @@ function renderCGMResult(s){
       <div class="cgm-stat"><div class="sv" style="color:var(--amber)">${s.mx.toFixed(0)}</div><div class="sl">بیشترین</div></div>
       <div class="cgm-stat"><div class="sv">${s.critical.length}</div><div class="sl">نقطه‌ی بحرانی</div></div>
     </div>
+    </div>
   </div>`;
 
+  // نمودار AGP
+  html+=`<div class="card coll" id="c-agp"><h2 onclick="toggleCard('c-agp')"><span>📉 نمودار AGP (پروفایل روزانه‌ی قند)</span></h2><div class="card-body">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.8">داده‌های همه‌ی روزها روی یک شبانه‌روز روی هم افتاده‌اند. خط پررنگ = میانه (۵۰٪)، نوار پررنگ = ۲۵ تا ۷۵٪، نوار روشن = ۵ تا ۹۵٪.</div>
+    <div id="agpChart"></div>
+    <div class="agp-legend">
+      <span><span class="agp-dot" style="background:#3fb9a3"></span>میانه</span>
+      <span><span class="agp-dot" style="background:rgba(63,185,163,.32)"></span>۲۵–۷۵٪</span>
+      <span><span class="agp-dot" style="background:rgba(63,185,163,.16)"></span>۵–۹۵٪</span>
+    </div>
+    <button class="add-btn" style="width:100%;margin-top:14px" onclick="exportAGPReport()">📄 دریافت گزارش AGP (PDF برای پزشک)</button>
+  </div></div>`;
+
   // هشدارها
-  html+=`<div class="card"><h2><span>🔔 ارزیابی و هشدارها</span></h2>`;
+  html+=`<div class="card coll" id="c-cgmalert"><h2 onclick="toggleCard('c-cgmalert')"><span>🔔 ارزیابی و هشدارها</span></h2><div class="card-body">`;
   alerts.forEach(a=>{
     const border=a.lvl==='danger'?'var(--red)':(a.lvl==='warn'?'var(--amber)':'var(--teal)');
     const bg=a.lvl==='danger'?'rgba(224,104,95,.1)':(a.lvl==='warn'?'rgba(224,163,85,.1)':'rgba(63,185,163,.1)');
     const icon=a.lvl==='danger'?'🚨':(a.lvl==='warn'?'⚠️':'✅');
     html+=`<div style="background:${bg};border:1px solid ${border};border-right:4px solid ${border};border-radius:10px;padding:12px 14px;margin-bottom:10px;font-size:13.5px;line-height:1.9">${icon} ${a.txt}</div>`;
   });
-  html+=`</div>`;
+  html+=`</div></div>`;
 
   // نقاط بحرانی
   if(s.critical.length>0){
-    html+=`<div class="card"><h2><span>⚡ نقاط بحرانی (${s.critical.length})</span></h2><div class="crit-list">`;
+    html+=`<div class="card coll closed" id="c-cgmcrit"><h2 onclick="toggleCard('c-cgmcrit')"><span>⚡ نقاط بحرانی (${s.critical.length})</span></h2><div class="card-body"><div class="crit-list">`;
     s.critical.slice(0,20).forEach(c=>{
       const cls=c.type==='low'?'crit-low':'crit-high';
       const label=c.type==='low'?'افت قند':'قند خیلی بالا';
@@ -2234,10 +2293,168 @@ function renderCGMResult(s){
       html+=`<div class="crit-item ${cls}"><span>${emoji} ${label}</span><span class="ct">${c.glu.toFixed(0)} mg/dL — ${c.time||''}</span></div>`;
     });
     if(s.critical.length>20) html+=`<div style="font-size:12px;color:var(--muted);text-align:center;margin-top:8px">و ${s.critical.length-20} مورد دیگر...</div>`;
-    html+=`</div></div>`;
+    html+=`</div></div></div>`;
   }
 
   document.getElementById('cgmResult').innerHTML=html;
+  buildAGP();
+  restoreCollState();
+}
+
+/* ===== نمودار AGP (Ambulatory Glucose Profile) ===== */
+function pctl(arr,p){
+  if(!arr.length) return null;
+  const a=arr.slice().sort((x,y)=>x-y);
+  const k=(a.length-1)*p/100, f=Math.floor(k);
+  return (f+1<a.length)? a[f]+(k-f)*(a[f+1]-a[f]) : a[f];
+}
+function computeAGP(){
+  if(!window._cgmReadings||!window._cgmReadings.length) return null;
+  // سطل‌های ۳۰ دقیقه‌ای بر اساس ساعت روز (۴۸ سطل)
+  const buckets=Array.from({length:48},()=>[]);
+  window._cgmReadings.forEach(r=>{
+    const d=r.t.dateObj;
+    const idx=Math.floor((d.getHours()*60+d.getMinutes())/30);
+    if(idx>=0&&idx<48) buckets[idx].push(r.glu);
+  });
+  const pts=[];
+  for(let i=0;i<48;i++){
+    const a=buckets[i];
+    if(a.length<2){ pts.push(null); continue; }
+    pts.push({x:i, p5:pctl(a,5),p25:pctl(a,25),p50:pctl(a,50),p75:pctl(a,75),p95:pctl(a,95)});
+  }
+  return pts;
+}
+function agpSVG(pts,w,h){
+  // محور: x=0..48 (24h)، y=0..300 mg/dL
+  const padL=38,padB=22,padT=10,padR=8;
+  const plotW=w-padL-padR, plotH=h-padT-padB;
+  const maxY=300;
+  const X=i=>padL+(i/47)*plotW;
+  const Y=v=>padT+plotH-(Math.min(v,maxY)/maxY)*plotH;
+  const valid=pts.filter(p=>p);
+  if(valid.length<4) return '<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">داده‌ی کافی برای نمودار AGP نیست.</div>';
+  function band(lo,hi){
+    let d='M';
+    valid.forEach((p,i)=>{ d+=`${X(p.x).toFixed(1)},${Y(p[hi]).toFixed(1)} `; });
+    for(let i=valid.length-1;i>=0;i--){ const p=valid[i]; d+=`${X(p.x).toFixed(1)},${Y(p[lo]).toFixed(1)} `; }
+    return d+'Z';
+  }
+  function line(key){
+    return 'M'+valid.map(p=>`${X(p.x).toFixed(1)},${Y(p[key]).toFixed(1)}`).join(' L');
+  }
+  // خطوط هدف ۷۰ و ۱۸۰
+  const y70=Y(70), y180=Y(180);
+  let svg=`<svg viewBox="0 0 ${w} ${h}" width="100%" style="display:block">`;
+  // ناحیه‌ی هدف (سبز کم‌رنگ بین ۷۰ و ۱۸۰)
+  svg+=`<rect x="${padL}" y="${y180.toFixed(1)}" width="${plotW}" height="${(y70-y180).toFixed(1)}" fill="rgba(63,185,163,.06)"/>`;
+  // شبکه‌ی افقی
+  [70,180,270].forEach(v=>{ svg+=`<line x1="${padL}" y1="${Y(v)}" x2="${w-padR}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 3"/>`; });
+  svg+=`<text x="4" y="${Y(70)+3}" fill="var(--muted)" font-size="9">70</text>`;
+  svg+=`<text x="4" y="${Y(180)+3}" fill="var(--muted)" font-size="9">180</text>`;
+  svg+=`<text x="4" y="${Y(270)+3}" fill="var(--muted)" font-size="9">270</text>`;
+  // باند ۵-۹۵ (روشن)
+  svg+=`<path d="${band('p5','p95')}" fill="rgba(63,185,163,.16)"/>`;
+  // باند ۲۵-۷۵ (پررنگ‌تر)
+  svg+=`<path d="${band('p25','p75')}" fill="rgba(63,185,163,.32)"/>`;
+  // خط median
+  svg+=`<path d="${line('p50')}" fill="none" stroke="#3fb9a3" stroke-width="2.2"/>`;
+  // خطوط هدف
+  svg+=`<line x1="${padL}" y1="${y70}" x2="${w-padR}" y2="${y70}" stroke="var(--teal)" stroke-width="1.2"/>`;
+  svg+=`<line x1="${padL}" y1="${y180}" x2="${w-padR}" y2="${y180}" stroke="var(--amber)" stroke-width="1.2"/>`;
+  // محور زمان
+  [0,6,12,18,24].forEach(hr=>{ const x=X(hr*2); svg+=`<text x="${x}" y="${h-6}" fill="var(--muted)" font-size="9" text-anchor="middle">${String(hr).padStart(2,'0')}:00</text>`; });
+  svg+=`</svg>`;
+  return svg;
+}
+function buildAGP(){
+  const el=document.getElementById('agpChart');
+  if(!el) return;
+  const pts=computeAGP();
+  if(!pts){ el.innerHTML=''; return; }
+  el.innerHTML=agpSVG(pts,640,240);
+}
+function exportAGPReport(){
+  if(!window._cgmReadings||!window._cgmReadings.length){ alert('اول فایل قند CGM را وارد کن.'); return; }
+  const s=window._cgmStats;
+  const pts=computeAGP();
+  // بازه‌ی تاریخ
+  let dates=window._cgmReadings.map(r=>r.t.dateObj).sort((a,b)=>a-b);
+  const fmt=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  const dateRange=`${fmt(dates[0])} تا ${fmt(dates[dates.length-1])}`;
+  const days=Math.round((dates[dates.length-1]-dates[0])/86400000)+1;
+  const svg=agpSVG(pts,700,260)
+    .replace(/var\(--line\)/g,'#ccc').replace(/var\(--muted\)/g,'#666').replace(/var\(--teal\)/g,'#2a9d8f').replace(/var\(--amber\)/g,'#e0a355');
+  const tirColor='#3fb9a3',tarColor='#e0a355',tbrColor='#e0685f';
+  const win=window.open('','_blank');
+  if(!win){ alert('برای دریافت PDF، اجازه‌ی باز شدن پنجره را بده (popup).'); return; }
+  win.document.write(`<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="UTF-8">
+  <title>گزارش AGP</title>
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+    *{font-family:Vazirmatn,sans-serif;box-sizing:border-box}
+    body{margin:0;padding:24px;color:#1a1a2e;background:#fff}
+    h1{font-size:20px;color:#5b3e96;margin:0 0 4px}
+    .sub{color:#666;font-size:13px;margin-bottom:18px}
+    .box{border:1px solid #ddd;border-radius:10px;padding:14px 16px;margin-bottom:16px}
+    .box h2{font-size:15px;margin:0 0 12px;color:#333}
+    .metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .metric{background:#f7f7fa;border-radius:8px;padding:12px}
+    .metric .v{font-size:22px;font-weight:800}
+    .metric .l{font-size:12px;color:#666;margin-top:3px}
+    .metric .g{font-size:11px;color:#999}
+    .tir-bar{display:flex;height:30px;border-radius:6px;overflow:hidden;margin:10px 0}
+    .tir-bar>div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700}
+    .tir-rows{font-size:13px}
+    .tir-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #eee}
+    .foot{font-size:11px;color:#888;margin-top:20px;line-height:1.8;border-top:1px solid #eee;padding-top:12px}
+    @media print{ body{padding:12px} .noprint{display:none} }
+    .btn{background:#2a9d8f;color:#fff;border:none;padding:12px 20px;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit}
+  </style></head><body>
+  <div class="noprint" style="text-align:center;margin-bottom:16px">
+    <button class="btn" onclick="window.print()">🖨 چاپ / ذخیره به‌صورت PDF</button>
+  </div>
+  <h1>گزارش AGP — پایش پیوسته‌ی قند</h1>
+  <div class="sub">بازه: ${dateRange} · ${days} روز · تولید: ${fmt(new Date())}</div>
+
+  <div class="box">
+    <h2>معیارهای قند</h2>
+    <div class="metrics">
+      <div class="metric"><div class="v">${s.avg.toFixed(0)} <span style="font-size:12px">mg/dL</span></div><div class="l">میانگین قند</div><div class="g">هدف: &lt; 154</div></div>
+      <div class="metric"><div class="v">${s.gmi.toFixed(1)}%</div><div class="l">شاخص مدیریت قند (GMI)</div><div class="g">هدف: &lt; 7٪</div></div>
+      <div class="metric"><div class="v">${s.cv.toFixed(1)}%</div><div class="l">نوسان قند (CV)</div><div class="g">هدف: ≤ 36٪</div></div>
+      <div class="metric"><div class="v">${s.mn.toFixed(0)} – ${s.mx.toFixed(0)}</div><div class="l">کمترین – بیشترین</div><div class="g">mg/dL</div></div>
+    </div>
+  </div>
+
+  <div class="box">
+    <h2>زمان در محدوده‌ها (Time in Ranges)</h2>
+    <div class="tir-bar">
+      <div style="width:${s.tbr}%;background:${tbrColor}">${s.tbr>6?s.tbr.toFixed(0)+'%':''}</div>
+      <div style="width:${s.tir}%;background:${tirColor}">${s.tir.toFixed(0)}%</div>
+      <div style="width:${s.tar}%;background:${tarColor}">${s.tar>6?s.tar.toFixed(0)+'%':''}</div>
+    </div>
+    <div class="tir-rows">
+      <div class="tir-row"><span>🔴 بسیار پایین (&lt;54)</span><b>${s.veryLow.toFixed(0)}٪</b></div>
+      <div class="tir-row"><span>🟠 پایین (54–70)</span><b>${(s.tbr-s.veryLow).toFixed(0)}٪</b></div>
+      <div class="tir-row"><span>🟢 در محدوده (70–180)</span><b>${s.tir.toFixed(0)}٪</b></div>
+      <div class="tir-row"><span>🟡 بالا (180–250)</span><b>${(s.tar-s.veryHigh).toFixed(0)}٪</b></div>
+      <div class="tir-row"><span>🔴 بسیار بالا (&gt;250)</span><b>${s.veryHigh.toFixed(0)}٪</b></div>
+    </div>
+  </div>
+
+  <div class="box">
+    <h2>نمودار AGP — پروفایل روزانه‌ی قند</h2>
+    <div style="font-size:11px;color:#888;margin-bottom:8px">داده‌های همه‌ی روزها روی یک شبانه‌روز. خط پررنگ = میانه، نوار = محدوده‌ی صدک‌ها.</div>
+    ${svg}
+  </div>
+
+  <div class="foot">
+    این گزارش آموزشی است و توسط یک ابزار شخصی تولید شده — جایگزین گزارش رسمی دستگاه یا نظر پزشک نیست.
+    برای تصمیم درباره‌ی درمان و تنظیم انسولین، حتماً با پزشک معالج مشورت شود.
+  </div>
+  </body></html>`);
+  win.document.close();
 }
 
 /* ===== وارد کردن فایل لاگ (وعده + انسولین) ===== */
@@ -2491,12 +2708,34 @@ function resetCGM(){
   document.getElementById('cgmUploadText').textContent='📂 انتخاب فایل CGM (اکسل یا CSV)';
 }
 
+/* ===== کارت‌های کشویی ===== */
+function toggleCard(id){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.classList.toggle('closed');
+  // ذخیره‌ی حالت
+  try{
+    const st=JSON.parse(localStorage.getItem('coll_state')||'{}');
+    st[id]=el.classList.contains('closed');
+    localStorage.setItem('coll_state',JSON.stringify(st));
+  }catch(e){}
+}
+function restoreCollState(){
+  try{
+    const st=JSON.parse(localStorage.getItem('coll_state')||'{}');
+    for(const id in st){
+      const el=document.getElementById(id);
+      if(el){ el.classList.toggle('closed', st[id]); }
+    }
+  }catch(e){}
+}
+
 buildSearchIndex();
 addFoodRow();
 (async()=>{
   await loadProfile();
   await loadPlan();
-  // اگر کاربر همان لحظه در تب برنامه است، بعد از بارگذاری دوباره رندر کن
+  restoreCollState();
   const p=document.getElementById('page-plan');
   if(p&&p.classList.contains('active')) renderWeek();
 })();
