@@ -153,6 +153,11 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .agp-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px;justify-content:center}
 .agp-legend span{display:flex;align-items:center;gap:5px}
 .agp-dot{width:14px;height:10px;border-radius:2px;display:inline-block}
+.agp-colors{margin-top:12px;font-size:12.5px}
+.agp-colors summary{cursor:pointer;color:var(--teal);padding:6px 0;user-select:none}
+.agp-color-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.agp-color-grid label{display:flex;align-items:center;justify-content:space-between;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--muted)}
+.agp-color-grid input[type=color]{width:34px;height:26px;border:none;background:none;cursor:pointer;padding:0}
 .cgm-legend span{display:flex;align-items:center;gap:4px}
 .cgm-dot{width:10px;height:10px;border-radius:2px;display:inline-block}
 .crit-list{margin-top:6px}
@@ -672,7 +677,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱.۶</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱.۷</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2270,6 +2275,16 @@ function renderCGMResult(s){
       <span><span class="agp-dot" style="background:rgba(63,185,163,.32)"></span>۲۵–۷۵٪</span>
       <span><span class="agp-dot" style="background:rgba(63,185,163,.16)"></span>۵–۹۵٪</span>
     </div>
+    <details class="agp-colors">
+      <summary>🎨 تغییر رنگ‌های نمودار</summary>
+      <div class="agp-color-grid">
+        <label>خط میانه <input type="color" id="col-median" onchange="setAgpColor('median',this.value)"></label>
+        <label>نوار ۲۵–۷۵٪ <input type="color" id="col-band2575" onchange="setAgpColor('band2575',this.value)"></label>
+        <label>نوار ۵–۹۵٪ <input type="color" id="col-band0595" onchange="setAgpColor('band0595',this.value)"></label>
+        <label>خط هدف بالا <input type="color" id="col-target" onchange="setAgpColor('target',this.value)"></label>
+      </div>
+      <button class="reset-btn" style="width:100%;margin-top:8px" onclick="resetAgpColors()">بازگرداندن رنگ‌های پیش‌فرض</button>
+    </details>
     <button class="add-btn" style="width:100%;margin-top:14px" onclick="exportAGPReport()">📄 دریافت گزارش AGP (PDF برای پزشک)</button>
   </div></div>`;
 
@@ -2325,45 +2340,47 @@ function computeAGP(){
   }
   return pts;
 }
-function agpSVG(pts,w,h){
-  // محور: x=0..48 (24h)، y=0..300 mg/dL
-  const padL=38,padB=22,padT=10,padR=8;
-  const plotW=w-padL-padR, plotH=h-padT-padB;
-  const maxY=300;
+const AGP_DEFAULT_COLORS={median:'#3fb9a3',band2575:'rgba(63,185,163,.32)',band0595:'rgba(63,185,163,.16)',target:'#e0a355',low:'#3fb9a3'};
+function agpColors(){
+  try{ const c=JSON.parse(localStorage.getItem('agp_colors')||'null'); if(c) return Object.assign({},AGP_DEFAULT_COLORS,c); }catch(e){}
+  return AGP_DEFAULT_COLORS;
+}
+function faDigits(s){ return String(s).replace(/[0-9]/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]); }
+function agpSVG(pts,w,h,forPrint){
+  const C=agpColors();
+  const padL=42,padB=26,padT=14,padR=10;
+  const plotW=w-padL-padR, plotH=h-padT-padB, maxY=300;
   const X=i=>padL+(i/47)*plotW;
-  const Y=v=>padT+plotH-(Math.min(v,maxY)/maxY)*plotH;
+  const Y=v=>padT+plotH-(Math.min(Math.max(v,0),maxY)/maxY)*plotH;
   const valid=pts.filter(p=>p);
-  if(valid.length<4) return '<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">داده‌ی کافی برای نمودار AGP نیست.</div>';
+  if(valid.length<4) return '<div style="color:#888;font-size:13px;text-align:center;padding:20px">داده‌ی کافی برای نمودار AGP نیست.</div>';
+  const gridCol=forPrint?'#ccc':'#38506a', txtCol=forPrint?'#666':'#9fb3c8';
   function band(lo,hi){
     let d='M';
-    valid.forEach((p,i)=>{ d+=`${X(p.x).toFixed(1)},${Y(p[hi]).toFixed(1)} `; });
+    valid.forEach(p=>{ d+=`${X(p.x).toFixed(1)},${Y(p[hi]).toFixed(1)} `; });
     for(let i=valid.length-1;i>=0;i--){ const p=valid[i]; d+=`${X(p.x).toFixed(1)},${Y(p[lo]).toFixed(1)} `; }
     return d+'Z';
   }
-  function line(key){
-    return 'M'+valid.map(p=>`${X(p.x).toFixed(1)},${Y(p[key]).toFixed(1)}`).join(' L');
-  }
-  // خطوط هدف ۷۰ و ۱۸۰
-  const y70=Y(70), y180=Y(180);
-  let svg=`<svg viewBox="0 0 ${w} ${h}" width="100%" style="display:block">`;
-  // ناحیه‌ی هدف (سبز کم‌رنگ بین ۷۰ و ۱۸۰)
-  svg+=`<rect x="${padL}" y="${y180.toFixed(1)}" width="${plotW}" height="${(y70-y180).toFixed(1)}" fill="rgba(63,185,163,.06)"/>`;
-  // شبکه‌ی افقی
-  [70,180,270].forEach(v=>{ svg+=`<line x1="${padL}" y1="${Y(v)}" x2="${w-padR}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 3"/>`; });
-  svg+=`<text x="4" y="${Y(70)+3}" fill="var(--muted)" font-size="9">70</text>`;
-  svg+=`<text x="4" y="${Y(180)+3}" fill="var(--muted)" font-size="9">180</text>`;
-  svg+=`<text x="4" y="${Y(270)+3}" fill="var(--muted)" font-size="9">270</text>`;
-  // باند ۵-۹۵ (روشن)
-  svg+=`<path d="${band('p5','p95')}" fill="rgba(63,185,163,.16)"/>`;
-  // باند ۲۵-۷۵ (پررنگ‌تر)
-  svg+=`<path d="${band('p25','p75')}" fill="rgba(63,185,163,.32)"/>`;
+  function line(key){ return 'M'+valid.map(p=>`${X(p.x).toFixed(1)},${Y(p[key]).toFixed(1)}`).join(' L'); }
+  let svg=`<svg viewBox="0 0 ${w} ${h}" width="100%" style="display:block" font-family="Vazirmatn,sans-serif">`;
+  // ناحیه‌ی هدف
+  svg+=`<rect x="${padL}" y="${Y(180).toFixed(1)}" width="${plotW}" height="${(Y(70)-Y(180)).toFixed(1)}" fill="rgba(63,185,163,.06)"/>`;
+  // شبکه و برچسب‌های محور Y
+  [50,100,150,200,250,300].forEach(v=>{
+    const y=Y(v);
+    svg+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${(w-padR).toFixed(1)}" y2="${y.toFixed(1)}" stroke="${gridCol}" stroke-width="0.7" stroke-dasharray="2 3" opacity="0.5"/>`;
+    svg+=`<text x="${padL-5}" y="${(y+3).toFixed(1)}" fill="${txtCol}" font-size="10" text-anchor="end">${faDigits(v)}</text>`;
+  });
+  // باندها
+  svg+=`<path d="${band('p5','p95')}" fill="${C.band0595}"/>`;
+  svg+=`<path d="${band('p25','p75')}" fill="${C.band2575}"/>`;
   // خط median
-  svg+=`<path d="${line('p50')}" fill="none" stroke="#3fb9a3" stroke-width="2.2"/>`;
-  // خطوط هدف
-  svg+=`<line x1="${padL}" y1="${y70}" x2="${w-padR}" y2="${y70}" stroke="var(--teal)" stroke-width="1.2"/>`;
-  svg+=`<line x1="${padL}" y1="${y180}" x2="${w-padR}" y2="${y180}" stroke="var(--amber)" stroke-width="1.2"/>`;
-  // محور زمان
-  [0,6,12,18,24].forEach(hr=>{ const x=X(hr*2); svg+=`<text x="${x}" y="${h-6}" fill="var(--muted)" font-size="9" text-anchor="middle">${String(hr).padStart(2,'0')}:00</text>`; });
+  svg+=`<path d="${line('p50')}" fill="none" stroke="${C.median}" stroke-width="2.4" stroke-linejoin="round"/>`;
+  // خطوط هدف ۷۰ و ۱۸۰
+  svg+=`<line x1="${padL}" y1="${Y(70).toFixed(1)}" x2="${(w-padR).toFixed(1)}" y2="${Y(70).toFixed(1)}" stroke="${C.low}" stroke-width="1.4"/>`;
+  svg+=`<line x1="${padL}" y1="${Y(180).toFixed(1)}" x2="${(w-padR).toFixed(1)}" y2="${Y(180).toFixed(1)}" stroke="${C.target}" stroke-width="1.4"/>`;
+  // برچسب‌های محور زمان
+  [0,6,12,18,24].forEach(hr=>{ const x=X(hr*2); svg+=`<text x="${x.toFixed(1)}" y="${(h-8).toFixed(1)}" fill="${txtCol}" font-size="10" text-anchor="middle">${faDigits(String(hr).padStart(2,'0'))}:۰۰</text>`; });
   svg+=`</svg>`;
   return svg;
 }
@@ -2372,7 +2389,63 @@ function buildAGP(){
   if(!el) return;
   const pts=computeAGP();
   if(!pts){ el.innerHTML=''; return; }
-  el.innerHTML=agpSVG(pts,640,240);
+  el.innerHTML=agpSVG(pts,640,240,false);
+  // مقداردهی اولیه‌ی رنگ‌گیرها
+  const C=agpColors();
+  const toHex=v=>{ if(v.startsWith('#'))return v; const m=v.match(/[\d.]+/g); if(!m)return '#3fb9a3'; return '#'+m.slice(0,3).map(x=>Math.round(+x).toString(16).padStart(2,'0')).join(''); };
+  ['median','band2575','band0595','target'].forEach(k=>{ const inp=document.getElementById('col-'+k); if(inp) inp.value=toHex(C[k]); });
+}
+function setAgpColor(key,val){
+  const C=agpColors();
+  // برای باندها شفافیت اضافه کن
+  if(key==='band2575') C[key]=hexToRgba(val,0.32);
+  else if(key==='band0595') C[key]=hexToRgba(val,0.16);
+  else C[key]=val;
+  if(key==='median') C.low=val; // خط هدف پایین هم‌رنگ میانه
+  localStorage.setItem('agp_colors',JSON.stringify(C));
+  buildAGP();
+}
+function hexToRgba(hex,a){
+  const m=hex.replace('#','').match(/.{2}/g); if(!m) return hex;
+  const [r,g,b]=m.map(x=>parseInt(x,16));
+  return `rgba(${r},${g},${b},${a})`;
+}
+function resetAgpColors(){
+  localStorage.removeItem('agp_colors');
+  buildAGP();
+}
+function dailyProfilesSVG(){
+  // گروه‌بندی داده بر اساس روز
+  const byDay={};
+  window._cgmReadings.forEach(r=>{
+    const d=r.t.dateObj;
+    const key=`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+    if(!byDay[key]) byDay[key]={label:d, pts:[]};
+    byDay[key].pts.push({min:d.getHours()*60+d.getMinutes(), glu:r.glu});
+  });
+  const keys=Object.keys(byDay).sort((a,b)=>byDay[a].label-byDay[b].label);
+  const W=170,H=70,padB=12,maxY=300;
+  const J=['شنبه','یک','دو','سه','چهار','پنج','جمعه'];
+  let html='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">';
+  keys.forEach(k=>{
+    const day=byDay[k]; const pts=day.pts.sort((a,b)=>a.min-b.min);
+    const X=m=>(m/1440)*W;
+    const Y=v=>H-padB-(Math.min(Math.max(v,0),maxY)/maxY)*(H-padB-4);
+    let path='M'+pts.map(p=>`${X(p.min).toFixed(1)},${Y(p.glu).toFixed(1)}`).join(' L');
+    const d=day.label;
+    const dateLbl=`${faDigits(d.getDate())}/${faDigits(d.getMonth()+1)}`;
+    let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;background:#fafafa;border-radius:6px">`;
+    // ناحیه هدف
+    svg+=`<rect x="0" y="${Y(180).toFixed(1)}" width="${W}" height="${(Y(70)-Y(180)).toFixed(1)}" fill="#e8e8e8"/>`;
+    svg+=`<line x1="0" y1="${Y(180).toFixed(1)}" x2="${W}" y2="${Y(180).toFixed(1)}" stroke="#ccc" stroke-width="0.5"/>`;
+    svg+=`<line x1="0" y1="${Y(70).toFixed(1)}" x2="${W}" y2="${Y(70).toFixed(1)}" stroke="#ccc" stroke-width="0.5"/>`;
+    svg+=`<path d="${path}" fill="none" stroke="#2a9d8f" stroke-width="1"/>`;
+    svg+=`<text x="3" y="10" font-size="9" fill="#666">${dateLbl}</text>`;
+    svg+=`</svg>`;
+    html+=`<div>${svg}</div>`;
+  });
+  html+='</div>';
+  return html;
 }
 function exportAGPReport(){
   if(!window._cgmReadings||!window._cgmReadings.length){ alert('اول فایل قند CGM را وارد کن.'); return; }
@@ -2383,8 +2456,13 @@ function exportAGPReport(){
   const fmt=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
   const dateRange=`${fmt(dates[0])} تا ${fmt(dates[dates.length-1])}`;
   const days=Math.round((dates[dates.length-1]-dates[0])/86400000)+1;
-  const svg=agpSVG(pts,700,260)
-    .replace(/var\(--line\)/g,'#ccc').replace(/var\(--muted\)/g,'#666').replace(/var\(--teal\)/g,'#2a9d8f').replace(/var\(--amber\)/g,'#e0a355');
+  // آمار حسگر: روزهای دارای داده و درصد زمان فعال
+  const daySet=new Set(window._cgmReadings.map(r=>{const d=r.t.dateObj;return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;}));
+  const daysWithData=daySet.size;
+  const expectedReadings=days*288; // هر ۵ دقیقه = ۲۸۸ در روز
+  const timeActive=Math.min(100,Math.round(window._cgmReadings.length/expectedReadings*100));
+  const svg=agpSVG(pts,700,260,true);
+  const dailySvg=dailyProfilesSVG();
   const tirColor='#3fb9a3',tarColor='#e0a355',tbrColor='#e0685f';
   const win=window.open('','_blank');
   if(!win){ alert('برای دریافت PDF، اجازه‌ی باز شدن پنجره را بده (popup).'); return; }
@@ -2418,6 +2496,14 @@ function exportAGPReport(){
   <div class="sub">بازه: ${dateRange} · ${days} روز · تولید: ${fmt(new Date())}</div>
 
   <div class="box">
+    <h2>وضعیت حسگر (Sensor Usage)</h2>
+    <div class="metrics">
+      <div class="metric"><div class="v">${daysWithData}/${days}</div><div class="l">روزهای دارای داده</div></div>
+      <div class="metric"><div class="v">${timeActive}%</div><div class="l">زمان فعال بودن حسگر</div></div>
+    </div>
+  </div>
+
+  <div class="box">
     <h2>معیارهای قند</h2>
     <div class="metrics">
       <div class="metric"><div class="v">${s.avg.toFixed(0)} <span style="font-size:12px">mg/dL</span></div><div class="l">میانگین قند</div><div class="g">هدف: &lt; 154</div></div>
@@ -2447,6 +2533,12 @@ function exportAGPReport(){
     <h2>نمودار AGP — پروفایل روزانه‌ی قند</h2>
     <div style="font-size:11px;color:#888;margin-bottom:8px">داده‌های همه‌ی روزها روی یک شبانه‌روز. خط پررنگ = میانه، نوار = محدوده‌ی صدک‌ها.</div>
     ${svg}
+  </div>
+
+  <div class="box">
+    <h2>پروفایل روزانه‌ی قند (هر روز جدا)</h2>
+    <div style="font-size:11px;color:#888;margin-bottom:10px">هر نمودار یک شبانه‌روز است. نوار خاکستری = محدوده‌ی هدف ۷۰ تا ۱۸۰.</div>
+    ${dailySvg}
   </div>
 
   <div class="foot">
