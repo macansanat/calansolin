@@ -683,7 +683,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲.۶</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲.۷</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2772,6 +2772,15 @@ function parseLogTime(str){
   return {y:+yyyy,mo:+MM,d:+dd,h:+hh,min:+mm,hhmm:hh+':'+mm,dateObj:new Date(+yyyy,+MM-1,+dd,+hh,+mm)};
 }
 const MEAL_FA={Breakfast:'صبحانه',Lunch:'ناهار',Dinner:'شام',Snack:'میان‌وعده'};
+function snackNameByHour(h){
+  // نام‌گذاری میان‌وعده بر اساس ساعت روز
+  if(h>=5 && h<9) return 'میان‌وعده‌ی سحری';
+  if(h>=9 && h<11) return 'میان‌وعده‌ی صبح';
+  if(h>=11 && h<14) return 'میان‌وعده‌ی ظهر';
+  if(h>=14 && h<18) return 'میان‌وعده‌ی عصرانه';
+  if(h>=18 && h<21) return 'میان‌وعده‌ی غروب';
+  return 'میان‌وعده‌ی شب';
+}
 function handleLogFile(input){
   const file=input.files[0]; if(!file) return;
   document.getElementById('logUploadText').textContent='⏳ در حال خواندن...';
@@ -2841,7 +2850,9 @@ function processLog(mealRows,insRows){
     const r=mealRows[i]; if(!r||!r[0]) continue;
     const t=parseLogTime(r[0]); if(!t) continue;
     const note=(r[4]||'').trim();
-    const type=MEAL_FA[r[1]]||r[1]||'وعده';
+    let type=MEAL_FA[r[1]]||r[1]||'وعده';
+    // نام‌گذاری میان‌وعده بر اساس ساعت
+    if(type==='میان‌وعده'){ type=snackNameByHour(t.h); }
     const key=r[0]+'|'+type+'|'+note;
     if(seen.has(key)) continue; seen.add(key);
     // تطبیق با نزدیک‌ترین انسولین (تا ۹۰ دقیقه قبل/بعد وعده)
@@ -2910,31 +2921,56 @@ function faNum(s){
   return String(s).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
                   .replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
 }
+function normalizeColloquial(s){
+  // تبدیل املای گفتاری به کتابی برای تطبیق بهتر
+  return s
+    .replace(/نون/g,'نان')
+    .replace(/میگو/g,'میگو')
+    .replace(/سیبزمینی/g,'سیب‌زمینی');
+}
 function matchNoteFoods(note){
-  // نوت را با / یا ، یا خط تیره می‌شکنیم و هر تکه را در دیتابیس می‌گردیم
+  // نوت را با / یا ، یا خط تیره یا «و» می‌شکنیم
   if(!note) return {items:[],carb:0};
-  const parts=note.split(/[\/،,\n\-]+/).map(s=>s.trim()).filter(Boolean);
+  const parts=note.split(/[\/،,\n]+|\sو\s/).map(s=>s.trim()).filter(Boolean);
   let items=[], totalCarb=0;
   parts.forEach(part=>{
-    const norm=normalizeFa(faNum(part));
-    // استخراج عدد (مقدار) از متن
+    const norm=normalizeColloquial(normalizeFa(faNum(part)));
     const numMatch=norm.match(/(\d+(\.\d+)?)/);
     const qty=numMatch?parseFloat(numMatch[1]):1;
-    // جستجو در ایندکس: بهترین تطبیق کلمه‌ای
+    // کلمات متن (بدون اعداد و واحدها و کلمات پرتکرار بی‌معنی)
+    const stop=['عدد','گرم','قاشق','کف','دست','لقمه','یک','پرس','فنجان','لیوان','کاسه','بشقاب','با','حبه','دانه','تکه','برش','متوسط','بزرگ','کوچک','پخته','ای','تابه'];
+    const noteWords=norm.replace(/\d+(\.\d+)?/g,' ').split(/\s+/).filter(w=>w.length>=2 && !stop.includes(w));
+    if(noteWords.length===0){ items.push({raw:part,unmatched:true}); return; }
     let best=null,bestScore=0;
     SEARCH_INDEX.forEach(entry=>{
-      const words=entry.norm.split(/\s+/);
-      let score=0;
-      words.forEach(w=>{ if(w.length>1 && norm.includes(w)) score+=w.length; });
-      // اگر خود آیتم در متن باشد امتیاز بیشتر
-      if(norm.includes(entry.norm)) score+=entry.norm.length*2;
+      const enorm=normalizeColloquial(entry.norm);
+      const itemWords=enorm.split(/\s+/).filter(w=>w.length>=2 && !stop.includes(w));
+      if(itemWords.length===0) return;
+      let score=0, matchedItemWords=0, matchedNoteWords=new Set();
+      itemWords.forEach(iw=>{
+        let matched=false;
+        noteWords.forEach((nw,ni)=>{
+          if(nw===iw){ score+=iw.length*3; matched=true; matchedNoteWords.add(ni); }
+          else if(nw.length>=3&&iw.length>=3 && (nw.startsWith(iw)||iw.startsWith(nw))){ score+=Math.min(iw.length,nw.length); matched=true; matchedNoteWords.add(ni); }
+        });
+        if(matched) matchedItemWords++;
+      });
+      // نسبت تطبیق: چند درصد کلمات آیتم و چند درصد کلمات متن تطبیق خوردند
+      const itemCoverage=matchedItemWords/itemWords.length;
+      const noteCoverage=matchedNoteWords.size/noteWords.length;
+      // جریمه‌ی سنگین اگر بخش زیادی از آیتم تطبیق نخورده (مثل «سیب» از «قیمه سیب‌زمینی»)
+      if(itemCoverage<0.5) score*=0.25;
+      // پاداش اگر نام تک‌کلمه‌ای دقیقاً برابر باشد (سیب، قند، نان)
+      if(itemWords.length===1 && noteWords.includes(itemWords[0])) score+=15;
+      // پاداش اگر کلمه‌ی اولِ آیتم با کلمه‌ی اولِ متن یکی باشد (سیب → «سیب قرمز» نه «خورش سیب»)
+      if(itemWords[0]===noteWords[0]) score+=12;
+      // جریمه‌ی خفیف برای خورش/غذای اصلی وقتی متن خیلی کوتاه است (یک میوه‌ی ساده به‌احتمال زیاد خورش نیست)
+      if(noteWords.length===1 && (entry.cat==='خورش و غذای اصلی'||entry.cat==='غذاهای سنتی ایرانی') && itemWords.length>1) score*=0.5;
       if(score>bestScore){ bestScore=score; best=entry; }
     });
-    if(best && bestScore>=2){
-      // پیدا کردن واحد مناسب: اگر متن واحدی دارد استفاده کن، وگرنه اولین واحد
+    if(best && bestScore>=8){
       const units=DB[best.cat][best.item];
       let unit=Object.keys(units)[0];
-      // تطبیق واحد از روی کلمات متن
       for(const u of Object.keys(units)){
         if(norm.includes(normalizeFa(u))){ unit=u; break; }
       }
