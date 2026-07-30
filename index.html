@@ -153,6 +153,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .agp-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px;justify-content:center}
 .agp-legend span{display:flex;align-items:center;gap:5px}
 .agp-dot{width:14px;height:10px;border-radius:2px;display:inline-block}
+.cgm-file-row{display:flex;justify-content:space-between;align-items:center;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:6px}
 .agp-colors{margin-top:12px;font-size:12.5px}
 .agp-colors summary{cursor:pointer;color:var(--teal);padding:6px 0;user-select:none}
 .agp-color-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
@@ -493,6 +494,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
           <option value="میان‌وعده عصر">میان‌وعده عصر</option>
           <option value="شام">شام</option>
           <option value="میان‌وعده شب">میان‌وعده شب</option>
+          <option value="میان‌وعده">میان‌وعده (کلی)</option>
         </select>
       </div>
       <div>
@@ -661,7 +663,9 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <span id="cgmUploadText">📂 انتخاب فایل CGM (اکسل یا CSV)</span>
   </label>
   <div class="formula-note" style="margin-top:8px">فایل باید دو ستون داشته باشد: زمان، و قند بر حسب mg/dL. اکثر دستگاه‌ها (میدترونیک، لیبره، دکسکام و...) چنین خروجی‌ای می‌دهند.</div>
-  <button class="reset-btn" style="margin-top:8px;width:100%" onclick="resetCGM()">🗑 پاک کردن تحلیل CGM</button>
+  <div class="formula-note" style="margin-top:4px;color:var(--teal)">✓ داده‌ها ذخیره می‌شوند و با باز کردن دوباره‌ی برنامه از بین نمی‌روند. هر سنسور جدید (۱۴ روزه) را می‌توانی وارد کنی تا به داده‌های قبلی اضافه شود.</div>
+  <div id="cgmFilesList"></div>
+  <button class="reset-btn" style="margin-top:8px;width:100%" onclick="resetCGM()">🗑 پاک کردن همه‌ی داده‌های CGM</button>
   </div>
 </div>
 <div id="cgmResult"></div>
@@ -679,7 +683,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲.۲</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲.۵</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -751,6 +755,23 @@ const DB = {
     "خورش به":{ "کفگیر":9,"بشقاب":16 },
     "خورش کدو/ریواس":{ "کفگیر":4,"بشقاب":8 },
     "خورش مرغ (ناردون)":{ "کفگیر":7,"بشقاب":13 },
+    "قلیه ماهی":{ "کفگیر":6,"بشقاب":11 },
+    "قلیه میگو":{ "کفگیر":6,"بشقاب":11 },
+    "خورش کدو حلوایی":{ "کفگیر":8,"بشقاب":14 },
+    "خورش قیمه سیب‌زمینی":{ "کفگیر":9,"بشقاب":16 },
+    "خورش مسما بادمجان":{ "کفگیر":6,"بشقاب":11 },
+    "خورش هویج":{ "کفگیر":9,"بشقاب":16 },
+    "خورش آلوچه":{ "کفگیر":7,"بشقاب":13 },
+    "خورش انار (ناردنگ)":{ "کفگیر":8,"بشقاب":14 },
+    "خورش ریواس":{ "کفگیر":4,"بشقاب":8 },
+    "خورش کنگر":{ "کفگیر":5,"بشقاب":9 },
+    "خورش بامیه":{ "کفگیر":6,"بشقاب":11 },
+    "خورش سیب":{ "کفگیر":9,"بشقاب":16 },
+    "خورش لوبیا سبز":{ "کفگیر":6,"بشقاب":11 },
+    "خورش قارچ":{ "کفگیر":5,"بشقاب":9 },
+    "قیمه نثار":{ "کفگیر":9,"بشقاب":16 },
+    "مرصع پلو خورش":{ "کفگیر":10,"بشقاب":18 },
+    "خورش گردو (فسنجان مرغ)":{ "کفگیر":10,"بشقاب":18 },
     "خوراک قارچ و مرغ":{ "پرس":6 },
     "آبگوشت (بدون نان)":{ "کاسه":20 },
     "دیزی":{ "کاسه":22 },
@@ -1021,13 +1042,41 @@ const DB = {
     "شیرینی تر (نول/دانمارکی)":{ "عدد":22 },
     "شیرینی زبان/پاپیون":{ "عدد":15 },
     "باقلوا":{ "عدد":18 },
+    "نان خامه‌ای":{ "عدد":22 },
+    "نان برنجی":{ "عدد":8 },
+    "نان نخودچی":{ "عدد":6 },
+    "کلمپه":{ "عدد":20 },
+    "قطاب":{ "عدد":14 },
+    "کماج":{ "عدد":24 },
+    "رولت مربایی":{ "برش":26 },
+    "نان مربایی":{ "عدد":16 },
+    "لوز نارگیل":{ "عدد":9 },
+    "لوز پسته":{ "عدد":10 },
+    "لوز بادام":{ "عدد":10 },
+    "حاجی‌بادام":{ "عدد":8 },
+    "زبان (شیرینی)":{ "عدد":15 },
+    "شیرینی نارگیلی":{ "عدد":10 },
+    "شیرینی کشمشی":{ "عدد":9 },
+    "شیرینی مشهدی/برشتوک":{ "عدد":12 },
+    "پادرازی":{ "عدد":13 },
+    "نان چای":{ "عدد":11 },
+    "کاک":{ "عدد":18 },
+    "قرابیه":{ "عدد":10 },
+    "شیرینی دانمارکی":{ "عدد":24 },
+    "نان قندی":{ "عدد":20 },
+    "کماج سمنو":{ "عدد":22 },
+    "فطیر":{ "عدد":16 },
     "حلوا":{ "قاشق غذاخوری":10 },
     "حلوا شکری/ارده":{ "قاشق غذاخوری":9 },
+    "حلوای هویج":{ "قاشق غذاخوری":8 },
+    "مسقطی":{ "قطعه":16 },
+    "پشمک":{ "کف دست":18 },
     "زولبیا/بامیه":{ "عدد":15 },
     "گز":{ "قطعه":9 },
     "سوهان":{ "قطعه":11 },
     "نقل/نبات":{ "قاشق غذاخوری":12 },
-    "لواشک":{ "برگ":10 },
+    "لواشک":{ "برگ":10,"کف دست":8 },
+    "ترشک":{ "کف دست":7 },
     "آبنبات":{ "عدد":6 },
     "دونات":{ "عدد":30 },
     "شکلات صبحانه":{ "قاشق غذاخوری":11 },
@@ -1132,7 +1181,6 @@ const DB = {
     "کاپ‌کیک":{ "عدد":26 },
     "اکلر":{ "عدد":18 },
     "پای سیب":{ "برش":35 },
-    "شیرینی نارگیلی":{ "عدد":10 },
     "رول بستنی":{ "عدد":30 },
     "فالوده":{ "کاسه":35 },
     "بستنی فالوده":{ "پرس":45 }
@@ -1201,8 +1249,6 @@ const DB = {
     "حلیم گندم":{ "کاسه":45 },
     "خوراک زبان":{ "پرس":8 },
     "تاس‌کباب":{ "پرس":18 },
-    "قلیه ماهی":{ "پرس":12 },
-    "قلیه میگو":{ "پرس":14 },
     "میگو پلو شمالی":{ "بشقاب":60 },
     "ماهی شکم‌پر":{ "پرس":15 },
     "ترشی‌تره":{ "کاسه":10 },
@@ -1218,11 +1264,6 @@ const DB = {
     "شامی لپه":{ "عدد":10 },
     "کتلت گوشت":{ "عدد":14 },
     "کباب دیگی":{ "پرس":10 },
-    "خورش ریواس":{ "کفگیر":4 },
-    "خورش آلواسفناج":{ "کفگیر":6 },
-    "خورش قیمه سیب‌زمینی":{ "کفگیر":9 },
-    "خورش کدو حلوایی":{ "کفگیر":8 },
-    "خورش مسما":{ "کفگیر":6 },
     "اسفناج و ماست (بورانی)":{ "پرس":6 },
     "کشک و بادمجان کبابی":{ "پرس":12 }
   },
@@ -2167,7 +2208,9 @@ function handleCGMFile(input){
       const ws=wb.Sheets[wb.SheetNames[0]];
       const rows=XLSX.utils.sheet_to_json(ws,{header:1});
       analyzeCGM(rows);
-      document.getElementById('cgmUploadText').textContent='📂 انتخاب فایل دیگر';
+      renderCGMFilesList();
+      document.getElementById('cgmFile').value='';
+      document.getElementById('cgmUploadText').textContent='📂 وارد کردن فایل سنسور دیگر';
     }catch(err){
       document.getElementById('cgmUploadText').textContent='📂 انتخاب فایل CGM (اکسل یا CSV)';
       alert('خطا در خواندن فایل. مطمئن شو فایل اکسل یا CSV با ستون زمان و قند است.');
@@ -2202,8 +2245,49 @@ function analyzeCGM(rows){
     document.getElementById('cgmResult').innerHTML='<div class="card"><p style="color:var(--red)">داده‌ی کافی پیدا نشد. مطمئن شو فایل ستون قند (mg/dL) دارد.</p></div>';
     return;
   }
-  // ذخیره‌ی سراسری برای تطبیق با وعده‌ها (قابلیت وصل قند به لاگ)
-  window._cgmReadings = readings.map(r=>({t:parseLogTime(r.time),glu:r.glu})).filter(r=>r.t);
+  // ادغام با داده‌های قبلی (چند سنسور / چند فایل) + حذف تکراری بر اساس زمان
+  mergeCGMData(readings);
+  runCGMAnalysis();
+}
+/* ===== ذخیره و ادغام دائم داده‌های CGM ===== */
+const CGMKEY='cgm_data_v1', CGMFILESKEY='cgm_files_v1';
+function mergeCGMData(newReadings){
+  // بارگذاری داده‌ی خام قبلی
+  let stored=[];
+  try{ stored=JSON.parse(localStorage.getItem(CGMKEY)||'[]'); }catch(e){}
+  // نگاشت با کلید زمان (رشته‌ی خام) برای حذف تکراری
+  const map={};
+  stored.forEach(r=>{ map[r.time]=r.glu; });
+  let added=0;
+  newReadings.forEach(r=>{ if(!(r.time in map)){ added++; } map[r.time]=r.glu; });
+  const merged=Object.keys(map).map(t=>({time:t,glu:map[t]}));
+  // ذخیره
+  try{ localStorage.setItem(CGMKEY,JSON.stringify(merged)); }catch(e){ alert('حجم داده زیاد شد؛ برخی فایل‌های قدیمی را پاک کن.'); }
+  // ثبت رکورد فایل واردشده
+  const parsed=newReadings.map(r=>parseLogTime(r.time)).filter(Boolean).map(t=>t.dateObj);
+  if(parsed.length){
+    parsed.sort((a,b)=>a-b);
+    const files=loadCGMFiles();
+    const fmt=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+    files.push({ imported:new Date().toISOString(), from:fmt(parsed[0]), to:fmt(parsed[parsed.length-1]),
+      count:newReadings.length, added });
+    try{ localStorage.setItem(CGMFILESKEY,JSON.stringify(files)); }catch(e){}
+  }
+  // بارگذاری در حافظه‌ی زنده
+  loadCGMFromStorage();
+}
+function loadCGMFiles(){
+  try{ return JSON.parse(localStorage.getItem(CGMFILESKEY)||'[]'); }catch(e){ return []; }
+}
+function loadCGMFromStorage(){
+  let stored=[];
+  try{ stored=JSON.parse(localStorage.getItem(CGMKEY)||'[]'); }catch(e){}
+  window._cgmReadings = stored.map(r=>({t:parseLogTime(r.time),glu:r.glu})).filter(r=>r.t);
+  return window._cgmReadings.length;
+}
+function runCGMAnalysis(){
+  const readings=window._cgmReadings;
+  if(!readings||readings.length<10){ return; }
   const vals=readings.map(r=>r.glu);
   const n=vals.length;
   const avg=vals.reduce((a,b)=>a+b,0)/n;
@@ -2220,11 +2304,12 @@ function analyzeCGM(rows){
   // شمارش رویدادهای افت و اوج (نقاط بحرانی)
   let critical=[];
   let inLow=false,inHigh=false;
+  const tstr=r=> r.t ? `${r.t.hhmm} ${faDigits(r.t.d)}/${faDigits(r.t.mo)}` : '';
   for(let i=0;i<readings.length;i++){
     const v=readings[i].glu;
-    if(v<70&&!inLow){ critical.push({type:'low',time:readings[i].time,glu:v}); inLow=true; }
+    if(v<70&&!inLow){ critical.push({type:'low',time:tstr(readings[i]),glu:v}); inLow=true; }
     else if(v>=70) inLow=false;
-    if(v>250&&!inHigh){ critical.push({type:'high',time:readings[i].time,glu:v}); inHigh=true; }
+    if(v>250&&!inHigh){ critical.push({type:'high',time:tstr(readings[i]),glu:v}); inHigh=true; }
     else if(v<=250) inHigh=false;
   }
   window._cgmStats={n,avg,tir,tar,tbr,veryLow,veryHigh,gmi,cv,mn,mx,critical};
@@ -2492,7 +2577,7 @@ function mealsInsulinReport(){
   basalRows.sort((a,b)=>a.d-b.d);
   const jShort=d=>{ const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); return `${faDigits(j[2])} ${J_MONTHS[j[1]-1]}`; };
 
-  if(rows.length===0 && basalRows.length===0) return '';
+  if(rows.length===0 && basalRows.length===0 && loadBG().length===0 && loadExercise().length===0) return '';
 
   let html='';
   // جدول وعده‌ها و انسولین وعده‌ای
@@ -2524,6 +2609,34 @@ function mealsInsulinReport(){
       <table class="rtbl"><thead><tr><th>تاریخ</th><th>نوع</th><th>دوز</th><th>ساعت</th></tr></thead><tbody>`;
     basalRows.forEach(r=>{
       html+=`<tr><td>${jShort(r.d)}</td><td>${r.type||'—'}</td><td>${faDigits(r.dose)} واحد</td><td style="direction:ltr">${faDigits(r.time)||'—'}</td></tr>`;
+    });
+    html+=`</tbody></table></div>`;
+  }
+  // جدول قند خون دستی (Blood Glucose)
+  const bgList=loadBG();
+  if(bgList.length){
+    bgList.sort((a,b)=>new Date(a.iso)-new Date(b.iso));
+    html+=`<div class="box" style="margin-bottom:16px"><h2>اندازه‌گیری‌های دستی قند خون</h2>
+      <div class="agp-note">قندهایی که خود فرد به‌صورت دستی (گلوکومتر) ثبت کرده.</div>
+      <table class="rtbl"><thead><tr><th>تاریخ</th><th>ساعت</th><th>قند (mg/dL)</th></tr></thead><tbody>`;
+    bgList.forEach(r=>{
+      const d=new Date(r.iso);
+      const t=parseLogTime(r.time);
+      html+=`<tr><td>${jShort(d)}</td><td style="direction:ltr">${t?faDigits(t.hhmm):'—'}</td><td>${faDigits(r.glu)}</td></tr>`;
+    });
+    html+=`</tbody></table></div>`;
+  }
+  // جدول ورزش
+  const exList=loadExercise();
+  if(exList.length){
+    exList.sort((a,b)=>new Date(a.iso)-new Date(b.iso));
+    html+=`<div class="box" style="margin-bottom:16px"><h2>فعالیت بدنی و ورزش</h2>
+      <div class="agp-note">ورزش می‌تواند قند را پایین بیاورد — برای تفسیر الگوها مهم است.</div>
+      <table class="rtbl"><thead><tr><th>تاریخ</th><th>ساعت</th><th>فعالیت</th><th>مدت (دقیقه)</th></tr></thead><tbody>`;
+    exList.forEach(r=>{
+      const d=new Date(r.iso);
+      const t=parseLogTime(r.start);
+      html+=`<tr><td>${jShort(d)}</td><td style="direction:ltr">${t?faDigits(t.hhmm):'—'}</td><td>${r.what||'ورزش'}</td><td>${r.dur?faDigits(r.dur):'—'}</td></tr>`;
     });
     html+=`</tbody></table></div>`;
   }
@@ -2668,6 +2781,9 @@ function handleLogFile(input){
       const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
       const meals=wb.Sheets['Meal']?XLSX.utils.sheet_to_json(wb.Sheets['Meal'],{header:1}):[];
       const ins=wb.Sheets['Insulin']?XLSX.utils.sheet_to_json(wb.Sheets['Insulin'],{header:1}):[];
+      const bg=wb.Sheets['Blood Glucose']?XLSX.utils.sheet_to_json(wb.Sheets['Blood Glucose'],{header:1}):[];
+      const ex=wb.Sheets['Exercise']?XLSX.utils.sheet_to_json(wb.Sheets['Exercise'],{header:1}):[];
+      processBGExercise(bg,ex);
       processLog(meals,ins);
       document.getElementById('logUploadText').textContent='📥 انتخاب فایل دیگر';
     }catch(err){
@@ -2677,6 +2793,39 @@ function handleLogFile(input){
   };
   reader.readAsArrayBuffer(file);
 }
+const BGKEY='bg_manual_v1', EXKEY='exercise_v1';
+function processBGExercise(bgRows,exRows){
+  // قند خون دستی
+  let bgStored=[]; try{ bgStored=JSON.parse(localStorage.getItem(BGKEY)||'[]'); }catch(e){}
+  const bgSeen=new Set(bgStored.map(x=>x.time));
+  for(let i=1;i<bgRows.length;i++){
+    const r=bgRows[i]; if(!r||!r[0]) continue;
+    const t=parseLogTime(r[0]); if(!t) continue;
+    const val=parseFloat(String(r[1]).replace(/[^\d.]/g,''));
+    if(isNaN(val)) continue;
+    const key=r[0];
+    if(bgSeen.has(key)) continue; bgSeen.add(key);
+    bgStored.push({time:key, iso:t.dateObj.toISOString(), glu:val});
+  }
+  try{ localStorage.setItem(BGKEY,JSON.stringify(bgStored)); }catch(e){}
+  // ورزش
+  let exStored=[]; try{ exStored=JSON.parse(localStorage.getItem(EXKEY)||'[]'); }catch(e){}
+  const exSeen=new Set(exStored.map(x=>x.start));
+  for(let i=1;i<exRows.length;i++){
+    const r=exRows[i]; if(!r||!r[0]) continue;
+    const ts=parseLogTime(r[0]); if(!ts) continue;
+    const te=r[1]?parseLogTime(r[1]):null;
+    const key=r[0];
+    if(exSeen.has(key)) continue; exSeen.add(key);
+    // مدت به دقیقه
+    let dur='';
+    if(te){ const mins=Math.round((te.dateObj-ts.dateObj)/60000); if(mins>0) dur=mins; }
+    exStored.push({start:key, iso:ts.dateObj.toISOString(), what:(r[2]||'').trim(), dur});
+  }
+  try{ localStorage.setItem(EXKEY,JSON.stringify(exStored)); }catch(e){}
+}
+function loadBG(){ try{ return JSON.parse(localStorage.getItem(BGKEY)||'[]'); }catch(e){ return []; } }
+function loadExercise(){ try{ return JSON.parse(localStorage.getItem(EXKEY)||'[]'); }catch(e){ return []; } }
 function processLog(mealRows,insRows){
   // پارس انسولین‌ها
   let insList=[];
@@ -2921,11 +3070,53 @@ async function resetAllMeals(){
   renderWeek(); updateCalibration();
 }
 function resetCGM(){
-  if(!confirm('تحلیل CGM و داده‌های قند بارگذاری‌شده پاک شوند؟')) return;
-  window._cgmReadings=null;
+  if(!confirm('همه‌ی داده‌های قند ذخیره‌شده (همه‌ی فایل‌ها) پاک شوند؟ این کار قابل بازگشت نیست.')) return;
+  window._cgmReadings=null; window._cgmStats=null;
+  try{ localStorage.removeItem(CGMKEY); localStorage.removeItem(CGMFILESKEY); }catch(e){}
   document.getElementById('cgmResult').innerHTML='';
   document.getElementById('cgmFile').value='';
   document.getElementById('cgmUploadText').textContent='📂 انتخاب فایل CGM (اکسل یا CSV)';
+  renderCGMFilesList();
+}
+function renderCGMFilesList(){
+  const box=document.getElementById('cgmFilesList');
+  if(!box) return;
+  const files=loadCGMFiles();
+  if(!files.length){ box.innerHTML=''; return; }
+  const total=(window._cgmReadings||[]).length;
+  let html=`<div style="font-size:12.5px;color:var(--muted);margin:10px 0 6px">📁 فایل‌های واردشده (${faDigits(files.length)}) — مجموع ${faDigits(total)} داده‌ی ذخیره‌شده:</div>`;
+  files.forEach((f,i)=>{
+    const imp=new Date(f.imported);
+    const impStr=`${faDigits(imp.getFullYear())}/${faDigits(imp.getMonth()+1)}/${faDigits(imp.getDate())}`;
+    html+=`<div class="cgm-file-row">
+      <div>
+        <div style="font-weight:700;font-size:12.5px">بازه: ${faDigits(f.from)} تا ${faDigits(f.to)}</div>
+        <div style="font-size:11px;color:var(--muted)">${faDigits(f.count)} داده (${faDigits(f.added)} جدید) · وارد شده ${impStr}</div>
+      </div>
+      <button class="del-meal" onclick="deleteCGMFile(${i})">حذف</button>
+    </div>`;
+  });
+  box.innerHTML=html;
+}
+function deleteCGMFile(idx){
+  const files=loadCGMFiles();
+  const f=files[idx]; if(!f) return;
+  if(!confirm(`فایل بازه‌ی ${f.from} تا ${f.to} حذف شود؟\nتوجه: داده‌های قندی که فقط از این فایل آمده‌اند حذف می‌شوند.`)) return;
+  // حذف داده‌های این بازه از داده‌ی خام
+  const [fd,fm,fy]=f.from.split('/').map(Number);
+  const [td,tm,ty]=f.to.split('/').map(Number);
+  const start=new Date(fy,fm-1,fd,0,0,0).getTime();
+  const end=new Date(ty,tm-1,td,23,59,59).getTime();
+  let stored=[];
+  try{ stored=JSON.parse(localStorage.getItem(CGMKEY)||'[]'); }catch(e){}
+  const kept=stored.filter(r=>{ const t=parseLogTime(r.time); if(!t) return true; const ms=t.dateObj.getTime(); return ms<start||ms>end; });
+  try{ localStorage.setItem(CGMKEY,JSON.stringify(kept)); }catch(e){}
+  files.splice(idx,1);
+  try{ localStorage.setItem(CGMFILESKEY,JSON.stringify(files)); }catch(e){}
+  // بارگذاری مجدد و تحلیل
+  if(loadCGMFromStorage()>=10){ runCGMAnalysis(); }
+  else { window._cgmReadings=null; document.getElementById('cgmResult').innerHTML='<div class="card"><p style="color:var(--muted)">داده‌ی کافی باقی نماند. فایل جدید وارد کن.</p></div>'; }
+  renderCGMFilesList();
 }
 
 /* ===== کارت‌های کشویی ===== */
@@ -2956,6 +3147,9 @@ addFoodRow();
   await loadProfile();
   await loadPlan();
   restoreCollState();
+  // بارگذاری خودکار داده‌های CGM ذخیره‌شده
+  if(loadCGMFromStorage()>=10){ runCGMAnalysis(); }
+  renderCGMFilesList();
   const p=document.getElementById('page-plan');
   if(p&&p.classList.contains('active')) renderWeek();
 })();
