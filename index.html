@@ -683,7 +683,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲.۸</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲.۹</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2844,6 +2844,20 @@ function processLog(mealRows,insRows){
     const dose=parseFloat(r[2]); if(isNaN(dose)) continue;
     insList.push({t,type:r[1]||'',dose});
   }
+  // ادغام تزریق‌های تقسیم‌شده: اگر دو تزریق در فاصله‌ی ≤۴۵ دقیقه باشند،
+  // احتمالاً یک دوز اصلی + یک دوز جبرانی برای همان وعده است → با هم جمع می‌شوند
+  insList.sort((a,b)=>a.t.dateObj-b.t.dateObj);
+  let mergedIns=[];
+  insList.forEach(ins=>{
+    const last=mergedIns[mergedIns.length-1];
+    if(last && (ins.t.dateObj-last.t.dateObj)<=45*60000){
+      last.dose += ins.dose; // جمع دوز جبرانی با اصلی
+      last.split = (last.split||1)+1; // شمارش تعداد تزریق
+    } else {
+      mergedIns.push({...ins});
+    }
+  });
+  insList=mergedIns;
   // پارس وعده‌ها و حذف تکراری‌ها
   let meals=[]; let seen=new Set();
   for(let i=1;i<mealRows.length;i++){
@@ -2900,7 +2914,7 @@ function renderLogPreview(meals){
         </label>
       </div>`;
     g.items.forEach(m=>{
-      const insTxt=m.ins?`💉 ${m.ins.dose} واحد ${m.ins.type||''} (${m.ins.t.hhmm})`:'بدون انسولین ثبت‌شده';
+      const insTxt=m.ins?`💉 ${m.ins.dose} واحد ${m.ins.type||''} (${m.ins.t.hhmm})${m.ins.split?` <span style="color:var(--amber)">— مجموع ${m.ins.split} تزریق</span>`:''}`:'بدون انسولین ثبت‌شده';
       html+=`<div class="log-meal-row">
         <input type="checkbox" class="log-check" data-idx="${m.idx}" data-day="${dk}">
         <div class="log-meal-info">
