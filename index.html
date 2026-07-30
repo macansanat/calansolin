@@ -694,7 +694,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳.۱</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳.۲</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2028,10 +2028,23 @@ function renderSavedMeals(){
   }).join('');
 }
 function editMealForm(key,m){
+  // آماده‌سازی غذاهای در حال ویرایش
+  window._editFoods = (m.foods||[]).slice();
+  const chips = window._editFoods.map((f,i)=>`<span class="picked-chip">${f}<span class="x" onclick="removeEditFood(${i})">×</span></span>`).join('');
   return `<div class="saved-meal editing">
     <div class="top"><span class="mtype">✏️ ویرایش: ${m.type}</span></div>
-    <label>غذاها (هر کدام در یک خط)</label>
-    <textarea id="edit-foods" class="edit-ta">${(m.foods||[]).join('\n')}</textarea>
+    <label>نوع وعده</label>
+    <select id="edit-type" style="width:100%;margin-bottom:10px">
+      ${['صبحانه','میان‌وعده صبح','ناهار','میان‌وعده عصر','شام','میان‌وعده شب','میان‌وعده','میان‌وعده‌ی سحری','میان‌وعده‌ی صبح','میان‌وعده‌ی ظهر','میان‌وعده‌ی عصرانه','میان‌وعده‌ی غروب','میان‌وعده‌ی شب'].map(t=>`<option value="${t}"${t===m.type?' selected':''}>${t}</option>`).join('')}
+    </select>
+    <label>افزودن غذا از دیتابیس</label>
+    <div class="search-wrap" style="position:relative">
+      <input type="text" id="editFoodSearch" class="food-search" placeholder="🔍 نام غذا را بنویس..." oninput="doSearchEdit(this)" autocomplete="off">
+      <div class="search-results" id="editSearchResults"></div>
+    </div>
+    <div class="picked-foods" id="editPickedFoods" style="margin:8px 0">${chips}</div>
+    <label style="font-size:11px;color:var(--muted)">یا دستی (هر غذا یک خط):</label>
+    <textarea id="edit-foods-manual" class="edit-ta" placeholder="غذایی که در دیتابیس نیست را اینجا تایپ کن" rows="2"></textarea>
     <div class="edit-grid">
       <div><label>ساعت</label><input type="time" id="edit-time" value="${m.time||''}"></div>
       <div><label>دوز انسولین</label><input type="number" id="edit-insDose" step="0.5" value="${m.insDose||''}"></div>
@@ -2048,19 +2061,50 @@ function editMealForm(key,m){
       <div><label>کمترین قند</label><input type="number" id="edit-trough" value="${m.trough||''}"></div>
       <div><label>نوع انسولین</label><input type="text" id="edit-insType" value="${m.insType||''}" placeholder="اپیدرا"></div>
     </div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12.5px;cursor:pointer">
+      <input type="checkbox" id="edit-exclude" ${m.excludeCalib?'checked':''} style="width:16px;height:16px;accent-color:var(--amber)">
+      این وعده را در محاسبه‌ی I:C حساب نکن (فقط در تاریخچه بماند)
+    </label>
     <div class="log-actions">
       <button class="log-btn" onclick="saveEditMeal('${key}',${m.id})">✓ ذخیره‌ی تغییرات</button>
       <button class="log-btn sec" onclick="cancelEditMeal()">لغو</button>
     </div>
   </div>`;
 }
+function doSearchEdit(input){
+  const box=document.getElementById('editSearchResults');
+  const q=normalizeFa(input.value);
+  if(!q){ box.classList.remove('show'); box.innerHTML=''; return; }
+  const matches=SEARCH_INDEX.filter(x=>x.norm.includes(q)).slice(0,40);
+  if(matches.length===0){ box.innerHTML='<div class="search-empty">موردی پیدا نشد</div>'; box.classList.add('show'); return; }
+  box.innerHTML=matches.map(m=>
+    `<div class="search-item" onclick="pickEditFood('${m.cat.replace(/'/g,"\\'")}','${m.item.replace(/'/g,"\\'")}')">
+       <span>${itemEmoji(m.cat,m.item)} ${m.item}</span><span class="cat">${(CAT_EMOJI[m.cat]||'')} ${m.cat}</span></div>`).join('');
+  box.classList.add('show');
+}
+function pickEditFood(cat,item){
+  window._editFoods.push(itemEmoji(cat,item)+' '+item);
+  document.getElementById('editSearchResults').classList.remove('show');
+  document.getElementById('editFoodSearch').value='';
+  renderEditFoods();
+}
+function renderEditFoods(){
+  const c=document.getElementById('editPickedFoods');
+  if(!c) return;
+  c.innerHTML=window._editFoods.map((f,i)=>`<span class="picked-chip">${f}<span class="x" onclick="removeEditFood(${i})">×</span></span>`).join('');
+}
+function removeEditFood(i){ window._editFoods.splice(i,1); renderEditFoods(); }
 function startEditMeal(key,id){ window._editingMeal=id; renderSavedMeals(); }
 function cancelEditMeal(){ window._editingMeal=null; renderSavedMeals(); }
 function saveEditMeal(key,id){
   const list=planData[key]; if(!Array.isArray(list)) return;
   const m=list.find(x=>x.id===id); if(!m) return;
-  const foodsRaw=document.getElementById('edit-foods').value;
-  m.foods=foodsRaw.split('\n').map(s=>s.trim()).filter(Boolean);
+  // ترکیب غذاهای انتخابی از دیتابیس + غذاهای دستی
+  let foods=(window._editFoods||[]).slice();
+  const manual=document.getElementById('edit-foods-manual').value;
+  if(manual.trim()){ manual.split('\n').map(s=>s.trim()).filter(Boolean).forEach(f=>foods.push(f)); }
+  m.foods=foods;
+  m.type=document.getElementById('edit-type').value;
   m.time=document.getElementById('edit-time').value;
   m.insDose=document.getElementById('edit-insDose').value;
   m.insType=document.getElementById('edit-insType').value;
@@ -2069,7 +2113,8 @@ function saveEditMeal(key,id){
   m.bgAfter=document.getElementById('edit-bgAfter').value;
   m.peak=document.getElementById('edit-peak').value;
   m.trough=document.getElementById('edit-trough').value;
-  window._editingMeal=null;
+  m.excludeCalib=document.getElementById('edit-exclude').checked;
+  window._editingMeal=null; window._editFoods=null;
   savePlan(); renderSavedMeals(); updateCalibration();
 }
 function delMeal(key,id){
@@ -2089,6 +2134,7 @@ function collectReviewMeals(){
     const list=planData[key];
     if(!Array.isArray(list)) continue;
     list.forEach((m,idx)=>{
+      if(m.excludeCalib) return; // کاربر این وعده را کنار گذاشته — در بررسی هم نیاید
       const hasFood = Array.isArray(m.foods) && m.foods.length>0;
       const carb=parseFloat(m.carb), ins=parseFloat(m.insDose);
       const hasIns = !isNaN(ins) && ins>0;
@@ -2158,6 +2204,7 @@ function collectCalibMeals(){
     const list=planData[key];
     if(!Array.isArray(list)) continue;
     list.forEach(m=>{
+      if(m.excludeCalib) return; // کاربر این وعده را از محاسبه کنار گذاشته
       const carb=parseFloat(m.carb), ins=parseFloat(m.insDose);
       const bgB=parseFloat(m.bgBefore), bgA=parseFloat(m.bgAfter);
       const peak=parseFloat(m.peak), trough=parseFloat(m.trough);
@@ -2922,15 +2969,29 @@ function processBGExercise(bgRows,exRows){
 function loadBG(){ try{ return JSON.parse(localStorage.getItem(BGKEY)||'[]'); }catch(e){ return []; } }
 function loadExercise(){ try{ return JSON.parse(localStorage.getItem(EXKEY)||'[]'); }catch(e){ return []; } }
 function processLog(mealRows,insRows){
-  // پارس انسولین‌ها
-  let insList=[];
+  // پارس انسولین‌ها — جدا کردن پایه (Toujeo/Lantus/...) از رپید (Apidra/...)
+  let insList=[]; let basalList=[];
+  const basalNames=/toujeo|lantus|levemir|tresiba|glargine|degludec|detemir|basal|لانتوس|توجئو|توجیو|لومیر|ترسیبا|پایه/i;
   for(let i=1;i<insRows.length;i++){
     const r=insRows[i]; if(!r||!r[0]) continue;
     const t=parseLogTime(r[0]); if(!t) continue;
-    const dose=parseFloat(r[2]); if(isNaN(dose)) continue;
-    insList.push({t,type:r[1]||'',dose});
+    const dose=parseFloat(r[2]); if(isNaN(dose)||dose<=0) continue;
+    const typeName=(r[1]||'').trim();
+    if(basalNames.test(typeName)){
+      basalList.push({t,type:typeName,dose});
+    } else {
+      insList.push({t,type:typeName,dose});
+    }
   }
-  // ادغام تزریق‌های تقسیم‌شده: اگر دو تزریق در فاصله‌ی ≤۴۵ دقیقه باشند،
+  // ذخیره‌ی انسولین پایه به‌صورت جدا (به وعده نمی‌چسبد)
+  if(basalList.length){
+    if(!planData['_basal']) planData['_basal']={};
+    basalList.forEach(b=>{
+      const k=dayKey(b.t.dateObj);
+      planData['_basal'][k]={type:b.type,dose:String(b.dose),time:b.t.hhmm};
+    });
+  }
+  // ادغام تزریق‌های تقسیم‌شده: اگر دو تزریق رپید در فاصله‌ی ≤۴۵ دقیقه باشند،
   // احتمالاً یک دوز اصلی + یک دوز جبرانی برای همان وعده است → با هم جمع می‌شوند
   insList.sort((a,b)=>a.t.dateObj-b.t.dateObj);
   let mergedIns=[];
