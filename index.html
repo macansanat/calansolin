@@ -683,7 +683,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲.۷</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲.۸</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2855,14 +2855,24 @@ function processLog(mealRows,insRows){
     if(type==='میان‌وعده'){ type=snackNameByHour(t.h); }
     const key=r[0]+'|'+type+'|'+note;
     if(seen.has(key)) continue; seen.add(key);
-    // تطبیق با نزدیک‌ترین انسولین (تا ۹۰ دقیقه قبل/بعد وعده)
-    let bestIns=null,bestDiff=91*60000;
-    insList.forEach(ins=>{
-      const diff=Math.abs(ins.t.dateObj-t.dateObj);
-      if(diff<bestDiff){ bestDiff=diff; bestIns=ins; }
-    });
-    meals.push({t,type,note,ins:bestIns});
+    meals.push({t,type,note,ins:null});
   }
+  // اختصاص هر انسولین به «یک» وعده (نزدیک‌ترین) — تا یک تزریق به چند وعده نچسبد
+  // هر جفت (انسولین، وعده) با فاصله‌ی زمانی مرتب می‌شود؛ نزدیک‌ترین‌ها اول اختصاص می‌یابند
+  let pairs=[];
+  insList.forEach((ins,ii)=>{
+    meals.forEach((m,mi)=>{
+      const diff=Math.abs(ins.t.dateObj-m.t.dateObj);
+      if(diff<=90*60000) pairs.push({diff,ii,mi});
+    });
+  });
+  pairs.sort((a,b)=>a.diff-b.diff);
+  const insUsed=new Set(), mealHasIns=new Set();
+  pairs.forEach(p=>{
+    if(insUsed.has(p.ii)||mealHasIns.has(p.mi)) return; // هر انسولین و هر وعده فقط یک بار
+    meals[p.mi].ins=insList[p.ii];
+    insUsed.add(p.ii); mealHasIns.add(p.mi);
+  });
   // مرتب بر اساس تاریخ (جدید به قدیم)
   meals.sort((a,b)=>b.t.dateObj-a.t.dateObj);
   _logData=meals;
