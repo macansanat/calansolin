@@ -154,6 +154,10 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .agp-legend span{display:flex;align-items:center;gap:5px}
 .agp-dot{width:14px;height:10px;border-radius:2px;display:inline-block}
 .cgm-file-row{display:flex;justify-content:space-between;align-items:center;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:6px}
+.review-row{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.review-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;margin-bottom:5px}
+.review-issue{font-size:12px;color:var(--amber);margin-bottom:4px}
+.review-detail{font-size:11.5px;color:var(--muted);line-height:1.7}
 .agp-colors{margin-top:12px;font-size:12.5px}
 .agp-colors summary{cursor:pointer;color:var(--teal);padding:6px 0;user-select:none}
 .agp-color-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
@@ -635,6 +639,13 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
 </div>
 
+<div class="card coll closed" id="c-review">
+  <h2 onclick="toggleCard('c-review')"><span>🔍 وعده‌های نیازمند بررسی</span></h2>
+  <div class="card-body">
+  <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">وعده‌هایی که اطلاعاتشان ناقص است و در محاسبه‌ی I:C حساب نمی‌شوند. برای دقت بیشتر، آن‌ها را اصلاح کن.</div>
+  <div id="reviewBody"></div>
+  </div>
+</div>
 <div class="card coll closed" id="c-calib">
   <h2 onclick="toggleCard('c-calib')"><span>🎯 کالیبراسیون I:C از روی تجربه</span></h2>
   <div class="card-body">
@@ -683,7 +694,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲.۹</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳.۱</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2068,6 +2079,78 @@ function delMeal(key,id){
 }
 
 /* ===== کالیبراسیون I:C از روی تجربه‌ی وعده‌های ثبت‌شده ===== */
+function collectReviewMeals(){
+  // وعده‌هایی که اطلاعاتشان ناقص است و باید کاربر اصلاح کند
+  const issues=[];
+  const lightWords=['گیلاس','انگور','بادام','هلو','شلیل','خیار','آلبالو','توت','سیب','گلابی','هندوانه','خربزه','طالبی','شکلات','گردو','پسته','بیسکویت','آلو','زردالو','موز','پرتقال','نارنگی','کیوی','انجیر','خرما','کشمش','نخودچی','چای','قهوه'];
+  const heavyWords=['برنج','نان','پلو','ماکارونی','لپه','عدس','لوبیا','سیب‌زمینی','املت','تخم','خورش','ماهی','مرغ','گوشت','کباب','پنیر','عدسی','حلیم','کتلت','ساندویچ','پیتزا','قلوه','جگر','ران','سینه'];
+  for(const key in planData){
+    if(key==='_basal') continue;
+    const list=planData[key];
+    if(!Array.isArray(list)) continue;
+    list.forEach((m,idx)=>{
+      const hasFood = Array.isArray(m.foods) && m.foods.length>0;
+      const carb=parseFloat(m.carb), ins=parseFloat(m.insDose);
+      const hasIns = !isNaN(ins) && ins>0;
+      const foodsTxt=(m.foods||[]).join('، ');
+      let issue=null;
+      if(hasIns && !hasFood){
+        issue={type:'no-food', msg:'انسولین زده شده ولی غذا ثبت نشده'};
+      } else if(hasFood && !hasIns){
+        issue={type:'no-ins', msg:'غذا ثبت شده ولی انسولین ثبت نشده'};
+      } else if(hasFood && ['صبحانه','ناهار','شام'].includes(m.type)){
+        const hasHeavy=heavyWords.some(w=>foodsTxt.includes(w));
+        const hasLight=lightWords.some(w=>foodsTxt.includes(w));
+        if(hasLight && !hasHeavy){
+          issue={type:'maybe-snack', msg:'وعده‌ی اصلی ولی فقط خوراکی سبک — شاید میان‌وعده باشد'};
+        }
+      }
+      if(issue){
+        issues.push({key,id:m.id,type:m.type,time:m.time,foods:foodsTxt,ins:hasIns?ins:null,carb:isNaN(carb)?null:carb,issue});
+      }
+    });
+  }
+  return issues;
+}
+function renderReviewMeals(){
+  const box=document.getElementById('reviewBody');
+  const card=document.getElementById('c-review');
+  if(!box) return;
+  const issues=collectReviewMeals();
+  if(issues.length===0){
+    box.innerHTML='<div style="font-size:13px;color:var(--teal);text-align:center;padding:12px">✓ همه‌ی وعده‌ها کامل‌اند — موردی برای بررسی نیست.</div>';
+    return;
+  }
+  issues.sort((a,b)=>new Date(a.key)-new Date(b.key));
+  const badge=`<div style="background:rgba(224,163,85,.12);border:1px solid var(--amber);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12.5px;color:var(--amber)">⚠️ ${faDigits(issues.length)} وعده نیاز به بررسی دارد</div>`;
+  let html=badge;
+  const jShort=k=>{ const p=k.split('-').map(Number); const j=g2j(p[0],p[1],p[2]); return `${faDigits(j[2])} ${J_MONTHS[j[1]-1]}`; };
+  const icons={'no-food':'🍽️','no-ins':'💉','maybe-snack':'🔄'};
+  issues.forEach(it=>{
+    html+=`<div class="review-row">
+      <div class="review-head">
+        <span>${icons[it.issue.type]||'•'} <b>${jShort(it.key)}</b> · ${it.type} · ${faDigits(it.time||'')}</span>
+        <button class="mini-btn" onclick="goEditReviewMeal('${it.key}',${it.id})">اصلاح</button>
+      </div>
+      <div class="review-issue">${it.issue.msg}</div>
+      ${it.foods?`<div class="review-detail">غذا: ${it.foods}</div>`:''}
+      ${it.ins?`<div class="review-detail">انسولین: ${faDigits(it.ins)} واحد</div>`:''}
+    </div>`;
+  });
+  box.innerHTML=html;
+}
+function goEditReviewMeal(key,id){
+  const d=new Date(key);
+  curWeekStart=weekStart(d);
+  for(let i=0;i<7;i++){
+    const dd=new Date(curWeekStart); dd.setDate(dd.getDate()+i);
+    if(dayKey(dd)===key){ selectedDayIdx=i; break; }
+  }
+  renderWeek();
+  const mealsCard=document.getElementById('c-meals');
+  if(mealsCard) mealsCard.classList.remove('closed');
+  setTimeout(()=>{ try{ startEditMeal(key,id); }catch(e){} const el=document.getElementById('c-meals'); if(el) el.scrollIntoView({behavior:'smooth'}); },120);
+}
 function collectCalibMeals(){
   const out=[];
   for(const key in planData){
@@ -2078,7 +2161,9 @@ function collectCalibMeals(){
       const carb=parseFloat(m.carb), ins=parseFloat(m.insDose);
       const bgB=parseFloat(m.bgBefore), bgA=parseFloat(m.bgAfter);
       const peak=parseFloat(m.peak), trough=parseFloat(m.trough);
-      if(carb>0 && ins>0 && !isNaN(bgA) && !isNaN(bgB)){
+      // وعده باید غذای ثبت‌شده داشته باشد — اگر غذا فراموش شده، کرب نامعلوم است و نباید در کالیبراسیون بیاید
+      const hasFood = Array.isArray(m.foods) && m.foods.length>0;
+      if(hasFood && carb>0 && ins>0 && !isNaN(bgA) && !isNaN(bgB)){
         // وعده‌ی «موفق»: قند ۲ ساعته ۷۰-۱۸۰ باشد
         let good = bgA>=70 && bgA<=180;
         // پیک فقط اگر واقعاً بالا باشد (بالای ۲۵۰) رد می‌شود — پیک ۱۸۰-۲۵۰ بعد از غذا طبیعی است
@@ -2092,6 +2177,7 @@ function collectCalibMeals(){
   return out;
 }
 function updateCalibration(){
+  renderReviewMeals();
   const body=document.getElementById('calibBody');
   if(!body) return;
   const meals=collectCalibMeals();
@@ -2915,12 +3001,15 @@ function renderLogPreview(meals){
       </div>`;
     g.items.forEach(m=>{
       const insTxt=m.ins?`💉 ${m.ins.dose} واحد ${m.ins.type||''} (${m.ins.t.hhmm})${m.ins.split?` <span style="color:var(--amber)">— مجموع ${m.ins.split} تزریق</span>`:''}`:'بدون انسولین ثبت‌شده';
+      // هشدار: انسولین دارد ولی غذا ثبت نشده → از کالیبراسیون کنار می‌رود
+      const noFoodWarn = (m.ins && !m.note) ? `<div style="font-size:11px;color:var(--amber);margin-top:3px">⚠️ غذا ثبت نشده — در کالیبراسیون I:C حساب نمی‌شود</div>` : '';
       html+=`<div class="log-meal-row">
         <input type="checkbox" class="log-check" data-idx="${m.idx}" data-day="${dk}">
         <div class="log-meal-info">
           <span class="log-meal-type">${m.type}</span><span class="log-meal-time">${m.t.hhmm}</span>
           ${m.note?`<div class="log-meal-note">${m.note}</div>`:'<div class="log-meal-note" style="color:var(--muted)">بدون توضیح</div>'}
           <div class="log-meal-ins">${insTxt}</div>
+          ${noFoodWarn}
         </div>
       </div>`;
     });
