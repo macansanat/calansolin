@@ -158,6 +158,9 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .review-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;margin-bottom:5px}
 .review-issue{font-size:12px;color:var(--amber);margin-bottom:4px}
 .review-detail{font-size:11.5px;color:var(--muted);line-height:1.7}
+.copy-foods-btn,.copy-meal-btn{width:100%;margin-top:10px;background:var(--panel-2);border:1px solid var(--teal);color:var(--teal);border-radius:8px;padding:8px;font-family:inherit;font-size:12.5px;cursor:pointer}
+.copy-foods-btn:hover,.copy-meal-btn:hover{background:rgba(63,185,163,.1)}
+.copy-meal-btn{margin-top:8px}
 .agp-colors{margin-top:12px;font-size:12.5px}
 .agp-colors summary{cursor:pointer;color:var(--teal);padding:6px 0;user-select:none}
 .agp-color-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
@@ -694,7 +697,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳.۲</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳.۳</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -1568,6 +1571,29 @@ function itemEmoji(cat,item){
   for(const e of ITEM_EMOJI){ if(n.includes(normalizeFa(e[0]))) return e[1]; }
   return CAT_EMOJI[cat]||"🍽️";
 }
+// کپی اسامی خوراکی‌ها به کلیپ‌بورد (برای پیست در اپ CGM) — بدون ایموجی، با جداکننده‌ی «،»
+function copyFoodsToClipboard(foods, btn){
+  const clean=foods.map(f=>{
+    // حذف ایموجی از ابتدا
+    let s=f.replace(/^\s*[\p{Emoji}\u200d\ufe0f]+\s*/u,'').trim();
+    // حذف پرانتزهای توضیحی که «/» دارند (مثل «سالاد (کاهو/خیار/گوجه)») چون موقع بازخوانی می‌شکنند
+    s=s.replace(/\s*\([^)]*\/[^)]*\)/g,'');
+    // ساده‌سازی نام‌هایی که «/» دارند (مثل «سیب قرمز/زرد» → «سیب قرمز»)
+    s=s.replace(/([^\(]*?)\/[^\(\)]*?(\s*\(|$)/, (mm,before,after)=>before.trim()+after);
+    return s.trim();
+  }).filter(Boolean);
+  const text=clean.join('، ');
+  const done=()=>{ if(btn){ const o=btn.textContent; btn.textContent='✓ کپی شد'; setTimeout(()=>{btn.textContent=o;},1500); } };
+  const fallback=()=>{
+    const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try{ document.execCommand('copy'); done(); }catch(e){ alert('کپی نشد. متن:\n'+text); }
+    document.body.removeChild(ta);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(fallback);
+  } else fallback();
+}
 
 function catOptions(){return Object.keys(DB).map(c=>`<option value="${c}">${(CAT_EMOJI[c]||'')} ${c}</option>`).join('');}
 function itemOptions(cat){return Object.keys(DB[cat]).map(i=>`<option value="${i}">${itemEmoji(cat,i)} ${i}</option>`).join('');}
@@ -1758,6 +1784,9 @@ function renderFoodSummary(list){
       <span class="fs-name">${f.emoji} ${f.name}<span class="fs-amt">(${f.amt} ${f.unit})</span></span>
       <span class="fs-carb">${f.carb} گ</span>
     </div>`).join('');
+  // دکمه‌ی کپی خوراکی‌ها (برای پیست در اپ CGM)
+  const names=list.map(f=>`${f.name} (${f.amt} ${f.unit})`);
+  c.innerHTML+=`<button class="copy-foods-btn" onclick='copyFoodsToClipboard(${JSON.stringify(names).replace(/'/g,"&#39;")},this)'>📋 کپی خوراکی‌ها برای اپ CGM</button>`;
 }
 
 function calcCarbs(){
@@ -2013,6 +2042,7 @@ function renderSavedMeals(){
     if(m.peak) dataChips.push(`پیک: ${m.peak}`);
     if(m.trough) dataChips.push(`کمترین: ${m.trough}`);
     const chipsHtml=dataChips.length?`<div class="meal-chips">${dataChips.map(x=>`<span class="mchip">${x}</span>`).join('')}</div>`:'';
+    const copyBtn=(m.foods&&m.foods.length)?`<button class="copy-meal-btn" onclick='copyFoodsToClipboard(${JSON.stringify(m.foods).replace(/'/g,"&#39;")},this)'>📋 کپی خوراکی‌ها</button>`:'';
     return `<div class="saved-meal">
       <div class="top">
         <span class="mtype">${m.type}${m.time?` <span class="mtime">${m.time}</span>`:''}</span>
@@ -2024,6 +2054,7 @@ function renderSavedMeals(){
       <div class="foods">${foodsTxt}</div>
       ${insTxt?`<div class="ins">${insTxt}</div>`:''}
       ${chipsHtml}
+      ${copyBtn}
     </div>`;
   }).join('');
 }
