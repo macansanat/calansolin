@@ -683,7 +683,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲.۵</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲.۶</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2081,10 +2081,10 @@ function collectCalibMeals(){
       if(carb>0 && ins>0 && !isNaN(bgA) && !isNaN(bgB)){
         // وعده‌ی «موفق»: قند ۲ ساعته ۷۰-۱۸۰ باشد
         let good = bgA>=70 && bgA<=180;
-        // اگر پیک وارد شده و بالای ۱۸۰ است → موفق نیست (اوج خطرناک)
-        if(!isNaN(peak) && peak>180) good=false;
-        // اگر کمترین قند وارد شده و زیر ۷۰ است → موفق نیست (افت، یعنی دوز زیاد بوده)
-        if(!isNaN(trough) && trough<70) good=false;
+        // پیک فقط اگر واقعاً بالا باشد (بالای ۲۵۰) رد می‌شود — پیک ۱۸۰-۲۵۰ بعد از غذا طبیعی است
+        if(!isNaN(peak) && peak>250) good=false;
+        // دره فقط اگر افت واقعی باشد (زیر ۶۰) رد می‌شود — ۶۰-۷۰ نوسان طبیعی است
+        if(!isNaN(trough) && trough<60) good=false;
         out.push({carb,ins,bgB,bgA,peak,trough,good,dayKey:key});
       }
     });
