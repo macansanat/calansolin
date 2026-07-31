@@ -205,6 +205,22 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .filter-item input{width:17px;height:17px;accent-color:var(--teal);margin-top:2px;flex-shrink:0}
 .filter-name{font-size:12.5px;font-weight:600}
 .filter-desc{font-size:11px;color:var(--muted);line-height:1.7;margin-top:2px}
+.filter-range{border-top:1px solid var(--line);padding-top:10px;margin-top:4px}
+.range-btns{display:flex;gap:6px}
+.range-btn{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:7px 4px;font-family:inherit;font-size:12px;cursor:pointer}
+.range-btn.active{border-color:var(--teal);color:var(--teal);background:rgba(63,185,163,.1);font-weight:700}
+.quick-actions{display:flex;gap:8px;margin-bottom:12px}
+.quick-btn{flex:1;background:var(--panel-2);border:1px solid var(--teal);color:var(--teal);border-radius:9px;padding:9px 6px;font-family:inherit;font-size:12.5px;cursor:pointer}
+.quick-btn:hover{background:rgba(63,185,163,.1)}
+.frequent-box{margin-bottom:12px;max-height:280px;overflow-y:auto}
+.freq-meal{background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:9px 11px;margin-bottom:6px;cursor:pointer;transition:border-color .15s}
+.freq-meal:hover{border-color:var(--teal)}
+.freq-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.freq-label{font-size:12.5px;font-weight:600}
+.freq-count{font-size:11px;color:var(--teal);background:rgba(63,185,163,.12);padding:2px 8px;border-radius:20px;flex-shrink:0}
+.freq-detail{font-size:11px;color:var(--muted);margin-top:3px}
+.paste-box{background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:11px;margin-bottom:12px}
+.paste-box textarea{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:8px;color:var(--text);font-family:inherit;font-size:13px;resize:vertical}
 .calib-big{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .calib-num{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:14px 18px;min-width:130px}
 .calib-num .cv{font-size:26px;font-weight:800;direction:ltr;line-height:1.2}
@@ -498,6 +514,20 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <h2 onclick="toggleCard('c-addmeal')"><span>➕ افزودن وعده به این روز</span></h2>
   <div class="card-body">
   <div class="add-meal-form" style="background:transparent;border:none;padding:0;margin:0">
+    <div class="quick-actions">
+      <button type="button" class="quick-btn" onclick="toggleFrequentPanel()">⭐ وعده‌های پرمصرف</button>
+      <button type="button" class="quick-btn" onclick="togglePastePanel()">📋 پیست خوراکی‌ها</button>
+    </div>
+    <div id="frequentPanel" style="display:none">
+      <div id="frequentMealsBox" class="frequent-box"></div>
+    </div>
+    <div id="pastePanel" style="display:none">
+      <div class="paste-box">
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">متنی که از «کپی خوراکی‌ها» گرفتی را اینجا پیست کن تا خودکار وارد شود:</div>
+        <textarea id="planPasteBox" rows="2" placeholder="مثلاً: سیب قرمز، نان سنگک، پنیر معمولی"></textarea>
+        <button type="button" class="quick-btn" style="width:100%;margin-top:6px" onclick="pastePlanFoods()">✓ تشخیص و افزودن</button>
+      </div>
+    </div>
     <div class="row">
       <div>
         <label>نوع وعده</label>
@@ -710,7 +740,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳.۶</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳.۸</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2012,6 +2042,94 @@ function renderPickedFoods(){
 }
 function removePicked(i){ window._planPicked.splice(i,1); renderPickedFoods(); }
 
+// ===== وعده‌های پرمصرف: پیدا کردن ترکیب‌های تکراری از تاریخچه =====
+function collectFrequentMeals(){
+  const combos={};
+  for(const key in planData){
+    if(key==='_basal') continue;
+    const list=planData[key]; if(!Array.isArray(list)) continue;
+    list.forEach(m=>{
+      if(!m.foods||m.foods.length===0) return;
+      // کلید ترکیب: نام غذاها (بدون ایموجی) مرتب‌شده
+      const names=m.foods.map(f=>f.replace(/^\s*[\p{Emoji}\u200d\ufe0f]+\s*/u,'').trim()).sort();
+      const comboKey=names.join(' + ');
+      if(!combos[comboKey]){
+        combos[comboKey]={foods:m.foods.slice(),count:0,carb:m.carb,insType:m.insType,insDose:m.insDose,type:m.type,label:names.join('، ')};
+      }
+      combos[comboKey].count++;
+    });
+  }
+  // فقط ترکیب‌هایی که بیش از یک بار تکرار شده‌اند، مرتب بر اساس تکرار
+  return Object.values(combos).filter(c=>c.count>=2).sort((a,b)=>b.count-a.count).slice(0,12);
+}
+function renderFrequentMeals(){
+  const box=document.getElementById('frequentMealsBox');
+  if(!box) return;
+  const freq=collectFrequentMeals();
+  if(freq.length===0){
+    box.innerHTML='<div style="font-size:12px;color:var(--muted);padding:10px;text-align:center">هنوز وعده‌ی تکراری‌ای ثبت نشده. وقتی وعده‌ای را چند بار ثبت کنی، اینجا برای استفاده‌ی سریع ظاهر می‌شود.</div>';
+    return;
+  }
+  box.innerHTML=freq.map((f,i)=>`
+    <div class="freq-meal" onclick="loadFrequentMeal(${i})">
+      <div class="freq-top">
+        <span class="freq-label">${f.foods.join(' + ')}</span>
+        <span class="freq-count">${faDigits(f.count)}×</span>
+      </div>
+      ${f.carb||f.insDose?`<div class="freq-detail">${f.carb?`کرب ${faDigits(f.carb)}گ`:''}${f.insDose?` · انسولین ${faDigits(f.insDose)} واحد`:''}</div>`:''}
+    </div>`).join('');
+  window._freqMeals=freq;
+}
+function loadFrequentMeal(i){
+  const f=window._freqMeals[i]; if(!f) return;
+  // لود کردن در فرم افزودن وعده
+  window._planPicked=f.foods.slice();
+  renderPickedFoods();
+  if(f.carb) document.getElementById('mealCarb').value=f.carb;
+  if(f.insType) document.getElementById('mealInsulinType').value=f.insType;
+  if(f.insDose) document.getElementById('mealInsulinDose').value=f.insDose;
+  if(f.type) document.getElementById('mealType').value=f.type;
+  // بستن زبانه‌ی پرمصرف
+  const panel=document.getElementById('frequentPanel');
+  if(panel) panel.style.display='none';
+  // اسکرول به فرم
+  document.getElementById('c-addmeal').scrollIntoView({behavior:'smooth'});
+}
+function toggleFrequentPanel(){
+  const panel=document.getElementById('frequentPanel');
+  if(!panel) return;
+  if(panel.style.display==='none'||!panel.style.display){ renderFrequentMeals(); panel.style.display='block'; const pp=document.getElementById('pastePanel'); if(pp)pp.style.display='none'; }
+  else panel.style.display='none';
+}
+function togglePastePanel(){
+  const panel=document.getElementById('pastePanel');
+  if(!panel) return;
+  if(panel.style.display==='none'||!panel.style.display){ panel.style.display='block'; const fp=document.getElementById('frequentPanel'); if(fp)fp.style.display='none'; }
+  else panel.style.display='none';
+}
+// ===== پیست کردن خوراکی‌های کپی‌شده =====
+function pastePlanFoods(){
+  const ta=document.getElementById('planPasteBox');
+  const text=ta.value.trim();
+  if(!text){ alert('اول متن خوراکی‌ها را در کادر پیست کن.'); return; }
+  const res=matchNoteFoods(text);
+  if(res.items.length===0){ alert('غذایی تشخیص داده نشد.'); return; }
+  // افزودن غذاهای تشخیص‌داده‌شده به فرم
+  if(!window._planPicked) window._planPicked=[];
+  let added=0, notFound=[];
+  res.items.forEach(it=>{
+    if(it.unmatched){ notFound.push(it.raw); }
+    else { window._planPicked.push(it.emoji+' '+it.item); added++; }
+  });
+  renderPickedFoods();
+  // پر کردن کرب خودکار
+  if(res.carb>0) document.getElementById('mealCarb').value=res.carb;
+  ta.value='';
+  let msg=`${faDigits(added)} غذا اضافه شد`;
+  if(res.carb>0) msg+=` (مجموع کرب: ${faDigits(res.carb)} گرم)`;
+  if(notFound.length) msg+=`\nتشخیص داده نشد: ${notFound.join('، ')}`;
+  alert(msg);
+}
 function saveMealEntry(){
   const d=new Date(curWeekStart); d.setDate(d.getDate()+selectedDayIdx);
   const key=dayKey(d);
@@ -2315,7 +2433,7 @@ function goEditReviewMeal(key,id){
   setTimeout(()=>{ try{ startEditMeal(key,id); }catch(e){} const el=document.getElementById('c-meals'); if(el) el.scrollIntoView({behavior:'smooth'}); },120);
 }
 // ===== سیستم فیلترهای مفید کالیبراسیون =====
-const CALIB_FILTER_DEFAULTS={ lowCarb:true, stableBG:false, useMedian:false };
+const CALIB_FILTER_DEFAULTS={ lowCarb:true, stableBG:false, useMedian:false, dayRange:0 };
 function getCalibFilters(){
   try{ const f=JSON.parse(localStorage.getItem('calib_filters')||'null'); if(f) return Object.assign({},CALIB_FILTER_DEFAULTS,f); }catch(e){}
   return {...CALIB_FILTER_DEFAULTS};
@@ -2330,10 +2448,27 @@ function getLowCarbCut(){
 }
 function collectCalibMeals(){
   const out=[];
+  const filters = getCalibFilters();
+  // برای فیلتر بازه‌ی زمانی: جدیدترین روزِ دارای وعده را پیدا کن (مبنای «اخیر»)
+  let latestDay=null;
+  for(const key in planData){
+    if(key==='_basal') continue;
+    if(Array.isArray(planData[key]) && planData[key].length){
+      const d=new Date(key);
+      if(!latestDay || d>latestDay) latestDay=d;
+    }
+  }
+  let rangeCutoff=null;
+  if(filters.dayRange>0 && latestDay){
+    rangeCutoff=new Date(latestDay);
+    rangeCutoff.setDate(rangeCutoff.getDate()-(filters.dayRange-1));
+  }
   for(const key in planData){
     if(key==='_basal') continue;
     const list=planData[key];
     if(!Array.isArray(list)) continue;
+    // فیلتر بازه‌ی زمانی: روزهای قدیمی‌تر از بازه کنار می‌روند
+    if(rangeCutoff){ const d=new Date(key); if(d<rangeCutoff) continue; }
     list.forEach(m=>{
       if(m.excludeCalib) return; // کاربر این وعده را از محاسبه کنار گذاشته
       const carb=parseFloat(m.carb), ins=parseFloat(m.insDose);
@@ -2349,13 +2484,10 @@ function collectCalibMeals(){
         // دره فقط اگر افت واقعی باشد (زیر ۶۰) رد می‌شود — ۶۰-۷۰ نوسان طبیعی است
         if(!isNaN(trough) && trough<60) good=false;
         // فیلتر کم‌کربوهیدرات: وعده‌های خیلی کم‌کرب نسبت I:C گمراه‌کننده می‌دهند
-        // (مثلاً ۸ گرم کرب با ۱۰ واحد انسولین که انسولینش برای چیز دیگری بوده)
         const lowCarbCut = getLowCarbCut();
         const isLowCarb = (lowCarbCut>0 && carb<lowCarbCut);
         if(isLowCarb) good=false;
         // فیلتر قند پایدار: I:C درست یعنی قند بعد از وعده تقریباً ثابت می‌ماند.
-        // اگر قند خیلی بالا رفته (کم‌انسولین) یا خیلی افتاده (زیاد‌انسولین)، نسبت گمراه‌کننده است.
-        const filters = getCalibFilters();
         const delta = bgA - bgB;
         const isUnstable = filters.stableBG && Math.abs(delta) > 50;
         if(isUnstable) good=false;
@@ -2474,6 +2606,15 @@ function updateCalibration(){
         <div class="filter-desc">میانه در برابر وعده‌های پرت مقاوم‌تر است و عدد پایدارتری می‌دهد.</div>
       </div>
     </label>
+    <div class="filter-range">
+      <div class="filter-name" style="margin-bottom:6px">📅 بازه‌ی زمانی محاسبه</div>
+      <div class="filter-desc" style="margin-bottom:8px">اگر رژیم گرفته‌ای یا وزنت تغییر کرده، I:C اخیرت ممکن است با کل دوره فرق کند. بازه را عوض کن و تفاوت را ببین.</div>
+      <div class="range-btns">
+        <button class="range-btn${filters.dayRange===0?' active':''}" onclick="setCalibFilter('dayRange',0)">کل دوره</button>
+        <button class="range-btn${filters.dayRange===14?' active':''}" onclick="setCalibFilter('dayRange',14)">۱۴ روز اخیر</button>
+        <button class="range-btn${filters.dayRange===7?' active':''}" onclick="setCalibFilter('dayRange',7)">۷ روز اخیر</button>
+      </div>
+    </div>
   </div>`;
   body.innerHTML=`
     <div class="calib-n">بر اساس <b>${goodMeals.length}</b> وعده‌ی موفق از <b>${allMeals}</b> وعده‌ی دارای قند${rangeTxt?` · ${rangeTxt}`:''}</div>
