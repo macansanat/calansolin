@@ -198,7 +198,13 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .calib-card{background:linear-gradient(180deg,#16212e,#12202c);border:1px solid var(--teal-dim);border-radius:14px;padding:18px;margin-top:18px}
 .calib-empty{font-size:13px;color:var(--muted);text-align:center;padding:14px;line-height:1.9}
 .calib-result{text-align:center}
-.lowcarb-filter{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:12px 0;text-align:right}
+.filters-panel{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:12px;margin:12px 0;text-align:right}
+.filters-title{font-size:13px;font-weight:700;margin-bottom:10px}
+.filter-item{display:flex;gap:9px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line);cursor:pointer}
+.filter-item:first-of-type{border-top:none}
+.filter-item input{width:17px;height:17px;accent-color:var(--teal);margin-top:2px;flex-shrink:0}
+.filter-name{font-size:12.5px;font-weight:600}
+.filter-desc{font-size:11px;color:var(--muted);line-height:1.7;margin-top:2px}
 .calib-big{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .calib-num{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:14px 18px;min-width:130px}
 .calib-num .cv{font-size:26px;font-weight:800;direction:ltr;line-height:1.2}
@@ -704,7 +710,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳.۵</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳.۶</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2308,14 +2314,19 @@ function goEditReviewMeal(key,id){
   if(mealsCard) mealsCard.classList.remove('closed');
   setTimeout(()=>{ try{ startEditMeal(key,id); }catch(e){} const el=document.getElementById('c-meals'); if(el) el.scrollIntoView({behavior:'smooth'}); },120);
 }
-function getLowCarbCut(){
-  // آستانه‌ی فیلتر کم‌کرب — پیش‌فرض ۲۰ گرم؛ ۰ یعنی خاموش
-  const v=localStorage.getItem('lowcarb_cut');
-  return v===null?20:parseInt(v);
+// ===== سیستم فیلترهای مفید کالیبراسیون =====
+const CALIB_FILTER_DEFAULTS={ lowCarb:true, stableBG:false, useMedian:false };
+function getCalibFilters(){
+  try{ const f=JSON.parse(localStorage.getItem('calib_filters')||'null'); if(f) return Object.assign({},CALIB_FILTER_DEFAULTS,f); }catch(e){}
+  return {...CALIB_FILTER_DEFAULTS};
 }
-function setLowCarbCut(val){
-  localStorage.setItem('lowcarb_cut',String(val));
+function setCalibFilter(key,val){
+  const f=getCalibFilters(); f[key]=val;
+  localStorage.setItem('calib_filters',JSON.stringify(f));
   updateCalibration();
+}
+function getLowCarbCut(){
+  return getCalibFilters().lowCarb ? 20 : 0;
 }
 function collectCalibMeals(){
   const out=[];
@@ -2340,8 +2351,15 @@ function collectCalibMeals(){
         // فیلتر کم‌کربوهیدرات: وعده‌های خیلی کم‌کرب نسبت I:C گمراه‌کننده می‌دهند
         // (مثلاً ۸ گرم کرب با ۱۰ واحد انسولین که انسولینش برای چیز دیگری بوده)
         const lowCarbCut = getLowCarbCut();
-        if(lowCarbCut>0 && carb<lowCarbCut) good=false;
-        out.push({carb,ins,bgB,bgA,peak,trough,good,dayKey:key,lowCarb:(lowCarbCut>0 && carb<lowCarbCut)});
+        const isLowCarb = (lowCarbCut>0 && carb<lowCarbCut);
+        if(isLowCarb) good=false;
+        // فیلتر قند پایدار: I:C درست یعنی قند بعد از وعده تقریباً ثابت می‌ماند.
+        // اگر قند خیلی بالا رفته (کم‌انسولین) یا خیلی افتاده (زیاد‌انسولین)، نسبت گمراه‌کننده است.
+        const filters = getCalibFilters();
+        const delta = bgA - bgB;
+        const isUnstable = filters.stableBG && Math.abs(delta) > 50;
+        if(isUnstable) good=false;
+        out.push({carb,ins,bgB,bgA,peak,trough,good,dayKey:key,lowCarb:isLowCarb,unstable:isUnstable});
       }
     });
   }
@@ -2392,10 +2410,16 @@ function updateCalibration(){
     </div>`;
     return;
   }
-  // میانگین I:C واقعی = میانگین (کربوهیدرات ÷ انسولین) وعده‌های موفق
-  let sumIC=0;
-  goodMeals.forEach(m=>{ sumIC += m.carb/m.ins; });
-  const realIC = sumIC/goodMeals.length;
+  // I:C واقعی = میانگین یا میانه‌ی (کربوهیدرات ÷ انسولین) وعده‌های موفق
+  const ratios = goodMeals.map(m=>m.carb/m.ins).sort((a,b)=>a-b);
+  const filters = getCalibFilters();
+  let realIC;
+  if(filters.useMedian){
+    const mid=Math.floor(ratios.length/2);
+    realIC = ratios.length%2 ? ratios[mid] : (ratios[mid-1]+ratios[mid])/2;
+  } else {
+    realIC = ratios.reduce((a,b)=>a+b,0)/ratios.length;
+  }
   const curIC = parseFloat(document.getElementById('icRatio').value)||0;
   // تحلیل هشدار پزشک
   const allMeals=meals.length;
@@ -2424,21 +2448,38 @@ function updateCalibration(){
     const toJ=k=>{ const [y,mo,d]=k.split('-').map(Number); return jalaliShort(new Date(y,mo-1,d)); };
     rangeTxt = dayKeys.length===1 ? `از تاریخ ${toJ(dayKeys[0])}` : `از ${toJ(dayKeys[0])} تا ${toJ(dayKeys[dayKeys.length-1])} (${dayKeys.length} روز)`;
   }
-  // شمارش وعده‌های کنارگذاشته‌شده به‌خاطر فیلتر کم‌کرب
+  // شمارش وعده‌های کنارگذاشته‌شده به‌خاطر هر فیلتر
   const lowCarbExcluded = meals.filter(m=>m.lowCarb).length;
-  const cut = getLowCarbCut();
-  const filterBox = `<div class="lowcarb-filter">
-    <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer">
-      <input type="checkbox" ${cut>0?'checked':''} onchange="setLowCarbCut(this.checked?20:0)" style="width:16px;height:16px;accent-color:var(--teal)">
-      <span>حذف وعده‌های کم‌کربوهیدرات (زیر ${faDigits(cut>0?cut:20)} گرم) از محاسبه</span>
+  const unstableExcluded = meals.filter(m=>m.unstable).length;
+  const filterBox = `<div class="filters-panel">
+    <div class="filters-title">🎛 فیلترهای مفید <span style="font-size:11px;color:var(--muted);font-weight:400">(برای دقت بیشتر — با پزشکت مشورت کن کدام بهتر است)</span></div>
+    <label class="filter-item">
+      <input type="checkbox" ${filters.lowCarb?'checked':''} onchange="setCalibFilter('lowCarb',this.checked)">
+      <div>
+        <div class="filter-name">حذف وعده‌های کم‌کربوهیدرات (زیر ۲۰ گرم)</div>
+        <div class="filter-desc">انسولین این وعده‌ها معمولاً برای کربوهیدرات نبوده، پس نسبت گمراه‌کننده است.${filters.lowCarb&&lowCarbExcluded>0?` <b style="color:var(--amber)">${faDigits(lowCarbExcluded)} وعده کنار رفت.</b>`:''}</div>
+      </div>
     </label>
-    <div style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.7">وعده‌های خیلی کم‌کرب نسبت I:C گمراه‌کننده می‌دهند (انسولینشان معمولاً برای چیز دیگری بوده). ${cut>0&&lowCarbExcluded>0?`<b style="color:var(--amber)">${faDigits(lowCarbExcluded)} وعده</b> به این دلیل کنار گذاشته شد.`:''}</div>
+    <label class="filter-item">
+      <input type="checkbox" ${filters.stableBG?'checked':''} onchange="setCalibFilter('stableBG',this.checked)">
+      <div>
+        <div class="filter-name">فقط وعده‌هایی که قند پایدار ماند</div>
+        <div class="filter-desc">I:C درست یعنی قند بعد از وعده تقریباً ثابت می‌ماند. وعده‌هایی که قند خیلی بالا/پایین رفت (بیش از ۵۰) کنار می‌روند چون دوزشان نامتناسب بوده.${filters.stableBG&&unstableExcluded>0?` <b style="color:var(--amber)">${faDigits(unstableExcluded)} وعده کنار رفت.</b>`:''}</div>
+      </div>
+    </label>
+    <label class="filter-item">
+      <input type="checkbox" ${filters.useMedian?'checked':''} onchange="setCalibFilter('useMedian',this.checked)">
+      <div>
+        <div class="filter-name">استفاده از میانه به‌جای میانگین</div>
+        <div class="filter-desc">میانه در برابر وعده‌های پرت مقاوم‌تر است و عدد پایدارتری می‌دهد.</div>
+      </div>
+    </label>
   </div>`;
   body.innerHTML=`
     <div class="calib-n">بر اساس <b>${goodMeals.length}</b> وعده‌ی موفق از <b>${allMeals}</b> وعده‌ی دارای قند${rangeTxt?` · ${rangeTxt}`:''}</div>
     ${filterBox}
     <div class="calib-big">
-      <div class="calib-num exp"><div class="cv">1:${realIC.toFixed(1)}</div><div class="cl">I:C واقعی (از تجربه)</div></div>
+      <div class="calib-num exp"><div class="cv">1:${realIC.toFixed(1)}</div><div class="cl">I:C واقعی (${filters.useMedian?'میانه':'میانگین'})</div></div>
       <div class="calib-num cur"><div class="cv">1:${curIC.toFixed(1)}</div><div class="cl">I:C فعلی برنامه</div></div>
     </div>
     <div class="calib-compare">
@@ -2447,7 +2488,7 @@ function updateCalibration(){
     </div>
     ${doctorAlert}
     <button class="calib-apply" onclick="applyCalibIC(${realIC.toFixed(1)})">✓ استفاده از I:C واقعی (${realIC.toFixed(1)}) در پروفایل</button>
-    <div class="calib-warn">⚠ این عدد از میانگین چند وعده به‌دست آمده و فقط یک راهنماست. حتماً قبل از تغییر واقعی، با پزشکت درباره‌اش گفتگو کن — چون ورزش، استرس، بیماری و نوع غذا می‌توانند آن را تغییر دهند.</div>`;
+    <div class="calib-warn">⚠ این عدد از چند وعده به‌دست آمده و فقط یک راهنماست. حتماً قبل از تغییر واقعی، با پزشکت درباره‌اش گفتگو کن — چون ورزش، استرس، بیماری و نوع غذا می‌توانند آن را تغییر دهند.</div>`;
 }
 function applyCalibIC(ic){
   if(!confirm('آیا مطمئنی می‌خواهی I:C پروفایل را به '+ic+' تغییر دهی؟ (این تصمیم بهتر است با پزشک هماهنگ شود)')) return;
