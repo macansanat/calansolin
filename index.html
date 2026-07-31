@@ -645,8 +645,14 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 <div class="card coll closed" id="c-review">
   <h2 onclick="toggleCard('c-review')"><span>🔍 وعده‌های نیازمند بررسی</span></h2>
   <div class="card-body">
-  <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">وعده‌هایی که اطلاعاتشان ناقص است و در محاسبه‌ی I:C حساب نمی‌شوند. برای دقت بیشتر، آن‌ها را اصلاح کن.</div>
+  <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">وعده‌هایی که اطلاعاتشان ناقص است و در محاسبه‌ی I:C حساب نمی‌شوند. برای دقت بیشتر، آن‌ها را اصلاح کن یا نادیده بگیر.</div>
   <div id="reviewBody"></div>
+  </div>
+</div>
+<div class="card coll closed" id="c-ignored" style="display:none">
+  <h2 onclick="toggleCard('c-ignored')"><span>🗂 وعده‌های نادیده‌گرفته‌شده (تاریخچه)</span></h2>
+  <div class="card-body">
+  <div id="ignoredBody"></div>
   </div>
 </div>
 <div class="card coll closed" id="c-calib">
@@ -697,7 +703,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳.۳</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳.۴</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2201,13 +2207,18 @@ function renderReviewMeals(){
   issues.sort((a,b)=>new Date(a.key)-new Date(b.key));
   const badge=`<div style="background:rgba(224,163,85,.12);border:1px solid var(--amber);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12.5px;color:var(--amber)">⚠️ ${faDigits(issues.length)} وعده نیاز به بررسی دارد</div>`;
   let html=badge;
+  // دکمه‌ی «همه را نادیده بگیر»
+  html+=`<button class="reset-btn" style="width:100%;margin-bottom:12px;border-color:var(--muted)" onclick="ignoreAllReview()">✓✓ نادیده گرفتن همه (${faDigits(issues.length)} وعده) در محاسبه‌ی I:C</button>`;
   const jShort=k=>{ const p=k.split('-').map(Number); const j=g2j(p[0],p[1],p[2]); return `${faDigits(j[2])} ${J_MONTHS[j[1]-1]}`; };
   const icons={'no-food':'🍽️','no-ins':'💉','maybe-snack':'🔄'};
   issues.forEach(it=>{
     html+=`<div class="review-row">
       <div class="review-head">
         <span>${icons[it.issue.type]||'•'} <b>${jShort(it.key)}</b> · ${it.type} · ${faDigits(it.time||'')}</span>
-        <button class="mini-btn" onclick="goEditReviewMeal('${it.key}',${it.id})">اصلاح</button>
+        <div style="display:flex;gap:6px">
+          <button class="mini-btn" onclick="goEditReviewMeal('${it.key}',${it.id})">اصلاح</button>
+          <button class="mini-btn" style="border-color:var(--muted);color:var(--muted)" onclick="ignoreReviewMeal('${it.key}',${it.id})">نادیده بگیر</button>
+        </div>
       </div>
       <div class="review-issue">${it.issue.msg}</div>
       ${it.foods?`<div class="review-detail">غذا: ${it.foods}</div>`:''}
@@ -2215,6 +2226,74 @@ function renderReviewMeals(){
     </div>`;
   });
   box.innerHTML=html;
+}
+function ignoreReviewMeal(key,id){
+  const list=planData[key]; if(!Array.isArray(list)) return;
+  const m=list.find(x=>x.id===id); if(!m) return;
+  m.excludeCalib=true;
+  savePlan(); renderReviewMeals(); updateCalibration(); renderIgnoredMeals();
+}
+function ignoreAllReview(){
+  const issues=collectReviewMeals();
+  if(issues.length===0) return;
+  if(!confirm(`تمام ${issues.length} وعده‌ی نیازمند بررسی در محاسبه‌ی I:C نادیده گرفته شوند؟\n(در تاریخچه می‌مانند و بعداً قابل بازگرداندن‌اند)`)) return;
+  issues.forEach(it=>{
+    const list=planData[it.key]; if(!Array.isArray(list)) return;
+    const m=list.find(x=>x.id===it.id); if(m) m.excludeCalib=true;
+  });
+  savePlan(); renderReviewMeals(); updateCalibration(); renderIgnoredMeals();
+}
+function collectIgnoredMeals(){
+  const out=[];
+  for(const key in planData){
+    if(key==='_basal') continue;
+    const list=planData[key]; if(!Array.isArray(list)) continue;
+    list.forEach(m=>{ if(m.excludeCalib){ out.push({key,id:m.id,type:m.type,time:m.time,foods:(m.foods||[]).join('، '),ins:m.insDose}); } });
+  }
+  return out;
+}
+function renderIgnoredMeals(){
+  const box=document.getElementById('ignoredBody');
+  const card=document.getElementById('c-ignored');
+  if(!box) return;
+  const ignored=collectIgnoredMeals();
+  if(ignored.length===0){
+    box.innerHTML='<div style="font-size:12.5px;color:var(--muted);text-align:center;padding:10px">هیچ وعده‌ای نادیده گرفته نشده.</div>';
+    if(card) card.style.display='none';
+    return;
+  }
+  if(card) card.style.display='';
+  ignored.sort((a,b)=>new Date(a.key)-new Date(b.key));
+  const jShort=k=>{ const p=k.split('-').map(Number); const j=g2j(p[0],p[1],p[2]); return `${faDigits(j[2])} ${J_MONTHS[j[1]-1]}`; };
+  let html=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">${faDigits(ignored.length)} وعده در محاسبه‌ی I:C حساب نمی‌شوند. برای بازگرداندن، «برگردان» را بزن.</div>`;
+  html+=`<button class="reset-btn" style="width:100%;margin-bottom:10px;border-color:var(--teal);color:var(--teal)" onclick="restoreAllIgnored()">↩ بازگرداندن همه به بررسی</button>`;
+  ignored.forEach(it=>{
+    html+=`<div class="review-row">
+      <div class="review-head">
+        <span><b>${jShort(it.key)}</b> · ${it.type} · ${faDigits(it.time||'')}</span>
+        <button class="mini-btn" style="border-color:var(--teal);color:var(--teal)" onclick="restoreIgnoredMeal('${it.key}',${it.id})">↩ برگردان</button>
+      </div>
+      ${it.foods?`<div class="review-detail">غذا: ${it.foods}</div>`:''}
+      ${it.ins?`<div class="review-detail">انسولین: ${faDigits(it.ins)} واحد</div>`:''}
+    </div>`;
+  });
+  box.innerHTML=html;
+}
+function restoreIgnoredMeal(key,id){
+  const list=planData[key]; if(!Array.isArray(list)) return;
+  const m=list.find(x=>x.id===id); if(!m) return;
+  m.excludeCalib=false;
+  savePlan(); renderReviewMeals(); updateCalibration(); renderIgnoredMeals();
+}
+function restoreAllIgnored(){
+  const ignored=collectIgnoredMeals();
+  if(ignored.length===0) return;
+  if(!confirm(`تمام ${ignored.length} وعده‌ی نادیده‌گرفته‌شده به لیست بررسی برگردانده شوند؟`)) return;
+  ignored.forEach(it=>{
+    const list=planData[it.key]; if(!Array.isArray(list)) return;
+    const m=list.find(x=>x.id===it.id); if(m) m.excludeCalib=false;
+  });
+  savePlan(); renderReviewMeals(); updateCalibration(); renderIgnoredMeals();
 }
 function goEditReviewMeal(key,id){
   const d=new Date(key);
@@ -2256,6 +2335,7 @@ function collectCalibMeals(){
 }
 function updateCalibration(){
   renderReviewMeals();
+  renderIgnoredMeals();
   const body=document.getElementById('calibBody');
   if(!body) return;
   const meals=collectCalibMeals();
