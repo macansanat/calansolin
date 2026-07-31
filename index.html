@@ -759,7 +759,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۴.۰</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۴.۱</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2651,93 +2651,11 @@ function collectCalibMeals(){
   }
   return out;
 }
-function updateCalibration(){
-  renderReviewMeals();
-  renderIgnoredMeals();
-  const body=document.getElementById('calibBody');
-  if(!body) return;
-  const meals=collectCalibMeals();
-  const goodMeals=meals.filter(m=>m.good);
-  if(goodMeals.length<3){
-    // شمارش وضعیت واقعی همه‌ی وعده‌ها برای راهنمایی دقیق
-    let totalMeals=0, withCarb=0, withIns=0, withBG=0, missingBG=0;
-    for(const k in planData){
-      if(k==='_basal') continue;
-      const list=planData[k]; if(!Array.isArray(list)) continue;
-      list.forEach(m=>{
-        totalMeals++;
-        const hasC=parseFloat(m.carb)>0, hasI=parseFloat(m.insDose)>0;
-        const hasBG=!isNaN(parseFloat(m.bgBefore))&&!isNaN(parseFloat(m.bgAfter));
-        if(hasC) withCarb++;
-        if(hasI) withIns++;
-        if(hasBG) withBG++;
-        if(hasC&&hasI&&!hasBG) missingBG++;
-      });
-    }
-    let statusMsg='';
-    if(totalMeals===0){
-      statusMsg='هنوز هیچ وعده‌ای ثبت نشده. با ثبت وعده‌ها (دستی یا از فایل لاگ)، این بخش فعال می‌شود.';
-    } else {
-      statusMsg=`<b style="color:var(--teal)">${totalMeals}</b> وعده ثبت شده`;
-      let needs=[];
-      if(missingBG>0) needs.push(`<b style="color:var(--amber)">${missingBG}</b> وعده کربوهیدرات و انسولین دارند ولی <b>قند قبل/بعد ندارند</b>`);
-      if(withCarb<totalMeals) needs.push(`${totalMeals-withCarb} وعده کربوهیدرات ندارند`);
-      if(needs.length){
-        statusMsg+='، ولی برای کالیبراسیون کامل نیستند:<br>• '+needs.join('<br>• ');
-        if(missingBG>0){
-          statusMsg+='<br><br>💡 <b>راه سریع:</b> فایل قند CGM را در تب «تحلیل CGM» وارد کن، سپس دوباره فایل لاگ را وارد کن تا قند وعده‌ها خودکار پر شود. یا قند قبل/بعد را دستی در «ویرایش» هر وعده وارد کن.';
-        }
-      }
-    }
-    body.innerHTML=`<div class="calib-empty">
-      برای کالیبراسیون، حداقل <b style="color:var(--teal)">۳ وعده‌ی موفق</b> لازم است — وعده‌ای که کربوهیدرات + دوز انسولین + قند قبل و ۲ ساعت بعد داشته باشد (و قند بعد بین ۷۰ تا ۱۸۰ مانده باشد).
-      <br><br>${statusMsg}
-      <br><br>تا حالا <b style="color:var(--teal)">${goodMeals.length}</b> وعده‌ی کامل و موفق داری.
-    </div>`;
-    return;
-  }
-  // I:C واقعی = میانگین یا میانه‌ی (کربوهیدرات ÷ انسولین) وعده‌های موفق
-  const ratios = goodMeals.map(m=>m.carb/m.ins).sort((a,b)=>a-b);
-  const filters = getCalibFilters();
-  let realIC;
-  if(filters.useMedian){
-    const mid=Math.floor(ratios.length/2);
-    realIC = ratios.length%2 ? ratios[mid] : (ratios[mid-1]+ratios[mid])/2;
-  } else {
-    realIC = ratios.reduce((a,b)=>a+b,0)/ratios.length;
-  }
-  const curIC = parseFloat(document.getElementById('icRatio').value)||0;
-  // تحلیل هشدار پزشک
-  const allMeals=meals.length;
-  const badMeals=meals.filter(m=>!m.good).length;
-  const badRatio = allMeals>0 ? badMeals/allMeals : 0;
-  const bigDiff = curIC>0 && Math.abs(realIC-curIC)/curIC > 0.3; // اختلاف بیش از ۳۰٪
-  let doctorAlert='';
-  if(bigDiff || badRatio>0.35){
-    let reasons=[];
-    if(bigDiff) reasons.push('نسبت واقعی I:C بدنت به‌طور محسوسی با تنظیمات فعلی فرق دارد');
-    if(badRatio>0.35) reasons.push(`حدود ${Math.round(badRatio*100)}٪ وعده‌ها کنترل خوبی نداشتند (پیک بالا یا افت)`);
-    doctorAlert=`
-      <div class="doctor-alert">
-        <div class="da-title">🩺 وقت گفتگو با پزشک است</div>
-        <div class="da-body">
-          ${reasons.join(' و ')}. این یعنی ممکن است بدنت تغییر کرده باشد و لازم است پزشکت
-          <b>دوباره آزمایش بگیرد و انسولین‌هایت را بازبینی کند</b>.
-          می‌توانی همین تاریخچه و الگوها را به پزشکت نشان دهی.
-        </div>
-      </div>`;
-  }
-  // بازه‌ی تاریخی وعده‌های موفق (برای شفافیت)
-  const dayKeys=[...new Set(goodMeals.map(m=>m.dayKey))].sort();
-  let rangeTxt='';
-  if(dayKeys.length){
-    const toJ=k=>{ const [y,mo,d]=k.split('-').map(Number); return jalaliShort(new Date(y,mo-1,d)); };
-    rangeTxt = dayKeys.length===1 ? `از تاریخ ${toJ(dayKeys[0])}` : `از ${toJ(dayKeys[0])} تا ${toJ(dayKeys[dayKeys.length-1])} (${dayKeys.length} روز)`;
-  }
-  // شمارش وعده‌های کنارگذاشته‌شده به‌خاطر هر فیلتر
+function buildFilterBox(meals){
+  const filters=getCalibFilters();
   const lowCarbExcluded = meals.filter(m=>m.lowCarb).length;
   const unstableExcluded = meals.filter(m=>m.unstable).length;
-  const filterBox = `<div class="filters-panel">
+  return `<div class="filters-panel">
     <div class="filters-title">🎛 فیلترهای مفید <span style="font-size:11px;color:var(--muted);font-weight:400">(برای دقت بیشتر — با پزشکت مشورت کن کدام بهتر است)</span></div>
     <label class="filter-item">
       <input type="checkbox" ${filters.lowCarb?'checked':''} onchange="setCalibFilter('lowCarb',this.checked)">
@@ -2788,6 +2706,94 @@ function updateCalibration(){
         <div style="font-size:10.5px;color:var(--muted);margin-top:5px">قالب: سال/ماه/روز — مثلاً ۱۴۰۵/۰۵/۰۱</div>`:''}
     </div>
   </div>`;
+}
+function updateCalibration(){
+  renderReviewMeals();
+  renderIgnoredMeals();
+  const body=document.getElementById('calibBody');
+  if(!body) return;
+  const meals=collectCalibMeals();
+  const goodMeals=meals.filter(m=>m.good);
+  if(goodMeals.length<3){
+    // شمارش وضعیت واقعی همه‌ی وعده‌ها برای راهنمایی دقیق
+    let totalMeals=0, withCarb=0, withIns=0, withBG=0, missingBG=0;
+    for(const k in planData){
+      if(k==='_basal') continue;
+      const list=planData[k]; if(!Array.isArray(list)) continue;
+      list.forEach(m=>{
+        totalMeals++;
+        const hasC=parseFloat(m.carb)>0, hasI=parseFloat(m.insDose)>0;
+        const hasBG=!isNaN(parseFloat(m.bgBefore))&&!isNaN(parseFloat(m.bgAfter));
+        if(hasC) withCarb++;
+        if(hasI) withIns++;
+        if(hasBG) withBG++;
+        if(hasC&&hasI&&!hasBG) missingBG++;
+      });
+    }
+    let statusMsg='';
+    if(totalMeals===0){
+      statusMsg='هنوز هیچ وعده‌ای ثبت نشده. با ثبت وعده‌ها (دستی یا از فایل لاگ)، این بخش فعال می‌شود.';
+    } else {
+      statusMsg=`<b style="color:var(--teal)">${totalMeals}</b> وعده ثبت شده`;
+      let needs=[];
+      if(missingBG>0) needs.push(`<b style="color:var(--amber)">${missingBG}</b> وعده کربوهیدرات و انسولین دارند ولی <b>قند قبل/بعد ندارند</b>`);
+      if(withCarb<totalMeals) needs.push(`${totalMeals-withCarb} وعده کربوهیدرات ندارند`);
+      if(needs.length){
+        statusMsg+='، ولی برای کالیبراسیون کامل نیستند:<br>• '+needs.join('<br>• ');
+        if(missingBG>0){
+          statusMsg+='<br><br>💡 <b>راه سریع:</b> فایل قند CGM را در تب «تحلیل CGM» وارد کن، سپس دوباره فایل لاگ را وارد کن تا قند وعده‌ها خودکار پر شود. یا قند قبل/بعد را دستی در «ویرایش» هر وعده وارد کن.';
+        }
+      }
+    }
+    body.innerHTML=`
+      ${buildFilterBox(meals)}
+      <div class="calib-empty">
+      برای کالیبراسیون، حداقل <b style="color:var(--teal)">۳ وعده‌ی موفق</b> لازم است — وعده‌ای که کربوهیدرات + دوز انسولین + قند قبل و ۲ ساعت بعد داشته باشد (و قند بعد بین ۷۰ تا ۱۸۰ مانده باشد).
+      <br><br>${statusMsg}
+      <br><br>در این بازه <b style="color:var(--teal)">${goodMeals.length}</b> وعده‌ی کامل و موفق داری. اگر بازه‌ی زمانی را محدود کرده‌ای، آن را بازتر کن.
+    </div>`;
+    return;
+  }
+  // I:C واقعی = میانگین یا میانه‌ی (کربوهیدرات ÷ انسولین) وعده‌های موفق
+  const ratios = goodMeals.map(m=>m.carb/m.ins).sort((a,b)=>a-b);
+  const filters = getCalibFilters();
+  let realIC;
+  if(filters.useMedian){
+    const mid=Math.floor(ratios.length/2);
+    realIC = ratios.length%2 ? ratios[mid] : (ratios[mid-1]+ratios[mid])/2;
+  } else {
+    realIC = ratios.reduce((a,b)=>a+b,0)/ratios.length;
+  }
+  const curIC = parseFloat(document.getElementById('icRatio').value)||0;
+  // تحلیل هشدار پزشک
+  const allMeals=meals.length;
+  const badMeals=meals.filter(m=>!m.good).length;
+  const badRatio = allMeals>0 ? badMeals/allMeals : 0;
+  const bigDiff = curIC>0 && Math.abs(realIC-curIC)/curIC > 0.3; // اختلاف بیش از ۳۰٪
+  let doctorAlert='';
+  if(bigDiff || badRatio>0.35){
+    let reasons=[];
+    if(bigDiff) reasons.push('نسبت واقعی I:C بدنت به‌طور محسوسی با تنظیمات فعلی فرق دارد');
+    if(badRatio>0.35) reasons.push(`حدود ${Math.round(badRatio*100)}٪ وعده‌ها کنترل خوبی نداشتند (پیک بالا یا افت)`);
+    doctorAlert=`
+      <div class="doctor-alert">
+        <div class="da-title">🩺 وقت گفتگو با پزشک است</div>
+        <div class="da-body">
+          ${reasons.join(' و ')}. این یعنی ممکن است بدنت تغییر کرده باشد و لازم است پزشکت
+          <b>دوباره آزمایش بگیرد و انسولین‌هایت را بازبینی کند</b>.
+          می‌توانی همین تاریخچه و الگوها را به پزشکت نشان دهی.
+        </div>
+      </div>`;
+  }
+  // بازه‌ی تاریخی وعده‌های موفق (برای شفافیت)
+  const dayKeys=[...new Set(goodMeals.map(m=>m.dayKey))].sort();
+  let rangeTxt='';
+  if(dayKeys.length){
+    const toJ=k=>{ const [y,mo,d]=k.split('-').map(Number); return jalaliShort(new Date(y,mo-1,d)); };
+    rangeTxt = dayKeys.length===1 ? `از تاریخ ${toJ(dayKeys[0])}` : `از ${toJ(dayKeys[0])} تا ${toJ(dayKeys[dayKeys.length-1])} (${dayKeys.length} روز)`;
+  }
+  // پنل فیلترها (تابع مشترک)
+  const filterBox = buildFilterBox(meals);
   body.innerHTML=`
     <div class="calib-n">بر اساس <b>${goodMeals.length}</b> وعده‌ی موفق از <b>${allMeals}</b> وعده‌ی دارای قند${rangeTxt?` · ${rangeTxt}`:''}</div>
     ${filterBox}
