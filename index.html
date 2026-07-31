@@ -209,6 +209,11 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .range-btns{display:flex;gap:6px}
 .range-btn{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:7px 4px;font-family:inherit;font-size:12px;cursor:pointer}
 .range-btn.active{border-color:var(--teal);color:var(--teal);background:rgba(63,185,163,.1);font-weight:700}
+.range-input-row{display:flex;align-items:center;gap:8px;margin-top:10px}
+.range-input-row input,.range-dates input{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:7px 9px;color:var(--text);font-family:inherit;font-size:13px}
+.range-dates{display:flex;gap:8px;margin-top:10px}
+.range-dates>div{flex:1}
+.range-dates input{width:100%;margin-top:3px;direction:ltr;text-align:center}
 .quick-actions{display:flex;gap:8px;margin-bottom:12px}
 .quick-btn{flex:1;background:var(--panel-2);border:1px solid var(--teal);color:var(--teal);border-radius:9px;padding:9px 6px;font-family:inherit;font-size:12.5px;cursor:pointer}
 .quick-btn:hover{background:rgba(63,185,163,.1)}
@@ -394,6 +399,20 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <div class="card-body">
   <div id="foodRows"></div>
   <button class="add-btn" onclick="addFoodRow()">+ افزودن خوراکی</button>
+  <div class="quick-actions" style="margin-top:12px">
+    <button type="button" class="quick-btn" onclick="toggleFrequentPanelCalc()">⭐ وعده‌های پرمصرف</button>
+    <button type="button" class="quick-btn" onclick="togglePastePanelCalc()">📋 پیست خوراکی‌ها</button>
+  </div>
+  <div id="frequentPanelCalc" style="display:none;margin-top:10px">
+    <div id="frequentMealsBoxCalc" class="frequent-box"></div>
+  </div>
+  <div id="pastePanelCalc" style="display:none;margin-top:10px">
+    <div class="paste-box">
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">متنی که از «کپی خوراکی‌ها» گرفتی را اینجا پیست کن:</div>
+      <textarea id="calcPasteBox" rows="2" placeholder="مثلاً: سیب قرمز، نان سنگک، پنیر معمولی"></textarea>
+      <button type="button" class="quick-btn" style="width:100%;margin-top:6px" onclick="pasteCalcFoods()">✓ تشخیص و افزودن</button>
+    </div>
+  </div>
 
   <div class="food-summary" id="foodSummary" style="display:none">
     <div class="fs-title">📋 خلاصه‌ی این وعده</div>
@@ -740,7 +759,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳.۸</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۴.۰</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -1487,6 +1506,17 @@ function g2j(gy,gm,gd){
   var jd=1+((days<186)?(days%31):((days-186)%30));
   return [jy,jm,jd];
 }
+function j2g(jy,jm,jd){
+  jy+=1595; let days=-355668+(365*jy)+(~~(jy/33)*8)+(~~(((jy%33)+3)/4))+jd+((jm<7)?(jm-1)*31:((jm-7)*30)+186);
+  let gy=400*(~~(days/146097)); days%=146097;
+  if(days>36524){ days--; gy+=100*(~~(days/36524)); days%=36524; if(days>=365)days++; }
+  gy+=4*(~~(days/1461)); days%=1461;
+  if(days>365){ gy+=~~((days-1)/365); days=(days-1)%365; }
+  let gd=days+1;
+  const sal_a=[0,31,((gy%4===0&&gy%100!==0)||(gy%400===0))?29:28,31,30,31,30,31,31,30,31,30,31];
+  let gm; for(gm=0;gm<13;gm++){ if(gd<=sal_a[gm])break; gd-=sal_a[gm]; }
+  return [gy,gm,gd];
+}
 const J_MONTHS=["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
 const J_DAYS=["شنبه","یک‌شنبه","دوشنبه","سه‌شنبه","چهارشنبه","پنج‌شنبه","جمعه"];
 function jalaliStr(d){
@@ -2042,25 +2072,52 @@ function renderPickedFoods(){
 }
 function removePicked(i){ window._planPicked.splice(i,1); renderPickedFoods(); }
 
-// ===== وعده‌های پرمصرف: پیدا کردن ترکیب‌های تکراری از تاریخچه =====
+// ===== وعده‌های پرمصرف: گروه‌بندی بر اساس غذاهای مشترک (تطبیق جزئی) =====
 function collectFrequentMeals(){
-  const combos={};
+  // همه‌ی وعده‌های دارای غذا را جمع کن
+  const allMeals=[];
   for(const key in planData){
     if(key==='_basal') continue;
     const list=planData[key]; if(!Array.isArray(list)) continue;
     list.forEach(m=>{
       if(!m.foods||m.foods.length===0) return;
-      // کلید ترکیب: نام غذاها (بدون ایموجی) مرتب‌شده
-      const names=m.foods.map(f=>f.replace(/^\s*[\p{Emoji}\u200d\ufe0f]+\s*/u,'').trim()).sort();
-      const comboKey=names.join(' + ');
-      if(!combos[comboKey]){
-        combos[comboKey]={foods:m.foods.slice(),count:0,carb:m.carb,insType:m.insType,insDose:m.insDose,type:m.type,label:names.join('، ')};
-      }
-      combos[comboKey].count++;
+      const names=m.foods.map(f=>f.replace(/^\s*[\p{Emoji}\u200d\ufe0f]+\s*/u,'').trim());
+      allMeals.push({foods:m.foods.slice(),names,carb:m.carb,insType:m.insType,insDose:m.insDose,type:m.type});
     });
   }
-  // فقط ترکیب‌هایی که بیش از یک بار تکرار شده‌اند، مرتب بر اساس تکرار
-  return Object.values(combos).filter(c=>c.count>=2).sort((a,b)=>b.count-a.count).slice(0,12);
+  if(allMeals.length===0) return [];
+  // گروه‌بندی: وعده‌هایی که حداقل یک غذای اصلی مشترک دارند
+  // «غذای اصلی» = غذایی که در کلمات کلیدی سنگین باشد یا طولانی‌ترین نام
+  const used=new Array(allMeals.length).fill(false);
+  const groups=[];
+  for(let i=0;i<allMeals.length;i++){
+    if(used[i]) continue;
+    const group=[allMeals[i]]; used[i]=true;
+    const baseSet=new Set(allMeals[i].names);
+    for(let j=i+1;j<allMeals.length;j++){
+      if(used[j]) continue;
+      // تعداد غذاهای مشترک
+      const shared=allMeals[j].names.filter(n=>baseSet.has(n)).length;
+      const minLen=Math.min(allMeals[i].names.length, allMeals[j].names.length);
+      // اگر حداقل نصف غذاهای وعده‌ی کوچک‌تر مشترک باشد (و حداقل ۱ غذا)
+      if(shared>=1 && shared>=Math.ceil(minLen/2)){
+        group.push(allMeals[j]); used[j]=true;
+      }
+    }
+    groups.push(group);
+  }
+  // برای هر گروه، نماینده = پرتکرارترین ترکیب، و شمارش = اندازه‌ی گروه
+  const result=groups.map(g=>{
+    // پرتکمل‌ترین وعده‌ی گروه را نماینده کن (بیشترین غذا)
+    const rep=g.slice().sort((a,b)=>b.foods.length-a.foods.length)[0];
+    // میانگین کرب و رایج‌ترین انسولین
+    const carbs=g.map(m=>parseFloat(m.carb)).filter(x=>!isNaN(x));
+    const avgCarb=carbs.length?Math.round(carbs.reduce((a,b)=>a+b,0)/carbs.length):rep.carb;
+    return {foods:rep.foods, count:g.length, carb:avgCarb||rep.carb, insType:rep.insType, insDose:rep.insDose, type:rep.type,
+            variants:g.length};
+  });
+  // فقط گروه‌هایی با حداقل ۲ عضو، مرتب بر اساس تکرار
+  return result.filter(r=>r.count>=2).sort((a,b)=>b.count-a.count).slice(0,15);
 }
 function renderFrequentMeals(){
   const box=document.getElementById('frequentMealsBox');
@@ -2106,6 +2163,83 @@ function togglePastePanel(){
   if(!panel) return;
   if(panel.style.display==='none'||!panel.style.display){ panel.style.display='block'; const fp=document.getElementById('frequentPanel'); if(fp)fp.style.display='none'; }
   else panel.style.display='none';
+}
+// ===== نسخه‌ی ماشین‌حساب: افزودن غذا به foodRows =====
+function addFoodToCalcRows(cat,item,amt,unit){
+  addFoodRow();
+  const rows=document.querySelectorAll('#foodRows .food-row');
+  const row=rows[rows.length-1];
+  if(!row) return;
+  const catSel=row.querySelector('.sel-cat'); catSel.value=cat; onCatChange(catSel);
+  const itemSel=row.querySelector('.sel-item'); itemSel.value=item; onItemChange(itemSel);
+  if(unit){ const us=row.querySelector('.sel-unit'); if([...us.options].some(o=>o.value===unit)) us.value=unit; }
+  const amtIn=row.querySelector('.in-amt'); if(amt) amtIn.value=amt;
+  // پاک کردن ردیف خالی پیش‌فرض اگر اولین ردیف خالی است
+  calcCarbs();
+}
+function findFoodInDB(name){
+  // پیدا کردن دسته و آیتم از روی نام
+  const nn=normalizeFa(name);
+  for(const e of SEARCH_INDEX){ if(e.norm===nn) return {cat:e.cat,item:e.item}; }
+  for(const e of SEARCH_INDEX){ if(e.norm.includes(nn)||nn.includes(e.norm)) return {cat:e.cat,item:e.item}; }
+  return null;
+}
+function loadFrequentMealCalc(i){
+  const f=window._freqMealsCalc[i]; if(!f) return;
+  document.getElementById('foodRows').innerHTML=''; rowCount=0;
+  // استفاده از matchNoteFoods برای تطبیق دقیق‌تر (همان موتور تشخیص غذا)
+  const namesText=f.foods.map(fd=>fd.replace(/^\s*[\p{Emoji}\u200d\ufe0f]+\s*/u,'').trim()).join('، ');
+  const res=matchNoteFoods(namesText);
+  res.items.forEach(it=>{
+    if(it.unmatched) return;
+    const units=DB[it.cat][it.item];
+    addFoodToCalcRows(it.cat,it.item,it.qty||1,it.unit||Object.keys(units)[0]);
+  });
+  if(document.querySelectorAll('#foodRows .food-row').length===0) addFoodRow();
+  document.getElementById('frequentPanelCalc').style.display='none';
+  document.getElementById('c-carb').scrollIntoView({behavior:'smooth'});
+}
+function toggleFrequentPanelCalc(){
+  const panel=document.getElementById('frequentPanelCalc');
+  if(!panel) return;
+  if(panel.style.display==='none'||!panel.style.display){
+    const freq=collectFrequentMeals();
+    window._freqMealsCalc=freq;
+    const box=document.getElementById('frequentMealsBoxCalc');
+    if(freq.length===0){ box.innerHTML='<div style="font-size:12px;color:var(--muted);padding:10px;text-align:center">هنوز وعده‌ی تکراری‌ای در برنامه‌ی هفتگی ثبت نشده.</div>'; }
+    else { box.innerHTML=freq.map((f,i)=>`
+      <div class="freq-meal" onclick="loadFrequentMealCalc(${i})">
+        <div class="freq-top"><span class="freq-label">${f.foods.join(' + ')}</span><span class="freq-count">${faDigits(f.count)}×</span></div>
+        ${f.carb?`<div class="freq-detail">کرب حدود ${faDigits(f.carb)}گ</div>`:''}
+      </div>`).join(''); }
+    panel.style.display='block';
+    const pp=document.getElementById('pastePanelCalc'); if(pp)pp.style.display='none';
+  } else panel.style.display='none';
+}
+function togglePastePanelCalc(){
+  const panel=document.getElementById('pastePanelCalc');
+  if(!panel) return;
+  if(panel.style.display==='none'||!panel.style.display){ panel.style.display='block'; const fp=document.getElementById('frequentPanelCalc'); if(fp)fp.style.display='none'; }
+  else panel.style.display='none';
+}
+function pasteCalcFoods(){
+  const ta=document.getElementById('calcPasteBox');
+  const text=ta.value.trim();
+  if(!text){ alert('اول متن خوراکی‌ها را پیست کن.'); return; }
+  const res=matchNoteFoods(text);
+  if(res.items.length===0){ alert('غذایی تشخیص داده نشد.'); return; }
+  let added=0, notFound=[];
+  res.items.forEach(it=>{
+    if(it.unmatched){ notFound.push(it.raw); return; }
+    const units=DB[it.cat][it.item];
+    addFoodToCalcRows(it.cat,it.item,it.qty||1,it.unit||Object.keys(units)[0]);
+    added++;
+  });
+  ta.value='';
+  let msg=`${faDigits(added)} غذا اضافه شد`;
+  if(notFound.length) msg+=`\nتشخیص داده نشد: ${notFound.join('، ')}`;
+  alert(msg);
+  document.getElementById('pastePanelCalc').style.display='none';
 }
 // ===== پیست کردن خوراکی‌های کپی‌شده =====
 function pastePlanFoods(){
@@ -2433,7 +2567,7 @@ function goEditReviewMeal(key,id){
   setTimeout(()=>{ try{ startEditMeal(key,id); }catch(e){} const el=document.getElementById('c-meals'); if(el) el.scrollIntoView({behavior:'smooth'}); },120);
 }
 // ===== سیستم فیلترهای مفید کالیبراسیون =====
-const CALIB_FILTER_DEFAULTS={ lowCarb:true, stableBG:false, useMedian:false, dayRange:0 };
+const CALIB_FILTER_DEFAULTS={ lowCarb:true, stableBG:false, useMedian:false, rangeMode:'all', rangeDays:0, rangeFrom:'', rangeTo:'' };
 function getCalibFilters(){
   try{ const f=JSON.parse(localStorage.getItem('calib_filters')||'null'); if(f) return Object.assign({},CALIB_FILTER_DEFAULTS,f); }catch(e){}
   return {...CALIB_FILTER_DEFAULTS};
@@ -2442,6 +2576,17 @@ function setCalibFilter(key,val){
   const f=getCalibFilters(); f[key]=val;
   localStorage.setItem('calib_filters',JSON.stringify(f));
   updateCalibration();
+}
+function setRangeMode(mode){
+  const f=getCalibFilters();
+  f.rangeMode=mode;
+  if(mode==='days' && !f.rangeDays) f.rangeDays=7;
+  localStorage.setItem('calib_filters',JSON.stringify(f));
+  updateCalibration();
+}
+function faToEn(s){
+  // تبدیل ارقام فارسی به انگلیسی + نرمال کردن جداکننده
+  return String(s).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^\d\/]/g,'').trim();
 }
 function getLowCarbCut(){
   return getCalibFilters().lowCarb ? 20 : 0;
@@ -2458,17 +2603,26 @@ function collectCalibMeals(){
       if(!latestDay || d>latestDay) latestDay=d;
     }
   }
-  let rangeCutoff=null;
-  if(filters.dayRange>0 && latestDay){
+  let rangeCutoff=null, rangeStart=null, rangeEnd=null;
+  if(filters.rangeMode==='days' && filters.rangeDays>0 && latestDay){
     rangeCutoff=new Date(latestDay);
-    rangeCutoff.setDate(rangeCutoff.getDate()-(filters.dayRange-1));
+    rangeCutoff.setDate(rangeCutoff.getDate()-(filters.rangeDays-1));
+  } else if(filters.rangeMode==='dates' && filters.rangeFrom && filters.rangeTo){
+    // بازه‌ی تاریخ شمسی → میلادی
+    const f=filters.rangeFrom.split('/').map(Number), t=filters.rangeTo.split('/').map(Number);
+    if(f.length===3 && t.length===3){
+      const gf=j2g(f[0],f[1],f[2]), gt=j2g(t[0],t[1],t[2]);
+      rangeStart=new Date(gf[0],gf[1]-1,gf[2]);
+      rangeEnd=new Date(gt[0],gt[1]-1,gt[2],23,59,59);
+    }
   }
   for(const key in planData){
     if(key==='_basal') continue;
     const list=planData[key];
     if(!Array.isArray(list)) continue;
-    // فیلتر بازه‌ی زمانی: روزهای قدیمی‌تر از بازه کنار می‌روند
+    // فیلتر بازه‌ی زمانی
     if(rangeCutoff){ const d=new Date(key); if(d<rangeCutoff) continue; }
+    if(rangeStart&&rangeEnd){ const d=new Date(key); if(d<rangeStart||d>rangeEnd) continue; }
     list.forEach(m=>{
       if(m.excludeCalib) return; // کاربر این وعده را از محاسبه کنار گذاشته
       const carb=parseFloat(m.carb), ins=parseFloat(m.insDose);
@@ -2610,10 +2764,28 @@ function updateCalibration(){
       <div class="filter-name" style="margin-bottom:6px">📅 بازه‌ی زمانی محاسبه</div>
       <div class="filter-desc" style="margin-bottom:8px">اگر رژیم گرفته‌ای یا وزنت تغییر کرده، I:C اخیرت ممکن است با کل دوره فرق کند. بازه را عوض کن و تفاوت را ببین.</div>
       <div class="range-btns">
-        <button class="range-btn${filters.dayRange===0?' active':''}" onclick="setCalibFilter('dayRange',0)">کل دوره</button>
-        <button class="range-btn${filters.dayRange===14?' active':''}" onclick="setCalibFilter('dayRange',14)">۱۴ روز اخیر</button>
-        <button class="range-btn${filters.dayRange===7?' active':''}" onclick="setCalibFilter('dayRange',7)">۷ روز اخیر</button>
+        <button class="range-btn${filters.rangeMode==='all'?' active':''}" onclick="setRangeMode('all')">کل دوره</button>
+        <button class="range-btn${filters.rangeMode==='days'?' active':''}" onclick="setRangeMode('days')">چند روز اخیر</button>
+        <button class="range-btn${filters.rangeMode==='dates'?' active':''}" onclick="setRangeMode('dates')">بازه‌ی تاریخ</button>
       </div>
+      ${filters.rangeMode==='days'?`
+        <div class="range-input-row">
+          <span style="font-size:12.5px">آخرین</span>
+          <input type="number" id="rangeDaysInput" min="1" max="365" value="${filters.rangeDays||7}" onchange="setCalibFilter('rangeDays',parseInt(this.value)||7)" style="width:70px">
+          <span style="font-size:12.5px">روز</span>
+        </div>`:''}
+      ${filters.rangeMode==='dates'?`
+        <div class="range-dates">
+          <div>
+            <label style="font-size:11px;color:var(--muted)">از تاریخ (شمسی)</label>
+            <input type="text" id="rangeFromInput" placeholder="۱۴۰۵/۰۴/۲۹" value="${filters.rangeFrom||''}" onchange="setCalibFilter('rangeFrom',faToEn(this.value))">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--muted)">تا تاریخ (شمسی)</label>
+            <input type="text" id="rangeToInput" placeholder="۱۴۰۵/۰۵/۰۸" value="${filters.rangeTo||''}" onchange="setCalibFilter('rangeTo',faToEn(this.value))">
+          </div>
+        </div>
+        <div style="font-size:10.5px;color:var(--muted);margin-top:5px">قالب: سال/ماه/روز — مثلاً ۱۴۰۵/۰۵/۰۱</div>`:''}
     </div>
   </div>`;
   body.innerHTML=`
