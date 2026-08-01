@@ -214,6 +214,24 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .range-dates{display:flex;gap:8px;margin-top:10px}
 .range-dates>div{flex:1}
 .range-dates input{width:100%;margin-top:3px;direction:ltr;text-align:center}
+.cal-tip{background:rgba(224,163,85,.1);border:1px solid var(--amber);border-radius:10px;padding:11px;font-size:12px;line-height:1.9;color:var(--text)}
+.cal-suggest{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:12px}
+.cal-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.cal-table td{padding:5px 4px;border-bottom:1px solid var(--line)}
+.cal-table td:last-child{text-align:left;color:var(--teal);direction:ltr}
+.cal-warn-spread{font-size:11px;color:var(--amber);margin-top:8px;line-height:1.8}
+.cal-offset-row{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:12px}
+.cal-offset-input input{width:80px;background:var(--panel);border:1px solid var(--teal);border-radius:8px;padding:9px;color:var(--text);font-family:inherit;font-size:16px;text-align:center;direction:ltr}
+.cal-display-mode{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:12px}
+.mode-btns{display:flex;gap:6px}
+.mode-btn{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:9px 4px;font-family:inherit;font-size:11.5px;cursor:pointer}
+.mode-btn.active{border-color:var(--teal);color:var(--teal);background:rgba(63,185,163,.12);font-weight:700}
+.cal-compare-title{font-size:12.5px;font-weight:600;margin-top:14px;margin-bottom:8px}
+.cal-triple th{font-size:11px;color:var(--muted);padding:5px 4px;border-bottom:1px solid var(--line);text-align:center}
+.cal-triple td{text-align:center}
+.cal-trust{border-radius:10px;padding:11px;margin-top:12px;font-size:12px;line-height:1.8}
+.cal-trust.good{background:rgba(63,185,163,.1);border:1px solid var(--teal)}
+.cal-trust.meh{background:rgba(224,163,85,.1);border:1px solid var(--amber)}
 .quick-actions{display:flex;gap:8px;margin-bottom:12px}
 .quick-btn{flex:1;background:var(--panel-2);border:1px solid var(--teal);color:var(--teal);border-radius:9px;padding:9px 6px;font-family:inherit;font-size:12.5px;cursor:pointer}
 .quick-btn:hover{background:rgba(63,185,163,.1)}
@@ -745,6 +763,15 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
 </div>
 <div id="cgmResult"></div>
+<div class="card coll closed" id="c-cgmcal">
+  <h2 onclick="toggleCard('c-cgmcal')"><span>🎯 کالیبراسیون CGM با گلوکومتر</span></h2>
+  <div class="card-body">
+    <div style="font-size:12.5px;color:var(--muted);margin-bottom:12px;line-height:1.9">
+      دستگاه CGM با گلوکومتر (قند خون انگشتی) کمی تفاوت دارد. این بخش تفاوت را از روی اندازه‌گیری‌های دستی‌ات پیدا می‌کند و یک «افست» پیشنهاد می‌دهد تا قند CGM به واقعیت نزدیک‌تر شود.
+    </div>
+    <div id="cgmCalBody"></div>
+  </div>
+</div>
 <div class="disclaimer">
   <b>یادداشت:</b> این تحلیل تصویری کلی از کنترل قند می‌دهد و آموزشی است. تفسیر نهایی و هر تغییر درمانی با پزشک است. فایل شما فقط در همین مرورگر پردازش می‌شود و جایی ارسال نمی‌شود.
 </div>
@@ -759,7 +786,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۴.۱</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۴.۲</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -3029,6 +3056,7 @@ function renderCGMResult(s){
 
   document.getElementById('cgmResult').innerHTML=html;
   buildAGP();
+  renderCgmCal();
   restoreCollState();
 }
 
@@ -3464,6 +3492,163 @@ function processBGExercise(bgRows,exRows){
 }
 function loadBG(){ try{ return JSON.parse(localStorage.getItem(BGKEY)||'[]'); }catch(e){ return []; } }
 function loadExercise(){ try{ return JSON.parse(localStorage.getItem(EXKEY)||'[]'); }catch(e){ return []; } }
+
+// ===== سیستم کالیبراسیون/افست CGM =====
+// حالت نمایش قند: 'cgm' (خام) | 'offset' (CGM+افست) | 'bg' (گلوکومتر)
+const CGMCAL_KEY='cgm_cal_v1';
+function getCgmCal(){
+  const def={ offset:0, autoOffset:0, displayMode:'cgm', trusted:false };
+  try{ const c=JSON.parse(localStorage.getItem(CGMCAL_KEY)||'null'); if(c) return Object.assign({},def,c); }catch(e){}
+  return {...def};
+}
+function setCgmCal(key,val){
+  const c=getCgmCal(); c[key]=val;
+  localStorage.setItem(CGMCAL_KEY,JSON.stringify(c));
+}
+// قند CGM را با در نظر گرفتن افست، تبدیل به مقدار نمایشی می‌کند
+function applyOffset(cgmVal){
+  const c=getCgmCal();
+  const v=parseFloat(cgmVal);
+  if(isNaN(v)) return cgmVal;
+  return Math.round(v + (c.offset||0));
+}
+// پیدا کردن نزدیک‌ترین قند CGM به یک زمان مشخص (برای مقایسه با گلوکومتر)
+function cgmValueAtTime(dateObj, windowMin=15){
+  if(!window._cgmReadings||!window._cgmReadings.length||!dateObj) return null;
+  let best=null, bestGap=windowMin*60000+1;
+  window._cgmReadings.forEach(r=>{
+    if(!r.t||!r.t.dateObj) return;
+    const gap=Math.abs(r.t.dateObj-dateObj);
+    if(gap<bestGap){ bestGap=gap; best=r.glu; }
+  });
+  return best;
+}
+// استخراج جفت‌های (گلوکومتر، CGM هم‌زمان) از داده‌ی قند دستی
+function collectCgmBgPairs(){
+  const bg=loadBG();
+  const pairs=[];
+  bg.forEach(b=>{
+    const d=new Date(b.iso);
+    const cgmVal=cgmValueAtTime(d,15);
+    if(cgmVal!==null){
+      // آیا نزدیک وعده است؟ (تا ۲.۵ ساعت بعد از یک وعده)
+      let afterMeal=false;
+      for(const key in planData){
+        if(key==='_basal') continue;
+        const list=planData[key]; if(!Array.isArray(list)) continue;
+        list.forEach(m=>{
+          if(!m.time) return;
+          const parts=key.split('-').map(Number);
+          const [hh,mm]=m.time.split(':').map(Number);
+          const mt=new Date(parts[0],parts[1]-1,parts[2],hh||0,mm||0);
+          const dm=(d-mt)/60000;
+          if(dm>=0 && dm<=150) afterMeal=true;
+        });
+      }
+      pairs.push({time:b.iso, bg:b.glu, cgm:Math.round(cgmVal), diff:Math.round(cgmVal-b.glu), afterMeal});
+    }
+  });
+  return pairs;
+}
+// محاسبه‌ی افست پیشنهادی از جفت‌ها
+function computeSuggestedOffset(){
+  const pairs=collectCgmBgPairs();
+  if(pairs.length<3) return null;
+  // افست = میانگین (گلوکومتر منهای CGM) = چقدر باید به CGM اضافه شود تا به گلوکومتر برسد
+  const diffs=pairs.map(p=>p.bg-p.cgm);
+  const mean=diffs.reduce((a,b)=>a+b,0)/diffs.length;
+  const sorted=[...diffs].sort((a,b)=>a-b);
+  const median=sorted.length%2?sorted[Math.floor(sorted.length/2)]:(sorted[sorted.length/2-1]+sorted[sorted.length/2])/2;
+  const afterMeal=pairs.filter(p=>p.afterMeal).map(p=>p.bg-p.cgm);
+  const fasting=pairs.filter(p=>!p.afterMeal).map(p=>p.bg-p.cgm);
+  const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+  return {
+    n:pairs.length, mean:Math.round(mean), median:Math.round(median),
+    afterMealAvg:afterMeal.length?Math.round(avg(afterMeal)):null, afterMealN:afterMeal.length,
+    fastingAvg:fasting.length?Math.round(avg(fasting)):null, fastingN:fasting.length,
+    pairs, spread:Math.round(Math.max(...diffs)-Math.min(...diffs))
+  };
+}
+function renderCgmCal(){
+  const box=document.getElementById('cgmCalBody');
+  if(!box) return;
+  const cal=getCgmCal();
+  const sug=computeSuggestedOffset();
+  let html='';
+  // بخش ۱: راهنما درباره‌ی زمان مناسب اندازه‌گیری
+  html+=`<div class="cal-tip">💡 <b>نکته‌ی مهم:</b> تفاوت CGM و گلوکومتر <b>بعد از غذا</b> (۳۰ تا ۹۰ دقیقه) بیشترین مقدار است، چون قند سریع تغییر می‌کند و CGM با تأخیر آن را نشان می‌دهد. برای کالیبراسیون بهتر، بیشتر <b>بعد از وعده‌ها</b> گلوکومتر بزن و در اپ CGM ثبت کن.</div>`;
+  if(!sug){
+    html+=`<div style="font-size:12.5px;color:var(--muted);padding:12px;text-align:center;background:var(--panel-2);border-radius:10px;margin-top:10px">
+      برای محاسبه‌ی افست، حداقل <b>۳ اندازه‌گیری دستی گلوکومتر</b> لازم است که هم‌زمان با CGM ثبت شده باشند.<br><br>
+      قند خون انگشتی را در اپ CGM ثبت کن، سپس فایل لاگ را وارد کن تا اینجا مقایسه شود.
+    </div>`;
+    box.innerHTML=html;
+    return;
+  }
+  // بخش ۲: افست پیشنهادی
+  const activeOffset = cal.offset||0;
+  html+=`<div class="cal-suggest">
+    <div style="font-size:12.5px;margin-bottom:10px">بر اساس <b>${faDigits(sug.n)}</b> اندازه‌گیری هم‌زمان:</div>
+    <table class="cal-table">
+      <tr><td>میانگین تفاوت (گلوکومتر − CGM)</td><td><b>${sug.mean>0?'+':''}${faDigits(sug.mean)}</b></td></tr>
+      <tr><td>میانه‌ی تفاوت</td><td>${sug.median>0?'+':''}${faDigits(sug.median)}</td></tr>
+      ${sug.afterMealAvg!==null?`<tr><td>بعد از غذا (${faDigits(sug.afterMealN)} مورد)</td><td>${sug.afterMealAvg>0?'+':''}${faDigits(sug.afterMealAvg)}</td></tr>`:''}
+      ${sug.fastingAvg!==null?`<tr><td>ناشتا (${faDigits(sug.fastingN)} مورد)</td><td>${sug.fastingAvg>0?'+':''}${faDigits(sug.fastingAvg)}</td></tr>`:''}
+      <tr><td>پراکندگی (بیشترین − کمترین)</td><td>${faDigits(sug.spread)}</td></tr>
+    </table>
+    ${sug.spread>30?`<div class="cal-warn-spread">⚠ پراکندگی زیاد است (${faDigits(sug.spread)} واحد). یعنی تفاوت ثابت نیست و افست یک تقریب است، نه عدد دقیق. این بیشتر به‌خاطر تأخیر زمانی CGM بعد از غذاست.</div>`:''}
+  </div>`;
+  // بخش ۳: افست فعال (قابل ویرایش)
+  html+=`<div class="cal-offset-row">
+    <div>
+      <div style="font-size:12.5px;font-weight:600">افست فعال (به قند CGM اضافه می‌شود)</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">پیشنهاد: ${sug.median>0?'+':''}${faDigits(sug.median)} — می‌توانی تغییرش دهی</div>
+    </div>
+    <div class="cal-offset-input">
+      <input type="number" id="cgmOffsetInput" value="${activeOffset}" step="1" onchange="setCgmCal('offset',parseInt(this.value)||0);renderCgmCal();updateCalibration();runCGMAnalysisRefresh();">
+    </div>
+  </div>
+  <button class="quick-btn" style="width:100%;margin-top:8px" onclick="setCgmCal('offset',${sug.median});renderCgmCal();updateCalibration();runCGMAnalysisRefresh();">استفاده از افست پیشنهادی (${sug.median>0?'+':''}${faDigits(sug.median)})</button>`;
+  // بخش ۴: انتخاب حالت نمایش
+  html+=`<div class="cal-display-mode">
+    <div style="font-size:12.5px;font-weight:600;margin-bottom:8px">🖥 در همه‌ی محاسبات و نمایش‌ها، کدام قند را ببینم؟</div>
+    <div class="mode-btns">
+      <button class="mode-btn${cal.displayMode==='cgm'?' active':''}" onclick="setCgmCal('displayMode','cgm');renderCgmCal();updateCalibration();runCGMAnalysisRefresh();">قند CGM خام</button>
+      <button class="mode-btn${cal.displayMode==='offset'?' active':''}" onclick="setCgmCal('displayMode','offset');renderCgmCal();updateCalibration();runCGMAnalysisRefresh();">CGM + افست</button>
+      <button class="mode-btn${cal.displayMode==='bg'?' active':''}" onclick="setCgmCal('displayMode','bg');renderCgmCal();updateCalibration();runCGMAnalysisRefresh();">فقط گلوکومتر</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.8">
+      ${cal.displayMode==='cgm'?'الان قند خام CGM را می‌بینی. برای مقایسه، جدول زیر هر سه حالت را نشان می‌دهد.':''}
+      ${cal.displayMode==='offset'?'الان قند CGM + افست را می‌بینی (نزدیک‌تر به گلوکومتر).':''}
+      ${cal.displayMode==='bg'?'الان فقط اندازه‌گیری‌های گلوکومتر را می‌بینی (کمترین تعداد داده، ولی دقیق‌ترین).':''}
+    </div>
+  </div>`;
+  // بخش ۵: جدول مقایسه‌ی سه‌گانه (اعتمادسنجی افست)
+  html+=`<div class="cal-compare-title">مقایسه‌ی سه‌گانه (برای اعتمادسنجی افست):</div>
+    <table class="cal-table cal-triple">
+      <thead><tr><th>زمان</th><th>گلوکومتر</th><th>CGM خام</th><th>CGM+افست</th></tr></thead><tbody>`;
+  const jShort=iso=>{ const d=new Date(iso); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); return `${faDigits(j[2])} ${J_MONTHS[j[1]-1]} ${faDigits(String(d.getHours()).padStart(2,'0'))}:${faDigits(String(d.getMinutes()).padStart(2,'0'))}`; };
+  sug.pairs.slice().reverse().forEach(p=>{
+    const withOffset=p.cgm+activeOffset;
+    const match=Math.abs(withOffset-p.bg)<=10;
+    html+=`<tr><td style="font-size:10.5px">${jShort(p.time)}</td><td><b>${faDigits(p.bg)}</b></td><td>${faDigits(p.cgm)}</td><td style="color:${match?'var(--teal)':'var(--text)'}">${faDigits(withOffset)}${match?' ✓':''}</td></tr>`;
+  });
+  html+=`</tbody></table>`;
+  // اعتمادسنجی: اگر با افست، اکثر موارد نزدیک گلوکومتر شدند
+  const withOffsetMatches=sug.pairs.filter(p=>Math.abs(p.cgm+activeOffset-p.bg)<=10).length;
+  const matchPct=Math.round(withOffsetMatches/sug.pairs.length*100);
+  if(activeOffset!==0){
+    html+=`<div class="cal-trust ${matchPct>=70?'good':'meh'}">
+      با افست فعلی، <b>${faDigits(matchPct)}٪</b> اندازه‌گیری‌ها تا ۱۰ واحدِ گلوکومتر نزدیک شدند.
+      ${matchPct>=70?'✓ افست قابل‌اعتماد به نظر می‌رسد — می‌توانی حالت نمایش را روی «CGM + افست» بگذاری.':'هنوز تطابق کامل نیست؛ چند اندازه‌گیری دیگر بعد از غذا اضافه کن.'}
+    </div>`;
+  }
+  box.innerHTML=html;
+}
+// رفرش تحلیل CGM بعد از تغییر افست/حالت
+function runCGMAnalysisRefresh(){
+  if(window._cgmReadings&&window._cgmReadings.length>=10){ runCGMAnalysis(); }
+}
 function processLog(mealRows,insRows){
   // پارس انسولین‌ها — جدا کردن پایه (Toujeo/Lantus/...) از رپید (Apidra/...)
   let insList=[]; let basalList=[];
@@ -3657,6 +3842,8 @@ function matchNoteFoods(note){
 function cgmStatsForMeal(mealTime){
   // از داده‌های CGM، قند قبل/بعد/پیک/کمترین را حول زمان وعده پیدا کن
   if(!window._cgmReadings || !mealTime) return null;
+  const cal=getCgmCal();
+  const off = cal.displayMode==='offset' ? (cal.offset||0) : 0;
   const mt=mealTime.dateObj.getTime();
   const before=[], after2h=[], window4h=[];
   window._cgmReadings.forEach(r=>{
@@ -3666,10 +3853,10 @@ function cgmStatsForMeal(mealTime){
     if(diff>=0 && diff<=240) window4h.push(r.glu);     // تا ۴ ساعت بعد
   });
   if(before.length===0 && after2h.length===0) return null;
-  const bgBefore = before.length? Math.round(before[before.length-1]) : '';
-  const bgAfter = after2h.length? Math.round(after2h[after2h.length-1]) : '';
-  const peak = window4h.length? Math.round(Math.max(...window4h)) : '';
-  const trough = window4h.length? Math.round(Math.min(...window4h)) : '';
+  const bgBefore = before.length? Math.round(before[before.length-1])+off : '';
+  const bgAfter = after2h.length? Math.round(after2h[after2h.length-1])+off : '';
+  const peak = window4h.length? Math.round(Math.max(...window4h))+off : '';
+  const trough = window4h.length? Math.round(Math.min(...window4h))+off : '';
   return {bgBefore,bgAfter,peak,trough};
 }
 async function fillGlucoseFromCGM(){
