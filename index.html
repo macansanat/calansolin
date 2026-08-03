@@ -786,7 +786,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۴.۴</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۴.۶</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2465,8 +2465,9 @@ function collectReviewMeals(){
       let issue=null;
       if(hasIns && !hasFood){
         issue={type:'no-food', msg:'انسولین زده شده ولی غذا ثبت نشده'};
-      } else if(hasFood && !hasIns){
-        issue={type:'no-ins', msg:'غذا ثبت شده ولی انسولین ثبت نشده'};
+      } else if(hasFood && !hasIns && ['صبحانه','ناهار','شام'].includes(m.type)){
+        // فقط وعده‌های اصلی که انسولین ندارند مهم‌اند — میان‌وعده‌ها طبیعتاً انسولین ندارند
+        issue={type:'no-ins', msg:'وعده‌ی اصلی است ولی انسولین ثبت نشده'};
       } else if(hasFood && ['صبحانه','ناهار','شام'].includes(m.type)){
         const hasHeavy=heavyWords.some(w=>foodsTxt.includes(w));
         const hasLight=lightWords.some(w=>foodsTxt.includes(w));
@@ -2630,10 +2631,22 @@ function collectCalibMeals(){
       if(!latestDay || d>latestDay) latestDay=d;
     }
   }
+  // مبنای «چند روز اخیر» باید جدیدترین روزی باشد که قند CGM هم دارد،
+  // وگرنه بازه به روزهایی اشاره می‌کند که قند ندارند و هیچ وعده‌ای موفق نمی‌شود
+  let latestWithCgm=latestDay;
+  if(window._cgmReadings && window._cgmReadings.length){
+    let cgmMax=null;
+    window._cgmReadings.forEach(r=>{ if(r.t&&r.t.dateObj){ if(!cgmMax||r.t.dateObj>cgmMax) cgmMax=r.t.dateObj; } });
+    if(cgmMax){
+      const cgmMaxDay=new Date(cgmMax.getFullYear(),cgmMax.getMonth(),cgmMax.getDate());
+      if(latestDay && cgmMaxDay<latestDay) latestWithCgm=cgmMaxDay;
+    }
+  }
   let rangeCutoff=null, rangeStart=null, rangeEnd=null;
-  if(filters.rangeMode==='days' && filters.rangeDays>0 && latestDay){
-    rangeCutoff=new Date(latestDay);
+  if(filters.rangeMode==='days' && filters.rangeDays>0 && latestWithCgm){
+    rangeCutoff=new Date(latestWithCgm);
     rangeCutoff.setDate(rangeCutoff.getDate()-(filters.rangeDays-1));
+    rangeEnd=new Date(latestWithCgm.getFullYear(),latestWithCgm.getMonth(),latestWithCgm.getDate(),23,59,59);
   } else if(filters.rangeMode==='dates' && filters.rangeFrom && filters.rangeTo){
     // بازه‌ی تاریخ شمسی → میلادی
     const f=filters.rangeFrom.split('/').map(Number), t=filters.rangeTo.split('/').map(Number);
@@ -2648,8 +2661,8 @@ function collectCalibMeals(){
     const list=planData[key];
     if(!Array.isArray(list)) continue;
     // فیلتر بازه‌ی زمانی
-    if(rangeCutoff){ const d=new Date(key); if(d<rangeCutoff) continue; }
-    if(rangeStart&&rangeEnd){ const d=new Date(key); if(d<rangeStart||d>rangeEnd) continue; }
+    if(rangeCutoff){ const d=new Date(key); if(d<rangeCutoff) continue; if(rangeEnd && d>rangeEnd) continue; }
+    if(rangeStart&&rangeEnd&&!rangeCutoff){ const d=new Date(key); if(d<rangeStart||d>rangeEnd) continue; }
     list.forEach(m=>{
       if(m.excludeCalib) return; // کاربر این وعده را از محاسبه کنار گذاشته
       const carb=parseFloat(m.carb), ins=parseFloat(m.insDose);
