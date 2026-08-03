@@ -786,7 +786,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۴.۳</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۴.۴</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2768,7 +2768,22 @@ function updateCalibration(){
       if(needs.length){
         statusMsg+='، ولی برای کالیبراسیون کامل نیستند:<br>• '+needs.join('<br>• ');
         if(missingBG>0){
-          statusMsg+='<br><br>💡 <b>راه سریع:</b> فایل قند CGM را در تب «تحلیل CGM» وارد کن، سپس دوباره فایل لاگ را وارد کن تا قند وعده‌ها خودکار پر شود. یا قند قبل/بعد را دستی در «ویرایش» هر وعده وارد کن.';
+          // بررسی: آیا وعده‌های بدون‌قند خارج از بازه‌ی داده‌ی CGM هستند؟
+          let cgmRange=null;
+          if(window._cgmReadings && window._cgmReadings.length){
+            let mn=null,mx=null;
+            window._cgmReadings.forEach(r=>{ if(r.t&&r.t.dateObj){ if(!mn||r.t.dateObj<mn)mn=r.t.dateObj; if(!mx||r.t.dateObj>mx)mx=r.t.dateObj; } });
+            if(mn&&mx) cgmRange={mn,mx};
+          }
+          // جدیدترین روز وعده
+          let latestMealDay=null;
+          for(const k in planData){ if(k==='_basal')continue; if(Array.isArray(planData[k])&&planData[k].length){ const d=new Date(k); if(!latestMealDay||d>latestMealDay)latestMealDay=d; } }
+          const toJ=d=>{ const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); return `${faDigits(j[2])} ${J_MONTHS[j[1]-1]}`; };
+          if(cgmRange && latestMealDay && latestMealDay>cgmRange.mx){
+            statusMsg+=`<br><br>⚠ <b>علت اصلی:</b> داده‌ی قند CGM تو فقط تا <b>${toJ(cgmRange.mx)}</b> است، ولی وعده‌های اخیرت تا <b>${toJ(latestMealDay)}</b> ثبت شده‌اند. برای روزهایی که داده‌ی قند نیست، I:C محاسبه نمی‌شود.<br><br>💡 <b>راه‌حل:</b> فایل قند CGM جدیدتر (بعد از ${toJ(cgmRange.mx)}) را وارد کن، یا بازه‌ی زمانی را روی «کل دوره» بگذار تا روزهای دارای قند حساب شوند.`;
+          } else {
+            statusMsg+='<br><br>💡 <b>راه سریع:</b> فایل قند CGM را در تب «تحلیل CGM» وارد کن، سپس دوباره فایل لاگ را وارد کن تا قند وعده‌ها خودکار پر شود. یا قند قبل/بعد را دستی در «ویرایش» هر وعده وارد کن.';
+          }
         }
       }
     }
