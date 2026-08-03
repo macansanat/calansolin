@@ -786,7 +786,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۴.۲</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۴.۳</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -3421,9 +3421,10 @@ function exportAGPReport(){
 /* ===== وارد کردن فایل لاگ (وعده + انسولین) ===== */
 let _logData=null;
 function parseLogTime(str){
-  // '26-07-2026 08:35 GMT+3:30' → Date + اجزا
+  // '26-07-2026 08:35 GMT+3:30' یا '28/07/2026 18:57' → Date + اجزا
   if(!str) return null;
-  const m=String(str).match(/(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2})/);
+  // هر دو جداکننده‌ی «-» و «/» را قبول کن
+  const m=String(str).match(/(\d{2})[-\/](\d{2})[-\/](\d{4})\s+(\d{2}):(\d{2})/);
   if(!m) return null;
   const [_,dd,MM,yyyy,hh,mm]=m;
   return {y:+yyyy,mo:+MM,d:+dd,h:+hh,min:+mm,hhmm:hh+':'+mm,dateObj:new Date(+yyyy,+MM-1,+dd,+hh,+mm)};
