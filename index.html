@@ -538,6 +538,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <div class="formula-note" style="margin-top:6px">فایل خروجی اپ CGM (شیت‌های Meal و Insulin) را وارد کن. برنامه وعده‌ها و انسولین‌ها را نمایش می‌دهد و می‌توانی انتخاب کنی کدام‌ها در برنامه‌ی هفتگی ثبت شوند.</div>
     <div class="formula-note" style="margin-top:4px;color:var(--amber)">💡 ترتیب درست: اول فایل قند را در تب «تحلیل CGM» وارد کن، بعد فایل لاگ را — تا قند وعده‌ها خودکار پر شود.</div>
     <button class="reset-btn" style="width:100%;margin-top:8px;border-color:var(--teal);color:var(--teal)" onclick="fillGlucoseFromCGM()">🩸 پر کردن قند وعده‌ها از فایل CGM</button>
+    <div class="formula-note" style="margin-top:4px">↑ اگر <b>سنسور جدیدی</b> اضافه کردی (بعد از اینکه لاگ را وارد کرده بودی)، این دکمه را بزن تا قند وعده‌های اخیر هم پر شود — بدون نیاز به وارد کردن دوباره‌ی لاگ.</div>
     <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
       <button class="reset-btn" onclick="resetDayMeals()">🗑 پاک کردن وعده‌های این روز</button>
       <button class="reset-btn danger" onclick="resetAllMeals()">⚠ پاک کردن کل برنامه‌ی هفتگی</button>
@@ -786,7 +787,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۴.۶</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۴.۸</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2893,6 +2894,8 @@ function handleCGMFile(input){
       const rows=XLSX.utils.sheet_to_json(ws,{header:1});
       analyzeCGM(rows);
       renderCGMFilesList();
+      // اگر وعده‌هایی بدون قند وجود دارند، خودکار از CGM جدید پر کن
+      autoFillGlucoseIfNeeded();
       document.getElementById('cgmFile').value='';
       document.getElementById('cgmUploadText').textContent='📂 وارد کردن فایل سنسور دیگر';
     }catch(err){
@@ -3265,6 +3268,43 @@ function mealsInsulinReport(){
   if(rows.length===0 && basalRows.length===0 && loadBG().length===0 && loadExercise().length===0) return '';
 
   let html='';
+  // ===== خلاصه‌ی انسولین: میانگین سریع‌اثر هر وعده + پایه‌ی روزانه + نوع =====
+  const rapidByType={ 'صبحانه':[], 'ناهار':[], 'شام':[], 'میان‌وعده':[] };
+  const rapidTypes=new Set();
+  rows.forEach(r=>{
+    const dose=parseFloat(r.insDose);
+    if(!isNaN(dose) && dose>0){
+      if(r.insType) rapidTypes.add(r.insType);
+      const cat = ['صبحانه','ناهار','شام'].includes(r.type) ? r.type : 'میان‌وعده';
+      rapidByType[cat].push(dose);
+    }
+  });
+  const basalDoses=basalRows.map(b=>parseFloat(b.dose)).filter(x=>!isNaN(x)&&x>0);
+  const basalTypes=new Set(basalRows.map(b=>b.type).filter(Boolean));
+  const avgArr=a=>a.length?(a.reduce((x,y)=>x+y,0)/a.length):null;
+  const fmtD=v=>v===null?'—':faDigits(v.toFixed(1));
+  const anyRapid = Object.values(rapidByType).some(a=>a.length);
+  if(anyRapid || basalDoses.length){
+    html+=`<div class="box" style="margin-bottom:16px"><h2>خلاصه‌ی انسولین</h2>
+      <div class="agp-note">میانگین دوز انسولین بر اساس وعده‌ها و روزهای ثبت‌شده — برای دید کلی پزشک.</div>
+      <table class="rtbl"><thead><tr><th>مورد</th><th>میانگین دوز</th><th>تعداد</th></tr></thead><tbody>`;
+    if(anyRapid){
+      const rapidName = rapidTypes.size ? Array.from(rapidTypes).join('، ') : 'سریع‌اثر';
+      html+=`<tr><td colspan="3" style="background:#eef;font-weight:700">انسولین سریع‌اثر (${rapidName})</td></tr>`;
+      [['صبحانه','صبحانه'],['ناهار','ناهار'],['شام','شام'],['میان‌وعده','میان‌وعده']].forEach(([k,label])=>{
+        const arr=rapidByType[k];
+        if(arr.length) html+=`<tr><td>${label}</td><td>${fmtD(avgArr(arr))} واحد</td><td>${faDigits(arr.length)} بار</td></tr>`;
+      });
+      const allMain=[...rapidByType['صبحانه'],...rapidByType['ناهار'],...rapidByType['شام']];
+      if(allMain.length) html+=`<tr style="font-weight:600"><td>میانگین هر وعده‌ی اصلی</td><td>${fmtD(avgArr(allMain))} واحد</td><td>${faDigits(allMain.length)} وعده</td></tr>`;
+    }
+    if(basalDoses.length){
+      const basalName = basalTypes.size ? Array.from(basalTypes).join('، ') : 'پایه';
+      html+=`<tr><td colspan="3" style="background:#eef;font-weight:700">انسولین پایه (${basalName})</td></tr>`;
+      html+=`<tr style="font-weight:600"><td>میانگین روزانه</td><td>${fmtD(avgArr(basalDoses))} واحد</td><td>${faDigits(basalDoses.length)} روز</td></tr>`;
+    }
+    html+=`</tbody></table></div>`;
+  }
   // جدول وعده‌ها و انسولین وعده‌ای
   if(rows.length){
     html+=`<div class="box" style="margin-bottom:16px"><h2>وعده‌های غذایی و انسولین تزریقی</h2>
@@ -3597,6 +3637,56 @@ function computeSuggestedOffset(){
     fastingAvg:fasting.length?Math.round(avg(fasting)):null, fastingN:fasting.length,
     pairs, spread:Math.round(Math.max(...diffs)-Math.min(...diffs))
   };
+}
+// بعد از وارد کردن سنسور جدید، اگر وعده‌هایی قند ندارند و حالا CGM پوششان می‌دهد، خودکار پر کن
+function autoFillGlucoseIfNeeded(){
+  if(!window._cgmReadings || !window._cgmReadings.length) return;
+  // آیا وعده‌ای هست که قند ندارد؟
+  let missing=0;
+  for(const key in planData){
+    if(key==='_basal') continue;
+    const list=planData[key]; if(!Array.isArray(list)) continue;
+    list.forEach(m=>{
+      const noBG = (m.bgBefore===''||m.bgBefore==null) || (m.bgAfter===''||m.bgAfter==null);
+      if(noBG && m.time) missing++;
+    });
+  }
+  if(missing===0) return;
+  // پر کردن خودکار
+  let filled=0;
+  for(const key in planData){
+    if(key==='_basal') continue;
+    const list=planData[key]; if(!Array.isArray(list)) continue;
+    list.forEach(m=>{
+      if(!m.time) return;
+      const noBG = (m.bgBefore===''||m.bgBefore==null) || (m.bgAfter===''||m.bgAfter==null);
+      if(!noBG) return;
+      const parts=key.split('-').map(Number);
+      const [hh,mm]=m.time.split(':').map(Number);
+      const mt={dateObj:new Date(parts[0],parts[1]-1,parts[2],hh||0,mm||0)};
+      const st=cgmStatsForMeal(mt);
+      if(st && st.bgBefore!=='' && st.bgAfter!==''){
+        m.bgBefore=st.bgBefore; m.bgAfter=st.bgAfter;
+        if(st.peak!=='') m.peak=st.peak;
+        if(st.trough!=='') m.trough=st.trough;
+        filled++;
+      }
+    });
+  }
+  if(filled>0){
+    savePlan();
+    if(typeof renderSavedMeals==='function') renderSavedMeals();
+    if(typeof updateCalibration==='function') updateCalibration();
+    // اطلاع به کاربر
+    const el=document.getElementById('cgmResult');
+    if(el){
+      const note=document.createElement('div');
+      note.className='card';
+      note.style.borderColor='var(--teal)';
+      note.innerHTML=`<p style="color:var(--teal);font-size:13px;margin:0">✓ قند <b>${faDigits(filled)}</b> وعده از این سنسور خودکار پر شد. حالا می‌توانی در تب «برنامه‌ی هفتگی» کالیبراسیون I:C را ببینی.</p>`;
+      el.insertBefore(note, el.firstChild);
+    }
+  }
 }
 function renderCgmCal(){
   const box=document.getElementById('cgmCalBody');
