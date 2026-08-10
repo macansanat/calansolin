@@ -773,6 +773,12 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <div id="cgmCalBody"></div>
   </div>
 </div>
+<div class="card coll closed" id="c-expcalib">
+  <h2 onclick="toggleCard('c-expcalib')"><span>⚗️ کشف رابطه‌ی CGM و گلوکومتر (آزمایشی)</span></h2>
+  <div class="card-body">
+    <div id="expCalibBody"></div>
+  </div>
+</div>
 <div class="disclaimer">
   <b>یادداشت:</b> این تحلیل تصویری کلی از کنترل قند می‌دهد و آموزشی است. تفسیر نهایی و هر تغییر درمانی با پزشک است. فایل شما فقط در همین مرورگر پردازش می‌شود و جایی ارسال نمی‌شود.
 </div>
@@ -787,7 +793,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۴.۸</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۴.۹</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -3088,6 +3094,7 @@ function renderCGMResult(s){
   document.getElementById('cgmResult').innerHTML=html;
   buildAGP();
   renderCgmCal();
+  renderExperimentalCalib();
   restoreCollState();
 }
 
@@ -3637,6 +3644,163 @@ function computeSuggestedOffset(){
     fastingAvg:fasting.length?Math.round(avg(fasting)):null, fastingN:fasting.length,
     pairs, spread:Math.round(Math.max(...diffs)-Math.min(...diffs))
   };
+}
+/* ===== باکس آزمایشی: کشف رابطه‌ی CGM و گلوکومتر با مدل‌های مختلف ===== */
+// حل دستگاه معادلات خطی به روش حذف گاوسی
+function solveLinearSystem(A, b){
+  const n=A.length;
+  const M=A.map((row,i)=>[...row, b[i]]);
+  for(let col=0; col<n; col++){
+    // پیدا کردن سطر با بزرگ‌ترین مقدار (پایداری عددی)
+    let piv=col;
+    for(let r=col+1; r<n; r++) if(Math.abs(M[r][col])>Math.abs(M[piv][col])) piv=r;
+    if(Math.abs(M[piv][col])<1e-12) return null; // منفرد
+    [M[col],M[piv]]=[M[piv],M[col]];
+    for(let r=0; r<n; r++){
+      if(r===col) continue;
+      const f=M[r][col]/M[col][col];
+      for(let c=col; c<=n; c++) M[r][c]-=f*M[col][c];
+    }
+  }
+  return M.map((row,i)=>row[n]/row[i][i]);
+}
+// برازش چندجمله‌ای درجه‌ی deg: پیش‌بینی BG واقعی از روی CGM
+// برای پایداری عددی، CGM را حول میانگین مرکز و بر انحراف مقیاس می‌کنیم
+function fitPolynomial(pairs, deg){
+  const n=pairs.length;
+  if(n < deg+1) return null; // داده کافی نیست
+  const rawX=pairs.map(p=>p.cgm), ys=pairs.map(p=>p.bg);
+  const mx=rawX.reduce((a,b)=>a+b,0)/n;
+  const sd=Math.sqrt(rawX.reduce((a,b)=>a+(b-mx)**2,0)/n) || 1;
+  const xs=rawX.map(x=>(x-mx)/sd); // مقیاس‌شده
+  // ماتریس معادلات نرمال (deg+1)×(deg+1)
+  const A=[], b=[];
+  for(let i=0;i<=deg;i++){
+    A.push([]);
+    for(let j=0;j<=deg;j++){
+      let s=0; for(let k=0;k<n;k++) s+=Math.pow(xs[k], i+j);
+      A[i].push(s);
+    }
+    let sy=0; for(let k=0;k<n;k++) sy+=ys[k]*Math.pow(xs[k], i);
+    b.push(sy);
+  }
+  const coef=solveLinearSystem(A,b);
+  if(!coef || coef.some(c=>!isFinite(c))) return null;
+  // پیش‌بینی: ورودی خام را همان‌طور مقیاس می‌کنیم
+  const predict=xraw=>{ const z=(xraw-mx)/sd; return coef.reduce((acc,c,i)=>acc+c*Math.pow(z,i),0); };
+  // خطاها
+  let sae=0,sse=0,maxErr=0;
+  for(let k=0;k<n;k++){
+    const e=ys[k]-predict(rawX[k]);
+    sae+=Math.abs(e); sse+=e*e; maxErr=Math.max(maxErr,Math.abs(e));
+  }
+  return {deg, coef, predict, mae:sae/n, rmse:Math.sqrt(sse/n), maxErr, n};
+}
+// مدل افست ثابت: BG = CGM + offset
+function fitConstantOffset(pairs){
+  const n=pairs.length;
+  if(!n) return null;
+  const offs=pairs.map(p=>p.bg-p.cgm);
+  const off=offs.reduce((a,b)=>a+b,0)/n;
+  const predict=x=>x+off;
+  let sae=0,sse=0,maxErr=0;
+  pairs.forEach(p=>{const e=p.bg-predict(p.cgm); sae+=Math.abs(e); sse+=e*e; maxErr=Math.max(maxErr,Math.abs(e));});
+  return {deg:0, label:'افست ثابت', off:Math.round(off), predict, mae:sae/n, rmse:Math.sqrt(sse/n), maxErr, n};
+}
+// جمع‌آوری همه‌ی مدل‌ها برای مقایسه
+function buildCalibModels(pairs){
+  const models=[];
+  const c=fitConstantOffset(pairs); if(c) models.push(c);
+  for(let d=1; d<=3; d++){
+    const m=fitPolynomial(pairs,d);
+    if(m){ m.label='درجه '+faDigits(d); models.push(m); }
+  }
+  return models;
+}
+function renderExperimentalCalib(){
+  const box=document.getElementById('expCalibBody');
+  if(!box) return;
+  const pairs=collectCgmBgPairs();
+  const need = 4; // حداقل برای درجه ۳
+  let h='';
+  h+=`<div style="background:#3a2f14;border:1px solid var(--amber);border-radius:8px;padding:9px 11px;margin-bottom:12px;font-size:12px;color:var(--amber);line-height:1.8">
+    ⚗️ <b>مرحله‌ی آزمایشی</b> — این بخش رابطه‌ی CGM و گلوکومتر را با چند مدل ریاضی می‌سنجد تا ببینیم کدام بهتر است. نتایج فقط برای بررسی است، نه تصمیم درمانی. هرچه تعداد تست گلوکومتر در قندهای مختلف بیشتر باشد، مدل قابل‌اعتمادتر است.</div>`;
+  if(pairs.length < 3){
+    h+=`<div style="color:var(--muted);font-size:13px">فعلاً فقط ${faDigits(pairs.length)} جفت (CGM + گلوکومتر) داریم. برای ساختن مدل حداقل ۳ جفت لازم است — بهتر است چند تست گلوکومتر در ساعت‌های مختلف و قندهای مختلف ثبت شود.</div>`;
+    box.innerHTML=h; return;
+  }
+  const models=buildCalibModels(pairs);
+  // بهترین مدل بر اساس MAE
+  let best=models[0]; models.forEach(m=>{ if(m.mae<best.mae) best=m; });
+  // همبستگی
+  const xs=pairs.map(p=>p.cgm), ys=pairs.map(p=>p.bg);
+  const mx=xs.reduce((a,b)=>a+b,0)/xs.length, my=ys.reduce((a,b)=>a+b,0)/ys.length;
+  let sxy=0,sxx=0,syy=0;
+  for(let i=0;i<xs.length;i++){sxy+=(xs[i]-mx)*(ys[i]-my);sxx+=(xs[i]-mx)**2;syy+=(ys[i]-my)**2;}
+  const r = sxx&&syy ? sxy/Math.sqrt(sxx*syy) : 0;
+  h+=`<div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">تعداد جفت: <b style="color:var(--fg)">${faDigits(pairs.length)}</b> &nbsp;|&nbsp; همبستگی (r): <b style="color:var(--fg)">${faDigits(r.toFixed(2))}</b> ${r>0.9?'(قوی)':r>0.7?'(متوسط)':'(ضعیف)'}</div>`;
+  // جدول مقایسه‌ی مدل‌ها
+  h+=`<table class="rtbl" style="font-size:12px"><thead><tr><th>مدل</th><th>خطای متوسط</th><th>بیشترین خطا</th><th>وضعیت</th></tr></thead><tbody>`;
+  models.forEach(m=>{
+    const isBest = m===best;
+    // هشدار overfitting: اگر تعداد داده کم نسبت به درجه
+    let warn='';
+    if(m.deg>=2 && pairs.length < (m.deg+1)*4) warn='⚠️ داده کم';
+    const rowStyle = isBest ? 'background:#14312a' : '';
+    h+=`<tr style="${rowStyle}"><td>${m.label}${isBest?' ✓':''}</td><td>${faDigits(m.mae.toFixed(1))}</td><td>${faDigits(m.maxErr.toFixed(0))}</td><td style="color:var(--amber);font-size:11px">${warn}</td></tr>`;
+  });
+  h+=`</tbody></table>`;
+  // نمودار نقاط + منحنی بهترین مدل
+  h+=`<div style="margin-top:12px"><canvas id="expCalibChart" width="600" height="320" style="width:100%;background:var(--card2);border-radius:8px"></canvas></div>`;
+  // تفسیر
+  h+=`<div style="margin-top:12px;font-size:12px;color:var(--muted);line-height:1.9;background:var(--card2);border-radius:8px;padding:10px">`;
+  if(best.deg===0){
+    h+=`بهترین مدل فعلی: <b style="color:var(--teal)">افست ثابت</b> — یعنی کافی است حدود <b>${faDigits(Math.abs(best.off))}</b> واحد ${best.off>=0?'به':'از'} CGM ${best.off>=0?'اضافه':'کم'} کنی. مدل‌های پیچیده‌تر بهتر نبودند، پس ساده‌ترین کار جواب می‌دهد.`;
+  } else {
+    h+=`بهترین مدل فعلی: <b style="color:var(--teal)">${best.label}</b> با خطای متوسط ${faDigits(best.mae.toFixed(1))} واحد.`;
+    if(models[0] && models[0].mae - best.mae < 2){
+      h+=` <br>ولی توجه: مدل ساده (افست ثابت) هم تقریباً به همین خوبی بود — پس پیچیدگی بیشتر لازم نیست.`;
+    }
+  }
+  h+=`<br><b style="color:var(--amber)">هشدار ایمنی:</b> بخشی از تفاوت CGM و گلوکومتر از «تأخیر زمانی» CGM است (وقتی قند در حال تغییر است) که هیچ مدلی آن را درست نمی‌کند. پس این مدل‌ها تخمینی‌اند؛ برای تصمیم مهم، همیشه با گلوکومتر چک کن.</div>`;
+  box.innerHTML=h;
+  // رسم نمودار
+  requestAnimationFrame(()=>drawExpCalibChart(pairs, best));
+}
+function drawExpCalibChart(pairs, model){
+  const cv=document.getElementById('expCalibChart'); if(!cv) return;
+  const ctx=cv.getContext('2d'); const W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  const pad=40;
+  const allV=[...pairs.map(p=>p.cgm),...pairs.map(p=>p.bg)];
+  const lo=Math.max(0, Math.min(...allV)-15), hi=Math.max(...allV)+15;
+  const sx=x=>pad+(x-lo)/(hi-lo)*(W-2*pad);
+  const sy=y=>H-pad-(y-lo)/(hi-lo)*(H-2*pad);
+  // محورها و شبکه
+  ctx.strokeStyle='#333'; ctx.fillStyle='#888'; ctx.font='11px sans-serif'; ctx.lineWidth=1;
+  for(let v=Math.ceil(lo/50)*50; v<=hi; v+=50){
+    ctx.strokeStyle='#2a2a2a'; ctx.beginPath(); ctx.moveTo(sx(v),pad); ctx.lineTo(sx(v),H-pad); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad,sy(v)); ctx.lineTo(W-pad,sy(v)); ctx.stroke();
+    ctx.fillText(v, sx(v)-8, H-pad+16); ctx.fillText(v, 6, sy(v)+4);
+  }
+  // خط y=x (اگر CGM=BG بود)
+  ctx.strokeStyle='#555'; ctx.setLineDash([4,4]); ctx.beginPath();
+  ctx.moveTo(sx(lo),sy(lo)); ctx.lineTo(sx(hi),sy(hi)); ctx.stroke(); ctx.setLineDash([]);
+  // منحنی مدل
+  ctx.strokeStyle='#22c1a5'; ctx.lineWidth=2; ctx.beginPath();
+  let first=true;
+  for(let cgmv=lo; cgmv<=hi; cgmv+=2){
+    const pred=model.predict(cgmv);
+    if(first){ ctx.moveTo(sx(cgmv),sy(pred)); first=false; } else ctx.lineTo(sx(cgmv),sy(pred));
+  }
+  ctx.stroke();
+  // نقاط واقعی
+  ctx.fillStyle='#f0a500';
+  pairs.forEach(p=>{ ctx.beginPath(); ctx.arc(sx(p.cgm),sy(p.bg),4,0,7); ctx.fill(); });
+  // برچسب محورها
+  ctx.fillStyle='#aaa'; ctx.font='12px sans-serif';
+  ctx.fillText('CGM →', W/2-20, H-8);
+  ctx.save(); ctx.translate(14,H/2+20); ctx.rotate(-Math.PI/2); ctx.fillText('گلوکومتر →',0,0); ctx.restore();
 }
 // بعد از وارد کردن سنسور جدید، اگر وعده‌هایی قند ندارند و حالا CGM پوششان می‌دهد، خودکار پر کن
 function autoFillGlucoseIfNeeded(){
