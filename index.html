@@ -320,6 +320,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <button class="tab active" onclick="switchTab('calc',this)">🧮 ماشین‌حساب</button>
   <button class="tab" onclick="switchTab('plan',this)">📅 برنامه‌ی هفتگی</button>
   <button class="tab" onclick="switchTab('cgm',this)">📈 تحلیل CGM</button>
+  <button class="tab" onclick="switchTab('labs',this)">🧪 آزمایش‌ها</button>
 </div>
 
 <!-- ============ صفحه‌ی ماشین‌حساب ============ -->
@@ -792,8 +793,33 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <span class="big">⚠ این یک نرم‌افزار آموزشی است، نه یک نرم‌افزار درمانی واقعی</span>
   این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
+</div>
+
+<div class="page" id="page-labs">
+  <div class="card" id="c-labs-intro">
+    <h2 onclick="toggleCard('c-labs-intro')"><span>🧪 آزمایش‌های دیابت</span></h2>
+    <div class="card-body">
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:10px">
+        این بخش کمک می‌کند آزمایش‌های مرتبط با دیابت را ثبت، پیگیری و برای پزشکت آماده کنی. یک «بسته‌ی پیشنهادی» انتخاب کن تا آزمایش‌های لازم برای وضعیتت را ببینی، یا از کتابخانه‌ی کامل هر آزمایشی را اضافه کن.
+      </div>
+      <div class="formula-note" style="color:var(--amber)">⚕️ این لیست‌ها فقط پیشنهاد برای گفتگو با پزشک‌اند — تشخیص یا تجویز نیستند. پزشک تصمیم می‌گیرد کدام آزمایش لازم است. محدوده‌های نرمال بین آزمایشگاه‌ها کمی فرق دارند؛ همیشه محدوده‌ی برگه‌ی آزمایشگاه خودت را معیار بگیر.</div>
+    </div>
+  </div>
+  <div class="card" id="c-labs-packages">
+    <h2 onclick="toggleCard('c-labs-packages')"><span>📦 بسته‌های پیشنهادی</span></h2>
+    <div class="card-body"><div id="labPackages"></div></div>
+  </div>
+  <div class="card" id="c-labs-entry">
+    <h2 onclick="toggleCard('c-labs-entry')"><span>➕ ثبت نتیجه‌ی آزمایش</span></h2>
+    <div class="card-body"><div id="labEntry"></div></div>
+  </div>
+  <div class="card" id="c-labs-history">
+    <h2 onclick="toggleCard('c-labs-history')"><span>📊 نتایج ثبت‌شده و روند</span></h2>
+    <div class="card-body"><div id="labHistory"></div></div>
+  </div>
+</div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۴.۹</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۵.۰</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -1587,6 +1613,7 @@ function switchTab(name,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   if(name==='plan'){ goToToday(); }
+  if(name==='labs'){ renderLabsTab(); }
 }
 function goToToday(){
   const today=new Date(); today.setHours(0,0,0,0);
@@ -3644,6 +3671,270 @@ function computeSuggestedOffset(){
     fastingAvg:fasting.length?Math.round(avg(fasting)):null, fastingN:fasting.length,
     pairs, spread:Math.round(Math.max(...diffs)-Math.min(...diffs))
   };
+}
+/* ===== تب آزمایش‌ها: کتابخانه‌ی کامل + بسته‌ها + ثبت + روند ===== */
+// هر آزمایش: کلید، نام فارسی، واحد، محدوده‌ی نرمال [min,max] یا null، جهت هشدار، توضیح، معنی خارج از محدوده
+const LAB_LIBRARY={
+  // --- قند و تشخیص ---
+  glucose:{cat:'قند و تشخیص',items:{
+    hba1c:{fa:'HbA1c (قند سه‌ماهه)',unit:'%',lo:4,hi:5.7,desc:'میانگین قند خون در ۲-۳ ماه گذشته. مهم‌ترین شاخص کنترل دیابت.',high:'بالای ۵.۷ نشانه‌ی پیش‌دیابت و بالای ۶.۵ نشانه‌ی دیابت است. هرچه بالاتر، کنترل ضعیف‌تر و خطر عوارض بیشتر.',low:'خیلی پایین می‌تواند نشانه‌ی افت‌های مکرر قند باشد.'},
+    fbs:{fa:'قند ناشتا (FBS)',unit:'mg/dL',lo:70,hi:99,desc:'قند خون بعد از ۸ ساعت ناشتایی.',high:'۱۰۰-۱۲۵ پیش‌دیابت، بالای ۱۲۶ دیابت. باید با پزشک بررسی شود.',low:'زیر ۷۰ افت قند (هیپوگلایسمی) است — می‌تواند خطرناک باشد.'},
+    ppbs:{fa:'قند ۲ ساعت بعد غذا',unit:'mg/dL',lo:70,hi:140,desc:'قند خون ۲ ساعت بعد از غذا.',high:'۱۴۰-۱۹۹ اختلال تحمل گلوکز، بالای ۲۰۰ دیابت.',low:'زیر ۷۰ افت قند است.'},
+    rbs:{fa:'قند تصادفی (RBS)',unit:'mg/dL',lo:70,hi:140,desc:'قند خون در هر زمان بدون ناشتایی.',high:'بالای ۲۰۰ همراه با علائم، مشکوک به دیابت.',low:'زیر ۷۰ افت قند.'},
+    ogtt:{fa:'تست تحمل گلوکز (OGTT)',unit:'mg/dL',lo:null,hi:null,desc:'قند خون بعد از خوردن محلول گلوکز استاندارد — برای تشخیص دقیق پیش‌دیابت و دیابت. به‌ویژه برای کسانی که علائم دارند ولی FBS مرزی است.',high:'بالای ۱۴۰ در ۲ ساعت اختلال تحمل، بالای ۲۰۰ دیابت.',low:''},
+    fructosamine:{fa:'فروکتوزامین',unit:'µmol/L',lo:200,hi:285,desc:'میانگین قند ۲-۳ هفته‌ی اخیر (کوتاه‌تر از HbA1c). وقتی مفید است که HbA1c قابل‌اعتماد نباشد.',high:'کنترل قند ضعیف در هفته‌های اخیر.',low:''},
+  }},
+  // --- عملکرد پانکراس و نوع دیابت ---
+  pancreas:{cat:'پانکراس و نوع دیابت',items:{
+    cpeptide:{fa:'C-Peptide',unit:'ng/mL',lo:0.9,hi:4,desc:'نشان می‌دهد پانکراس چقدر انسولین خودش می‌سازد. برای تشخیص نوع دیابت و تصمیم درباره‌ی انسولین کلیدی است.',high:'بالا می‌تواند نشانه‌ی مقاومت به انسولین باشد.',low:'پایین یعنی پانکراس انسولین کمی می‌سازد (به سمت نوع ۱ یا دیابت پیشرفته).'},
+    insulin:{fa:'انسولین ناشتا',unit:'µU/mL',lo:2,hi:25,desc:'مقدار انسولین خون در حالت ناشتا. همراه با قند برای سنجش مقاومت به انسولین.',high:'بالا معمولاً نشانه‌ی مقاومت به انسولین است.',low:'پایین می‌تواند نشانه‌ی کمبود تولید انسولین باشد.'},
+    homair:{fa:'HOMA-IR (مقاومت انسولین)',unit:'',lo:0,hi:2,desc:'شاخص محاسبه‌شده از قند و انسولین ناشتا. مقاومت به انسولین را نشان می‌دهد — به‌ویژه در پیش‌دیابت مهم.',high:'بالای ۲.۵-۳ نشانه‌ی مقاومت به انسولین.',low:''},
+    antigad:{fa:'آنتی‌بادی Anti-GAD',unit:'IU/mL',lo:null,hi:null,desc:'آنتی‌بادی خودایمنی. مثبت بودنش به سمت دیابت نوع ۱ یا LADA اشاره دارد.',high:'مثبت: سیستم ایمنی به پانکراس حمله می‌کند (نوع ۱/LADA).',low:''},
+    antiia2:{fa:'آنتی‌بادی Anti-IA2',unit:'U/mL',lo:null,hi:null,desc:'آنتی‌بادی دیگر مرتبط با دیابت نوع ۱.',high:'مثبت به سمت دیابت خودایمنی.',low:''},
+  }},
+  // --- کلیه ---
+  kidney:{cat:'کلیه',items:{
+    creatinine:{fa:'کراتینین',unit:'mg/dL',lo:0.7,hi:1.3,desc:'شاخص عملکرد کلیه. در دیابت باید مرتب چک شود.',high:'بالا می‌تواند نشانه‌ی کاهش عملکرد کلیه باشد.',low:''},
+    bun:{fa:'اوره (BUN)',unit:'mg/dL',lo:7,hi:20,desc:'ماده‌ی دفعی که کلیه پاک می‌کند.',high:'بالا می‌تواند نشانه‌ی مشکل کلیه یا کم‌آبی باشد.',low:''},
+    egfr:{fa:'eGFR',unit:'mL/min',lo:90,hi:120,desc:'تخمین میزان فیلتر کلیه. مهم‌ترین شاخص سلامت کلیه در دیابت.',high:'',low:'زیر ۶۰ نشانه‌ی کاهش عملکرد کلیه — نیاز به بررسی جدی.'},
+    microalbumin:{fa:'میکروآلبومین ادرار (ACR)',unit:'mg/g',lo:0,hi:30,desc:'آسیب زودرس کلیه را قبل از هر علامتی نشان می‌دهد. یکی از مهم‌ترین آزمایش‌های دیابت که اغلب فراموش می‌شود.',high:'بالای ۳۰ نشانه‌ی آسیب اولیه‌ی کلیه (نفروپاتی دیابتی) — حتماً با پزشک.',low:''},
+  }},
+  // --- چربی ---
+  lipid:{cat:'چربی خون',items:{
+    chol:{fa:'کلسترول کل',unit:'mg/dL',lo:0,hi:200,desc:'کل کلسترول خون.',high:'بالای ۲۰۰ خطر قلبی-عروقی را افزایش می‌دهد.',low:''},
+    ldl:{fa:'LDL (بد)',unit:'mg/dL',lo:0,hi:100,desc:'کلسترول بد — در رگ‌ها رسوب می‌کند.',high:'بالا خطر تصلب شرایین و سکته. در دیابتی‌ها هدف سخت‌گیرانه‌تر است.',low:''},
+    hdl:{fa:'HDL (خوب)',unit:'mg/dL',lo:40,hi:100,desc:'کلسترول خوب — از قلب محافظت می‌کند.',high:'بالا مفید است.',low:'زیر ۴۰ (مرد) یا ۵۰ (زن) خطر قلبی را بیشتر می‌کند.'},
+    tg:{fa:'تری‌گلیسیرید',unit:'mg/dL',lo:0,hi:150,desc:'نوعی چربی خون. در دیابت اغلب بالاست.',high:'بالای ۱۵۰ با مقاومت به انسولین و خطر قلبی مرتبط است.',low:''},
+    vldl:{fa:'VLDL',unit:'mg/dL',lo:2,hi:30,desc:'نوعی چربی حامل تری‌گلیسیرید.',high:'بالا معمولاً همراه تری‌گلیسیرید بالا.',low:''},
+  }},
+  // --- کبد ---
+  liver:{cat:'کبد',items:{
+    ast:{fa:'AST (SGOT)',unit:'U/L',lo:0,hi:40,desc:'آنزیم کبدی. کبد چرب در دیابت شایع است.',high:'بالا می‌تواند نشانه‌ی کبد چرب یا التهاب کبد باشد.',low:''},
+    alt:{fa:'ALT (SGPT)',unit:'U/L',lo:0,hi:41,desc:'آنزیم کبدی، اختصاصی‌تر برای کبد.',high:'بالا نشانه‌ی کبد چرب یا آسیب کبدی — در دیابت شایع.',low:''},
+    alp:{fa:'ALP',unit:'U/L',lo:44,hi:147,desc:'آنزیم مرتبط با کبد و استخوان.',high:'بالا می‌تواند مشکل کبد یا مجاری صفراوی باشد.',low:''},
+    ggt:{fa:'GGT',unit:'U/L',lo:0,hi:55,desc:'آنزیم کبدی حساس به کبد چرب و الکل.',high:'بالا با کبد چرب مرتبط است.',low:''},
+  }},
+  // --- تیروئید ---
+  thyroid:{cat:'تیروئید',items:{
+    tsh:{fa:'TSH',unit:'mIU/L',lo:0.4,hi:4,desc:'هورمون محرک تیروئید. مشکلات تیروئید در دیابتی‌ها شایع‌تر است و روی قند اثر می‌گذارد.',high:'بالا نشانه‌ی کم‌کاری تیروئید.',low:'پایین نشانه‌ی پرکاری تیروئید.'},
+    t4:{fa:'T4',unit:'µg/dL',lo:4.5,hi:12,desc:'هورمون اصلی تیروئید.',high:'بالا: پرکاری.',low:'پایین: کم‌کاری.'},
+    t3:{fa:'T3',unit:'ng/dL',lo:80,hi:200,desc:'هورمون تیروئید.',high:'بالا: پرکاری.',low:'پایین: کم‌کاری.'},
+  }},
+  // --- ویتامین و مواد معدنی ---
+  vitamins:{cat:'ویتامین و مواد معدنی',items:{
+    b12:{fa:'ویتامین B12',unit:'pg/mL',lo:160,hi:950,desc:'برای اعصاب و خون. متفورمین می‌تواند کمش کند.',high:'',low:'کمبود باعث مشکلات عصبی و خونی می‌شود — در مصرف متفورمین مهم.'},
+    vitd:{fa:'ویتامین D (25-OH)',unit:'ng/mL',lo:30,hi:100,desc:'برای استخوان، ایمنی و حساسیت به انسولین.',high:'بالای ۱۰۰ احتمال سمیت.',low:'کمبود شایع است و با مقاومت به انسولین مرتبط.'},
+    folate:{fa:'فولات',unit:'ng/mL',lo:3,hi:20,desc:'ویتامین B9، برای خون و اعصاب.',high:'',low:'کمبود باعث کم‌خونی.'},
+    mg:{fa:'منیزیم',unit:'mg/dL',lo:1.7,hi:2.4,desc:'در دیابت اغلب کم است و روی حساسیت به انسولین اثر دارد.',high:'',low:'کمبود شایع در دیابت — بر کنترل قند اثر می‌گذارد.'},
+    b1:{fa:'تیامین (B1)',unit:'nmol/L',lo:70,hi:180,desc:'در دیابت بیشتر دفع می‌شود؛ کمبودش شایع است و به اعصاب مربوط می‌شود.',high:'',low:'کمبود در دیابتی‌ها شایع — با عوارض عصبی مرتبط.'},
+    ferritin:{fa:'فریتین',unit:'ng/mL',lo:20,hi:250,desc:'ذخیره‌ی آهن بدن.',high:'بالا می‌تواند نشانه‌ی التهاب یا اضافه‌بار آهن باشد — با پزشک بررسی شود.',low:'پایین نشانه‌ی کمبود آهن.'},
+    iron:{fa:'آهن',unit:'µg/dL',lo:60,hi:170,desc:'آهن خون.',high:'بالا: اضافه‌بار آهن.',low:'پایین: کم‌خونی فقر آهن.'},
+    calcium:{fa:'کلسیم',unit:'mg/dL',lo:8.5,hi:10.5,desc:'برای استخوان و اعصاب.',high:'بالا مشکلات مختلف.',low:'پایین اثر بر اعصاب و عضلات.'},
+    potassium:{fa:'پتاسیم',unit:'mEq/L',lo:3.5,hi:5,desc:'الکترولیت مهم؛ در بعضی داروهای دیابت و مشکل کلیه تغییر می‌کند.',high:'بالا می‌تواند خطرناک باشد (قلب).',low:'پایین هم بر قلب و عضله اثر دارد.'},
+    sodium:{fa:'سدیم',unit:'mEq/L',lo:135,hi:145,desc:'الکترولیت اصلی بدن.',high:'بالا: کم‌آبی.',low:'پایین: مشکلات مختلف.'},
+  }},
+  // --- قلب و التهاب ---
+  cardiac:{cat:'قلب و التهاب',items:{
+    bp_sys:{fa:'فشار خون سیستولیک (عدد بالا)',unit:'mmHg',lo:90,hi:130,desc:'فشار خون در دیابت باید کنترل شود.',high:'بالای ۱۳۰-۱۴۰ فشار خون بالا — خطر قلب و کلیه.',low:'خیلی پایین: سرگیجه.'},
+    bp_dia:{fa:'فشار خون دیاستولیک (عدد پایین)',unit:'mmHg',lo:60,hi:85,desc:'عدد پایین فشار خون.',high:'بالای ۸۵-۹۰ فشار بالا.',low:''},
+    crp:{fa:'CRP (hs-CRP)',unit:'mg/L',lo:0,hi:3,desc:'شاخص التهاب بدن. التهاب مزمن با مقاومت به انسولین و خطر قلبی مرتبط.',high:'بالا نشانه‌ی التهاب — خطر قلبی-عروقی.',low:''},
+    homocysteine:{fa:'هوموسیستئین',unit:'µmol/L',lo:5,hi:15,desc:'اسیدآمینه‌ای مرتبط با خطر قلبی.',high:'بالا خطر قلبی-عروقی را بیشتر می‌کند.',low:''},
+    uricacid:{fa:'اسید اوریک',unit:'mg/dL',lo:3.5,hi:7.2,desc:'در سندرم متابولیک و نقرس مهم.',high:'بالا با نقرس و سندرم متابولیک مرتبط.',low:''},
+  }},
+  // --- شمارش کامل خون (CBC) ---
+  cbc:{cat:'شمارش کامل خون (CBC)',items:{
+    hb:{fa:'هموگلوبین (Hb)',unit:'g/dL',lo:13,hi:17,desc:'حامل اکسیژن در خون.',high:'بالا: غلظت خون.',low:'پایین: کم‌خونی (بر HbA1c هم اثر می‌گذارد).'},
+    hct:{fa:'هماتوکریت (HCT)',unit:'%',lo:38,hi:50,desc:'درصد حجم گلبول قرمز در خون.',high:'بالا: کم‌آبی یا غلظت خون.',low:'پایین: کم‌خونی.'},
+    rbc:{fa:'گلبول قرمز (RBC)',unit:'M/µL',lo:4.5,hi:5.9,desc:'تعداد گلبول‌های قرمز.',high:'بالا: غلظت خون.',low:'پایین: کم‌خونی.'},
+    wbc:{fa:'گلبول سفید (WBC)',unit:'K/µL',lo:4,hi:11,desc:'سلول‌های ایمنی.',high:'بالا: عفونت یا التهاب.',low:'پایین: ضعف ایمنی.'},
+    plt:{fa:'پلاکت (PLT)',unit:'K/µL',lo:150,hi:450,desc:'برای انعقاد خون.',high:'بالا: خطر لخته یا التهاب.',low:'پایین: خطر خونریزی.'},
+    mcv:{fa:'MCV',unit:'fL',lo:80,hi:100,desc:'اندازه‌ی متوسط گلبول قرمز.',high:'بالا: کم‌خونی با گلبول درشت (کمبود B12/فولات).',low:'پایین: کم‌خونی فقر آهن.'},
+  }},
+};
+// بسته‌های پیشنهادی بر اساس گروه
+const LAB_PACKAGES={
+  prediabetes:{fa:'پیش‌دیابت / غربالگری اولیه',icon:'🔍',
+    desc:'برای کسی که چند علامت مشکوک دیده (تشنگی، پرادراری، خستگی، تاری دید) و هنوز پزشک متخصص ندارد. این بسته کمک می‌کند پزشک تصویر کاملی ببیند و مواردی را که شاید حدس نمی‌زد بررسی کند.',
+    tests:['hba1c','fbs','ppbs','ogtt','insulin','homair','chol','ldl','hdl','tg','ast','alt','tsh','hb','vitd']},
+  type1:{fa:'دیابت نوع ۱',icon:'💉',
+    desc:'با تأکید بر آنتی‌بادی‌ها، عملکرد پانکراس و تیروئید (چون بیماری‌های خودایمنی اغلب با هم می‌آیند).',
+    tests:['hba1c','fbs','cpeptide','antigad','antiia2','tsh','microalbumin','creatinine','egfr','ldl','hdl','tg','vitd','b12']},
+  type2:{fa:'دیابت نوع ۲',icon:'🩺',
+    desc:'پوشش کامل قند، چربی، کلیه، کبد و عوامل خطر متابولیک.',
+    tests:['hba1c','fbs','ppbs','cpeptide','homair','chol','ldl','hdl','tg','creatinine','egfr','microalbumin','ast','alt','tsh','vitd','b12','mg','ferritin']},
+  monitoring:{fa:'پایش دوره‌ای (هر ۳-۶ ماه)',icon:'📅',
+    desc:'آزمایش‌هایی که برای پیگیری منظم کنترل دیابت لازم‌اند.',
+    tests:['hba1c','fbs','ppbs','creatinine','egfr','microalbumin','ldl','hdl','tg','alt']},
+  complications:{fa:'بررسی عوارض',icon:'🔬',
+    desc:'برای کسی که مدتی دیابت داشته و می‌خواهد عوارض احتمالی (کلیه، کبد، قلب، اعصاب) را بررسی کند.',
+    tests:['hba1c','microalbumin','creatinine','egfr','ldl','crp','homocysteine','ast','alt','b12','b1','vitd','uricacid','bp_sys','bp_dia']},
+  full:{fa:'آزمایش کامل (همه موارد)',icon:'📋',
+    desc:'فهرست کامل همه‌ی آزمایش‌های مرتبط با دیابت — برای وقتی که می‌خواهی جامع‌ترین تصویر را داشته باشی.',
+    tests:'ALL'},
+};
+const LABS_KEY='labs_data_v1';
+function loadLabs(){ try{return JSON.parse(localStorage.getItem(LABS_KEY)||'{"entries":[],"selected":[]}');}catch(e){return {entries:[],selected:[]};} }
+function saveLabs(d){ localStorage.setItem(LABS_KEY,JSON.stringify(d)); }
+// پیدا کردن یک آزمایش در کتابخانه
+function findLabTest(key){
+  for(const grp in LAB_LIBRARY){ if(LAB_LIBRARY[grp].items[key]) return LAB_LIBRARY[grp].items[key]; }
+  return null;
+}
+function renderLabPackages(){
+  const box=document.getElementById('labPackages'); if(!box) return;
+  let h='<div style="display:flex;flex-direction:column;gap:8px">';
+  for(const pk in LAB_PACKAGES){
+    const p=LAB_PACKAGES[pk];
+    const count = p.tests==='ALL' ? Object.values(LAB_LIBRARY).reduce((s,g)=>s+Object.keys(g.items).length,0) : p.tests.length;
+    h+=`<div style="background:var(--card2);border-radius:8px;padding:11px;border:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="selectLabPackage('${pk}')">
+        <div><b>${p.icon} ${p.fa}</b> <span style="color:var(--muted);font-size:11px">(${faDigits(count)} آزمایش)</span></div>
+        <button class="quick-btn" style="font-size:11px" onclick="event.stopPropagation();selectLabPackage('${pk}')">انتخاب</button>
+      </div>
+      <div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:6px">${p.desc}</div>
+    </div>`;
+  }
+  h+='</div>';
+  box.innerHTML=h;
+}
+function selectLabPackage(pk){
+  const p=LAB_PACKAGES[pk];
+  let tests = p.tests==='ALL' ? [] : [...p.tests];
+  if(p.tests==='ALL'){ for(const g in LAB_LIBRARY) for(const k in LAB_LIBRARY[g].items) tests.push(k); }
+  const d=loadLabs(); d.selected=tests; saveLabs(d);
+  renderLabEntry();
+  // باز کردن کارت ثبت
+  const c=document.getElementById('c-labs-entry'); if(c) c.classList.remove('closed');
+  document.getElementById('labEntry').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function renderLabEntry(){
+  const box=document.getElementById('labEntry'); if(!box) return;
+  const d=loadLabs();
+  const today=new Date();
+  const jToday=g2j(today.getFullYear(),today.getMonth()+1,today.getDate());
+  let h='';
+  h+=`<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--muted)">تاریخ آزمایش:</label>
+    <input type="text" id="labDate" value="${faDigits(jToday.jy+'/'+String(jToday.jm).padStart(2,'0')+'/'+String(jToday.jd).padStart(2,'0'))}" style="width:130px;margin-right:8px" placeholder="۱۴۰۵/۰۵/۲۰"></div>`;
+  if(!d.selected||!d.selected.length){
+    h+=`<div style="color:var(--muted);font-size:12.5px">اول یک بسته‌ی پیشنهادی انتخاب کن، یا از پایین آزمایش دلخواه اضافه کن.</div>`;
+  }else{
+    h+=`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">مقادیر آزمایش‌ها را وارد کن (هرکدام را داری):</div>`;
+    // گروه‌بندی selected بر اساس دسته
+    const byGroup={};
+    d.selected.forEach(k=>{
+      for(const g in LAB_LIBRARY){ if(LAB_LIBRARY[g].items[k]){ (byGroup[g]=byGroup[g]||[]).push(k); break; } }
+    });
+    for(const g in byGroup){
+      h+=`<div style="font-weight:700;color:var(--teal);font-size:12px;margin:10px 0 4px">${LAB_LIBRARY[g].cat}</div>`;
+      byGroup[g].forEach(k=>{
+        const t=LAB_LIBRARY[g].items[k];
+        const rng = (t.lo!==null&&t.hi!==null) ? `${faDigits(t.lo)}-${faDigits(t.hi)}` : '—';
+        h+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+          <label style="flex:1;font-size:12.5px" title="${t.desc}">${t.fa} <span style="color:var(--muted);font-size:10px">(${rng} ${t.unit})</span></label>
+          <input type="number" step="any" id="lab_${k}" style="width:80px" placeholder="مقدار">
+        </div>`;
+      });
+    }
+    h+=`<button class="quick-btn" style="width:100%;margin-top:10px" onclick="saveLabEntry()">💾 ذخیره‌ی نتایج این تاریخ</button>`;
+  }
+  // افزودن آزمایش دلخواه از کل کتابخانه
+  h+=`<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:10px">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">افزودن آزمایش دیگر از کتابخانه:</div>
+    <select id="labAddSelect" style="width:70%"><option value="">— انتخاب آزمایش —</option>`;
+  for(const g in LAB_LIBRARY){
+    h+=`<optgroup label="${LAB_LIBRARY[g].cat}">`;
+    for(const k in LAB_LIBRARY[g].items){ h+=`<option value="${k}">${LAB_LIBRARY[g].items[k].fa}</option>`; }
+    h+=`</optgroup>`;
+  }
+  h+=`</select> <button class="quick-btn" style="font-size:11px" onclick="addLabTest()">افزودن</button></div>`;
+  box.innerHTML=h;
+}
+function addLabTest(){
+  const sel=document.getElementById('labAddSelect'); if(!sel||!sel.value) return;
+  const d=loadLabs(); d.selected=d.selected||[];
+  if(!d.selected.includes(sel.value)) d.selected.push(sel.value);
+  saveLabs(d); renderLabEntry();
+}
+function saveLabEntry(){
+  const d=loadLabs();
+  const date=document.getElementById('labDate').value.trim();
+  if(!date){ alert('تاریخ را وارد کن'); return; }
+  const vals={};
+  (d.selected||[]).forEach(k=>{
+    const el=document.getElementById('lab_'+k);
+    if(el && el.value!=='') vals[k]=parseFloat(el.value);
+  });
+  if(!Object.keys(vals).length){ alert('حداقل یک مقدار وارد کن'); return; }
+  d.entries=d.entries||[];
+  d.entries.push({date, vals, ts:Date.now()});
+  saveLabs(d);
+  renderLabHistory();
+  const c=document.getElementById('c-labs-history'); if(c) c.classList.remove('closed');
+  // پاک کردن ورودی‌ها
+  (d.selected||[]).forEach(k=>{ const el=document.getElementById('lab_'+k); if(el) el.value=''; });
+  document.getElementById('labHistory').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+// وضعیت یک مقدار: normal / high / low
+function labStatus(key,val){
+  const t=findLabTest(key); if(!t||t.lo===null||t.hi===null) return 'na';
+  if(val<t.lo) return 'low';
+  if(val>t.hi) return 'high';
+  return 'normal';
+}
+function renderLabHistory(){
+  const box=document.getElementById('labHistory'); if(!box) return;
+  const d=loadLabs();
+  if(!d.entries||!d.entries.length){ box.innerHTML='<div style="color:var(--muted);font-size:12.5px">هنوز نتیجه‌ای ثبت نشده.</div>'; return; }
+  // همه‌ی کلیدهای آزمایش‌شده
+  const allKeys=[];
+  d.entries.forEach(e=>{ for(const k in e.vals) if(!allKeys.includes(k)) allKeys.push(k); });
+  const entries=[...d.entries].sort((a,b)=>a.ts-b.ts);
+  // هشدارها: مقادیر خارج از محدوده در آخرین نتیجه
+  const last=entries[entries.length-1];
+  let alerts=[];
+  for(const k in last.vals){
+    const st=labStatus(k,last.vals[k]);
+    if(st==='high'||st==='low'){
+      const t=findLabTest(k);
+      alerts.push({k,fa:t.fa,val:last.vals[k],st,msg:st==='high'?t.high:t.low});
+    }
+  }
+  let h='';
+  if(alerts.length){
+    h+=`<div style="background:#3a1f1f;border:1px solid #a44;border-radius:8px;padding:10px;margin-bottom:12px">
+      <div style="color:#f88;font-weight:700;font-size:13px;margin-bottom:6px">⚠️ موارد خارج از محدوده (در آخرین نتیجه)</div>`;
+    alerts.forEach(a=>{
+      h+=`<div style="font-size:12px;line-height:1.8;margin-bottom:6px;color:#fdd">
+        <b>${a.fa}: ${faDigits(a.val)}</b> (${a.st==='high'?'بالا':'پایین'}) — ${a.msg||''}</div>`;
+    });
+    h+=`<div style="font-size:11px;color:var(--amber);margin-top:4px">این‌ها فقط برای گفتگو با پزشک‌اند، نه تشخیص. حتماً با پزشکت بررسی کن.</div></div>`;
+  }
+  // جدول روند: ردیف = آزمایش، ستون = تاریخ
+  h+=`<div style="overflow-x:auto"><table class="rtbl" style="font-size:11.5px;min-width:${100+entries.length*70}px"><thead><tr><th style="text-align:right">آزمایش</th>`;
+  entries.forEach(e=>{ h+=`<th>${faDigits(e.date)}</th>`; });
+  h+=`<th>محدوده</th></tr></thead><tbody>`;
+  allKeys.forEach(k=>{
+    const t=findLabTest(k); if(!t) return;
+    h+=`<tr><td style="text-align:right">${t.fa}</td>`;
+    entries.forEach(e=>{
+      if(e.vals[k]!==undefined){
+        const st=labStatus(k,e.vals[k]);
+        const color = st==='high'?'#f88':st==='low'?'#8bf':st==='normal'?'#6d6':'var(--fg)';
+        const mark = st==='high'?'↑':st==='low'?'↓':'';
+        h+=`<td style="color:${color};font-weight:600">${faDigits(e.vals[k])}${mark}</td>`;
+      }else h+=`<td style="color:#444">—</td>`;
+    });
+    const rng=(t.lo!==null&&t.hi!==null)?`${faDigits(t.lo)}-${faDigits(t.hi)}`:'—';
+    h+=`<td style="color:var(--muted);font-size:10px">${rng}</td></tr>`;
+  });
+  h+=`</tbody></table></div>`;
+  h+=`<div style="font-size:11px;color:var(--muted);margin-top:8px">↑ بالای محدوده &nbsp; ↓ زیر محدوده &nbsp; رنگ سبز = طبیعی. محدوده‌ها تقریبی‌اند؛ معیار، برگه‌ی آزمایشگاه خودت است.</div>`;
+  box.innerHTML=h;
+}
+function renderLabsTab(){
+  renderLabPackages();
+  renderLabEntry();
+  renderLabHistory();
 }
 /* ===== باکس آزمایشی: کشف رابطه‌ی CGM و گلوکومتر با مدل‌های مختلف ===== */
 // حل دستگاه معادلات خطی به روش حذف گاوسی
