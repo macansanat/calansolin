@@ -450,6 +450,8 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <div class="macro-cell kcal"><div class="mv" id="mKcal">0</div><div class="ml">کالری تقریبی</div></div>
     </div>
     <div class="macro-note" id="macroNote">برای ارزیابی نسبت به نیاز بدن، وزن را در پروفایل وارد کنید.</div>
+    <button type="button" id="macroMoreBtn" onclick="toggleMacroDetail()" style="width:100%;margin-top:10px;background:var(--panel-2);border:1px solid var(--line);color:var(--teal);border-radius:8px;padding:8px;font-family:inherit;font-size:12.5px;cursor:pointer">جزئیات بیشتر ⌄</button>
+    <div id="macroDetail" style="display:none;margin-top:10px"></div>
   </div>
   </div>
 </div>
@@ -852,7 +854,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۵.۲</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۵.۷</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -1907,6 +1909,40 @@ const MACRO_BY_CAT={
   "صبحانه‌ی کامل":[8,9],
   "دستی":[0,0]
 };
+/* داده‌ی تغذیه‌ای تفصیلی بر اساس دسته (تقریبی، در همان سطح دقت پروتئین/چربی).
+   fiberG = گرم فیبر به ازای «واحد پایه»‌ی دسته (مثل پروتئین/چربی، مستقل از کربوهیدرات).
+   satR/unsatR = نسبت از کل چربی. omega3: 0/1/2. sugarR = نسبت قند از کل کربوهیدرات. */
+const NUTR_BY_CAT={
+  "پروتئین (کربوهیدرات ناچیز)":{fiberG:0,satR:0.4,unsatR:0.6,omega3:0,sugarR:0,tags:['پروتئین بالا']},
+  "کباب‌ها":{fiberG:0,satR:0.45,unsatR:0.55,omega3:0,sugarR:0,tags:['پروتئین بالا']},
+  "احشا و اجزای گوشتی":{fiberG:0,satR:0.4,unsatR:0.6,omega3:1,sugarR:0,tags:['پروتئین بالا','آهن']},
+  "غذاهای دریایی":{fiberG:0,satR:0.2,unsatR:0.8,omega3:2,sugarR:0,tags:['امگا-۳','پروتئین بالا']},
+  "برنج و پلوها":{fiberG:1,satR:0.3,unsatR:0.7,omega3:0,sugarR:0.02,tags:[]},
+  "خورش و غذای اصلی":{fiberG:3,satR:0.35,unsatR:0.65,omega3:0,sugarR:0.05,tags:['فیبر']},
+  "غذاهای سنتی ایرانی":{fiberG:3,satR:0.35,unsatR:0.65,omega3:0,sugarR:0.05,tags:['فیبر']},
+  "غلات و نان":{fiberG:3,satR:0.25,unsatR:0.75,omega3:0,sugarR:0.03,tags:['فیبر']},
+  "حبوبات":{fiberG:7,satR:0.15,unsatR:0.85,omega3:0,sugarR:0.02,tags:['فیبر بالا','پروتئین گیاهی','منیزیم']},
+  "سوپ و آش":{fiberG:3,satR:0.3,unsatR:0.7,omega3:0,sugarR:0.05,tags:['فیبر']},
+  "میوه":{fiberG:2.5,satR:0.2,unsatR:0.8,omega3:0,sugarR:0.75,tags:['فیبر','ویتامین C','پتاسیم']},
+  "میوه‌های بیشتر":{fiberG:2.5,satR:0.2,unsatR:0.8,omega3:0,sugarR:0.75,tags:['فیبر','ویتامین C','پتاسیم']},
+  "خشکبار و مغزها":{fiberG:3,satR:0.12,unsatR:0.88,omega3:1,sugarR:0.15,tags:['چربی سالم','منیزیم','فیبر','امگا-۳']},
+  "میوه‌ی خشک و چیپس میوه":{fiberG:3,satR:0.2,unsatR:0.8,omega3:0,sugarR:0.85,tags:['فیبر','قند بالا','پتاسیم']},
+  "سبزیجات":{fiberG:3,satR:0.2,unsatR:0.8,omega3:0,sugarR:0.3,tags:['فیبر بالا','منیزیم','پتاسیم','ویتامین']},
+  "لبنیات":{fiberG:0,satR:0.6,unsatR:0.4,omega3:0,sugarR:0.5,tags:['کلسیم','پروتئین']},
+  "پنیر و لبنیات ویژه":{fiberG:0,satR:0.65,unsatR:0.35,omega3:0,sugarR:0.1,tags:['کلسیم','پروتئین','چربی اشباع بالا']},
+  "نوشیدنی":{fiberG:0,satR:0.3,unsatR:0.7,omega3:0,sugarR:0.9,tags:['قند بالا']},
+  "فست‌فود":{fiberG:2,satR:0.5,unsatR:0.5,omega3:0,sugarR:0.1,tags:['چربی اشباع بالا']},
+  "تنقلات و چیپس":{fiberG:1,satR:0.45,unsatR:0.55,omega3:0,sugarR:0.1,tags:['چربی اشباع بالا']},
+  "صبحانه":{fiberG:1.5,satR:0.4,unsatR:0.6,omega3:0,sugarR:0.15,tags:[]},
+  "صبحانه‌ی فرنگی":{fiberG:1.5,satR:0.45,unsatR:0.55,omega3:0,sugarR:0.15,tags:[]},
+  "غذای بین‌المللی":{fiberG:2,satR:0.4,unsatR:0.6,omega3:0,sugarR:0.1,tags:[]},
+  "کیک و دسر":{fiberG:1,satR:0.5,unsatR:0.5,omega3:0,sugarR:0.6,tags:['قند بالا','چربی اشباع بالا']},
+  "شیرینی و قند":{fiberG:0,satR:0.45,unsatR:0.55,omega3:0,sugarR:0.9,tags:['قند بالا']},
+  "سس‌ها و چاشنی‌ها":{fiberG:0.5,satR:0.3,unsatR:0.7,omega3:0,sugarR:0.4,tags:[]},
+  "آبمیوه و اسموتی":{fiberG:0.5,satR:0.2,unsatR:0.8,omega3:0,sugarR:0.85,tags:['قند بالا','ویتامین C']},
+  "صبحانه‌ی کامل":{fiberG:1.5,satR:0.4,unsatR:0.6,omega3:0,sugarR:0.15,tags:[]},
+  "دستی":{fiberG:1,satR:0.35,unsatR:0.65,omega3:0,sugarR:0.2,tags:[]}
+};
 function unitFactor(unit){
   const u=normalizeFa(unit);
   if(u.includes('قاشق چای')) return 0.15;
@@ -1959,6 +1995,9 @@ function renderFoodSummary(list){
 
 function calcCarbs(){
   let total=0, hasFast=false, hasSlow=false, totP=0, totF=0;
+  let fiber=0, sugar=0, satFat=0, unsatFat=0, omega3Score=0, omega3Wt=0;
+  let micro={min:{},vit:{}}, hasPreciseData=false;
+  const tagSet={};
   let summary=[];
   document.querySelectorAll('.food-row').forEach(row=>{
     const cat=row.querySelector('.sel-cat').value,item=row.querySelector('.sel-item').value;
@@ -1966,6 +2005,31 @@ function calcCarbs(){
     const per=(DB[cat]&&DB[cat][item]&&DB[cat][item][unit]!=null)?DB[cat][item][unit]:0;
     const carb=per*amt; row.querySelector('.c-val').textContent=Math.round(carb); total+=carb;
     const m=pf(cat,item,unit,amt); totP+=m.p; totF+=m.fat;
+    // داده‌ی تغذیه‌ای تفصیلی دسته
+    const n=NUTR_BY_CAT[cat];
+    // اگر داده‌ی دقیق ۱۰۰گرمی برای این غذا هست، ریزمغذی‌ها را دقیق حساب کن
+    // مهم: کربوهیدرات و دوز انسولین دست‌نخورده می‌مانند؛ فقط ریز‌مغذی‌ها از منبع دقیق‌اند
+    const nd=findNutr100(item);
+    if(nd && amt>0){
+      const grams = unitGrams(unit)*amt;    // گرم واقعی از وزن واحد (مستقل از کربوهیدرات)
+      const sc = grams/100;                  // ضریب مقیاس به ازای ۱۰۰ گرم
+      fiber += (nd.fiber||0)*sc;
+      sugar += (nd.sugar||0)*sc;
+      const fnd = (nd.fat||0)*sc;
+      if(n){ satFat += fnd*n.satR; unsatFat += fnd*n.unsatR; if(fnd>0){omega3Score+=n.omega3*fnd;omega3Wt+=fnd;} }
+      for(const k in nd.min) micro.min[k]=(micro.min[k]||0)+nd.min[k]*sc;
+      for(const k in nd.vit) micro.vit[k]=(micro.vit[k]||0)+nd.vit[k]*sc;
+      hasPreciseData=true;
+      if(n) n.tags.forEach(t=>{ tagSet[t]=(tagSet[t]||0)+ (carb+fnd); });
+    } else if(n && amt>0){
+      const wf=unitFactor(unit)*amt;       // ضریب وزنی (مثل پروتئین/چربی)
+      fiber += (n.fiberG||0)*wf;           // فیبر مستقل از کربوهیدرات، بر اساس وزن
+      sugar += carb*n.sugarR;              // قند ~ نسبتی از کربوهیدرات همان غذا
+      satFat += m.fat*n.satR;
+      unsatFat += m.fat*n.unsatR;
+      if(m.fat>0){ omega3Score += n.omega3*m.fat; omega3Wt += m.fat; }
+      n.tags.forEach(t=>{ tagSet[t]=(tagSet[t]||0)+ (carb+m.fat+m.p); });
+    }
     if(amt>0) summary.push({emoji:itemEmoji(cat,item),name:item,amt:amt,unit:unit,carb:Math.round(carb)});
     if(["برنج و پلوها","نوشیدنی","شیرینی و قند","میوه","فست‌فود","غلات و نان"].includes(cat)&&carb>10) hasFast=true;
     if(["حبوبات","سبزیجات","خشکبار و مغزها"].includes(cat)&&carb>5) hasSlow=true;
@@ -1973,7 +2037,10 @@ function calcCarbs(){
   document.getElementById('carbTotal').textContent=Math.round(total);
   renderFoodSummary(summary);
   window._mealFast=hasFast; window._mealSlow=hasSlow;
-  window._macro={carb:total,p:totP,fat:totF};
+  const omega3 = omega3Wt>0 ? omega3Score/omega3Wt : 0; // میانگین وزنی ۰..۲
+  // برچسب‌های برجسته (آن‌هایی که سهم قابل‌توجه دارند)
+  const tags=Object.keys(tagSet).sort((a,b)=>tagSet[b]-tagSet[a]);
+  window._macro={carb:total,p:totP,fat:totF,fiber,sugar,satFat,unsatFat,omega3,tags,netCarb:Math.max(0,total-fiber),micro,hasPreciseData};
   updateMacros(total,totP,totF);
   calcDose();
 }
@@ -1984,6 +2051,9 @@ function updateMacros(carb,p,fat){
   document.getElementById('mProt').textContent=Math.round(p);
   document.getElementById('mFat').textContent=Math.round(fat);
   document.getElementById('mKcal').textContent=kcal;
+  // اگر پنل جزئیات باز است، همیشه به‌روزش کن (حتی اگر وزن وارد نشده باشد)
+  const dt=document.getElementById('macroDetail');
+  if(dt && dt.style.display!=='none') renderMacroDetail();
   // ارزیابی نسبت به رنج روزانه‌ی این وعده (بر اساس وزن)
   const w=parseFloat(val('weight'));
   const note=document.getElementById('macroNote');
@@ -2003,6 +2073,96 @@ function updateMacros(carb,p,fat){
     `نسبت به یک وعده‌ی متعادل برای وزن ${Math.round(w)} کیلو: `+
     `کربوهیدرات ${tag(carb,dayCarb)} · پروتئین ${tag(p,dayProt)} · چربی ${tag(fat,dayFat)}`+
     `<div style="color:var(--muted);margin-top:6px;font-size:12px">این ارزیابی تقریبی و آموزشی است؛ نیاز واقعی هر فرد با پزشک/متخصص تغذیه تعیین می‌شود.</div>`;
+}
+function toggleMacroDetail(){
+  const box=document.getElementById('macroDetail');
+  const btn=document.getElementById('macroMoreBtn');
+  if(!box) return;
+  if(box.style.display==='none'){
+    box.style.display='block'; btn.textContent='بستن جزئیات ⌃';
+    renderMacroDetail();
+  }else{
+    box.style.display='none'; btn.textContent='جزئیات بیشتر ⌄';
+  }
+}
+function renderMacroDetail(){
+  const box=document.getElementById('macroDetail'); if(!box) return;
+  const m=window._macro||{};
+  const fmt=x=>faDigits(Math.round((x||0)*10)/10);
+  const omega3Label = m.omega3>=1.3?'زیاد 🐟':m.omega3>=0.5?'متوسط':'کم';
+  let h='';
+  // ---- بخش ۱: ارزش غذایی اصلی (کارت‌های رنگی) ----
+  h+=`<div style="background:linear-gradient(135deg,#16212e,#1b2938);border:1px solid var(--teal-dim);border-radius:12px;padding:14px;margin-bottom:10px">
+    <div style="font-weight:800;color:var(--teal);font-size:13.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px">🍎 ارزش غذایی این وعده</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+      ${nutrCell('کربوهیدرات کل',fmt(m.carb),'گ','#5b8fd6')}
+      ${nutrCell('کربوهیدرات خالص',fmt(m.netCarb),'گ','#3fb9a3','مهم برای انسولین')}
+      ${nutrCell('فیبر',fmt(m.fiber),'گ','#7bc86c')}
+      ${nutrCell('قند',fmt(m.sugar),'گ','#e0a355')}
+    </div>
+    <div style="font-size:10.5px;color:var(--muted);margin-top:8px;line-height:1.7">کربوهیدرات خالص (کل منهای فیبر) بیشترین اثر را روی قند دارد. فیبر بیشتر = جذب قند کندتر.</div>
+  </div>`;
+  // ---- بخش ۲: چربی‌ها ----
+  h+=`<div style="background:linear-gradient(135deg,#16212e,#1b2938);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px">
+    <div style="font-weight:800;color:var(--teal);font-size:13.5px;margin-bottom:10px">🥑 انواع چربی</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+      ${nutrCell('چربی کل',fmt(m.fat),'گ','#9a86e0')}
+      ${nutrCell('اشباع',fmt(m.satFat),'گ','#e0685f','کمترش بهتر')}
+      ${nutrCell('غیراشباع سالم',fmt(m.unsatFat),'گ','#7bc86c')}
+      ${nutrCell('امگا-۳',omega3Label,'','#5b8fd6')}
+    </div>
+    <div style="font-size:10.5px;color:var(--muted);margin-top:8px;line-height:1.8">
+      <b style="color:var(--ink)">اشباع</b> (لبنیات پرچرب، گوشت چرب): زیادش LDL بد را بالا می‌برد. <b style="color:var(--ink)">غیراشباع</b> (زیتون، مغز، ماهی): به HDL خوب و پایین آمدن تری‌گلیسیرید کمک می‌کند.</div>
+  </div>`;
+  // ---- بخش ۳ و ۴: ویتامین‌ها و مواد معدنی (فقط اگر داده‌ی دقیق داریم) ----
+  if(m.hasPreciseData && m.micro){
+    const VIT_INFO={a:['ویتامین A','µg'],c:['ویتامین C','mg'],e:['ویتامین E','mg'],k:['ویتامین K','µg'],b1:['B1 تیامین','mg'],b2:['B2','mg'],b3:['B3 نیاسین','mg'],b6:['ویتامین B6','mg'],b9:['B9 فولات','µg'],b12:['ویتامین B12','µg']};
+    const MIN_INFO={ca:['کلسیم','mg'],fe:['آهن','mg'],mg:['منیزیم','mg'],p:['فسفر','mg'],k:['پتاسیم','mg'],na:['سدیم','mg'],zn:['روی','mg']};
+    // مواد معدنی
+    const minRows=Object.keys(MIN_INFO).filter(k=>m.micro.min[k]>0);
+    if(minRows.length){
+      h+=`<div style="background:linear-gradient(135deg,#16212e,#1b2938);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px">
+        <div style="font-weight:800;color:var(--teal);font-size:13.5px;margin-bottom:10px">⛏️ مواد معدنی</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">`;
+      minRows.forEach(k=>{ h+=miniRow(MIN_INFO[k][0],fmt(m.micro.min[k]),MIN_INFO[k][1]); });
+      h+=`</div></div>`;
+    }
+    // ویتامین‌ها
+    const vitRows=Object.keys(VIT_INFO).filter(k=>m.micro.vit[k]>0);
+    if(vitRows.length){
+      h+=`<div style="background:linear-gradient(135deg,#16212e,#1b2938);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px">
+        <div style="font-weight:800;color:var(--teal);font-size:13.5px;margin-bottom:10px">💊 ویتامین‌ها</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">`;
+      vitRows.forEach(k=>{ h+=miniRow(VIT_INFO[k][0],fmt(m.micro.vit[k]),VIT_INFO[k][1]); });
+      h+=`</div></div>`;
+    }
+  }
+  // ---- بخش ۵: ارتباط با آزمایش خون ----
+  h+=`<div style="background:#1a2a1e;border:1px solid var(--teal-dim);border-radius:12px;padding:12px;margin-bottom:10px;font-size:11.5px;line-height:1.9;color:var(--muted)">
+    <b style="color:var(--teal)">🩸 ارتباط با آزمایش خون:</b> HDL و تری‌گلیسیرید مستقیماً از چربی غذا نمی‌آیند — بدن آن‌ها را می‌سازد. نکته‌ی مهم: <b style="color:var(--ink)">تری‌گلیسیرید بیشتر از قند و کربوهیدرات اضافی بالا می‌رود</b> تا از چربی. پس برای تری‌گلیسیرید پایین‌تر، کم کردن قند مهم‌تر از کم کردن چربی است.</div>`;
+  // ---- بخش ۶: برچسب‌ها ----
+  if(m.tags && m.tags.length){
+    h+=`<div style="background:linear-gradient(135deg,#16212e,#1b2938);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:6px">
+      <div style="font-weight:800;color:var(--teal);font-size:13.5px;margin-bottom:8px">✅ منبع خوبی است از:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">`;
+    m.tags.slice(0,8).forEach(t=>{ h+=`<span style="background:var(--teal-dim);color:#cdeee6;border-radius:20px;padding:5px 12px;font-size:11.5px;font-weight:600">${t}</span>`; });
+    h+=`</div></div>`;
+  }
+  // یادداشت منبع
+  const src = m.hasPreciseData ? 'داده‌ی این وعده از مقادیر استاندارد (بر پایه‌ی USDA) محاسبه شده' : 'مقادیر تقریبی و بر اساس نوع غذا هستند';
+  h+=`<div style="font-size:10px;color:var(--muted);text-align:center;margin-top:4px">${src} · برای غذاهای ترکیبی تقریبی است</div>`;
+  box.innerHTML=h;
+}
+function nutrCell(label,val,unit,color,sub){
+  return `<div style="background:var(--field);border-radius:9px;padding:10px;border-right:3px solid ${color}">
+    <div style="font-size:19px;font-weight:800;color:${color};line-height:1.2">${val}<span style="font-size:11px;font-weight:400;color:var(--muted)"> ${unit}</span></div>
+    <div style="font-size:11px;color:var(--ink);margin-top:2px">${label}</div>
+    ${sub?`<div style="font-size:9.5px;color:var(--muted)">${sub}</div>`:''}</div>`;
+}
+function miniRow(label,val,unit){
+  return `<div style="display:flex;justify-content:space-between;align-items:center;background:var(--field);border-radius:7px;padding:7px 10px">
+    <span style="font-size:11.5px;color:var(--ink)">${label}</span>
+    <span style="font-size:12px;font-weight:700;color:var(--teal)">${val}<span style="font-size:9.5px;color:var(--muted);font-weight:400"> ${unit}</span></span></div>`;
 }
 function calcRatios(){
   const tdd=parseFloat(val('tdd')),type=val('insulinType'),out=document.getElementById('ratioOut');
@@ -3705,6 +3865,81 @@ function computeSuggestedOffset(){
     fastingAvg:fasting.length?Math.round(avg(fasting)):null, fastingN:fasting.length,
     pairs, spread:Math.round(Math.max(...diffs)-Math.min(...diffs))
   };
+}
+/* ===== دیتابیس تغذیه‌ی دقیق (به ازای ۱۰۰ گرم، بر پایه‌ی USDA) =====
+   هر ماده: kcal, carb, protein, fat, fiber, sugar (گرم)
+   min: مواد معدنی (mg جز سلنیوم/µg) — ca,fe,mg,p,k,na,zn
+   vit: ویتامین‌ها — a(µg),c,e,k(µg),b1,b2,b3,b6,b9(µg),b12(µg)
+   کلید هر ماده با نام غذا در DB تطبیق داده می‌شود (کلیدهای هم‌معنی در NUTR_ALIAS). */
+const NUTR100={
+  // --- میوه‌ها ---
+  'انجیر تازه':{kcal:74,carb:19.2,protein:0.75,fat:0.3,fiber:2.9,sugar:16.3,min:{ca:35,fe:0.37,mg:17,p:14,k:232,na:1,zn:0.15},vit:{a:7,c:2,e:0.11,k:4.7,b1:0.06,b2:0.05,b3:0.4,b6:0.11,b9:6,b12:0}},
+  'سیب قرمز/زرد':{kcal:52,carb:13.8,protein:0.26,fat:0.17,fiber:2.4,sugar:10.4,min:{ca:6,fe:0.12,mg:5,p:11,k:107,na:1,zn:0.04},vit:{a:3,c:4.6,e:0.18,k:2.2,b1:0.02,b2:0.03,b3:0.09,b6:0.04,b9:3,b12:0}},
+  'موز':{kcal:89,carb:22.8,protein:1.09,fat:0.33,fiber:2.6,sugar:12.2,min:{ca:5,fe:0.26,mg:27,p:22,k:358,na:1,zn:0.15},vit:{a:3,c:8.7,e:0.1,k:0.5,b1:0.03,b2:0.07,b3:0.67,b6:0.37,b9:20,b12:0}},
+  'پرتقال':{kcal:47,carb:11.8,protein:0.94,fat:0.12,fiber:2.4,sugar:9.4,min:{ca:40,fe:0.1,mg:10,p:14,k:181,na:0,zn:0.07},vit:{a:11,c:53.2,e:0.18,k:0,b1:0.09,b2:0.04,b3:0.28,b6:0.06,b9:30,b12:0}},
+  'انگور':{kcal:69,carb:18.1,protein:0.72,fat:0.16,fiber:0.9,sugar:15.5,min:{ca:10,fe:0.36,mg:7,p:20,k:191,na:2,zn:0.07},vit:{a:3,c:3.2,e:0.19,k:14.6,b1:0.07,b2:0.07,b3:0.19,b6:0.09,b9:2,b12:0}},
+  'گیلاس':{kcal:63,carb:16,protein:1.06,fat:0.2,fiber:2.1,sugar:12.8,min:{ca:13,fe:0.36,mg:11,p:21,k:222,na:0,zn:0.07},vit:{a:3,c:7,e:0.07,k:2.1,b1:0.03,b2:0.03,b3:0.15,b6:0.05,b9:4,b12:0}},
+  'هندوانه':{kcal:30,carb:7.6,protein:0.61,fat:0.15,fiber:0.4,sugar:6.2,min:{ca:7,fe:0.24,mg:10,p:11,k:112,na:1,zn:0.1},vit:{a:28,c:8.1,e:0.05,k:0.1,b1:0.03,b2:0.02,b3:0.18,b6:0.05,b9:3,b12:0}},
+  'خربزه/طالبی':{kcal:34,carb:8.2,protein:0.84,fat:0.19,fiber:0.9,sugar:7.9,min:{ca:9,fe:0.21,mg:12,p:15,k:267,na:16,zn:0.18},vit:{a:169,c:36.7,e:0.05,k:2.5,b1:0.04,b2:0.02,b3:0.73,b6:0.07,b9:21,b12:0}},
+  'هلو':{kcal:39,carb:9.5,protein:0.91,fat:0.25,fiber:1.5,sugar:8.4,min:{ca:6,fe:0.25,mg:9,p:20,k:190,na:0,zn:0.17},vit:{a:16,c:6.6,e:0.73,k:2.6,b1:0.02,b2:0.03,b3:0.81,b6:0.03,b9:4,b12:0}},
+  'گلابی':{kcal:57,carb:15.2,protein:0.36,fat:0.14,fiber:3.1,sugar:9.8,min:{ca:9,fe:0.18,mg:7,p:12,k:116,na:1,zn:0.1},vit:{a:1,c:4.3,e:0.12,k:4.4,b1:0.01,b2:0.03,b3:0.16,b6:0.03,b9:7,b12:0}},
+  'زردآلو':{kcal:48,carb:11.1,protein:1.4,fat:0.39,fiber:2,sugar:9.2,min:{ca:13,fe:0.39,mg:10,p:23,k:259,na:1,zn:0.2},vit:{a:96,c:10,e:0.89,k:3.3,b1:0.03,b2:0.04,b3:0.6,b6:0.05,b9:9,b12:0}},
+  'کیوی':{kcal:61,carb:14.7,protein:1.14,fat:0.52,fiber:3,sugar:9,min:{ca:34,fe:0.31,mg:17,p:34,k:312,na:3,zn:0.14},vit:{a:4,c:92.7,e:1.46,k:40.3,b1:0.03,b2:0.03,b3:0.34,b6:0.06,b9:25,b12:0}},
+  'انار':{kcal:83,carb:18.7,protein:1.67,fat:1.17,fiber:4,sugar:13.7,min:{ca:10,fe:0.3,mg:12,p:36,k:236,na:3,zn:0.35},vit:{a:0,c:10.2,e:0.6,k:16.4,b1:0.07,b2:0.05,b3:0.29,b6:0.08,b9:38,b12:0}},
+  'توت‌فرنگی':{kcal:32,carb:7.7,protein:0.67,fat:0.3,fiber:2,sugar:4.9,min:{ca:16,fe:0.41,mg:13,p:24,k:153,na:1,zn:0.14},vit:{a:1,c:58.8,e:0.29,k:2.2,b1:0.02,b2:0.02,b3:0.39,b6:0.05,b9:24,b12:0}},
+  // --- مغزها و خشکبار ---
+  'گردو':{kcal:654,carb:13.7,protein:15.2,fat:65.2,fiber:6.7,sugar:2.6,min:{ca:98,fe:2.91,mg:158,p:346,k:441,na:2,zn:3.09},vit:{a:1,c:1.3,e:0.7,k:2.7,b1:0.34,b2:0.15,b3:1.13,b6:0.54,b9:98,b12:0}},
+  'بادام':{kcal:579,carb:21.6,protein:21.2,fat:49.9,fiber:12.5,sugar:4.4,min:{ca:269,fe:3.71,mg:270,p:481,k:733,na:1,zn:3.12},vit:{a:0,c:0,e:25.6,k:0,b1:0.2,b2:1.14,b3:3.62,b6:0.14,b9:44,b12:0}},
+  'پسته':{kcal:560,carb:27.2,protein:20.2,fat:45.3,fiber:10.6,sugar:7.7,min:{ca:105,fe:3.92,mg:121,p:490,k:1025,na:1,zn:2.2},vit:{a:26,c:5.6,e:2.86,k:13.2,b1:0.87,b2:0.16,b3:1.3,b6:1.7,b9:51,b12:0}},
+  'فندق':{kcal:628,carb:16.7,protein:15,fat:60.8,fiber:9.7,sugar:4.3,min:{ca:114,fe:4.7,mg:163,p:290,k:680,na:0,zn:2.45},vit:{a:1,c:6.3,e:15,k:14.2,b1:0.64,b2:0.11,b3:1.8,b6:0.56,b9:113,b12:0}},
+  'بادام‌زمینی':{kcal:567,carb:16.1,protein:25.8,fat:49.2,fiber:8.5,sugar:4.7,min:{ca:92,fe:4.58,mg:168,p:376,k:705,na:18,zn:3.27},vit:{a:0,c:0,e:8.33,k:0,b1:0.64,b2:0.13,b3:12.07,b6:0.35,b9:240,b12:0}},
+  'کشمش':{kcal:299,carb:79.2,protein:3.07,fat:0.46,fiber:3.7,sugar:59.2,min:{ca:50,fe:1.88,mg:32,p:101,k:749,na:11,zn:0.22},vit:{a:0,c:2.3,e:0.12,k:3.5,b1:0.11,b2:0.13,b3:0.77,b6:0.17,b9:5,b12:0}},
+  'خرما':{kcal:277,carb:75,protein:1.81,fat:0.15,fiber:6.7,sugar:66.5,min:{ca:64,fe:0.9,mg:54,p:62,k:696,na:1,zn:0.44},vit:{a:0,c:0,e:0.05,k:2.7,b1:0.05,b2:0.06,b3:1.61,b6:0.25,b9:15,b12:0}},
+  'انجیر خشک':{kcal:249,carb:63.9,protein:3.3,fat:0.93,fiber:9.8,sugar:47.9,min:{ca:162,fe:2.03,mg:68,p:67,k:680,na:10,zn:0.55},vit:{a:0,c:1.2,e:0.35,k:15.6,b1:0.09,b2:0.08,b3:0.62,b6:0.11,b9:9,b12:0}},
+  // --- لبنیات ---
+  'شیر پرچرب':{kcal:61,carb:4.8,protein:3.15,fat:3.25,fiber:0,sugar:5.1,min:{ca:113,fe:0.03,mg:10,p:84,k:132,na:43,zn:0.37},vit:{a:46,c:0,e:0.07,k:0.3,b1:0.05,b2:0.17,b3:0.09,b6:0.04,b9:5,b12:0.45}},
+  'شیر کم‌چرب':{kcal:42,carb:4.8,protein:3.4,fat:1,fiber:0,sugar:5.1,min:{ca:125,fe:0.03,mg:11,p:95,k:150,na:44,zn:0.42},vit:{a:58,c:0,e:0.01,k:0.2,b1:0.05,b2:0.18,b3:0.1,b6:0.04,b9:5,b12:0.5}},
+  'ماست پرچرب':{kcal:61,carb:4.7,protein:3.5,fat:3.3,fiber:0,sugar:4.7,min:{ca:121,fe:0.05,mg:12,p:95,k:155,na:46,zn:0.59},vit:{a:27,c:0.5,e:0.06,k:0.2,b1:0.03,b2:0.14,b3:0.08,b6:0.03,b9:7,b12:0.37}},
+  'ماست کم‌چرب':{kcal:63,carb:7,protein:5.3,fat:1.6,fiber:0,sugar:7,min:{ca:183,fe:0.08,mg:17,p:144,k:234,na:70,zn:0.89},vit:{a:14,c:0.8,e:0.01,k:0.2,b1:0.04,b2:0.21,b3:0.11,b6:0.05,b9:11,b12:0.56}},
+  'پنیر فتا':{kcal:264,carb:4.1,protein:14.2,fat:21.3,fiber:0,sugar:4.1,min:{ca:493,fe:0.65,mg:19,p:337,k:62,na:1116,zn:2.88},vit:{a:125,c:0,e:0.18,k:1.8,b1:0.15,b2:0.84,b3:0.99,b6:0.42,b9:32,b12:1.69}},
+  // --- غلات و نان (پخته/آماده) ---
+  'برنج سفید پخته':{kcal:130,carb:28.2,protein:2.7,fat:0.28,fiber:0.4,sugar:0.05,min:{ca:10,fe:1.2,mg:12,p:43,k:35,na:1,zn:0.49},vit:{a:0,c:0,e:0.04,k:0,b1:0.16,b2:0.01,b3:1.48,b6:0.09,b9:58,b12:0}},
+  'برنج قهوه‌ای پخته':{kcal:112,carb:23.5,protein:2.6,fat:0.83,fiber:1.8,sugar:0.35,min:{ca:10,fe:0.53,mg:44,p:83,k:79,na:5,zn:0.63},vit:{a:0,c:0,e:0.17,k:0.6,b1:0.18,b2:0.07,b3:2.56,b6:0.15,b9:9,b12:0}},
+  'نان سنگک':{kcal:270,carb:53,protein:9,fat:1.5,fiber:5,sugar:1,min:{ca:20,fe:3,mg:60,p:180,k:180,na:400,zn:1.5},vit:{a:0,c:0,e:0.3,k:0,b1:0.3,b2:0.15,b3:3,b6:0.15,b9:40,b12:0}},
+  'نان بربری':{kcal:290,carb:56,protein:9,fat:2,fiber:3.5,sugar:1.5,min:{ca:25,fe:2.8,mg:45,p:150,k:150,na:450,zn:1.2},vit:{a:0,c:0,e:0.3,k:0,b1:0.3,b2:0.15,b3:3,b6:0.12,b9:35,b12:0}},
+  // --- سبزیجات ---
+  'گوجه‌فرنگی':{kcal:18,carb:3.9,protein:0.88,fat:0.2,fiber:1.2,sugar:2.6,min:{ca:10,fe:0.27,mg:11,p:24,k:237,na:5,zn:0.17},vit:{a:42,c:13.7,e:0.54,k:7.9,b1:0.04,b2:0.02,b3:0.59,b6:0.08,b9:15,b12:0}},
+  'خیار':{kcal:15,carb:3.6,protein:0.65,fat:0.11,fiber:0.5,sugar:1.7,min:{ca:16,fe:0.28,mg:13,p:24,k:147,na:2,zn:0.2},vit:{a:5,c:2.8,e:0.03,k:16.4,b1:0.03,b2:0.03,b3:0.1,b6:0.04,b9:7,b12:0}},
+  'کاهو':{kcal:15,carb:2.9,protein:1.36,fat:0.15,fiber:1.3,sugar:0.8,min:{ca:36,fe:0.86,mg:13,p:29,k:194,na:28,zn:0.18},vit:{a:370,c:9.2,e:0.29,k:126.3,b1:0.07,b2:0.08,b3:0.38,b6:0.09,b9:38,b12:0}},
+  'هویج':{kcal:41,carb:9.6,protein:0.93,fat:0.24,fiber:2.8,sugar:4.7,min:{ca:33,fe:0.3,mg:12,p:35,k:320,na:69,zn:0.24},vit:{a:835,c:5.9,e:0.66,k:13.2,b1:0.07,b2:0.06,b3:0.98,b6:0.14,b9:19,b12:0}},
+};
+/* نام‌های هم‌معنی: کلید DB → کلید NUTR100 */
+const NUTR_ALIAS={
+  'انجیر':'انجیر تازه','سیب':'سیب قرمز/زرد','سیب زرد':'سیب قرمز/زرد','سیب قرمز':'سیب قرمز/زرد',
+  'نارنگی':'پرتقال','لیموشیرین':'پرتقال','انگور قرمز':'انگور','انگور سبز':'انگور',
+  'آلبالو':'گیلاس','بادام درختی':'بادام','مغز گردو':'گردو','مویز':'کشمش','کشمش پلویی':'کشمش',
+  'خرمای مضافتی':'خرما','خرما (شیرینی)':'خرما','رطب':'خرما','ماست چکیده':'ماست پرچرب',
+  'پنیر لیقوان':'پنیر فتا','پنیر تبریزی':'پنیر فتا','پنیر بلغاری':'پنیر فتا','گوجه':'گوجه‌فرنگی',
+};
+function findNutr100(name){
+  if(NUTR100[name]) return NUTR100[name];
+  if(NUTR_ALIAS[name] && NUTR100[NUTR_ALIAS[name]]) return NUTR100[NUTR_ALIAS[name]];
+  // تطبیق جزئی: اگر نام غذا شامل کلید باشد
+  for(const k in NUTR100){ if(name.includes(k)||k.includes(name)) return NUTR100[k]; }
+  return null;
+}
+/* وزن تقریبی هر واحد به گرم (برای محاسبه‌ی مستقل ریزمغذی‌ها، جدا از کربوهیدرات).
+   این‌ها فقط برای مقیاس‌کردن ویتامین/ماده‌ی معدنی‌اند و روی دوز انسولین اثر ندارند. */
+const UNIT_GRAMS={
+  'گرم':1,'عدد':60,'عدد بزرگ':90,'عدد کوچک':40,'دانه':8,'حبه':6,'لنگه':6,'برگ':10,
+  'قاشق غذاخوری':15,'قاشق چای‌خوری':5,'قاشق':15,'کف دست':50,'نصف کف دست':25,
+  'لیوان':200,'فنجان':120,'کاسه':200,'بشقاب':180,'بشقاب پر':250,'بشقاب کوچک':120,
+  'مشت':30,'قاچ':120,'برش':30,'تکه':40,'قطعه':40,'مربع':20,'وعده':200,'پرس':250,
+};
+function unitGrams(unit){
+  const u=normalizeFa(unit);
+  for(const k in UNIT_GRAMS){ if(u.includes(normalizeFa(k))) return UNIT_GRAMS[k]; }
+  return 50; // پیش‌فرض متوسط
 }
 /* ===== تب ورزش: کتابخانه‌ی حرکت‌ها + برنامه + ثبت ===== */
 // آدمک SVG ساده برای هر حرکت (سبک و آفلاین)
