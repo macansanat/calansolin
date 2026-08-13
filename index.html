@@ -834,6 +834,10 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <h2 onclick="toggleCard('c-ex-plan')"><span>📋 برنامه‌ی پیشنهادی امروز</span></h2>
     <div class="card-body"><div id="exPlan"></div></div>
   </div>
+  <div class="card" id="c-ex-workout">
+    <h2 onclick="toggleCard('c-ex-workout')"><span>▶️ شروع تمرین (با کرنومتر)</span></h2>
+    <div class="card-body"><div id="exWorkout"></div></div>
+  </div>
   <div class="card coll closed" id="c-ex-library">
     <h2 onclick="toggleCard('c-ex-library')"><span>📚 کتابخانه‌ی حرکت‌ها</span></h2>
     <div class="card-body"><div id="exLibrary"></div></div>
@@ -848,7 +852,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۵.۱</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۵.۲</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -3704,18 +3708,38 @@ function computeSuggestedOffset(){
 }
 /* ===== تب ورزش: کتابخانه‌ی حرکت‌ها + برنامه + ثبت ===== */
 // آدمک SVG ساده برای هر حرکت (سبک و آفلاین)
-function stickFigure(pose){
-  const poses={
-    walk:'<line x1="50" y1="20" x2="50" y2="55"/><circle cx="50" cy="14" r="7"/><line x1="50" y1="30" x2="38" y2="42"/><line x1="50" y1="30" x2="63" y2="38"/><line x1="50" y1="55" x2="40" y2="80"/><line x1="50" y1="55" x2="62" y2="78"/>',
-    squat:'<circle cx="50" cy="16" r="7"/><line x1="50" y1="23" x2="50" y2="45"/><line x1="50" y1="30" x2="38" y2="40"/><line x1="50" y1="30" x2="62" y2="40"/><line x1="50" y1="45" x2="38" y2="55"/><line x1="38" y1="55" x2="42" y2="78"/><line x1="50" y1="45" x2="62" y2="55"/><line x1="62" y1="55" x2="58" y2="78"/>',
-    plank:'<circle cx="22" cy="45" r="7"/><line x1="29" y1="47" x2="78" y2="60"/><line x1="35" y1="49" x2="33" y2="68"/><line x1="70" y1="58" x2="72" y2="72"/>',
-    pushup:'<circle cx="20" cy="50" r="7"/><line x1="27" y1="52" x2="80" y2="62"/><line x1="38" y1="54" x2="36" y2="70"/><line x1="72" y1="60" x2="74" y2="72"/>',
-    stretch:'<circle cx="50" cy="14" r="7"/><line x1="50" y1="21" x2="50" y2="52"/><line x1="50" y1="28" x2="44" y2="10"/><line x1="50" y1="28" x2="56" y2="10"/><line x1="50" y1="52" x2="42" y2="80"/><line x1="50" y1="52" x2="58" y2="80"/>',
-    chair:'<circle cx="50" cy="18" r="7"/><line x1="50" y1="25" x2="50" y2="48"/><line x1="50" y1="32" x2="40" y2="42"/><line x1="50" y1="32" x2="60" y2="42"/><line x1="50" y1="48" x2="40" y2="50"/><line x1="40" y1="50" x2="40" y2="72"/><line x1="50" y1="48" x2="62" y2="50"/><line x1="62" y1="50" x2="62" y2="72"/><line x1="34" y1="50" x2="68" y2="50" stroke-width="2" opacity="0.5"/>',
-    march:'<circle cx="50" cy="14" r="7"/><line x1="50" y1="20" x2="50" y2="52"/><line x1="50" y1="28" x2="40" y2="20"/><line x1="50" y1="28" x2="60" y2="40"/><line x1="50" y1="52" x2="44" y2="78"/><line x1="50" y1="52" x2="60" y2="60"/><line x1="60" y1="60" x2="58" y2="78"/>',
-    heel:'<circle cx="50" cy="14" r="7"/><line x1="50" y1="21" x2="50" y2="55"/><line x1="50" y1="30" x2="40" y2="38"/><line x1="50" y1="30" x2="60" y2="38"/><line x1="50" y1="55" x2="46" y2="78"/><line x1="50" y1="55" x2="56" y2="76"/><line x1="42" y1="80" x2="50" y2="80" stroke-width="2"/>',
+function stickFigure(pose, animate){
+  // هر حرکت: دو فریم که با انیمیشن بینشان جابه‌جا می‌شود (رفت‌وبرگشت)
+  const frames={
+    walk:['<circle cx="50" cy="14" r="7"/><line x1="50" y1="20" x2="50" y2="55"/><line x1="50" y1="30" x2="38" y2="42"/><line x1="50" y1="30" x2="63" y2="38"/><line x1="50" y1="55" x2="40" y2="80"/><line x1="50" y1="55" x2="62" y2="78"/>',
+          '<circle cx="50" cy="14" r="7"/><line x1="50" y1="20" x2="50" y2="55"/><line x1="50" y1="30" x2="40" y2="38"/><line x1="50" y1="30" x2="60" y2="42"/><line x1="50" y1="55" x2="60" y2="80"/><line x1="50" y1="55" x2="40" y2="78"/>'],
+    squat:['<circle cx="50" cy="12" r="7"/><line x1="50" y1="19" x2="50" y2="45"/><line x1="50" y1="26" x2="38" y2="36"/><line x1="50" y1="26" x2="62" y2="36"/><line x1="50" y1="45" x2="40" y2="62"/><line x1="40" y1="62" x2="42" y2="82"/><line x1="50" y1="45" x2="60" y2="62"/><line x1="60" y1="62" x2="58" y2="82"/>',
+           '<circle cx="50" cy="26" r="7"/><line x1="50" y1="33" x2="50" y2="52"/><line x1="50" y1="38" x2="40" y2="34"/><line x1="50" y1="38" x2="60" y2="34"/><line x1="50" y1="52" x2="38" y2="60"/><line x1="38" y1="60" x2="42" y2="82"/><line x1="50" y1="52" x2="62" y2="60"/><line x1="62" y1="60" x2="58" y2="82"/>'],
+    plank:['<circle cx="22" cy="45" r="7"/><line x1="29" y1="47" x2="78" y2="60"/><line x1="35" y1="49" x2="33" y2="68"/><line x1="70" y1="58" x2="72" y2="72"/>',
+           '<circle cx="22" cy="48" r="7"/><line x1="29" y1="50" x2="78" y2="62"/><line x1="35" y1="52" x2="33" y2="70"/><line x1="70" y1="60" x2="72" y2="74"/>'],
+    pushup:['<circle cx="20" cy="48" r="7"/><line x1="27" y1="50" x2="80" y2="60"/><line x1="38" y1="52" x2="36" y2="70"/><line x1="72" y1="58" x2="74" y2="72"/>',
+            '<circle cx="20" cy="56" r="7"/><line x1="27" y1="58" x2="80" y2="66"/><line x1="38" y1="60" x2="40" y2="72"/><line x1="72" y1="64" x2="74" y2="74"/>'],
+    stretch:['<circle cx="50" cy="14" r="7"/><line x1="50" y1="21" x2="50" y2="52"/><line x1="50" y1="28" x2="44" y2="10"/><line x1="50" y1="28" x2="56" y2="10"/><line x1="50" y1="52" x2="42" y2="80"/><line x1="50" y1="52" x2="58" y2="80"/>',
+             '<circle cx="50" cy="14" r="7"/><line x1="50" y1="21" x2="50" y2="52"/><line x1="50" y1="28" x2="40" y2="20"/><line x1="50" y1="28" x2="60" y2="20"/><line x1="50" y1="52" x2="42" y2="80"/><line x1="50" y1="52" x2="58" y2="80"/>'],
+    chair:['<circle cx="50" cy="16" r="7"/><line x1="50" y1="23" x2="50" y2="46"/><line x1="50" y1="30" x2="40" y2="40"/><line x1="50" y1="30" x2="60" y2="40"/><line x1="50" y1="46" x2="40" y2="50"/><line x1="40" y1="50" x2="40" y2="72"/><line x1="50" y1="46" x2="62" y2="50"/><line x1="62" y1="50" x2="62" y2="72"/><line x1="34" y1="50" x2="68" y2="50" stroke-width="2" opacity="0.4"/>',
+           '<circle cx="50" cy="28" r="7"/><line x1="50" y1="35" x2="50" y2="50"/><line x1="50" y1="39" x2="40" y2="44"/><line x1="50" y1="39" x2="60" y2="44"/><line x1="50" y1="50" x2="40" y2="52"/><line x1="40" y1="52" x2="40" y2="72"/><line x1="50" y1="50" x2="62" y2="52"/><line x1="62" y1="52" x2="62" y2="72"/><line x1="34" y1="52" x2="68" y2="52" stroke-width="2" opacity="0.4"/>'],
+    march:['<circle cx="50" cy="14" r="7"/><line x1="50" y1="20" x2="50" y2="52"/><line x1="50" y1="28" x2="40" y2="20"/><line x1="50" y1="28" x2="60" y2="40"/><line x1="50" y1="52" x2="44" y2="78"/><line x1="50" y1="52" x2="60" y2="60"/><line x1="60" y1="60" x2="58" y2="78"/>',
+           '<circle cx="50" cy="14" r="7"/><line x1="50" y1="20" x2="50" y2="52"/><line x1="50" y1="28" x2="40" y2="40"/><line x1="50" y1="28" x2="60" y2="20"/><line x1="50" y1="52" x2="40" y2="60"/><line x1="40" y1="60" x2="42" y2="78"/><line x1="50" y1="52" x2="56" y2="78"/>'],
+    heel:['<circle cx="50" cy="16" r="7"/><line x1="50" y1="23" x2="50" y2="55"/><line x1="50" y1="30" x2="40" y2="38"/><line x1="50" y1="30" x2="60" y2="38"/><line x1="50" y1="55" x2="46" y2="80"/><line x1="50" y1="55" x2="56" y2="80"/>',
+          '<circle cx="50" cy="10" r="7"/><line x1="50" y1="17" x2="50" y2="50"/><line x1="50" y1="24" x2="40" y2="32"/><line x1="50" y1="24" x2="60" y2="32"/><line x1="50" y1="50" x2="46" y2="74"/><line x1="50" y1="50" x2="56" y2="74"/><line x1="43" y1="74" x2="47" y2="78" stroke-width="2"/><line x1="53" y1="74" x2="57" y2="78" stroke-width="2"/>'],
+    breath:['<circle cx="50" cy="18" r="7"/><line x1="50" y1="25" x2="50" y2="50"/><line x1="50" y1="32" x2="42" y2="44"/><line x1="50" y1="32" x2="58" y2="44"/><line x1="50" y1="50" x2="42" y2="76"/><line x1="50" y1="50" x2="58" y2="76"/>',
+            '<circle cx="50" cy="18" r="8"/><line x1="50" y1="26" x2="50" y2="50"/><line x1="50" y1="32" x2="40" y2="40"/><line x1="50" y1="32" x2="60" y2="40"/><line x1="50" y1="50" x2="42" y2="76"/><line x1="50" y1="50" x2="58" y2="76"/>'],
+    neck:['<circle cx="46" cy="16" r="7"/><line x1="50" y1="22" x2="50" y2="52"/><line x1="50" y1="30" x2="40" y2="40"/><line x1="50" y1="30" x2="60" y2="40"/><line x1="50" y1="52" x2="42" y2="80"/><line x1="50" y1="52" x2="58" y2="80"/>',
+          '<circle cx="54" cy="16" r="7"/><line x1="50" y1="22" x2="50" y2="52"/><line x1="50" y1="30" x2="40" y2="40"/><line x1="50" y1="30" x2="60" y2="40"/><line x1="50" y1="52" x2="42" y2="80"/><line x1="50" y1="52" x2="58" y2="80"/>'],
+    leg_raise:['<line x1="20" y1="20" x2="20" y2="72" stroke-width="2" opacity="0.4"/><circle cx="35" cy="20" r="7"/><line x1="35" y1="27" x2="35" y2="55"/><line x1="35" y1="34" x2="24" y2="40"/><line x1="35" y1="34" x2="46" y2="40"/><line x1="35" y1="55" x2="35" y2="80"/><line x1="35" y1="55" x2="55" y2="60"/>',
+               '<line x1="20" y1="20" x2="20" y2="72" stroke-width="2" opacity="0.4"/><circle cx="35" cy="20" r="7"/><line x1="35" y1="27" x2="35" y2="55"/><line x1="35" y1="34" x2="24" y2="40"/><line x1="35" y1="34" x2="46" y2="40"/><line x1="35" y1="55" x2="35" y2="80"/><line x1="35" y1="55" x2="60" y2="45"/>'],
   };
-  return `<svg viewBox="0 0 100 90" width="60" height="54" style="stroke:var(--teal);stroke-width:3;fill:none;stroke-linecap:round"><g style="fill:var(--teal)">${(poses[pose]||poses.stretch)}</g></svg>`;
+  const f=frames[pose]||frames.stretch;
+  const id='sf'+Math.random().toString(36).slice(2,8);
+  const anim = animate!==false ? `<style>@keyframes ${id}{0%,100%{opacity:1}50%{opacity:0}}@keyframes ${id}b{0%,100%{opacity:0}50%{opacity:1}}#${id}a{animation:${id} 1.2s infinite}#${id}b{animation:${id}b 1.2s infinite}</style>` : '';
+  const frameB = animate!==false ? `<g id="${id}b" style="fill:var(--teal)">${f[1]}</g>` : '';
+  const frameAid = animate!==false ? `id="${id}a"` : '';
+  return `<svg viewBox="0 0 100 90" width="62" height="56" style="stroke:var(--teal);stroke-width:3;fill:none;stroke-linecap:round">${anim}<g ${frameAid} style="fill:var(--teal)">${f[0]}</g>${frameB}</svg>`;
 }
 // کتابخانه‌ی حرکت‌ها
 const EX_LIBRARY={
@@ -3730,11 +3754,24 @@ const EX_LIBRARY={
     {id:'chair_squat',name:'اسکات با صندلی (مبتدی)',pose:'chair',set:'۳ ست × ۱۰ بار',desc:'جلوی صندلی بایست، آرام بنشین تا لمسش کنی و دوباره بلند شو. برای شروع عالی است.',benefit:'نسخه‌ی آسان اسکات برای مبتدی‌ها یا زانوی حساس.'},
     {id:'wall_pushup',name:'شنا روی دیوار',pose:'pushup',set:'۳ ست × ۱۰ بار',desc:'رو به دیوار بایست، دست‌ها روی دیوار، بدن را جلو و عقب ببر. نسخه‌ی آسان شنا.',benefit:'عضلات بالاتنه را بدون فشار زیاد می‌سازد.'},
     {id:'plank',name:'پلانک',pose:'plank',set:'۳ ست × ۲۰-۳۰ ثانیه',desc:'روی ساعد و پنجه‌ی پا، بدن را صاف مثل تخته نگه دار. شکم را سفت کن.',benefit:'مرکز بدن را قوی می‌کند و متابولیسم را بالا می‌برد.'},
+    {id:'leg_raise',name:'بالا آوردن پا (ایستاده)',pose:'leg_raise',set:'۳ ست × ۱۲ بار هر پا',desc:'به دیوار یا صندلی تکیه بده، یک پا را صاف به جلو بالا بیاور و پایین ببر.',benefit:'عضلات پا و تعادل را تقویت می‌کند.'},
   ]},
   flexibility:{cat:'🧘 کششی و آرام‌سازی',items:[
     {id:'stretch_full',name:'کشش کامل بدن',pose:'stretch',set:'۵ دقیقه، هر کشش ۲۰-۳۰ ثانیه',desc:'دست‌ها را بالای سر بکش، به پهلوها خم شو، آرام نفس بکش.',benefit:'استرس را کم می‌کند و انعطاف را بیشتر. استرس کمتر یعنی قند پایدارتر (کورتیزول کمتر).'},
-    {id:'neck_shoulder',name:'کشش گردن و شانه',pose:'stretch',set:'هر طرف ۲۰ ثانیه',desc:'سر را آرام به هر طرف خم کن، شانه‌ها را بچرخان.',benefit:'تنش گردن و شانه (که با استرس جمع می‌شود) را آزاد می‌کند.'},
-    {id:'breathing',name:'تنفس عمیق (۴-۷-۸)',pose:'chair',set:'۴-۵ بار',desc:'۴ ثانیه دم بگیر، ۷ ثانیه نگه دار، ۸ ثانیه بازدم. نشسته یا دراز کشیده.',benefit:'سیستم عصبی را آرام می‌کند، استرس و ضربان قلب را پایین می‌آورد — کمک به کنترل قند و اعصاب.'},
+    {id:'neck_shoulder',name:'کشش گردن و شانه',pose:'neck',set:'هر طرف ۲۰ ثانیه',desc:'سر را آرام به هر طرف خم کن، شانه‌ها را بچرخان.',benefit:'تنش گردن و شانه (که با استرس جمع می‌شود) را آزاد می‌کند.'},
+    {id:'breathing',name:'تنفس عمیق (۴-۷-۸)',pose:'breath',set:'۴-۵ بار',desc:'۴ ثانیه دم بگیر، ۷ ثانیه نگه دار، ۸ ثانیه بازدم. نشسته یا دراز کشیده.',benefit:'سیستم عصبی را آرام می‌کند، استرس و ضربان قلب را پایین می‌آورد — کمک به کنترل قند و اعصاب.'},
+  ]},
+  senior:{cat:'👵 مخصوص سالمندان',items:[
+    {id:'chair_march',name:'مارش نشسته روی صندلی',pose:'breath',set:'۲ ست × ۱ دقیقه',desc:'روی صندلی بنشین و پاها را یکی‌یکی مثل راه رفتن بالا بیاور.',benefit:'هوازی امن و کم‌فشار برای سالمندان یا کسانی که تعادل ضعیف دارند.'},
+    {id:'seated_leg',name:'صاف کردن زانو (نشسته)',pose:'chair',set:'۲ ست × ۱۰ بار هر پا',desc:'روی صندلی بنشین، یک زانو را صاف کن تا پا افقی شود، بعد پایین بیاور.',benefit:'عضلات ران را بدون فشار به زانو تقویت می‌کند.'},
+    {id:'senior_heel',name:'بلند شدن روی پنجه با تکیه‌گاه',pose:'heel',set:'۲ ست × ۱۰ بار',desc:'پشت صندلی بایست و دستت را روی آن بگذار، آرام روی پنجه بلند شو.',benefit:'تعادل و گردش خون پا را بهتر می‌کند — امن با تکیه‌گاه.'},
+    {id:'senior_stretch',name:'کشش ملایم نشسته',pose:'breath',set:'۵ دقیقه',desc:'نشسته، آرام دست‌ها را بالا بکش و گردن را نرم بچرخان.',benefit:'انعطاف و آرامش، بدون خطر افتادن.'},
+  ]},
+  gestational:{cat:'🤰 دیابت بارداری',items:[
+    {id:'preg_walk',name:'پیاده‌روی آرام',pose:'walk',set:'۱۰-۱۵ دقیقه بعد از غذا',desc:'با سرعت راحت قدم بزن، جایی که نفست بند نیاید و بتوانی صحبت کنی.',benefit:'امن‌ترین و مؤثرترین ورزش در بارداری برای کنترل قند.'},
+    {id:'preg_chair_squat',name:'اسکات سبک با صندلی',pose:'chair',set:'۲ ست × ۸-۱۰ بار',desc:'با تکیه به صندلی، آرام و کم‌عمق بنشین و بلند شو. به بدنت فشار نیاور.',benefit:'عضلات پا را تقویت می‌کند و به زایمان کمک می‌کند.'},
+    {id:'preg_stretch',name:'کشش ملایم بارداری',pose:'breath',set:'۵-۱۰ دقیقه',desc:'کشش‌های آرام گردن، شانه و پهلو. از حرکات روی شکم یا دراز کشیدن به پشت (بعد سه‌ماهه اول) پرهیز کن.',benefit:'تنش و کمردرد بارداری را کم می‌کند.'},
+    {id:'preg_breath',name:'تنفس عمیق',pose:'breath',set:'۵ بار',desc:'نشسته، آرام و عمیق نفس بکش.',benefit:'آرامش و کاهش استرس — برای مادر و کنترل قند خوب است.'},
   ]},
 };
 // برنامه‌های پیشنهادی بر اساس هدف/سطح
@@ -3744,9 +3781,13 @@ const EX_PLANS={
   postmeal:{fa:'کنترل قند بعد غذا',icon:'🍽️',desc:'تمرکز بر پایین آوردن قند بعد از وعده‌ها.',
     items:['walk_meal','march','heel','breathing']},
   metabolic:{fa:'بهبود متابولیک و انسولین',icon:'🔥',desc:'ساخت عضله و بهبود حساسیت به انسولین.',
-    items:['squat','wall_pushup','plank','march','stretch_full']},
+    items:['squat','wall_pushup','plank','march','leg_raise','stretch_full']},
   stress:{fa:'کاهش استرس و اعصاب',icon:'🧘',desc:'آرام‌سازی سیستم عصبی و کاهش کورتیزول.',
     items:['breathing','stretch_full','neck_shoulder','walk_meal']},
+  senior:{fa:'سالمندان',icon:'👵',desc:'حرکت‌های امن و کم‌فشار، بیشتر نشسته یا با تکیه‌گاه.',
+    items:['chair_march','seated_leg','senior_heel','senior_stretch','preg_walk']},
+  gestational:{fa:'دیابت بارداری',icon:'🤰',desc:'ورزش‌های امن و ملایم مخصوص دوران بارداری (با تأیید پزشک).',
+    items:['preg_walk','preg_chair_squat','preg_stretch','preg_breath']},
 };
 const EX_KEY='exercise_log_v1';
 function loadExLog(){ try{return JSON.parse(localStorage.getItem(EX_KEY)||'{"entries":[]}');}catch(e){return {entries:[]};} }
@@ -3774,18 +3815,18 @@ function renderExPlan(){
 }
 function showExPlan(pk){
   const p=EX_PLANS[pk]; const box=document.getElementById('exPlanDetail'); if(!box) return;
-  let h=`<div style="background:var(--card2);border-radius:8px;padding:10px;margin-bottom:6px"><b>${p.icon} ${p.fa}</b><div style="font-size:11.5px;color:var(--muted);margin-top:4px">${p.desc}</div></div>`;
+  let h=`<div style="background:var(--panel-2);border-radius:8px;padding:10px;margin-bottom:6px"><b>${p.icon} ${p.fa}</b><div style="font-size:11.5px;color:var(--muted);margin-top:4px">${p.desc}</div></div>`;
   p.items.forEach(id=>{ h+=exCardHTML(findEx(id)); });
   box.innerHTML=h;
 }
 function exCardHTML(ex){
   if(!ex) return '';
-  return `<div style="display:flex;gap:10px;background:var(--card2);border-radius:8px;padding:10px;margin-bottom:6px;align-items:flex-start">
-    <div style="flex-shrink:0;background:var(--card);border-radius:6px;padding:4px">${stickFigure(ex.pose)}</div>
+  return `<div style="display:flex;gap:10px;background:var(--panel-2);border-radius:8px;padding:10px;margin-bottom:6px;align-items:flex-start">
+    <div style="flex-shrink:0;background:var(--panel);border-radius:6px;padding:4px">${stickFigure(ex.pose)}</div>
     <div style="flex:1">
       <div style="font-weight:700;font-size:13px">${ex.name}</div>
       <div style="font-size:11.5px;color:var(--teal);margin:2px 0">${ex.set}</div>
-      <div style="font-size:11.5px;color:var(--fg);line-height:1.7">${ex.desc}</div>
+      <div style="font-size:11.5px;color:var(--ink);line-height:1.7">${ex.desc}</div>
       <div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:3px">💡 ${ex.benefit}</div>
     </div></div>`;
 }
@@ -3838,7 +3879,7 @@ function renderExTodayList(){
   if(!list.length){ box.innerHTML='<div style="color:var(--muted);font-size:11.5px">هنوز حرکتی اضافه نشده.</div>'; return; }
   let h='';
   list.forEach((it,i)=>{
-    h+=`<div style="display:flex;align-items:center;gap:6px;background:var(--card2);border-radius:6px;padding:6px 8px;margin-bottom:4px">
+    h+=`<div style="display:flex;align-items:center;gap:6px;background:var(--panel-2);border-radius:6px;padding:6px 8px;margin-bottom:4px">
       <span style="flex:1;font-size:12px">${it.name} <span style="color:var(--muted);font-size:10.5px">(${it.set})</span></span>
       <button onclick="rmExToday(${i})" style="background:none;border:none;color:#c66;cursor:pointer;font-size:14px">✕</button></div>`;
   });
@@ -3858,6 +3899,150 @@ function saveExToday(){
   const c=document.getElementById('c-ex-history'); if(c) c.classList.remove('closed');
   document.getElementById('exHistory').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
+/* حالت تعاملی تمرین: انتخاب ترتیب + کرنومتر معکوس + تیک */
+let _wkList=[];       // لیست حرکت‌های انتخاب‌شده برای تمرین {id,name,dur,done}
+let _wkTimer=null;    // هندل تایمر
+let _wkActive=-1;     // اندیس حرکت فعال
+let _wkRemain=0;      // ثانیه‌ی باقی‌مانده
+function renderExWorkout(){
+  const box=document.getElementById('exWorkout'); if(!box) return;
+  let h=`<div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:8px">حرکت‌ها را به ترتیب دلخواه اضافه کن، برای هرکدام زمان ست را تنظیم کن، بعد «شروع» را بزن. کرنومتر برای هر ست می‌شمارد و تو حرکت را انجام می‌دهی؛ بعد تیک می‌زنی و به حرکت بعدی می‌روی.</div>`;
+  // انتخاب حرکت
+  h+=`<select id="wkAddSelect" style="width:62%"><option value="">— افزودن حرکت —</option>`;
+  for(const g in EX_LIBRARY){ h+=`<optgroup label="${EX_LIBRARY[g].cat}">`; EX_LIBRARY[g].items.forEach(ex=>{ h+=`<option value="${ex.id}">${ex.name}</option>`; }); h+=`</optgroup>`; }
+  h+=`</select> <button class="quick-btn" style="font-size:11px;padding:8px 12px" onclick="wkAdd()">افزودن</button>`;
+  // بارگذاری از یک برنامه‌ی آماده
+  h+=`<div style="margin-top:8px;font-size:11.5px;color:var(--muted)">یا یک برنامه‌ی آماده را بارگذاری کن:</div><div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px">`;
+  for(const pk in EX_PLANS){ h+=`<button class="quick-btn" style="font-size:10.5px;padding:6px 9px;flex:0 0 auto" onclick="wkLoadPlan('${pk}')">${EX_PLANS[pk].icon} ${EX_PLANS[pk].fa}</button>`; }
+  h+=`</div>`;
+  h+=`<div id="wkList" style="margin-top:12px"></div>`;
+  box.innerHTML=h;
+  renderWkList();
+}
+function renderWkList(){
+  const box=document.getElementById('wkList'); if(!box) return;
+  if(!_wkList.length){ box.innerHTML='<div style="color:var(--muted);font-size:11.5px">هنوز حرکتی برای تمرین اضافه نشده.</div>'; return; }
+  let h='';
+  _wkList.forEach((it,i)=>{
+    const active = i===_wkActive;
+    const border = active ? '2px solid var(--teal)' : '1px solid var(--line)';
+    h+=`<div style="background:var(--panel-2);border:${border};border-radius:9px;padding:9px;margin-bottom:7px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="flex:0 0 auto">${stickFigure(findEx(it.id)?findEx(it.id).pose:'stretch', active)}</div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:12.5px">${it.done?'✅ ':''}${it.name}</div>
+          <div style="font-size:10.5px;color:var(--muted)">${findEx(it.id)?findEx(it.id).set:''}</div>
+        </div>`;
+    if(!_wkRunning){
+      h+=`<div style="display:flex;align-items:center;gap:4px">
+        <button onclick="wkDur(${i},-10)" style="background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:5px;width:24px;height:24px;cursor:pointer">−</button>
+        <span style="font-size:11.5px;min-width:44px;text-align:center">${faDigits(it.dur)} ثانیه</span>
+        <button onclick="wkDur(${i},10)" style="background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:5px;width:24px;height:24px;cursor:pointer">+</button>
+        <button onclick="wkRemove(${i})" style="background:none;border:none;color:#c66;cursor:pointer;font-size:14px;margin-right:4px">✕</button>
+      </div>`;
+    }else{
+      h+=`<div style="font-size:11px;color:${it.done?'#6d6':'var(--muted)'}">${it.done?'انجام شد':faDigits(it.dur)+' ث'}</div>`;
+    }
+    h+=`</div>`;
+    // کرنومتر و کنترل حرکت فعال
+    if(active && _wkRunning){
+      const mm=String(Math.floor(_wkRemain/60)).padStart(2,'0'), ss=String(_wkRemain%60).padStart(2,'0');
+      h+=`<div style="text-align:center;margin-top:8px">
+        <div style="font-size:38px;font-weight:800;color:var(--teal);letter-spacing:2px;direction:ltr">${faDigits(mm+':'+ss)}</div>
+        <div style="display:flex;gap:6px;justify-content:center;margin-top:6px">`;
+      if(_wkTimer){ h+=`<button class="quick-btn" style="flex:0 0 auto;padding:7px 16px" onclick="wkPause()">⏸ مکث</button>`; }
+      else { h+=`<button class="quick-btn" style="flex:0 0 auto;padding:7px 16px" onclick="wkResume()">▶️ ادامه</button>`; }
+      h+=`<button class="quick-btn" style="flex:0 0 auto;padding:7px 16px" onclick="wkDoneStep()">✓ انجام شد</button>`;
+      h+=`</div></div>`;
+    }
+    h+=`</div>`;
+  });
+  // دکمه‌های کلی
+  if(!_wkRunning){
+    if(_wkList.length) h+=`<button class="quick-btn" style="width:100%;margin-top:8px" onclick="wkStart()">▶️ شروع تمرین</button>`;
+  }else{
+    h+=`<button class="quick-btn" style="width:100%;margin-top:8px;border-color:#c66;color:#e88" onclick="wkStop()">■ پایان تمرین</button>`;
+  }
+  box.innerHTML=h;
+}
+let _wkRunning=false;
+function wkAdd(){
+  const sel=document.getElementById('wkAddSelect'); if(!sel||!sel.value) return;
+  const ex=findEx(sel.value); if(!ex) return;
+  // حدس زمان پیش‌فرض از روی set (اگر ثانیه/دقیقه داشت)
+  let dur=40;
+  const s=ex.set;
+  if(/دقیقه/.test(s)){ const m=s.match(/(\d+)/); dur=m?parseInt(m[1])*60:60; if(dur>180)dur=60; }
+  else if(/ثانیه/.test(s)){ const m=s.match(/(\d+)/); dur=m?parseInt(m[1]):30; }
+  _wkList.push({id:ex.id,name:ex.name,dur,done:false});
+  renderWkList();
+}
+function wkLoadPlan(pk){
+  const p=EX_PLANS[pk]; if(!p) return;
+  _wkList=[];
+  p.items.forEach(id=>{ const ex=findEx(id); if(ex){ let dur=40; const s=ex.set; if(/دقیقه/.test(s)){const m=s.match(/(\d+)/);dur=m?Math.min(parseInt(m[1])*60,90):60;} else if(/ثانیه/.test(s)){const m=s.match(/(\d+)/);dur=m?parseInt(m[1]):30;} _wkList.push({id:ex.id,name:ex.name,dur,done:false}); } });
+  renderWkList();
+}
+function wkDur(i,delta){ _wkList[i].dur=Math.max(10,_wkList[i].dur+delta); renderWkList(); }
+function wkRemove(i){ _wkList.splice(i,1); renderWkList(); }
+function wkStart(){
+  if(!_wkList.length) return;
+  _wkList.forEach(it=>it.done=false);
+  _wkRunning=true; _wkActive=0; _wkRemain=_wkList[0].dur;
+  renderWkList(); wkResume();
+}
+function wkResume(){
+  if(_wkTimer) return;
+  _wkTimer=setInterval(()=>{
+    _wkRemain--;
+    if(_wkRemain<=0){
+      clearInterval(_wkTimer); _wkTimer=null;
+      // صدای بوق کوتاه (اگر مرورگر اجازه دهد)
+      try{ const a=new AudioContext(); const o=a.createOscillator(); o.connect(a.destination); o.frequency.value=660; o.start(); setTimeout(()=>{o.stop();a.close();},250);}catch(e){}
+      _wkRemain=0; renderWkList();
+    }else{
+      // فقط عدد کرنومتر را به‌روز کن (سبک‌تر از رندر کامل)
+      const box=document.getElementById('wkList');
+      const el=box?box.querySelector('div[style*="38px"]'):null;
+      if(el){ const mm=String(Math.floor(_wkRemain/60)).padStart(2,'0'),ss=String(_wkRemain%60).padStart(2,'0'); el.textContent=faDigits(mm+':'+ss);} else renderWkList();
+    }
+  },1000);
+  renderWkList();
+}
+function wkPause(){ if(_wkTimer){ clearInterval(_wkTimer); _wkTimer=null; } renderWkList(); }
+function wkDoneStep(){
+  if(_wkTimer){ clearInterval(_wkTimer); _wkTimer=null; }
+  if(_wkActive>=0 && _wkActive<_wkList.length) _wkList[_wkActive].done=true;
+  // حرکت بعدی که انجام نشده
+  let next=-1;
+  for(let i=0;i<_wkList.length;i++){ if(!_wkList[i].done){ next=i; break; } }
+  if(next<0){ wkFinish(); return; }
+  _wkActive=next; _wkRemain=_wkList[next].dur;
+  renderWkList(); wkResume();
+}
+function wkStop(){
+  if(_wkTimer){ clearInterval(_wkTimer); _wkTimer=null; }
+  _wkRunning=false; _wkActive=-1;
+  renderWkList();
+}
+function wkFinish(){
+  if(_wkTimer){ clearInterval(_wkTimer); _wkTimer=null; }
+  _wkRunning=false; _wkActive=-1;
+  // ثبت خودکار در تاریخچه
+  const done=_wkList.filter(it=>it.done);
+  if(done.length){
+    const today=new Date();
+    const jT=g2j(today.getFullYear(),today.getMonth()+1,today.getDate());
+    const date=faDigits(jT.jy+'/'+String(jT.jm).padStart(2,'0')+'/'+String(jT.jd).padStart(2,'0'));
+    const d=loadExLog();
+    d.entries.push({date, items:done.map(it=>({name:it.name,set:findEx(it.id)?findEx(it.id).set:'—'})), ts:Date.now()});
+    saveExLog(d);
+    renderExHistory();
+    const c=document.getElementById('c-ex-history'); if(c) c.classList.remove('closed');
+  }
+  const box=document.getElementById('wkList');
+  if(box) box.innerHTML=`<div style="text-align:center;padding:16px;background:#14312a;border-radius:9px"><div style="font-size:32px">🎉</div><div style="color:var(--teal);font-weight:700;font-size:15px;margin-top:6px">تمرین تمام شد! آفرین!</div><div style="font-size:12px;color:var(--muted);margin-top:4px">${faDigits(done.length)} حرکت انجام دادی و در تاریخچه ثبت شد.</div><button class="quick-btn" style="margin-top:10px;flex:0 0 auto;padding:8px 20px" onclick="_wkList=[];renderExWorkout()">تمرین جدید</button></div>`;
+}
 function renderExHistory(){
   const box=document.getElementById('exHistory'); if(!box) return;
   const d=loadExLog();
@@ -3868,19 +4053,19 @@ function renderExHistory(){
   // روزهای متوالی (streak)
   const days=[...new Set(entries.map(e=>e.date))];
   let h=`<div style="display:flex;gap:8px;margin-bottom:12px">
-    <div style="flex:1;background:var(--card2);border-radius:8px;padding:10px;text-align:center">
+    <div style="flex:1;background:var(--panel-2);border-radius:8px;padding:10px;text-align:center">
       <div style="font-size:22px;font-weight:700;color:var(--teal)">${faDigits(total)}</div>
       <div style="font-size:11px;color:var(--muted)">جلسه‌ی ثبت‌شده</div></div>
-    <div style="flex:1;background:var(--card2);border-radius:8px;padding:10px;text-align:center">
+    <div style="flex:1;background:var(--panel-2);border-radius:8px;padding:10px;text-align:center">
       <div style="font-size:22px;font-weight:700;color:var(--amber)">${faDigits(days.length)}</div>
       <div style="font-size:11px;color:var(--muted)">روز فعال</div></div></div>`;
   // پیام تشویقی
   const msgs=['هر قدم می‌ارزد! 💪','ادامه بده، بدنت ازت ممنونه! 🌱','عالی پیش می‌روی! 🔥','پشتکارت تحسین‌برانگیز است! 🏅'];
   h+=`<div style="background:#14312a;border-radius:8px;padding:8px 10px;font-size:12px;color:var(--teal);margin-bottom:12px;text-align:center">${msgs[total%msgs.length]}</div>`;
   entries.slice(0,20).forEach(e=>{
-    h+=`<div style="background:var(--card2);border-radius:8px;padding:9px;margin-bottom:6px">
+    h+=`<div style="background:var(--panel-2);border-radius:8px;padding:9px;margin-bottom:6px">
       <div style="font-size:12px;font-weight:600;color:var(--teal);margin-bottom:4px">${faDigits(e.date)}</div>`;
-    e.items.forEach(it=>{ h+=`<div style="font-size:11.5px;color:var(--fg)">• ${it.name} <span style="color:var(--muted);font-size:10.5px">(${it.set})</span></div>`; });
+    e.items.forEach(it=>{ h+=`<div style="font-size:11.5px;color:var(--ink)">• ${it.name} <span style="color:var(--muted);font-size:10.5px">(${it.set})</span></div>`; });
     h+=`</div>`;
   });
   box.innerHTML=h;
@@ -3888,6 +4073,7 @@ function renderExHistory(){
 function renderExerciseTab(){
   renderExSafety();
   renderExPlan();
+  renderExWorkout();
   renderExLibrary();
   renderExLogEntry();
   renderExHistory();
@@ -3897,78 +4083,78 @@ function renderExerciseTab(){
 const LAB_LIBRARY={
   // --- قند و تشخیص ---
   glucose:{cat:'قند و تشخیص',items:{
-    hba1c:{fa:'HbA1c (قند سه‌ماهه)',unit:'%',lo:4,hi:5.7,desc:'میانگین قند خون در ۲-۳ ماه گذشته. مهم‌ترین شاخص کنترل دیابت.',high:'بالای ۵.۷ نشانه‌ی پیش‌دیابت و بالای ۶.۵ نشانه‌ی دیابت است. هرچه بالاتر، کنترل ضعیف‌تر و خطر عوارض بیشتر.',low:'خیلی پایین می‌تواند نشانه‌ی افت‌های مکرر قند باشد.'},
-    fbs:{fa:'قند ناشتا (FBS)',unit:'mg/dL',lo:70,hi:99,desc:'قند خون بعد از ۸ ساعت ناشتایی.',high:'۱۰۰-۱۲۵ پیش‌دیابت، بالای ۱۲۶ دیابت. باید با پزشک بررسی شود.',low:'زیر ۷۰ افت قند (هیپوگلایسمی) است — می‌تواند خطرناک باشد.'},
-    ppbs:{fa:'قند ۲ ساعت بعد غذا',unit:'mg/dL',lo:70,hi:140,desc:'قند خون ۲ ساعت بعد از غذا.',high:'۱۴۰-۱۹۹ اختلال تحمل گلوکز، بالای ۲۰۰ دیابت.',low:'زیر ۷۰ افت قند است.'},
-    rbs:{fa:'قند تصادفی (RBS)',unit:'mg/dL',lo:70,hi:140,desc:'قند خون در هر زمان بدون ناشتایی.',high:'بالای ۲۰۰ همراه با علائم، مشکوک به دیابت.',low:'زیر ۷۰ افت قند.'},
-    ogtt:{fa:'تست تحمل گلوکز (OGTT)',unit:'mg/dL',lo:null,hi:null,desc:'قند خون بعد از خوردن محلول گلوکز استاندارد — برای تشخیص دقیق پیش‌دیابت و دیابت. به‌ویژه برای کسانی که علائم دارند ولی FBS مرزی است.',high:'بالای ۱۴۰ در ۲ ساعت اختلال تحمل، بالای ۲۰۰ دیابت.',low:''},
-    fructosamine:{fa:'فروکتوزامین',unit:'µmol/L',lo:200,hi:285,desc:'میانگین قند ۲-۳ هفته‌ی اخیر (کوتاه‌تر از HbA1c). وقتی مفید است که HbA1c قابل‌اعتماد نباشد.',high:'کنترل قند ضعیف در هفته‌های اخیر.',low:''},
+    hba1c:{fa:'HbA1c (قند سه‌ماهه)',en:'HbA1c (Glycosylated Hb)',unit:'%',lo:4,hi:5.7,desc:'میانگین قند خون در ۲-۳ ماه گذشته. مهم‌ترین شاخص کنترل دیابت.',high:'بالای ۵.۷ نشانه‌ی پیش‌دیابت و بالای ۶.۵ نشانه‌ی دیابت است. هرچه بالاتر، کنترل ضعیف‌تر و خطر عوارض بیشتر.',low:'خیلی پایین می‌تواند نشانه‌ی افت‌های مکرر قند باشد.'},
+    fbs:{fa:'قند ناشتا',en:'FBS (Fasting Blood Glucose)',unit:'mg/dL',lo:70,hi:99,desc:'قند خون بعد از ۸ ساعت ناشتایی.',high:'۱۰۰-۱۲۵ پیش‌دیابت، بالای ۱۲۶ دیابت. باید با پزشک بررسی شود.',low:'زیر ۷۰ افت قند (هیپوگلایسمی) است — می‌تواند خطرناک باشد.'},
+    ppbs:{fa:'قند ۲ ساعت بعد غذا',en:'2hpp (Blood Glucose 2hrs.p.p)',unit:'mg/dL',lo:70,hi:140,desc:'قند خون ۲ ساعت بعد از غذا.',high:'۱۴۰-۱۹۹ اختلال تحمل گلوکز، بالای ۲۰۰ دیابت.',low:'زیر ۷۰ افت قند است.'},
+    rbs:{fa:'قند تصادفی',en:'RBS (Random Blood Sugar)',unit:'mg/dL',lo:70,hi:140,desc:'قند خون در هر زمان بدون ناشتایی.',high:'بالای ۲۰۰ همراه با علائم، مشکوک به دیابت.',low:'زیر ۷۰ افت قند.'},
+    ogtt:{fa:'تست تحمل گلوکز',en:'OGTT (Oral Glucose Tolerance Test)',unit:'mg/dL',lo:null,hi:null,desc:'قند خون بعد از خوردن محلول گلوکز استاندارد — برای تشخیص دقیق پیش‌دیابت و دیابت. به‌ویژه برای کسانی که علائم دارند ولی FBS مرزی است.',high:'بالای ۱۴۰ در ۲ ساعت اختلال تحمل، بالای ۲۰۰ دیابت.',low:''},
+    fructosamine:{fa:'فروکتوزامین',en:'Fructosamine',unit:'µmol/L',lo:200,hi:285,desc:'میانگین قند ۲-۳ هفته‌ی اخیر (کوتاه‌تر از HbA1c). وقتی مفید است که HbA1c قابل‌اعتماد نباشد.',high:'کنترل قند ضعیف در هفته‌های اخیر.',low:''},
   }},
   // --- عملکرد پانکراس و نوع دیابت ---
   pancreas:{cat:'پانکراس و نوع دیابت',items:{
-    cpeptide:{fa:'C-Peptide',unit:'ng/mL',lo:0.9,hi:4,desc:'نشان می‌دهد پانکراس چقدر انسولین خودش می‌سازد. برای تشخیص نوع دیابت و تصمیم درباره‌ی انسولین کلیدی است.',high:'بالا می‌تواند نشانه‌ی مقاومت به انسولین باشد.',low:'پایین یعنی پانکراس انسولین کمی می‌سازد (به سمت نوع ۱ یا دیابت پیشرفته).'},
-    insulin:{fa:'انسولین ناشتا',unit:'µU/mL',lo:2,hi:25,desc:'مقدار انسولین خون در حالت ناشتا. همراه با قند برای سنجش مقاومت به انسولین.',high:'بالا معمولاً نشانه‌ی مقاومت به انسولین است.',low:'پایین می‌تواند نشانه‌ی کمبود تولید انسولین باشد.'},
-    homair:{fa:'HOMA-IR (مقاومت انسولین)',unit:'',lo:0,hi:2,desc:'شاخص محاسبه‌شده از قند و انسولین ناشتا. مقاومت به انسولین را نشان می‌دهد — به‌ویژه در پیش‌دیابت مهم.',high:'بالای ۲.۵-۳ نشانه‌ی مقاومت به انسولین.',low:''},
-    antigad:{fa:'آنتی‌بادی Anti-GAD',unit:'IU/mL',lo:null,hi:null,desc:'آنتی‌بادی خودایمنی. مثبت بودنش به سمت دیابت نوع ۱ یا LADA اشاره دارد.',high:'مثبت: سیستم ایمنی به پانکراس حمله می‌کند (نوع ۱/LADA).',low:''},
-    antiia2:{fa:'آنتی‌بادی Anti-IA2',unit:'U/mL',lo:null,hi:null,desc:'آنتی‌بادی دیگر مرتبط با دیابت نوع ۱.',high:'مثبت به سمت دیابت خودایمنی.',low:''},
+    cpeptide:{fa:'سی-پپتید',en:'C-Peptide',unit:'ng/mL',lo:0.9,hi:4,desc:'نشان می‌دهد پانکراس چقدر انسولین خودش می‌سازد. برای تشخیص نوع دیابت و تصمیم درباره‌ی انسولین کلیدی است.',high:'بالا می‌تواند نشانه‌ی مقاومت به انسولین باشد.',low:'پایین یعنی پانکراس انسولین کمی می‌سازد (به سمت نوع ۱ یا دیابت پیشرفته).'},
+    insulin:{fa:'انسولین ناشتا',en:'Fasting Insulin',unit:'µU/mL',lo:2,hi:25,desc:'مقدار انسولین خون در حالت ناشتا. همراه با قند برای سنجش مقاومت به انسولین.',high:'بالا معمولاً نشانه‌ی مقاومت به انسولین است.',low:'پایین می‌تواند نشانه‌ی کمبود تولید انسولین باشد.'},
+    homair:{fa:'شاخص مقاومت انسولین',en:'HOMA-IR',unit:'',lo:0,hi:2,desc:'شاخص محاسبه‌شده از قند و انسولین ناشتا. مقاومت به انسولین را نشان می‌دهد — به‌ویژه در پیش‌دیابت مهم.',high:'بالای ۲.۵-۳ نشانه‌ی مقاومت به انسولین.',low:''},
+    antigad:{fa:'آنتی‌بادی ضد GAD',en:'Anti-GAD Antibody',unit:'IU/mL',lo:null,hi:null,desc:'آنتی‌بادی خودایمنی. مثبت بودنش به سمت دیابت نوع ۱ یا LADA اشاره دارد.',high:'مثبت: سیستم ایمنی به پانکراس حمله می‌کند (نوع ۱/LADA).',low:''},
+    antiia2:{fa:'آنتی‌بادی ضد IA2',en:'Anti-IA2 Antibody',unit:'U/mL',lo:null,hi:null,desc:'آنتی‌بادی دیگر مرتبط با دیابت نوع ۱.',high:'مثبت به سمت دیابت خودایمنی.',low:''},
   }},
   // --- کلیه ---
   kidney:{cat:'کلیه',items:{
-    creatinine:{fa:'کراتینین',unit:'mg/dL',lo:0.7,hi:1.3,desc:'شاخص عملکرد کلیه. در دیابت باید مرتب چک شود.',high:'بالا می‌تواند نشانه‌ی کاهش عملکرد کلیه باشد.',low:''},
-    bun:{fa:'اوره (BUN)',unit:'mg/dL',lo:7,hi:20,desc:'ماده‌ی دفعی که کلیه پاک می‌کند.',high:'بالا می‌تواند نشانه‌ی مشکل کلیه یا کم‌آبی باشد.',low:''},
-    egfr:{fa:'eGFR',unit:'mL/min',lo:90,hi:120,desc:'تخمین میزان فیلتر کلیه. مهم‌ترین شاخص سلامت کلیه در دیابت.',high:'',low:'زیر ۶۰ نشانه‌ی کاهش عملکرد کلیه — نیاز به بررسی جدی.'},
-    microalbumin:{fa:'میکروآلبومین ادرار (ACR)',unit:'mg/g',lo:0,hi:30,desc:'آسیب زودرس کلیه را قبل از هر علامتی نشان می‌دهد. یکی از مهم‌ترین آزمایش‌های دیابت که اغلب فراموش می‌شود.',high:'بالای ۳۰ نشانه‌ی آسیب اولیه‌ی کلیه (نفروپاتی دیابتی) — حتماً با پزشک.',low:''},
+    creatinine:{fa:'کراتینین',en:'Creatinine',unit:'mg/dL',lo:0.7,hi:1.3,desc:'شاخص عملکرد کلیه. در دیابت باید مرتب چک شود.',high:'بالا می‌تواند نشانه‌ی کاهش عملکرد کلیه باشد.',low:''},
+    bun:{fa:'اوره',en:'BUN (Blood Urea Nitrogen)',unit:'mg/dL',lo:7,hi:20,desc:'ماده‌ی دفعی که کلیه پاک می‌کند.',high:'بالا می‌تواند نشانه‌ی مشکل کلیه یا کم‌آبی باشد.',low:''},
+    egfr:{fa:'نرخ فیلتر کلیه',en:'eGFR',unit:'mL/min',lo:90,hi:120,desc:'تخمین میزان فیلتر کلیه. مهم‌ترین شاخص سلامت کلیه در دیابت.',high:'',low:'زیر ۶۰ نشانه‌ی کاهش عملکرد کلیه — نیاز به بررسی جدی.'},
+    microalbumin:{fa:'میکروآلبومین ادرار',en:'Urine Microalbumin (ACR)',unit:'mg/g',lo:0,hi:30,desc:'آسیب زودرس کلیه را قبل از هر علامتی نشان می‌دهد. یکی از مهم‌ترین آزمایش‌های دیابت که اغلب فراموش می‌شود.',high:'بالای ۳۰ نشانه‌ی آسیب اولیه‌ی کلیه (نفروپاتی دیابتی) — حتماً با پزشک.',low:''},
   }},
   // --- چربی ---
   lipid:{cat:'چربی خون',items:{
-    chol:{fa:'کلسترول کل',unit:'mg/dL',lo:0,hi:200,desc:'کل کلسترول خون.',high:'بالای ۲۰۰ خطر قلبی-عروقی را افزایش می‌دهد.',low:''},
-    ldl:{fa:'LDL (بد)',unit:'mg/dL',lo:0,hi:100,desc:'کلسترول بد — در رگ‌ها رسوب می‌کند.',high:'بالا خطر تصلب شرایین و سکته. در دیابتی‌ها هدف سخت‌گیرانه‌تر است.',low:''},
-    hdl:{fa:'HDL (خوب)',unit:'mg/dL',lo:40,hi:100,desc:'کلسترول خوب — از قلب محافظت می‌کند.',high:'بالا مفید است.',low:'زیر ۴۰ (مرد) یا ۵۰ (زن) خطر قلبی را بیشتر می‌کند.'},
-    tg:{fa:'تری‌گلیسیرید',unit:'mg/dL',lo:0,hi:150,desc:'نوعی چربی خون. در دیابت اغلب بالاست.',high:'بالای ۱۵۰ با مقاومت به انسولین و خطر قلبی مرتبط است.',low:''},
-    vldl:{fa:'VLDL',unit:'mg/dL',lo:2,hi:30,desc:'نوعی چربی حامل تری‌گلیسیرید.',high:'بالا معمولاً همراه تری‌گلیسیرید بالا.',low:''},
+    chol:{fa:'کلسترول کل',en:'Total Cholesterol',unit:'mg/dL',lo:0,hi:200,desc:'کل کلسترول خون.',high:'بالای ۲۰۰ خطر قلبی-عروقی را افزایش می‌دهد.',low:''},
+    ldl:{fa:'کلسترول بد',en:'LDL Cholesterol',unit:'mg/dL',lo:0,hi:100,desc:'کلسترول بد — در رگ‌ها رسوب می‌کند.',high:'بالا خطر تصلب شرایین و سکته. در دیابتی‌ها هدف سخت‌گیرانه‌تر است.',low:''},
+    hdl:{fa:'کلسترول خوب',en:'HDL Cholesterol',unit:'mg/dL',lo:40,hi:100,desc:'کلسترول خوب — از قلب محافظت می‌کند.',high:'بالا مفید است.',low:'زیر ۴۰ (مرد) یا ۵۰ (زن) خطر قلبی را بیشتر می‌کند.'},
+    tg:{fa:'تری‌گلیسیرید',en:'Triglycerides',unit:'mg/dL',lo:0,hi:150,desc:'نوعی چربی خون. در دیابت اغلب بالاست.',high:'بالای ۱۵۰ با مقاومت به انسولین و خطر قلبی مرتبط است.',low:''},
+    vldl:{fa:'وی‌ال‌دی‌ال',en:'VLDL',unit:'mg/dL',lo:2,hi:30,desc:'نوعی چربی حامل تری‌گلیسیرید.',high:'بالا معمولاً همراه تری‌گلیسیرید بالا.',low:''},
   }},
   // --- کبد ---
   liver:{cat:'کبد',items:{
-    ast:{fa:'AST (SGOT)',unit:'U/L',lo:0,hi:40,desc:'آنزیم کبدی. کبد چرب در دیابت شایع است.',high:'بالا می‌تواند نشانه‌ی کبد چرب یا التهاب کبد باشد.',low:''},
-    alt:{fa:'ALT (SGPT)',unit:'U/L',lo:0,hi:41,desc:'آنزیم کبدی، اختصاصی‌تر برای کبد.',high:'بالا نشانه‌ی کبد چرب یا آسیب کبدی — در دیابت شایع.',low:''},
-    alp:{fa:'ALP',unit:'U/L',lo:44,hi:147,desc:'آنزیم مرتبط با کبد و استخوان.',high:'بالا می‌تواند مشکل کبد یا مجاری صفراوی باشد.',low:''},
-    ggt:{fa:'GGT',unit:'U/L',lo:0,hi:55,desc:'آنزیم کبدی حساس به کبد چرب و الکل.',high:'بالا با کبد چرب مرتبط است.',low:''},
+    ast:{fa:'آنزیم کبدی AST',en:'AST (SGOT)',unit:'U/L',lo:0,hi:40,desc:'آنزیم کبدی. کبد چرب در دیابت شایع است.',high:'بالا می‌تواند نشانه‌ی کبد چرب یا التهاب کبد باشد.',low:''},
+    alt:{fa:'آنزیم کبدی ALT',en:'ALT (SGPT)',unit:'U/L',lo:0,hi:41,desc:'آنزیم کبدی، اختصاصی‌تر برای کبد.',high:'بالا نشانه‌ی کبد چرب یا آسیب کبدی — در دیابت شایع.',low:''},
+    alp:{fa:'آلکالن فسفاتاز',en:'ALP (Alkaline Phosphatase)',unit:'U/L',lo:44,hi:147,desc:'آنزیم مرتبط با کبد و استخوان.',high:'بالا می‌تواند مشکل کبد یا مجاری صفراوی باشد.',low:''},
+    ggt:{fa:'جی‌جی‌تی',en:'GGT',unit:'U/L',lo:0,hi:55,desc:'آنزیم کبدی حساس به کبد چرب و الکل.',high:'بالا با کبد چرب مرتبط است.',low:''},
   }},
   // --- تیروئید ---
   thyroid:{cat:'تیروئید',items:{
-    tsh:{fa:'TSH',unit:'mIU/L',lo:0.4,hi:4,desc:'هورمون محرک تیروئید. مشکلات تیروئید در دیابتی‌ها شایع‌تر است و روی قند اثر می‌گذارد.',high:'بالا نشانه‌ی کم‌کاری تیروئید.',low:'پایین نشانه‌ی پرکاری تیروئید.'},
-    t4:{fa:'T4',unit:'µg/dL',lo:4.5,hi:12,desc:'هورمون اصلی تیروئید.',high:'بالا: پرکاری.',low:'پایین: کم‌کاری.'},
-    t3:{fa:'T3',unit:'ng/dL',lo:80,hi:200,desc:'هورمون تیروئید.',high:'بالا: پرکاری.',low:'پایین: کم‌کاری.'},
+    tsh:{fa:'هورمون محرک تیروئید',en:'TSH',unit:'mIU/L',lo:0.4,hi:4,desc:'هورمون محرک تیروئید. مشکلات تیروئید در دیابتی‌ها شایع‌تر است و روی قند اثر می‌گذارد.',high:'بالا نشانه‌ی کم‌کاری تیروئید.',low:'پایین نشانه‌ی پرکاری تیروئید.'},
+    t4:{fa:'تیروکسین',en:'T4 (Thyroxine)',unit:'µg/dL',lo:4.5,hi:12,desc:'هورمون اصلی تیروئید.',high:'بالا: پرکاری.',low:'پایین: کم‌کاری.'},
+    t3:{fa:'تری‌یدوتیرونین',en:'T3',unit:'ng/dL',lo:80,hi:200,desc:'هورمون تیروئید.',high:'بالا: پرکاری.',low:'پایین: کم‌کاری.'},
   }},
   // --- ویتامین و مواد معدنی ---
   vitamins:{cat:'ویتامین و مواد معدنی',items:{
-    b12:{fa:'ویتامین B12',unit:'pg/mL',lo:160,hi:950,desc:'برای اعصاب و خون. متفورمین می‌تواند کمش کند.',high:'',low:'کمبود باعث مشکلات عصبی و خونی می‌شود — در مصرف متفورمین مهم.'},
-    vitd:{fa:'ویتامین D (25-OH)',unit:'ng/mL',lo:30,hi:100,desc:'برای استخوان، ایمنی و حساسیت به انسولین.',high:'بالای ۱۰۰ احتمال سمیت.',low:'کمبود شایع است و با مقاومت به انسولین مرتبط.'},
-    folate:{fa:'فولات',unit:'ng/mL',lo:3,hi:20,desc:'ویتامین B9، برای خون و اعصاب.',high:'',low:'کمبود باعث کم‌خونی.'},
-    mg:{fa:'منیزیم',unit:'mg/dL',lo:1.7,hi:2.4,desc:'در دیابت اغلب کم است و روی حساسیت به انسولین اثر دارد.',high:'',low:'کمبود شایع در دیابت — بر کنترل قند اثر می‌گذارد.'},
-    b1:{fa:'تیامین (B1)',unit:'nmol/L',lo:70,hi:180,desc:'در دیابت بیشتر دفع می‌شود؛ کمبودش شایع است و به اعصاب مربوط می‌شود.',high:'',low:'کمبود در دیابتی‌ها شایع — با عوارض عصبی مرتبط.'},
-    ferritin:{fa:'فریتین',unit:'ng/mL',lo:20,hi:250,desc:'ذخیره‌ی آهن بدن.',high:'بالا می‌تواند نشانه‌ی التهاب یا اضافه‌بار آهن باشد — با پزشک بررسی شود.',low:'پایین نشانه‌ی کمبود آهن.'},
-    iron:{fa:'آهن',unit:'µg/dL',lo:60,hi:170,desc:'آهن خون.',high:'بالا: اضافه‌بار آهن.',low:'پایین: کم‌خونی فقر آهن.'},
-    calcium:{fa:'کلسیم',unit:'mg/dL',lo:8.5,hi:10.5,desc:'برای استخوان و اعصاب.',high:'بالا مشکلات مختلف.',low:'پایین اثر بر اعصاب و عضلات.'},
-    potassium:{fa:'پتاسیم',unit:'mEq/L',lo:3.5,hi:5,desc:'الکترولیت مهم؛ در بعضی داروهای دیابت و مشکل کلیه تغییر می‌کند.',high:'بالا می‌تواند خطرناک باشد (قلب).',low:'پایین هم بر قلب و عضله اثر دارد.'},
-    sodium:{fa:'سدیم',unit:'mEq/L',lo:135,hi:145,desc:'الکترولیت اصلی بدن.',high:'بالا: کم‌آبی.',low:'پایین: مشکلات مختلف.'},
+    b12:{fa:'ویتامین B12',en:'Vitamin B12',unit:'pg/mL',lo:160,hi:950,desc:'برای اعصاب و خون. متفورمین می‌تواند کمش کند.',high:'',low:'کمبود باعث مشکلات عصبی و خونی می‌شود — در مصرف متفورمین مهم.'},
+    vitd:{fa:'ویتامین D',en:'25-OH Vitamin D',unit:'ng/mL',lo:30,hi:100,desc:'برای استخوان، ایمنی و حساسیت به انسولین.',high:'بالای ۱۰۰ احتمال سمیت.',low:'کمبود شایع است و با مقاومت به انسولین مرتبط.'},
+    folate:{fa:'فولات',en:'Folate (Folic Acid)',unit:'ng/mL',lo:3,hi:20,desc:'ویتامین B9، برای خون و اعصاب.',high:'',low:'کمبود باعث کم‌خونی.'},
+    mg:{fa:'منیزیم',en:'Magnesium (Mg)',unit:'mg/dL',lo:1.7,hi:2.4,desc:'در دیابت اغلب کم است و روی حساسیت به انسولین اثر دارد.',high:'',low:'کمبود شایع در دیابت — بر کنترل قند اثر می‌گذارد.'},
+    b1:{fa:'تیامین',en:'Thiamine (Vitamin B1)',unit:'nmol/L',lo:70,hi:180,desc:'در دیابت بیشتر دفع می‌شود؛ کمبودش شایع است و به اعصاب مربوط می‌شود.',high:'',low:'کمبود در دیابتی‌ها شایع — با عوارض عصبی مرتبط.'},
+    ferritin:{fa:'فریتین',en:'Ferritin',unit:'ng/mL',lo:20,hi:250,desc:'ذخیره‌ی آهن بدن.',high:'بالا می‌تواند نشانه‌ی التهاب یا اضافه‌بار آهن باشد — با پزشک بررسی شود.',low:'پایین نشانه‌ی کمبود آهن.'},
+    iron:{fa:'آهن',en:'Iron (Fe)',unit:'µg/dL',lo:60,hi:170,desc:'آهن خون.',high:'بالا: اضافه‌بار آهن.',low:'پایین: کم‌خونی فقر آهن.'},
+    calcium:{fa:'کلسیم',en:'Calcium (Ca)',unit:'mg/dL',lo:8.5,hi:10.5,desc:'برای استخوان و اعصاب.',high:'بالا مشکلات مختلف.',low:'پایین اثر بر اعصاب و عضلات.'},
+    potassium:{fa:'پتاسیم',en:'Potassium (K)',unit:'mEq/L',lo:3.5,hi:5,desc:'الکترولیت مهم؛ در بعضی داروهای دیابت و مشکل کلیه تغییر می‌کند.',high:'بالا می‌تواند خطرناک باشد (قلب).',low:'پایین هم بر قلب و عضله اثر دارد.'},
+    sodium:{fa:'سدیم',en:'Sodium (Na)',unit:'mEq/L',lo:135,hi:145,desc:'الکترولیت اصلی بدن.',high:'بالا: کم‌آبی.',low:'پایین: مشکلات مختلف.'},
   }},
   // --- قلب و التهاب ---
   cardiac:{cat:'قلب و التهاب',items:{
-    bp_sys:{fa:'فشار خون سیستولیک (عدد بالا)',unit:'mmHg',lo:90,hi:130,desc:'فشار خون در دیابت باید کنترل شود.',high:'بالای ۱۳۰-۱۴۰ فشار خون بالا — خطر قلب و کلیه.',low:'خیلی پایین: سرگیجه.'},
-    bp_dia:{fa:'فشار خون دیاستولیک (عدد پایین)',unit:'mmHg',lo:60,hi:85,desc:'عدد پایین فشار خون.',high:'بالای ۸۵-۹۰ فشار بالا.',low:''},
-    crp:{fa:'CRP (hs-CRP)',unit:'mg/L',lo:0,hi:3,desc:'شاخص التهاب بدن. التهاب مزمن با مقاومت به انسولین و خطر قلبی مرتبط.',high:'بالا نشانه‌ی التهاب — خطر قلبی-عروقی.',low:''},
-    homocysteine:{fa:'هوموسیستئین',unit:'µmol/L',lo:5,hi:15,desc:'اسیدآمینه‌ای مرتبط با خطر قلبی.',high:'بالا خطر قلبی-عروقی را بیشتر می‌کند.',low:''},
-    uricacid:{fa:'اسید اوریک',unit:'mg/dL',lo:3.5,hi:7.2,desc:'در سندرم متابولیک و نقرس مهم.',high:'بالا با نقرس و سندرم متابولیک مرتبط.',low:''},
+    bp_sys:{fa:'فشار خون سیستولیک',en:'Systolic BP',unit:'mmHg',lo:90,hi:130,desc:'فشار خون در دیابت باید کنترل شود.',high:'بالای ۱۳۰-۱۴۰ فشار خون بالا — خطر قلب و کلیه.',low:'خیلی پایین: سرگیجه.'},
+    bp_dia:{fa:'فشار خون دیاستولیک',en:'Diastolic BP',unit:'mmHg',lo:60,hi:85,desc:'عدد پایین فشار خون.',high:'بالای ۸۵-۹۰ فشار بالا.',low:''},
+    crp:{fa:'پروتئین واکنشی C',en:'CRP (hs-CRP)',unit:'mg/L',lo:0,hi:3,desc:'شاخص التهاب بدن. التهاب مزمن با مقاومت به انسولین و خطر قلبی مرتبط.',high:'بالا نشانه‌ی التهاب — خطر قلبی-عروقی.',low:''},
+    homocysteine:{fa:'هوموسیستئین',en:'Homocysteine',unit:'µmol/L',lo:5,hi:15,desc:'اسیدآمینه‌ای مرتبط با خطر قلبی.',high:'بالا خطر قلبی-عروقی را بیشتر می‌کند.',low:''},
+    uricacid:{fa:'اسید اوریک',en:'Uric Acid',unit:'mg/dL',lo:3.5,hi:7.2,desc:'در سندرم متابولیک و نقرس مهم.',high:'بالا با نقرس و سندرم متابولیک مرتبط.',low:''},
   }},
   // --- شمارش کامل خون (CBC) ---
   cbc:{cat:'شمارش کامل خون (CBC)',items:{
-    hb:{fa:'هموگلوبین (Hb)',unit:'g/dL',lo:13,hi:17,desc:'حامل اکسیژن در خون.',high:'بالا: غلظت خون.',low:'پایین: کم‌خونی (بر HbA1c هم اثر می‌گذارد).'},
-    hct:{fa:'هماتوکریت (HCT)',unit:'%',lo:38,hi:50,desc:'درصد حجم گلبول قرمز در خون.',high:'بالا: کم‌آبی یا غلظت خون.',low:'پایین: کم‌خونی.'},
-    rbc:{fa:'گلبول قرمز (RBC)',unit:'M/µL',lo:4.5,hi:5.9,desc:'تعداد گلبول‌های قرمز.',high:'بالا: غلظت خون.',low:'پایین: کم‌خونی.'},
-    wbc:{fa:'گلبول سفید (WBC)',unit:'K/µL',lo:4,hi:11,desc:'سلول‌های ایمنی.',high:'بالا: عفونت یا التهاب.',low:'پایین: ضعف ایمنی.'},
-    plt:{fa:'پلاکت (PLT)',unit:'K/µL',lo:150,hi:450,desc:'برای انعقاد خون.',high:'بالا: خطر لخته یا التهاب.',low:'پایین: خطر خونریزی.'},
-    mcv:{fa:'MCV',unit:'fL',lo:80,hi:100,desc:'اندازه‌ی متوسط گلبول قرمز.',high:'بالا: کم‌خونی با گلبول درشت (کمبود B12/فولات).',low:'پایین: کم‌خونی فقر آهن.'},
+    hb:{fa:'هموگلوبین',en:'Hemoglobin (Hb)',unit:'g/dL',lo:13,hi:17,desc:'حامل اکسیژن در خون.',high:'بالا: غلظت خون.',low:'پایین: کم‌خونی (بر HbA1c هم اثر می‌گذارد).'},
+    hct:{fa:'هماتوکریت',en:'Hematocrit (HCT)',unit:'%',lo:38,hi:50,desc:'درصد حجم گلبول قرمز در خون.',high:'بالا: کم‌آبی یا غلظت خون.',low:'پایین: کم‌خونی.'},
+    rbc:{fa:'گلبول قرمز',en:'RBC (Red Blood Cell)',unit:'M/µL',lo:4.5,hi:5.9,desc:'تعداد گلبول‌های قرمز.',high:'بالا: غلظت خون.',low:'پایین: کم‌خونی.'},
+    wbc:{fa:'گلبول سفید',en:'WBC (White Blood Cell)',unit:'K/µL',lo:4,hi:11,desc:'سلول‌های ایمنی.',high:'بالا: عفونت یا التهاب.',low:'پایین: ضعف ایمنی.'},
+    plt:{fa:'پلاکت',en:'Platelet (PLT)',unit:'K/µL',lo:150,hi:450,desc:'برای انعقاد خون.',high:'بالا: خطر لخته یا التهاب.',low:'پایین: خطر خونریزی.'},
+    mcv:{fa:'حجم متوسط گلبول',en:'MCV',unit:'fL',lo:80,hi:100,desc:'اندازه‌ی متوسط گلبول قرمز.',high:'بالا: کم‌خونی با گلبول درشت (کمبود B12/فولات).',low:'پایین: کم‌خونی فقر آهن.'},
   }},
 };
 // بسته‌های پیشنهادی بر اساس گروه
@@ -4006,10 +4192,10 @@ function renderLabPackages(){
   for(const pk in LAB_PACKAGES){
     const p=LAB_PACKAGES[pk];
     const count = p.tests==='ALL' ? Object.values(LAB_LIBRARY).reduce((s,g)=>s+Object.keys(g.items).length,0) : p.tests.length;
-    h+=`<div style="background:var(--card2);border-radius:8px;padding:11px;border:1px solid var(--border)">
-      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="selectLabPackage('${pk}')">
-        <div><b>${p.icon} ${p.fa}</b> <span style="color:var(--muted);font-size:11px">(${faDigits(count)} آزمایش)</span></div>
-        <button class="quick-btn" style="font-size:11px" onclick="event.stopPropagation();selectLabPackage('${pk}')">انتخاب</button>
+    h+=`<div style="background:var(--panel-2);border-radius:9px;padding:11px;border:1px solid var(--line)">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <div style="flex:1"><b>${p.icon} ${p.fa}</b> <span style="color:var(--muted);font-size:11px">(${faDigits(count)} آزمایش)</span></div>
+        <button class="quick-btn" style="flex:0 0 auto;font-size:11px;padding:6px 14px" onclick="selectLabPackage('${pk}')">انتخاب</button>
       </div>
       <div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:6px">${p.desc}</div>
     </div>`;
@@ -4023,7 +4209,6 @@ function selectLabPackage(pk){
   if(p.tests==='ALL'){ for(const g in LAB_LIBRARY) for(const k in LAB_LIBRARY[g].items) tests.push(k); }
   const d=loadLabs(); d.selected=tests; saveLabs(d);
   renderLabEntry();
-  // باز کردن کارت ثبت
   const c=document.getElementById('c-labs-entry'); if(c) c.classList.remove('closed');
   document.getElementById('labEntry').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
@@ -4038,8 +4223,7 @@ function renderLabEntry(){
   if(!d.selected||!d.selected.length){
     h+=`<div style="color:var(--muted);font-size:12.5px">اول یک بسته‌ی پیشنهادی انتخاب کن، یا از پایین آزمایش دلخواه اضافه کن.</div>`;
   }else{
-    h+=`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">مقادیر آزمایش‌ها را وارد کن (هرکدام را داری):</div>`;
-    // گروه‌بندی selected بر اساس دسته
+    h+=`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">مقادیر آزمایش‌ها را وارد کن (هرکدام را داری). آزمایش‌هایی که پزشکت نداده را با ✕ حذف کن.</div>`;
     const byGroup={};
     d.selected.forEach(k=>{
       for(const g in LAB_LIBRARY){ if(LAB_LIBRARY[g].items[k]){ (byGroup[g]=byGroup[g]||[]).push(k); break; } }
@@ -4049,30 +4233,34 @@ function renderLabEntry(){
       byGroup[g].forEach(k=>{
         const t=LAB_LIBRARY[g].items[k];
         const rng = (t.lo!==null&&t.hi!==null) ? `${faDigits(t.lo)}-${faDigits(t.hi)}` : '—';
-        h+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
-          <label style="flex:1;font-size:12.5px" title="${t.desc}">${t.fa} <span style="color:var(--muted);font-size:10px">(${rng} ${t.unit})</span></label>
-          <input type="number" step="any" id="lab_${k}" style="width:80px" placeholder="مقدار">
+        h+=`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <button onclick="removeLabTest('${k}')" title="حذف این آزمایش" style="flex:0 0 auto;background:none;border:none;color:#c66;cursor:pointer;font-size:15px;padding:0 2px">✕</button>
+          <label style="flex:1;font-size:12px;line-height:1.5" title="${t.desc}">${t.fa}<br><span style="color:var(--muted);font-size:10px;direction:ltr;display:inline-block">${t.en||''} • ${rng} ${t.unit}</span></label>
+          <input type="number" step="any" id="lab_${k}" style="width:78px;flex:0 0 auto" placeholder="مقدار">
         </div>`;
       });
     }
     h+=`<button class="quick-btn" style="width:100%;margin-top:10px" onclick="saveLabEntry()">💾 ذخیره‌ی نتایج این تاریخ</button>`;
   }
-  // افزودن آزمایش دلخواه از کل کتابخانه
-  h+=`<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:10px">
+  h+=`<div style="margin-top:14px;border-top:1px solid var(--line);padding-top:10px">
     <div style="font-size:12px;color:var(--muted);margin-bottom:6px">افزودن آزمایش دیگر از کتابخانه:</div>
-    <select id="labAddSelect" style="width:70%"><option value="">— انتخاب آزمایش —</option>`;
+    <select id="labAddSelect" style="width:68%"><option value="">— انتخاب آزمایش —</option>`;
   for(const g in LAB_LIBRARY){
     h+=`<optgroup label="${LAB_LIBRARY[g].cat}">`;
-    for(const k in LAB_LIBRARY[g].items){ h+=`<option value="${k}">${LAB_LIBRARY[g].items[k].fa}</option>`; }
+    for(const k in LAB_LIBRARY[g].items){ const it=LAB_LIBRARY[g].items[k]; h+=`<option value="${k}">${it.fa}${it.en?' — '+it.en:''}</option>`; }
     h+=`</optgroup>`;
   }
-  h+=`</select> <button class="quick-btn" style="font-size:11px" onclick="addLabTest()">افزودن</button></div>`;
+  h+=`</select> <button class="quick-btn" style="font-size:11px;padding:8px 12px" onclick="addLabTest()">افزودن</button></div>`;
   box.innerHTML=h;
 }
 function addLabTest(){
   const sel=document.getElementById('labAddSelect'); if(!sel||!sel.value) return;
   const d=loadLabs(); d.selected=d.selected||[];
   if(!d.selected.includes(sel.value)) d.selected.push(sel.value);
+  saveLabs(d); renderLabEntry();
+}
+function removeLabTest(k){
+  const d=loadLabs(); d.selected=(d.selected||[]).filter(x=>x!==k);
   saveLabs(d); renderLabEntry();
 }
 function saveLabEntry(){
@@ -4090,65 +4278,68 @@ function saveLabEntry(){
   saveLabs(d);
   renderLabHistory();
   const c=document.getElementById('c-labs-history'); if(c) c.classList.remove('closed');
-  // پاک کردن ورودی‌ها
   (d.selected||[]).forEach(k=>{ const el=document.getElementById('lab_'+k); if(el) el.value=''; });
   document.getElementById('labHistory').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
-// وضعیت یک مقدار: normal / high / low
 function labStatus(key,val){
   const t=findLabTest(key); if(!t||t.lo===null||t.hi===null) return 'na';
   if(val<t.lo) return 'low';
   if(val>t.hi) return 'high';
   return 'normal';
 }
+function deleteLabEntry(ts){
+  if(!confirm('این نتیجه‌ی ثبت‌شده حذف شود؟')) return;
+  const d=loadLabs(); d.entries=(d.entries||[]).filter(e=>e.ts!==ts); saveLabs(d); renderLabHistory();
+}
 function renderLabHistory(){
   const box=document.getElementById('labHistory'); if(!box) return;
   const d=loadLabs();
   if(!d.entries||!d.entries.length){ box.innerHTML='<div style="color:var(--muted);font-size:12.5px">هنوز نتیجه‌ای ثبت نشده.</div>'; return; }
-  // همه‌ی کلیدهای آزمایش‌شده
   const allKeys=[];
   d.entries.forEach(e=>{ for(const k in e.vals) if(!allKeys.includes(k)) allKeys.push(k); });
   const entries=[...d.entries].sort((a,b)=>a.ts-b.ts);
-  // هشدارها: مقادیر خارج از محدوده در آخرین نتیجه
   const last=entries[entries.length-1];
   let alerts=[];
   for(const k in last.vals){
     const st=labStatus(k,last.vals[k]);
     if(st==='high'||st==='low'){
       const t=findLabTest(k);
-      alerts.push({k,fa:t.fa,val:last.vals[k],st,msg:st==='high'?t.high:t.low});
+      alerts.push({k,fa:t.fa,en:t.en,val:last.vals[k],st,msg:st==='high'?t.high:t.low});
     }
   }
   let h='';
   if(alerts.length){
-    h+=`<div style="background:#3a1f1f;border:1px solid #a44;border-radius:8px;padding:10px;margin-bottom:12px">
+    h+=`<div style="background:#3a1f1f;border:1px solid #a44;border-radius:9px;padding:10px;margin-bottom:12px">
       <div style="color:#f88;font-weight:700;font-size:13px;margin-bottom:6px">⚠️ موارد خارج از محدوده (در آخرین نتیجه)</div>`;
     alerts.forEach(a=>{
       h+=`<div style="font-size:12px;line-height:1.8;margin-bottom:6px;color:#fdd">
-        <b>${a.fa}: ${faDigits(a.val)}</b> (${a.st==='high'?'بالا':'پایین'}) — ${a.msg||''}</div>`;
+        <b>${a.fa}${a.en?' ('+a.en+')':''}: ${faDigits(a.val)}</b> (${a.st==='high'?'بالا':'پایین'}) — ${a.msg||''}</div>`;
     });
     h+=`<div style="font-size:11px;color:var(--amber);margin-top:4px">این‌ها فقط برای گفتگو با پزشک‌اند، نه تشخیص. حتماً با پزشکت بررسی کن.</div></div>`;
   }
-  // جدول روند: ردیف = آزمایش، ستون = تاریخ
-  h+=`<div style="overflow-x:auto"><table class="rtbl" style="font-size:11.5px;min-width:${100+entries.length*70}px"><thead><tr><th style="text-align:right">آزمایش</th>`;
+  h+=`<div style="overflow-x:auto"><table class="rtbl" style="font-size:11.5px;min-width:${140+entries.length*70}px"><thead><tr><th style="text-align:right">آزمایش</th>`;
   entries.forEach(e=>{ h+=`<th>${faDigits(e.date)}</th>`; });
   h+=`<th>محدوده</th></tr></thead><tbody>`;
   allKeys.forEach(k=>{
     const t=findLabTest(k); if(!t) return;
-    h+=`<tr><td style="text-align:right">${t.fa}</td>`;
+    h+=`<tr><td style="text-align:right;line-height:1.4">${t.fa}<br><span style="color:var(--muted);font-size:9px;direction:ltr;display:inline-block">${t.en||''}</span></td>`;
     entries.forEach(e=>{
       if(e.vals[k]!==undefined){
         const st=labStatus(k,e.vals[k]);
-        const color = st==='high'?'#f88':st==='low'?'#8bf':st==='normal'?'#6d6':'var(--fg)';
+        const color = st==='high'?'#f88':st==='low'?'#8bf':st==='normal'?'#6d6':'var(--ink)';
         const mark = st==='high'?'↑':st==='low'?'↓':'';
         h+=`<td style="color:${color};font-weight:600">${faDigits(e.vals[k])}${mark}</td>`;
       }else h+=`<td style="color:#444">—</td>`;
     });
     const rng=(t.lo!==null&&t.hi!==null)?`${faDigits(t.lo)}-${faDigits(t.hi)}`:'—';
-    h+=`<td style="color:var(--muted);font-size:10px">${rng}</td></tr>`;
+    h+=`<td style="color:var(--muted);font-size:10px">${rng} ${t.unit}</td></tr>`;
   });
   h+=`</tbody></table></div>`;
   h+=`<div style="font-size:11px;color:var(--muted);margin-top:8px">↑ بالای محدوده &nbsp; ↓ زیر محدوده &nbsp; رنگ سبز = طبیعی. محدوده‌ها تقریبی‌اند؛ معیار، برگه‌ی آزمایشگاه خودت است.</div>`;
+  // امکان حذف هر نتیجه‌ی ثبت‌شده
+  h+=`<div style="margin-top:10px;font-size:11px;color:var(--muted)">حذف یک نتیجه‌ی ثبت‌شده:</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">`;
+  entries.forEach(e=>{ h+=`<button onclick="deleteLabEntry(${e.ts})" style="background:none;border:1px solid #a44;color:#c88;border-radius:6px;font-size:10.5px;padding:4px 8px;cursor:pointer">✕ ${faDigits(e.date)}</button>`; });
+  h+=`</div>`;
   box.innerHTML=h;
 }
 function renderLabsTab(){
@@ -4249,7 +4440,7 @@ function renderExperimentalCalib(){
   let sxy=0,sxx=0,syy=0;
   for(let i=0;i<xs.length;i++){sxy+=(xs[i]-mx)*(ys[i]-my);sxx+=(xs[i]-mx)**2;syy+=(ys[i]-my)**2;}
   const r = sxx&&syy ? sxy/Math.sqrt(sxx*syy) : 0;
-  h+=`<div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">تعداد جفت: <b style="color:var(--fg)">${faDigits(pairs.length)}</b> &nbsp;|&nbsp; همبستگی (r): <b style="color:var(--fg)">${faDigits(r.toFixed(2))}</b> ${r>0.9?'(قوی)':r>0.7?'(متوسط)':'(ضعیف)'}</div>`;
+  h+=`<div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">تعداد جفت: <b style="color:var(--ink)">${faDigits(pairs.length)}</b> &nbsp;|&nbsp; همبستگی (r): <b style="color:var(--ink)">${faDigits(r.toFixed(2))}</b> ${r>0.9?'(قوی)':r>0.7?'(متوسط)':'(ضعیف)'}</div>`;
   // جدول مقایسه‌ی مدل‌ها
   h+=`<table class="rtbl" style="font-size:12px"><thead><tr><th>مدل</th><th>خطای متوسط</th><th>بیشترین خطا</th><th>وضعیت</th></tr></thead><tbody>`;
   models.forEach(m=>{
@@ -4262,9 +4453,9 @@ function renderExperimentalCalib(){
   });
   h+=`</tbody></table>`;
   // نمودار نقاط + منحنی بهترین مدل
-  h+=`<div style="margin-top:12px"><canvas id="expCalibChart" width="600" height="320" style="width:100%;background:var(--card2);border-radius:8px"></canvas></div>`;
+  h+=`<div style="margin-top:12px"><canvas id="expCalibChart" width="600" height="320" style="width:100%;background:var(--panel-2);border-radius:8px"></canvas></div>`;
   // تفسیر
-  h+=`<div style="margin-top:12px;font-size:12px;color:var(--muted);line-height:1.9;background:var(--card2);border-radius:8px;padding:10px">`;
+  h+=`<div style="margin-top:12px;font-size:12px;color:var(--muted);line-height:1.9;background:var(--panel-2);border-radius:8px;padding:10px">`;
   if(best.deg===0){
     h+=`بهترین مدل فعلی: <b style="color:var(--teal)">افست ثابت</b> — یعنی کافی است حدود <b>${faDigits(Math.abs(best.off))}</b> واحد ${best.off>=0?'به':'از'} CGM ${best.off>=0?'اضافه':'کم'} کنی. مدل‌های پیچیده‌تر بهتر نبودند، پس ساده‌ترین کار جواب می‌دهد.`;
   } else {
