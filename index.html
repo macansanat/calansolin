@@ -304,6 +304,66 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 @media(max-width:380px){
   .macro-grid{grid-template-columns:1fr 1fr}
 }
+/* ===== تقویم شمسی پاپ‌آپ ===== */
+.jdate-field{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.jdate-input{width:150px;max-width:60%;cursor:pointer;background:var(--field);text-align:center;font-size:16px;letter-spacing:1px}
+.jdate-today-btn{background:var(--teal-dim);color:#d6f5ee;border:none;border-radius:10px;padding:11px 16px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;flex:0 0 auto}
+.jdate-today-btn:active{background:var(--teal);color:#fff}
+.jcal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}
+.jcal{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;width:100%;max-width:340px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.jcal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px}
+.jcal-nav{background:var(--panel-2);border:1px solid var(--line);color:var(--teal);width:40px;height:40px;border-radius:10px;font-size:20px;cursor:pointer;font-family:inherit;flex:0 0 auto}
+.jcal-nav:active{background:var(--teal-dim)}
+.jcal-title{font-weight:800;font-size:15.5px;text-align:center;flex:1}
+.jcal-title select{display:inline-block;width:auto;padding:6px 8px;font-size:14px;margin:0 3px;background:var(--field)}
+.jcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.jcal-dow{text-align:center;font-size:11px;color:var(--muted);font-weight:700;padding:4px 0}
+.jcal-day{text-align:center;padding:9px 0;border-radius:9px;cursor:pointer;font-size:14.5px;background:var(--field);border:1px solid transparent}
+.jcal-day:active{background:var(--teal-dim)}
+.jcal-day.today{border-color:var(--teal);color:var(--teal);font-weight:800}
+.jcal-day.selected{background:var(--teal);color:#fff;font-weight:800}
+.jcal-day.empty{background:transparent;cursor:default}
+.jcal-foot{display:flex;gap:8px;margin-top:14px}
+.jcal-foot button{flex:1;border-radius:10px;padding:11px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;border:1px solid var(--line)}
+.jcal-today-action{background:var(--teal-dim);color:#d6f5ee;border-color:var(--teal-dim)!important}
+.jcal-close{background:var(--panel-2);color:var(--muted)}
+/* ===== ردیف آزمایش خواناتر ===== */
+.lab-row{display:flex;align-items:center;gap:10px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.lab-row .lab-info{flex:1;min-width:0}
+.lab-row .lab-fa{font-size:15px;font-weight:700;line-height:1.5}
+.lab-row .lab-en{color:var(--muted);font-size:11.5px;direction:ltr;display:block;margin-top:2px}
+.lab-row .lab-val{width:92px;flex:0 0 auto;font-size:16px;text-align:center}
+.lab-row .lab-del{flex:0 0 auto;background:var(--red-dim,#5a2b28);border:none;color:#f2b8b3;cursor:pointer;font-size:15px;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center}
+.lab-row .lab-del:active{background:#7a3b36}
+.lab-cat-head{font-weight:800;color:var(--teal);font-size:13.5px;margin:16px 0 8px}
+/* ===== ردیف حرکت در «شروع تمرین» خواناتر ===== */
+.wk-row-name{font-weight:800;font-size:16px;line-height:1.4}
+.wk-row-meta{font-size:12.5px;color:var(--teal);margin-top:3px}
+.wk-move-btn{background:var(--panel);border:1px solid var(--line);border-radius:7px;width:34px;height:28px;cursor:pointer;font-size:14px;line-height:1;color:var(--teal)}
+.wk-move-btn:disabled{color:#555}
+.wk-del-btn{background:var(--red-dim,#5a2b28);border:none;color:#f2b8b3;cursor:pointer;font-size:16px;width:36px;height:36px;border-radius:9px;flex:0 0 auto;display:flex;align-items:center;justify-content:center}
+.wk-del-btn:active{background:#7a3b36}
+.wk-ctrl-label{font-size:12px;color:var(--muted);margin-bottom:5px}
+.wk-step{display:flex;align-items:center;justify-content:center;gap:8px}
+.wk-step button{background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:8px;width:38px;height:38px;cursor:pointer;font-size:20px;font-weight:800;-webkit-tap-highlight-color:transparent}
+.wk-step button:active{background:var(--teal-dim);color:#fff}
+.wk-step .wk-step-val{font-size:17px;font-weight:800;min-width:52px;text-align:center;cursor:pointer;border-bottom:1.5px dashed var(--teal-dim);padding:2px 4px;border-radius:4px}
+.wk-step .wk-step-val:active{background:var(--teal-dim)}
+/* ===== اسپینر چرخشی عدد (ست/ثانیه) ===== */
+.spin-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}
+.spin-box{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;width:100%;max-width:300px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.spin-title{font-weight:800;font-size:15px;text-align:center;margin-bottom:12px;color:var(--teal)}
+.spin-wheel{position:relative;height:180px;overflow-y:scroll;scroll-snap-type:y mandatory;border-top:1px solid var(--line);border-bottom:1px solid var(--line);-webkit-overflow-scrolling:touch}
+.spin-wheel::-webkit-scrollbar{width:0;display:none}
+.spin-wheel{scrollbar-width:none}
+.spin-pad{height:72px}
+.spin-item{height:36px;scroll-snap-align:center;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--muted);cursor:pointer;direction:ltr}
+.spin-item.sel{color:var(--teal);font-size:26px;font-weight:800}
+.spin-highlight{position:absolute;left:0;right:0;top:72px;height:36px;background:var(--teal-dim);opacity:.18;border-radius:8px;pointer-events:none}
+.spin-foot{display:flex;gap:8px;margin-top:14px}
+.spin-foot button{flex:1;border-radius:10px;padding:11px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;border:1px solid var(--line)}
+.spin-ok{background:var(--teal-dim);color:#d6f5ee;border-color:var(--teal-dim)!important}
+.spin-cancel{background:var(--panel-2);color:var(--muted)}
 </style>
 </head>
 <body>
@@ -313,9 +373,6 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <h1>ماشین‌حساب دوز و برنامه‌ی هفتگی</h1>
   <div class="sub">ابزار آموزشی برای یادگیری — نه جایگزین پزشک</div>
 </header>
-<div class="safety">
-  <b>⚠ هشدار ایمنی:</b> اعداد کربوهیدرات و زمان‌بندی‌ها تقریبی و آموزشی‌اند. دوز و زمان واقعی انسولین را فقط پزشک تعیین می‌کند. هرگز بر اساس این صفحه به کسی انسولین تزریق نکنید.
-</div>
 <div class="tabs">
   <button class="tab active" onclick="switchTab('calc',this)">🧮 ماشین‌حساب</button>
   <button class="tab" onclick="switchTab('plan',this)">📅 برنامه‌ی هفتگی</button>
@@ -517,6 +574,15 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <b style="color:var(--red)">چرا این‌ها «اصول» هستند نه «دستور»:</b> این نکات به شما کمک می‌کنند بفهمید چرا قند بعضی وعده‌ها بالا یا پایین می‌رود. اما تبدیل این اصول به یک زمان دقیق برای یک فرد مشخص (مثلاً «تو ۲۰ دقیقه قبل بزن») کار پزشک است، چون به واکنش واقعی بدن، سابقه و آزمایش‌ها بستگی دارد که فقط پزشک به آن‌ها دسترسی دارد. زمان‌بندی نادرست یکی از شایع‌ترین علل افت قند خطرناک است.
     </p>
   </details>
+</div>
+
+<div class="disclaimer">
+  <b>محدودیت‌های مهم:</b> این ابزار جنس کربوهیدرات، اثر چربی و پروتئین و فیبر، فعالیت بدنی، استرس و بیماری را نمی‌بیند. اعداد تقریبی‌اند. <b>جایگزین پزشک نیست</b> و خطای دوز انسولین می‌تواند به افت خطرناک قند منجر شود.
+</div>
+
+<div class="final-warn">
+  <span class="big">⚠ این یک نرم‌افزار آموزشی است، نه یک نرم‌افزار درمانی واقعی</span>
+  این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
 </div>
 </div>
 
@@ -788,16 +854,6 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 </div>
 
-<div class="disclaimer">
-  <b>محدودیت‌های مهم:</b> این ابزار جنس کربوهیدرات، اثر چربی و پروتئین و فیبر، فعالیت بدنی، استرس و بیماری را نمی‌بیند. اعداد تقریبی‌اند. <b>جایگزین پزشک نیست</b> و خطای دوز انسولین می‌تواند به افت خطرناک قند منجر شود.
-</div>
-
-<div class="final-warn">
-  <span class="big">⚠ این یک نرم‌افزار آموزشی است، نه یک نرم‌افزار درمانی واقعی</span>
-  این ابزار فقط برای یادگیری مفهوم فرمول‌ها ساخته شده و <b>تحت نظارت پزشک نیست</b>. هیچ دوز یا زمان تزریقی را نباید صرفاً بر اساس خروجی این صفحه انجام داد. تنظیم واقعی نوع، دوز و زمان انسولین باید فقط توسط پزشک معالج یا متخصص غدد و بر پایه‌ی معاینه و آزمایش‌های فردی انجام شود، چون افت یا افزایش شدید قند خون می‌تواند خطرناک و حتی تهدیدکننده‌ی حیات باشد.
-</div>
-</div>
-
 <div class="page" id="page-labs">
   <div class="card" id="c-labs-intro">
     <h2 onclick="toggleCard('c-labs-intro')"><span>🧪 آزمایش‌های دیابت</span></h2>
@@ -854,7 +910,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۵.۷</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۶.۳</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -1628,6 +1684,113 @@ function weekStart(d){
   const offset=(gday+1)%7; // Sat->0, Sun->1 ...
   x.setDate(x.getDate()-offset); x.setHours(0,0,0,0); return x;
 }
+
+/* ====== تقویم شمسی پاپ‌آپ (مشترک بین تب‌ها) ====== */
+// تعداد روزهای هر ماه شمسی؛ اسفند در سال کبیسه ۳۰ روز
+function jMonthLen(jy,jm){
+  if(jm<=6) return 31;
+  if(jm<=11) return 30;
+  // اسفند: کبیسه بودن را با تبدیل رفت‌وبرگشت چک می‌کنیم
+  const g=j2g(jy,12,30); const back=g2j(g[0],g[1],g[2]);
+  return (back[0]===jy && back[1]===12 && back[2]===30) ? 30 : 29;
+}
+// روزِ هفته‌ی اولین روز ماه شمسی (۰=شنبه ... ۶=جمعه)
+function jFirstDow(jy,jm){
+  const g=j2g(jy,jm,1); const dt=new Date(g[0],g[1]-1,g[2]);
+  return (dt.getDay()+1)%7; // یک‌شنبه(0)->1 ... شنبه(6)->0
+}
+let _jcalState={inputId:null, jy:0, jm:0, jd:0, onPick:null};
+// باز کردن تقویم برای یک input. اگر مقدار فعلی input معتبر باشد همان نمایش داده می‌شود، وگرنه امروز.
+function openJCal(inputId,onPick){
+  const inp=document.getElementById(inputId);
+  let jy,jm,jd;
+  const parsed = inp ? parseJDate(inp.value) : null;
+  if(parsed){ [jy,jm,jd]=parsed; }
+  else{ const t=new Date(); const j=g2j(t.getFullYear(),t.getMonth()+1,t.getDate()); jy=j[0];jm=j[1];jd=j[2]; }
+  _jcalState={inputId, jy, jm, jd, onPick:onPick||null};
+  renderJCal();
+}
+// خواندن رشته‌ی «yyyy/mm/dd» با ارقام فارسی یا انگلیسی
+function parseJDate(s){
+  if(!s) return null;
+  const en=String(s).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^\d\/]/g,'');
+  const m=en.split('/').map(x=>parseInt(x,10));
+  if(m.length!==3||m.some(isNaN)) return null;
+  if(m[0]<1300||m[0]>1500||m[1]<1||m[1]>12||m[2]<1||m[2]>31) return null;
+  return m;
+}
+function jDateStr(jy,jm,jd){ return jy+'/'+String(jm).padStart(2,'0')+'/'+String(jd).padStart(2,'0'); }
+function renderJCal(){
+  let ov=document.getElementById('jcalOverlay');
+  if(!ov){ ov=document.createElement('div'); ov.id='jcalOverlay'; ov.className='jcal-overlay';
+    ov.addEventListener('click',e=>{ if(e.target===ov) closeJCal(); });
+    document.body.appendChild(ov);
+  }
+  const {jy,jm,jd}=_jcalState;
+  const tj=(()=>{ const t=new Date(); return g2j(t.getFullYear(),t.getMonth()+1,t.getDate()); })();
+  const len=jMonthLen(jy,jm), fdow=jFirstDow(jy,jm);
+  let cells='';
+  const dows=['ش','ی','د','س','چ','پ','ج'];
+  dows.forEach(d=>cells+=`<div class="jcal-dow">${d}</div>`);
+  for(let i=0;i<fdow;i++) cells+=`<div class="jcal-day empty"></div>`;
+  for(let d=1;d<=len;d++){
+    const isToday=(jy===tj[0]&&jm===tj[1]&&d===tj[2]);
+    const isSel=(d===jd);
+    cells+=`<div class="jcal-day${isToday?' today':''}${isSel?' selected':''}" onclick="pickJCalDay(${d})">${faDigits(d)}</div>`;
+  }
+  let monthOpts=''; for(let i=1;i<=12;i++) monthOpts+=`<option value="${i}"${i===jm?' selected':''}>${J_MONTHS[i-1]}</option>`;
+  let yearOpts=''; for(let y=jy-3;y<=jy+3;y++) yearOpts+=`<option value="${y}"${y===jy?' selected':''}>${faDigits(y)}</option>`;
+  ov.innerHTML=`<div class="jcal">
+    <div class="jcal-head">
+      <button class="jcal-nav" onclick="jcalMonth(1)">›</button>
+      <div class="jcal-title">
+        <select onchange="jcalSet('jm',this.value)">${monthOpts}</select>
+        <select onchange="jcalSet('jy',this.value)">${yearOpts}</select>
+      </div>
+      <button class="jcal-nav" onclick="jcalMonth(-1)">‹</button>
+    </div>
+    <div class="jcal-grid">${cells}</div>
+    <div class="jcal-foot">
+      <button class="jcal-today-action" onclick="jcalToday()">📅 امروز</button>
+      <button class="jcal-close" onclick="closeJCal()">بستن</button>
+    </div>
+  </div>`;
+}
+function jcalMonth(dir){ // dir=+1 ماه بعد، -1 ماه قبل
+  let {jy,jm}=_jcalState; jm+=dir;
+  if(jm>12){jm=1;jy++;} if(jm<1){jm=12;jy--;}
+  _jcalState.jy=jy; _jcalState.jm=jm;
+  const len=jMonthLen(jy,jm); if(_jcalState.jd>len) _jcalState.jd=len;
+  renderJCal();
+}
+function jcalSet(field,val){ _jcalState[field]=parseInt(val,10);
+  const len=jMonthLen(_jcalState.jy,_jcalState.jm); if(_jcalState.jd>len)_jcalState.jd=len;
+  renderJCal();
+}
+function jcalToday(){ const t=new Date(); const j=g2j(t.getFullYear(),t.getMonth()+1,t.getDate());
+  _jcalState.jy=j[0];_jcalState.jm=j[1];_jcalState.jd=j[2]; commitJCal(); }
+function pickJCalDay(d){ _jcalState.jd=d; commitJCal(); }
+function commitJCal(){
+  const {inputId,jy,jm,jd,onPick}=_jcalState;
+  const str=jDateStr(jy,jm,jd);
+  const inp=document.getElementById(inputId);
+  if(inp) inp.value=faDigits(str);
+  if(typeof onPick==='function') onPick(str);
+  closeJCal();
+}
+function closeJCal(){ const ov=document.getElementById('jcalOverlay'); if(ov) ov.remove(); }
+// ساخت HTML یک فیلد تاریخ که با کلیک تقویم باز می‌کند + دکمه‌ی امروز
+function jDateFieldHTML(inputId,initialStr){
+  return `<div class="jdate-field">
+    <input type="text" id="${inputId}" class="jdate-input" readonly value="${faDigits(initialStr)}" placeholder="۱۴۰۵/۰۵/۲۰" onclick="openJCal('${inputId}')">
+    <button type="button" class="jdate-today-btn" onclick="jcalSetTodayField('${inputId}')">📅 امروز</button>
+  </div>`;
+}
+function jcalSetTodayField(inputId){
+  const t=new Date(); const j=g2j(t.getFullYear(),t.getMonth()+1,t.getDate());
+  const inp=document.getElementById(inputId); if(inp) inp.value=faDigits(jDateStr(j[0],j[1],j[2]));
+}
+
 
 /* ====== ذخیره‌سازی ====== */
 const PKEY='insulin_profile_v1';
@@ -3944,37 +4107,118 @@ function unitGrams(unit){
 /* ===== تب ورزش: کتابخانه‌ی حرکت‌ها + برنامه + ثبت ===== */
 // آدمک SVG ساده برای هر حرکت (سبک و آفلاین)
 function stickFigure(pose, animate){
-  // هر حرکت: دو فریم که با انیمیشن بینشان جابه‌جا می‌شود (رفت‌وبرگشت)
-  const frames={
-    walk:['<circle cx="50" cy="14" r="7"/><line x1="50" y1="20" x2="50" y2="55"/><line x1="50" y1="30" x2="38" y2="42"/><line x1="50" y1="30" x2="63" y2="38"/><line x1="50" y1="55" x2="40" y2="80"/><line x1="50" y1="55" x2="62" y2="78"/>',
-          '<circle cx="50" cy="14" r="7"/><line x1="50" y1="20" x2="50" y2="55"/><line x1="50" y1="30" x2="40" y2="38"/><line x1="50" y1="30" x2="60" y2="42"/><line x1="50" y1="55" x2="60" y2="80"/><line x1="50" y1="55" x2="40" y2="78"/>'],
-    squat:['<circle cx="50" cy="12" r="7"/><line x1="50" y1="19" x2="50" y2="45"/><line x1="50" y1="26" x2="38" y2="36"/><line x1="50" y1="26" x2="62" y2="36"/><line x1="50" y1="45" x2="40" y2="62"/><line x1="40" y1="62" x2="42" y2="82"/><line x1="50" y1="45" x2="60" y2="62"/><line x1="60" y1="62" x2="58" y2="82"/>',
-           '<circle cx="50" cy="26" r="7"/><line x1="50" y1="33" x2="50" y2="52"/><line x1="50" y1="38" x2="40" y2="34"/><line x1="50" y1="38" x2="60" y2="34"/><line x1="50" y1="52" x2="38" y2="60"/><line x1="38" y1="60" x2="42" y2="82"/><line x1="50" y1="52" x2="62" y2="60"/><line x1="62" y1="60" x2="58" y2="82"/>'],
-    plank:['<circle cx="22" cy="45" r="7"/><line x1="29" y1="47" x2="78" y2="60"/><line x1="35" y1="49" x2="33" y2="68"/><line x1="70" y1="58" x2="72" y2="72"/>',
-           '<circle cx="22" cy="48" r="7"/><line x1="29" y1="50" x2="78" y2="62"/><line x1="35" y1="52" x2="33" y2="70"/><line x1="70" y1="60" x2="72" y2="74"/>'],
-    pushup:['<circle cx="20" cy="48" r="7"/><line x1="27" y1="50" x2="80" y2="60"/><line x1="38" y1="52" x2="36" y2="70"/><line x1="72" y1="58" x2="74" y2="72"/>',
-            '<circle cx="20" cy="56" r="7"/><line x1="27" y1="58" x2="80" y2="66"/><line x1="38" y1="60" x2="40" y2="72"/><line x1="72" y1="64" x2="74" y2="74"/>'],
-    stretch:['<circle cx="50" cy="14" r="7"/><line x1="50" y1="21" x2="50" y2="52"/><line x1="50" y1="28" x2="44" y2="10"/><line x1="50" y1="28" x2="56" y2="10"/><line x1="50" y1="52" x2="42" y2="80"/><line x1="50" y1="52" x2="58" y2="80"/>',
-             '<circle cx="50" cy="14" r="7"/><line x1="50" y1="21" x2="50" y2="52"/><line x1="50" y1="28" x2="40" y2="20"/><line x1="50" y1="28" x2="60" y2="20"/><line x1="50" y1="52" x2="42" y2="80"/><line x1="50" y1="52" x2="58" y2="80"/>'],
-    chair:['<circle cx="50" cy="16" r="7"/><line x1="50" y1="23" x2="50" y2="46"/><line x1="50" y1="30" x2="40" y2="40"/><line x1="50" y1="30" x2="60" y2="40"/><line x1="50" y1="46" x2="40" y2="50"/><line x1="40" y1="50" x2="40" y2="72"/><line x1="50" y1="46" x2="62" y2="50"/><line x1="62" y1="50" x2="62" y2="72"/><line x1="34" y1="50" x2="68" y2="50" stroke-width="2" opacity="0.4"/>',
-           '<circle cx="50" cy="28" r="7"/><line x1="50" y1="35" x2="50" y2="50"/><line x1="50" y1="39" x2="40" y2="44"/><line x1="50" y1="39" x2="60" y2="44"/><line x1="50" y1="50" x2="40" y2="52"/><line x1="40" y1="52" x2="40" y2="72"/><line x1="50" y1="50" x2="62" y2="52"/><line x1="62" y1="52" x2="62" y2="72"/><line x1="34" y1="52" x2="68" y2="52" stroke-width="2" opacity="0.4"/>'],
-    march:['<circle cx="50" cy="14" r="7"/><line x1="50" y1="20" x2="50" y2="52"/><line x1="50" y1="28" x2="40" y2="20"/><line x1="50" y1="28" x2="60" y2="40"/><line x1="50" y1="52" x2="44" y2="78"/><line x1="50" y1="52" x2="60" y2="60"/><line x1="60" y1="60" x2="58" y2="78"/>',
-           '<circle cx="50" cy="14" r="7"/><line x1="50" y1="20" x2="50" y2="52"/><line x1="50" y1="28" x2="40" y2="40"/><line x1="50" y1="28" x2="60" y2="20"/><line x1="50" y1="52" x2="40" y2="60"/><line x1="40" y1="60" x2="42" y2="78"/><line x1="50" y1="52" x2="56" y2="78"/>'],
-    heel:['<circle cx="50" cy="16" r="7"/><line x1="50" y1="23" x2="50" y2="55"/><line x1="50" y1="30" x2="40" y2="38"/><line x1="50" y1="30" x2="60" y2="38"/><line x1="50" y1="55" x2="46" y2="80"/><line x1="50" y1="55" x2="56" y2="80"/>',
-          '<circle cx="50" cy="10" r="7"/><line x1="50" y1="17" x2="50" y2="50"/><line x1="50" y1="24" x2="40" y2="32"/><line x1="50" y1="24" x2="60" y2="32"/><line x1="50" y1="50" x2="46" y2="74"/><line x1="50" y1="50" x2="56" y2="74"/><line x1="43" y1="74" x2="47" y2="78" stroke-width="2"/><line x1="53" y1="74" x2="57" y2="78" stroke-width="2"/>'],
-    breath:['<circle cx="50" cy="18" r="7"/><line x1="50" y1="25" x2="50" y2="50"/><line x1="50" y1="32" x2="42" y2="44"/><line x1="50" y1="32" x2="58" y2="44"/><line x1="50" y1="50" x2="42" y2="76"/><line x1="50" y1="50" x2="58" y2="76"/>',
-            '<circle cx="50" cy="18" r="8"/><line x1="50" y1="26" x2="50" y2="50"/><line x1="50" y1="32" x2="40" y2="40"/><line x1="50" y1="32" x2="60" y2="40"/><line x1="50" y1="50" x2="42" y2="76"/><line x1="50" y1="50" x2="58" y2="76"/>'],
-    neck:['<circle cx="46" cy="16" r="7"/><line x1="50" y1="22" x2="50" y2="52"/><line x1="50" y1="30" x2="40" y2="40"/><line x1="50" y1="30" x2="60" y2="40"/><line x1="50" y1="52" x2="42" y2="80"/><line x1="50" y1="52" x2="58" y2="80"/>',
-          '<circle cx="54" cy="16" r="7"/><line x1="50" y1="22" x2="50" y2="52"/><line x1="50" y1="30" x2="40" y2="40"/><line x1="50" y1="30" x2="60" y2="40"/><line x1="50" y1="52" x2="42" y2="80"/><line x1="50" y1="52" x2="58" y2="80"/>'],
-    leg_raise:['<line x1="20" y1="20" x2="20" y2="72" stroke-width="2" opacity="0.4"/><circle cx="35" cy="20" r="7"/><line x1="35" y1="27" x2="35" y2="55"/><line x1="35" y1="34" x2="24" y2="40"/><line x1="35" y1="34" x2="46" y2="40"/><line x1="35" y1="55" x2="35" y2="80"/><line x1="35" y1="55" x2="55" y2="60"/>',
-               '<line x1="20" y1="20" x2="20" y2="72" stroke-width="2" opacity="0.4"/><circle cx="35" cy="20" r="7"/><line x1="35" y1="27" x2="35" y2="55"/><line x1="35" y1="34" x2="24" y2="40"/><line x1="35" y1="34" x2="46" y2="40"/><line x1="35" y1="55" x2="35" y2="80"/><line x1="35" y1="55" x2="60" y2="45"/>'],
+  const on = animate!==false;
+  const dur = '1.1s';
+  function limb(a,b){
+    if(!on) return `<line x1="${a[0]}" y1="${a[1]}" x2="${a[2]}" y2="${a[3]}"/>`;
+    return `<line x1="${a[0]}" y1="${a[1]}" x2="${a[2]}" y2="${a[3]}">
+      <animate attributeName="x2" values="${a[2]};${b[2]};${a[2]}" dur="${dur}" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" keyTimes="0;0.5;1"/>
+      <animate attributeName="y2" values="${a[3]};${b[3]};${a[3]}" dur="${dur}" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" keyTimes="0;0.5;1"/>
+      <animate attributeName="x1" values="${a[0]};${b[0]};${a[0]}" dur="${dur}" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" keyTimes="0;0.5;1"/>
+      <animate attributeName="y1" values="${a[1]};${b[1]};${a[1]}" dur="${dur}" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" keyTimes="0;0.5;1"/></line>`;
+  }
+  function head(a,b,r){
+    r=r||7;
+    if(!on) return `<circle cx="${a[0]}" cy="${a[1]}" r="${r}"/>`;
+    return `<circle cx="${a[0]}" cy="${a[1]}" r="${r}">
+      <animate attributeName="cx" values="${a[0]};${b[0]};${a[0]}" dur="${dur}" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" keyTimes="0;0.5;1"/>
+      <animate attributeName="cy" values="${a[1]};${b[1]};${a[1]}" dur="${dur}" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" keyTimes="0;0.5;1"/></circle>`;
+  }
+  const P={
+    walk:{ head:[[50,14],[50,14]], parts:[
+      ['limb',[50,21,50,55],[50,21,50,55]],
+      ['limb',[50,30,38,44],[50,30,60,44]],
+      ['limb',[50,30,62,44],[50,30,40,44]],
+      ['limb',[50,55,40,70],[50,55,58,68]],
+      ['limb',[40,70,38,84],[58,68,60,82]],
+      ['limb',[50,55,60,68],[50,55,42,70]],
+      ['limb',[60,68,62,82],[42,70,40,84]],
+    ]},
+    march:{ head:[[50,14],[50,14]], parts:[
+      ['limb',[50,21,50,52],[50,21,50,52]],
+      ['limb',[50,28,40,20],[50,28,42,42]],
+      ['limb',[50,28,60,42],[50,28,58,20]],
+      ['limb',[50,52,42,64],[50,52,44,78]],
+      ['limb',[42,64,40,80],[44,78,42,88]],
+      ['limb',[50,52,58,78],[50,52,56,64]],
+      ['limb',[58,78,60,88],[56,64,58,80]],
+    ]},
+    squat:{ head:[[50,12],[50,28]], parts:[
+      ['limb',[50,19,50,45],[50,35,50,54]],
+      ['limb',[50,26,38,34],[50,40,40,32]],
+      ['limb',[50,26,62,34],[50,40,60,32]],
+      ['limb',[50,45,40,60],[50,54,38,60]],
+      ['limb',[40,60,42,82],[38,60,42,82]],
+      ['limb',[50,45,60,60],[50,54,62,60]],
+      ['limb',[60,60,58,82],[62,60,58,82]],
+    ]},
+    chair:{ head:[[50,14],[50,28]], parts:[
+      ['limb',[50,21,50,46],[50,35,50,52]],
+      ['limb',[50,28,40,38],[50,40,40,42]],
+      ['limb',[50,28,60,38],[50,40,60,42]],
+      ['limb',[50,46,40,58],[50,52,40,60]],
+      ['limb',[40,58,40,80],[40,60,40,82]],
+      ['limb',[50,46,60,58],[50,52,60,60]],
+      ['limb',[60,58,60,80],[60,60,60,82]],
+      ['rect',[34,80,68,80]],
+    ]},
+    pushup:{ head:[[22,46],[22,54]], parts:[
+      ['limb',[28,48,78,60],[28,56,78,64]],
+      ['limb',[34,50,32,68],[34,58,32,72]],
+      ['limb',[70,58,72,72],[70,62,72,74]],
+    ]},
+    plank:{ head:[[22,46],[22,48]], parts:[
+      ['limb',[28,48,78,61],[28,50,78,63]],
+      ['limb',[34,50,32,69],[34,52,32,71]],
+      ['limb',[70,59,72,73],[70,61,72,74]],
+    ]},
+    heel:{ head:[[50,16],[50,10]], parts:[
+      ['limb',[50,23,50,55],[50,17,50,50]],
+      ['limb',[50,30,40,38],[50,24,40,32]],
+      ['limb',[50,30,60,38],[50,24,60,32]],
+      ['limb',[50,55,46,78],[50,50,46,72]],
+      ['limb',[50,55,56,78],[50,50,56,72]],
+      ['rect',[44,80,56,80]],
+    ]},
+    stretch:{ head:[[50,15],[50,15]], parts:[
+      ['limb',[50,22,50,52],[50,22,50,52]],
+      ['limb',[50,28,44,10],[50,28,32,20]],
+      ['limb',[50,28,56,10],[50,28,68,20]],
+      ['limb',[50,52,44,80],[50,52,44,80]],
+      ['limb',[50,52,56,80],[50,52,56,80]],
+    ]},
+    leg_raise:{ head:[[35,20],[35,20]], parts:[
+      ['wall'],
+      ['limb',[35,27,35,55],[35,27,35,55]],
+      ['limb',[35,34,24,42],[35,34,24,42]],
+      ['limb',[35,34,46,40],[35,34,46,40]],
+      ['limb',[35,55,35,80],[35,55,35,80]],
+      ['limb',[35,55,55,60],[35,55,62,45]],
+    ]},
+    breath:{ head:[[50,18],[50,16]], parts:[
+      ['limb',[50,25,50,50],[50,23,50,50]],
+      ['limb',[50,31,42,44],[50,29,40,40]],
+      ['limb',[50,31,58,44],[50,29,60,40]],
+      ['limb',[50,50,42,76],[50,50,42,76]],
+      ['limb',[50,50,58,76],[50,50,58,76]],
+    ]},
+    neck:{ head:[[44,16],[56,16]], parts:[
+      ['limb',[50,22,50,52],[50,22,50,52]],
+      ['limb',[50,30,40,40],[50,30,40,40]],
+      ['limb',[50,30,60,40],[50,30,60,40]],
+      ['limb',[50,52,42,80],[50,52,42,80]],
+      ['limb',[50,52,58,80],[50,52,58,80]],
+    ]},
   };
-  const f=frames[pose]||frames.stretch;
-  const id='sf'+Math.random().toString(36).slice(2,8);
-  const anim = animate!==false ? `<style>@keyframes ${id}{0%,100%{opacity:1}50%{opacity:0}}@keyframes ${id}b{0%,100%{opacity:0}50%{opacity:1}}#${id}a{animation:${id} 1.2s infinite}#${id}b{animation:${id}b 1.2s infinite}</style>` : '';
-  const frameB = animate!==false ? `<g id="${id}b" style="fill:var(--teal)">${f[1]}</g>` : '';
-  const frameAid = animate!==false ? `id="${id}a"` : '';
-  return `<svg viewBox="0 0 100 90" width="62" height="56" style="stroke:var(--teal);stroke-width:3;fill:none;stroke-linecap:round">${anim}<g ${frameAid} style="fill:var(--teal)">${f[0]}</g>${frameB}</svg>`;
+  const def=P[pose]||P.stretch;
+  let body='';
+  def.parts.forEach(pt=>{
+    if(pt[0]==='limb') body+=limb(pt[1],pt[2]);
+    else if(pt[0]==='rect') body+=`<line x1="${pt[1][0]}" y1="${pt[1][1]}" x2="${pt[1][2]}" y2="${pt[1][3]}" stroke-width="2" opacity="0.4"/>`;
+    else if(pt[0]==='wall') body+=`<line x1="20" y1="18" x2="20" y2="74" stroke-width="2" opacity="0.35"/>`;
+  });
+  body+=head(def.head[0],def.head[1]);
+  return `<svg viewBox="0 0 100 95" width="64" height="60" style="stroke:var(--teal);stroke-width:3.5;fill:var(--teal);stroke-linecap:round;stroke-linejoin:round">${body}</svg>`;
 }
 // کتابخانه‌ی حرکت‌ها
 const EX_LIBRARY={
@@ -4030,46 +4274,57 @@ function saveExLog(d){ localStorage.setItem(EX_KEY,JSON.stringify(d)); }
 function findEx(id){ for(const g in EX_LIBRARY){ const it=EX_LIBRARY[g].items.find(x=>x.id===id); if(it) return it; } return null; }
 function renderExSafety(){
   const box=document.getElementById('exSafety'); if(!box) return;
-  box.innerHTML=`<div style="background:#3a2f14;border:1px solid var(--amber);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--amber);line-height:1.9">
-    <b>⚠️ ایمنی ورزش با دیابت (مهم):</b><br>
-    • قبل و بعد ورزش <b>قندت را چک کن</b>. اگر زیر ۱۰۰ بود، اول یک میان‌وعده‌ی سبک بخور.<br>
-    • اگر انسولین می‌زنی، ورزش می‌تواند قند را <b>بیشتر بیندازد</b> — درباره‌ی زمان ورزش و تنظیم دوز حتماً با پزشکت مشورت کن.<br>
-    • همیشه یک قند سریع (حبه قند، آبمیوه) همراهت باشد.<br>
-    • اگر حین ورزش سرگیجه، تعریق سرد، لرزش یا تپش شدید دیدی، <b>فوراً توقف کن</b> و قند بخور.<br>
-    • با درد قفسه‌ی سینه، تنگی نفس شدید یا سرگیجه‌ی شدید، ورزش را قطع کن و به پزشک مراجعه کن.<br>
-    این پیشنهادها آموزشی و عمومی‌اند، نه نسخه‌ی شخصی. شروع هر برنامه‌ی ورزشی جدید بهتر است با پزشک هماهنگ شود.</div>`;
+  box.innerHTML=`<div style="background:linear-gradient(135deg,#3a2f14,#2a2410);border:1px solid var(--amber);border-radius:12px;padding:13px 15px;font-size:12px;color:#f0c674;line-height:2">
+    <div style="font-weight:800;font-size:13.5px;margin-bottom:6px;display:flex;align-items:center;gap:6px">⚠️ ایمنی ورزش با دیابت</div>
+    <div style="display:flex;gap:8px;margin-bottom:5px"><span>🩸</span><span>قبل و بعد ورزش <b>قندت را چک کن</b>. اگر زیر ۱۰۰ بود، اول یک میان‌وعده‌ی سبک بخور.</span></div>
+    <div style="display:flex;gap:8px;margin-bottom:5px"><span>💉</span><span>اگر انسولین می‌زنی، ورزش می‌تواند قند را <b>بیشتر بیندازد</b> — درباره‌ی زمان ورزش و دوز با پزشکت مشورت کن.</span></div>
+    <div style="display:flex;gap:8px;margin-bottom:5px"><span>🍬</span><span>همیشه یک قند سریع (حبه قند، آبمیوه) همراهت باشد.</span></div>
+    <div style="display:flex;gap:8px;margin-bottom:5px"><span>🛑</span><span>سرگیجه، تعریق سرد، لرزش یا تپش شدید دیدی: <b>فوراً توقف کن</b> و قند بخور.</span></div>
+    <div style="display:flex;gap:8px"><span>❤️</span><span>با درد قفسه‌ی سینه یا تنگی نفس شدید، ورزش را قطع و به پزشک مراجعه کن.</span></div>
+    <div style="font-size:10.5px;color:#b89555;margin-top:8px;border-top:1px solid #5a4a24;padding-top:6px">آموزشی و عمومی — نه نسخه‌ی شخصی. شروع برنامه‌ی جدید بهتر است با پزشک هماهنگ شود.</div></div>`;
 }
 function renderExPlan(){
   const box=document.getElementById('exPlan'); if(!box) return;
-  let h='<div style="font-size:12px;color:var(--muted);margin-bottom:8px">یک هدف انتخاب کن تا برنامه‌ی مناسبش را ببینی:</div>';
-  h+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">';
-  for(const pk in EX_PLANS){ h+=`<button class="quick-btn" style="font-size:11.5px" onclick="showExPlan('${pk}')">${EX_PLANS[pk].icon} ${EX_PLANS[pk].fa}</button>`; }
+  let h='<div style="font-size:12px;color:var(--muted);margin-bottom:10px">یک هدف انتخاب کن تا برنامه‌ی مناسبش را ببینی:</div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px">';
+  for(const pk in EX_PLANS){ const p=EX_PLANS[pk];
+    h+=`<button class="exPlanBtn" data-pk="${pk}" onclick="showExPlan('${pk}')" style="background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px 8px;cursor:pointer;color:var(--ink);font-family:inherit;text-align:right;transition:all .15s">
+      <div style="font-size:20px;margin-bottom:3px">${p.icon}</div>
+      <div style="font-size:12px;font-weight:700">${p.fa}</div></button>`;
+  }
   h+='</div><div id="exPlanDetail"></div>';
   box.innerHTML=h;
   showExPlan('beginner');
 }
 function showExPlan(pk){
   const p=EX_PLANS[pk]; const box=document.getElementById('exPlanDetail'); if(!box) return;
-  let h=`<div style="background:var(--panel-2);border-radius:8px;padding:10px;margin-bottom:6px"><b>${p.icon} ${p.fa}</b><div style="font-size:11.5px;color:var(--muted);margin-top:4px">${p.desc}</div></div>`;
+  // هایلایت دکمه‌ی فعال
+  document.querySelectorAll('.exPlanBtn').forEach(b=>{
+    const on=b.dataset.pk===pk;
+    b.style.borderColor=on?'var(--teal)':'var(--line)';
+    b.style.background=on?'linear-gradient(135deg,#16302a,#1b2938)':'var(--panel-2)';
+  });
+  let h=`<div style="background:linear-gradient(135deg,#16302a,#1b2938);border:1px solid var(--teal-dim);border-radius:11px;padding:12px;margin-bottom:8px">
+    <b style="font-size:14px">${p.icon} ${p.fa}</b><div style="font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.7">${p.desc}</div></div>`;
   p.items.forEach(id=>{ h+=exCardHTML(findEx(id)); });
   box.innerHTML=h;
 }
 function exCardHTML(ex){
   if(!ex) return '';
-  return `<div style="display:flex;gap:10px;background:var(--panel-2);border-radius:8px;padding:10px;margin-bottom:6px;align-items:flex-start">
-    <div style="flex-shrink:0;background:var(--panel);border-radius:6px;padding:4px">${stickFigure(ex.pose)}</div>
+  return `<div style="display:flex;gap:11px;background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:11px;margin-bottom:7px;align-items:flex-start;box-shadow:0 1px 3px rgba(0,0,0,0.2)">
+    <div style="flex-shrink:0;background:radial-gradient(circle at 50% 40%,#1e3a34,var(--panel));border-radius:10px;padding:5px;border:1px solid var(--teal-dim)">${stickFigure(ex.pose)}</div>
     <div style="flex:1">
-      <div style="font-weight:700;font-size:13px">${ex.name}</div>
-      <div style="font-size:11.5px;color:var(--teal);margin:2px 0">${ex.set}</div>
-      <div style="font-size:11.5px;color:var(--ink);line-height:1.7">${ex.desc}</div>
-      <div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:3px">💡 ${ex.benefit}</div>
+      <div style="font-weight:700;font-size:13.5px">${ex.name}</div>
+      <div style="display:inline-block;font-size:11px;color:var(--teal);background:var(--teal-dim);border-radius:12px;padding:2px 10px;margin:4px 0">${ex.set}</div>
+      <div style="font-size:11.5px;color:var(--ink);line-height:1.75">${ex.desc}</div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:4px;border-right:2px solid var(--teal-dim);padding-right:7px">💡 ${ex.benefit}</div>
     </div></div>`;
 }
 function renderExLibrary(){
   const box=document.getElementById('exLibrary'); if(!box) return;
   let h='';
   for(const g in EX_LIBRARY){
-    h+=`<div style="font-weight:700;color:var(--teal);font-size:13px;margin:12px 0 6px">${EX_LIBRARY[g].cat}</div>`;
+    h+=`<div style="font-weight:800;color:var(--teal);font-size:13.5px;margin:14px 0 8px;padding-bottom:5px;border-bottom:2px solid var(--teal-dim)">${EX_LIBRARY[g].cat}</div>`;
     EX_LIBRARY[g].items.forEach(ex=>{ h+=exCardHTML(ex); });
   }
   box.innerHTML=h;
@@ -4078,8 +4333,28 @@ function renderExLogEntry(){
   const box=document.getElementById('exLogEntry'); if(!box) return;
   const today=new Date();
   const jT=g2j(today.getFullYear(),today.getMonth()+1,today.getDate());
-  let h=`<div style="margin-bottom:8px"><label style="font-size:12px;color:var(--muted)">تاریخ:</label>
-    <input type="text" id="exDate" value="${faDigits(jT.jy+'/'+String(jT.jm).padStart(2,'0')+'/'+String(jT.jd).padStart(2,'0'))}" style="width:130px;margin-right:8px"></div>`;
+  const nowT=String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
+  let h=`<div style="margin-bottom:14px"><label style="display:block;font-size:13px;color:var(--muted);margin:0 0 6px">تاریخ:</label>
+    ${jDateFieldHTML('exDate', jDateStr(jT[0],jT[1],jT[2]))}</div>`;
+  h+=`<div style="display:flex;gap:10px;margin-bottom:12px">
+    <div style="flex:1;min-width:0">
+      <label style="display:block;font-size:13px;color:var(--muted);margin:0 0 6px">ساعت:</label>
+      <input type="time" id="exTime" value="${nowT}" style="width:100%;text-align:center;font-size:16px">
+    </div>
+    <div style="flex:1;min-width:0">
+      <label style="display:block;font-size:13px;color:var(--muted);margin:0 0 6px">وعده/نوبت:</label>
+      <select id="exSlot" style="width:100%">
+        <option value="">— بدون نوبت —</option>
+        <option value="صبح">صبح</option>
+        <option value="بعد صبحانه">بعد صبحانه</option>
+        <option value="ظهر">ظهر</option>
+        <option value="بعد ناهار">بعد ناهار</option>
+        <option value="عصر">عصر</option>
+        <option value="بعد شام">بعد شام</option>
+        <option value="شب">شب</option>
+      </select>
+    </div>
+  </div>`;
   h+=`<div style="font-size:12px;color:var(--muted);margin-bottom:6px">حرکت‌هایی که امروز انجام دادی را انتخاب کن (ست/زمان و تعدادش را می‌توانی ویرایش کنی):</div>`;
   h+=`<select id="exAddSelect" style="width:65%"><option value="">— انتخاب حرکت —</option>`;
   for(const g in EX_LIBRARY){ h+=`<optgroup label="${EX_LIBRARY[g].cat}">`; EX_LIBRARY[g].items.forEach(ex=>{ h+=`<option value="${ex.id}">${ex.name}</option>`; }); h+=`</optgroup>`; }
@@ -4125,8 +4400,10 @@ function saveExToday(){
   const list=window._exToday||[];
   if(!list.length){ alert('حداقل یک حرکت اضافه کن'); return; }
   const date=document.getElementById('exDate').value.trim();
+  const timeEl=document.getElementById('exTime'); const time=timeEl?timeEl.value:'';
+  const slotEl=document.getElementById('exSlot'); const slot=slotEl?slotEl.value:'';
   const d=loadExLog();
-  d.entries.push({date, items:[...list], ts:Date.now()});
+  d.entries.push({date, time, slot, items:[...list], ts:Date.now()});
   saveExLog(d);
   window._exToday=[];
   renderExTodayList();
@@ -4135,25 +4412,123 @@ function saveExToday(){
   document.getElementById('exHistory').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 /* حالت تعاملی تمرین: انتخاب ترتیب + کرنومتر معکوس + تیک */
-let _wkList=[];       // لیست حرکت‌های انتخاب‌شده برای تمرین {id,name,dur,done}
-let _wkTimer=null;    // هندل تایمر
+let _wkList=[];       // {id,name,sets,dur,rest,done}
+let _wkTimer=null;
 let _wkActive=-1;     // اندیس حرکت فعال
 let _wkRemain=0;      // ثانیه‌ی باقی‌مانده
+let _wkSet=1;         // ست جاری
+let _wkPhase='work';  // 'work' یا 'rest'
+let _wkRunning=false;
+let _wkSound=true;    // صدا روشن/خاموش
+let _wkAudioCtx=null;
+// --- صداها با Web Audio (آفلاین) ---
+function wkBeep(freq,dur,type,vol){
+  if(!_wkSound) return;
+  try{
+    if(!_wkAudioCtx) _wkAudioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    const ctx=_wkAudioCtx;
+    if(ctx.state==='suspended'){ ctx.resume(); }
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type=type||'sine'; o.frequency.value=freq;
+    g.gain.setValueAtTime(vol||0.15, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+(dur||0.15));
+    o.connect(g); g.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime+(dur||0.15));
+  }catch(e){}
+}
+function wkTick(){ wkBeep(880,0.05,'square',0.06); }          // تیک ثانیه
+function wkClickUp(){ wkBeep(740,0.07,'sine',0.14); }         // کلیک افزایش (نت بالاتر)
+function wkClickDown(){ wkBeep(560,0.07,'sine',0.14); }       // کلیک کاهش (نت پایین‌تر)
+function wkStartSound(){ wkBeep(523,0.12,'sine',0.18); setTimeout(()=>wkBeep(784,0.16,'sine',0.18),120); } // شروع (دو نت بالارونده)
+function wkSetDone(){ wkBeep(659,0.15,'triangle',0.2); setTimeout(()=>wkBeep(523,0.2,'triangle',0.2),150); } // پایان ست
+function wkRestSound(){ wkBeep(440,0.1,'sine',0.15); }        // شروع استراحت
+function wkFinishSound(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>wkBeep(f,0.2,'sine',0.2),i*140)); } // پایان کل (فانفار)
+// --- بیت ورزشی (لوپ ریتمیک، آفلاین) که موقع هر ست پخش می‌شود ---
+let _wkBeatTimer=null;
+let _wkMusic=true;   // موزیک روشن/خاموش
+const _beatPatterns=[
+  // هر الگو: توالی نت‌ها با زمان (بیت در دقیقه ~۱۲۰)
+  {bpm:128,bass:[65.4,65.4,98,65.4],hat:true},
+  {bpm:120,bass:[73.4,73.4,110,73.4],hat:true},
+  {bpm:132,bass:[82.4,82.4,61.7,82.4],hat:true},
+];
+let _curBeat=null, _beatStep=0;
+function wkStartBeat(){
+  if(!_wkMusic||!_wkSound) return;
+  wkStopBeat();
+  try{
+    if(!_wkAudioCtx) _wkAudioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    if(_wkAudioCtx.state==='suspended') _wkAudioCtx.resume();
+  }catch(e){ return; }
+  _curBeat=_beatPatterns[Math.floor(Math.random()*_beatPatterns.length)];
+  _beatStep=0;
+  const interval=60000/_curBeat.bpm/2; // نیم‌ضرب
+  _wkBeatTimer=setInterval(()=>{
+    const ctx=_wkAudioCtx; if(!ctx) return;
+    const t=ctx.currentTime;
+    const step=_beatStep%8;
+    // بیس در ضرب‌های اصلی
+    if(step%2===0){
+      const bassNote=_curBeat.bass[(step/2)%_curBeat.bass.length];
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='triangle'; o.frequency.value=bassNote;
+      g.gain.setValueAtTime(0.22,t); g.gain.exponentialRampToValueAtTime(0.01,t+0.18);
+      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+0.2);
+    }
+    // های‌هت (نویز کوتاه) در ضرب‌های فرعی
+    if(_curBeat.hat && step%2===1){
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='square'; o.frequency.value=8000;
+      g.gain.setValueAtTime(0.04,t); g.gain.exponentialRampToValueAtTime(0.005,t+0.04);
+      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+0.05);
+    }
+    // ضرب قوی (کیک) در شروع هر میزان
+    if(step===0){
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='sine'; o.frequency.setValueAtTime(150,t); o.frequency.exponentialRampToValueAtTime(50,t+0.12);
+      g.gain.setValueAtTime(0.3,t); g.gain.exponentialRampToValueAtTime(0.01,t+0.15);
+      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+0.16);
+    }
+    _beatStep++;
+  }, interval);
+}
+function wkStopBeat(){ if(_wkBeatTimer){ clearInterval(_wkBeatTimer); _wkBeatTimer=null; } }
+function wkToggleMusic(){ _wkMusic=!_wkMusic; const b=document.getElementById('wkMusicBtn'); if(b) b.textContent=_wkMusic?'🎵':'🎵̶'; if(!_wkMusic) wkStopBeat(); else if(_wkRunning&&_wkPhase==='work') wkStartBeat(); }
+// --- پارس تعداد ست و زمان از متن ---
+function faToEnDigits(s){
+  return String(s).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+}
+function parseSetInfo(setText){
+  const t=faToEnDigits(setText);  // تبدیل ارقام فارسی به انگلیسی
+  let sets=1;
+  const sm=t.match(/(\d+)\s*ست/);
+  if(sm) sets=parseInt(sm[1]);
+  let dur=40;
+  const minM=t.match(/(\d+)(?:\s*تا\s*\d+)?\s*دقیقه/);
+  const secM=t.match(/(\d+)(?:\s*تا\s*\d+)?\s*ثانیه/);
+  const repM=t.match(/(\d+)(?:\s*تا\s*\d+)?\s*بار/);
+  if(secM){ dur=parseInt(secM[1]); }
+  else if(minM){ dur=parseInt(minM[1])*60; }
+  else if(repM){ dur=Math.max(20,parseInt(repM[1])*3); }
+  return {sets, dur};
+}
 function renderExWorkout(){
   const box=document.getElementById('exWorkout'); if(!box) return;
-  let h=`<div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:8px">حرکت‌ها را به ترتیب دلخواه اضافه کن، برای هرکدام زمان ست را تنظیم کن، بعد «شروع» را بزن. کرنومتر برای هر ست می‌شمارد و تو حرکت را انجام می‌دهی؛ بعد تیک می‌زنی و به حرکت بعدی می‌روی.</div>`;
-  // انتخاب حرکت
-  h+=`<select id="wkAddSelect" style="width:62%"><option value="">— افزودن حرکت —</option>`;
+  let h=`<div style="font-size:13px;color:var(--muted);line-height:1.9;margin-bottom:10px">حرکت‌ها را اضافه کن و با ▲▼ ترتیبشان را بچین. برای هرکدام تعداد ست و زمان هر ست را تنظیم کن، بعد «شروع» را بزن. کرنومتر هر ست را می‌شمارد، بین ست‌ها استراحت می‌گذارد و با صدا راهنمایی‌ات می‌کند.</div>`;
+  // ردیف کنترل: انتخاب + صدا
+  h+=`<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+    <select id="wkAddSelect" style="flex:1;min-width:150px"><option value="">— افزودن حرکت —</option>`;
   for(const g in EX_LIBRARY){ h+=`<optgroup label="${EX_LIBRARY[g].cat}">`; EX_LIBRARY[g].items.forEach(ex=>{ h+=`<option value="${ex.id}">${ex.name}</option>`; }); h+=`</optgroup>`; }
-  h+=`</select> <button class="quick-btn" style="font-size:11px;padding:8px 12px" onclick="wkAdd()">افزودن</button>`;
-  // بارگذاری از یک برنامه‌ی آماده
-  h+=`<div style="margin-top:8px;font-size:11.5px;color:var(--muted)">یا یک برنامه‌ی آماده را بارگذاری کن:</div><div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px">`;
-  for(const pk in EX_PLANS){ h+=`<button class="quick-btn" style="font-size:10.5px;padding:6px 9px;flex:0 0 auto" onclick="wkLoadPlan('${pk}')">${EX_PLANS[pk].icon} ${EX_PLANS[pk].fa}</button>`; }
-  h+=`</div>`;
-  h+=`<div id="wkList" style="margin-top:12px"></div>`;
+  h+=`</select> <button class="quick-btn" style="flex:0 0 auto;font-size:13px;padding:9px 14px" onclick="wkAdd()">افزودن</button>
+    <button id="wkSoundBtn" class="quick-btn" style="flex:0 0 auto;font-size:15px;padding:9px 11px" onclick="wkToggleSound()" title="صدای راهنما">${_wkSound?'🔊':'🔇'}</button>
+    <button id="wkMusicBtn" class="quick-btn" style="flex:0 0 auto;font-size:15px;padding:9px 11px" onclick="wkToggleMusic()" title="بیت ورزشی">${_wkMusic?'🎵':'🎵̶'}</button></div>`;
+  h+=`<div style="margin-top:10px;font-size:13px;color:var(--muted)">یا یک برنامه‌ی آماده:</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">`;
+  for(const pk in EX_PLANS){ h+=`<button class="quick-btn" style="font-size:12px;padding:8px 12px;flex:0 0 auto" onclick="wkLoadPlan('${pk}')">${EX_PLANS[pk].icon} ${EX_PLANS[pk].fa}</button>`; }
+  h+=`</div><div id="wkList" style="margin-top:12px"></div>`;
   box.innerHTML=h;
   renderWkList();
 }
+function wkToggleSound(){ _wkSound=!_wkSound; const b=document.getElementById('wkSoundBtn'); if(b) b.textContent=_wkSound?'🔊':'🔇'; if(_wkSound) wkBeep(660,0.1); }
 function renderWkList(){
   const box=document.getElementById('wkList'); if(!box) return;
   if(!_wkList.length){ box.innerHTML='<div style="color:var(--muted);font-size:11.5px">هنوز حرکتی برای تمرین اضافه نشده.</div>'; return; }
@@ -4161,122 +4536,236 @@ function renderWkList(){
   _wkList.forEach((it,i)=>{
     const active = i===_wkActive;
     const border = active ? '2px solid var(--teal)' : '1px solid var(--line)';
-    h+=`<div style="background:var(--panel-2);border:${border};border-radius:9px;padding:9px;margin-bottom:7px">
-      <div style="display:flex;align-items:center;gap:8px">
+    const bg = active ? 'linear-gradient(135deg,#16302a,#1b2938)' : 'var(--panel-2)';
+    h+=`<div style="background:${bg};border:${border};border-radius:11px;padding:12px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:10px">
         <div style="flex:0 0 auto">${stickFigure(findEx(it.id)?findEx(it.id).pose:'stretch', active)}</div>
-        <div style="flex:1">
-          <div style="font-weight:700;font-size:12.5px">${it.done?'✅ ':''}${it.name}</div>
-          <div style="font-size:10.5px;color:var(--muted)">${findEx(it.id)?findEx(it.id).set:''}</div>
+        <div style="flex:1;min-width:0">
+          <div class="wk-row-name">${it.done?'✅ ':''}${it.name}</div>
+          <div class="wk-row-meta">${faDigits(it.sets)} ست × ${faDigits(it.dur)} ثانیه${it.rest?` · استراحت ${faDigits(it.rest)}ث`:''}</div>
         </div>`;
     if(!_wkRunning){
-      h+=`<div style="display:flex;align-items:center;gap:4px">
-        <button onclick="wkDur(${i},-10)" style="background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:5px;width:24px;height:24px;cursor:pointer">−</button>
-        <span style="font-size:11.5px;min-width:44px;text-align:center">${faDigits(it.dur)} ثانیه</span>
-        <button onclick="wkDur(${i},10)" style="background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:5px;width:24px;height:24px;cursor:pointer">+</button>
-        <button onclick="wkRemove(${i})" style="background:none;border:none;color:#c66;cursor:pointer;font-size:14px;margin-right:4px">✕</button>
+      // دکمه‌های جابه‌جایی ▲▼
+      h+=`<div style="display:flex;flex-direction:column;gap:3px;flex:0 0 auto">
+        <button class="wk-move-btn" onclick="wkMove(${i},-1)" ${i===0?'disabled':''}>▲</button>
+        <button class="wk-move-btn" onclick="wkMove(${i},1)" ${i===_wkList.length-1?'disabled':''}>▼</button>
+      </div>
+      <button class="wk-del-btn" onclick="wkRemove(${i})" title="حذف">✕</button></div>`;
+      // کنترل ست و زمان
+      h+=`<div style="display:flex;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
+        <div style="flex:1;text-align:center">
+          <div class="wk-ctrl-label">تعداد ست</div>
+          <div class="wk-step">
+            <button onclick="wkSets(${i},-1)">−</button>
+            <span class="wk-step-val" onclick="wkSetsSpin(${i})" title="برای انتخاب سریع بزن">${faDigits(it.sets)}</span>
+            <button onclick="wkSets(${i},1)">+</button>
+          </div>
+        </div>
+        <div style="flex:1;text-align:center">
+          <div class="wk-ctrl-label">زمان هر ست</div>
+          <div class="wk-step">
+            <button onclick="wkDur(${i},-10)">−</button>
+            <span class="wk-step-val" onclick="wkDurSpin(${i})" title="برای انتخاب سریع بزن">${faDigits(it.dur)}ث</span>
+            <button onclick="wkDur(${i},10)">+</button>
+          </div>
+        </div>
       </div>`;
     }else{
-      h+=`<div style="font-size:11px;color:${it.done?'#6d6':'var(--muted)'}">${it.done?'انجام شد':faDigits(it.dur)+' ث'}</div>`;
+      // حالت اجرا: نشان وضعیت
+      let status = it.done?'✅ انجام شد': active?'در حال اجرا':'در نوبت';
+      h+=`<div style="font-size:12.5px;color:${it.done?'#6d6':active?'var(--teal)':'var(--muted)'};flex:0 0 auto;font-weight:700">${status}</div></div>`;
     }
-    h+=`</div>`;
-    // کرنومتر و کنترل حرکت فعال
+    // کرنومتر حرکت فعال
     if(active && _wkRunning){
       const mm=String(Math.floor(_wkRemain/60)).padStart(2,'0'), ss=String(_wkRemain%60).padStart(2,'0');
-      h+=`<div style="text-align:center;margin-top:8px">
-        <div style="font-size:38px;font-weight:800;color:var(--teal);letter-spacing:2px;direction:ltr">${faDigits(mm+':'+ss)}</div>
-        <div style="display:flex;gap:6px;justify-content:center;margin-top:6px">`;
-      if(_wkTimer){ h+=`<button class="quick-btn" style="flex:0 0 auto;padding:7px 16px" onclick="wkPause()">⏸ مکث</button>`; }
-      else { h+=`<button class="quick-btn" style="flex:0 0 auto;padding:7px 16px" onclick="wkResume()">▶️ ادامه</button>`; }
-      h+=`<button class="quick-btn" style="flex:0 0 auto;padding:7px 16px" onclick="wkDoneStep()">✓ انجام شد</button>`;
+      const isRest=_wkPhase==='rest';
+      h+=`<div style="text-align:center;margin-top:10px">
+        <div style="font-size:12px;color:${isRest?'var(--amber)':'var(--teal)'};font-weight:700;margin-bottom:2px">${isRest?'😮‍💨 استراحت':`ست ${faDigits(_wkSet)} از ${faDigits(it.sets)}`}</div>
+        <div id="wkClock" style="font-size:44px;font-weight:800;color:${isRest?'var(--amber)':'var(--teal)'};letter-spacing:2px;direction:ltr">${faDigits(mm+':'+ss)}</div>
+        <div style="display:flex;gap:6px;justify-content:center;margin-top:8px">`;
+      if(_wkTimer){ h+=`<button class="quick-btn" style="flex:0 0 auto;padding:8px 18px" onclick="wkPause()">⏸ مکث</button>`; }
+      else { h+=`<button class="quick-btn" style="flex:0 0 auto;padding:8px 18px" onclick="wkResume()">▶️ ادامه</button>`; }
+      h+=`<button class="quick-btn" style="flex:0 0 auto;padding:8px 18px" onclick="wkSkip()">⏭ رد کن</button>`;
       h+=`</div></div>`;
     }
     h+=`</div>`;
   });
-  // دکمه‌های کلی
   if(!_wkRunning){
-    if(_wkList.length) h+=`<button class="quick-btn" style="width:100%;margin-top:8px" onclick="wkStart()">▶️ شروع تمرین</button>`;
+    if(_wkList.length) h+=`<button class="quick-btn" style="width:100%;margin-top:8px;padding:11px;font-size:14px" onclick="wkStart()">▶️ شروع تمرین</button>`;
   }else{
     h+=`<button class="quick-btn" style="width:100%;margin-top:8px;border-color:#c66;color:#e88" onclick="wkStop()">■ پایان تمرین</button>`;
   }
   box.innerHTML=h;
 }
-let _wkRunning=false;
 function wkAdd(){
   const sel=document.getElementById('wkAddSelect'); if(!sel||!sel.value) return;
   const ex=findEx(sel.value); if(!ex) return;
-  // حدس زمان پیش‌فرض از روی set (اگر ثانیه/دقیقه داشت)
-  let dur=40;
-  const s=ex.set;
-  if(/دقیقه/.test(s)){ const m=s.match(/(\d+)/); dur=m?parseInt(m[1])*60:60; if(dur>180)dur=60; }
-  else if(/ثانیه/.test(s)){ const m=s.match(/(\d+)/); dur=m?parseInt(m[1]):30; }
-  _wkList.push({id:ex.id,name:ex.name,dur,done:false});
+  const info=parseSetInfo(ex.set);
+  _wkList.push({id:ex.id,name:ex.name,sets:info.sets,dur:info.dur,rest:info.sets>1?20:0,done:false});
   renderWkList();
 }
 function wkLoadPlan(pk){
   const p=EX_PLANS[pk]; if(!p) return;
   _wkList=[];
-  p.items.forEach(id=>{ const ex=findEx(id); if(ex){ let dur=40; const s=ex.set; if(/دقیقه/.test(s)){const m=s.match(/(\d+)/);dur=m?Math.min(parseInt(m[1])*60,90):60;} else if(/ثانیه/.test(s)){const m=s.match(/(\d+)/);dur=m?parseInt(m[1]):30;} _wkList.push({id:ex.id,name:ex.name,dur,done:false}); } });
+  p.items.forEach(id=>{ const ex=findEx(id); if(ex){ const info=parseSetInfo(ex.set); _wkList.push({id:ex.id,name:ex.name,sets:info.sets,dur:info.dur,rest:info.sets>1?20:0,done:false}); } });
   renderWkList();
 }
-function wkDur(i,delta){ _wkList[i].dur=Math.max(10,_wkList[i].dur+delta); renderWkList(); }
+function wkSets(i,delta){ const old=_wkList[i].sets; _wkList[i].sets=Math.max(1,_wkList[i].sets+delta); if(_wkList[i].sets!==old){ delta>0?wkClickUp():wkClickDown(); } _wkList[i].rest=_wkList[i].sets>1?(_wkList[i].rest||20):0; renderWkList(); }
+function wkDur(i,delta){ const old=_wkList[i].dur; _wkList[i].dur=Math.max(10,_wkList[i].dur+delta); if(_wkList[i].dur!==old){ delta>0?wkClickUp():wkClickDown(); } renderWkList(); }
+
+/* ===== اسپینر چرخشی عدد (مشترک: ست/ثانیه) ===== */
+let _spinState={values:[], idx:0, onPick:null, lastIdx:-1};
+// باز کردن اسپینر: title عنوان، values آرایه‌ی اعداد، current مقدار فعلی، fmt نمایش هر عدد، onPick(val)
+function openSpinner(title, values, current, fmt, onPick){
+  // نزدیک‌ترین ایندکس به مقدار فعلی (اگر دقیقاً در لیست نبود)
+  let idx=values.indexOf(current);
+  if(idx<0){
+    let best=0, bd=Infinity;
+    values.forEach((v,k)=>{ const d=Math.abs(v-current); if(d<bd){ bd=d; best=k; } });
+    idx=best;
+  }
+  _spinState={values, idx, onPick, fmt:fmt||(v=>faDigits(v)), lastIdx:idx};
+  let ov=document.getElementById('spinOverlay');
+  if(!ov){ ov=document.createElement('div'); ov.id='spinOverlay'; ov.className='spin-overlay';
+    ov.addEventListener('click',e=>{ if(e.target===ov) closeSpinner(); });
+    document.body.appendChild(ov);
+  }
+  let items='';
+  values.forEach((v,k)=>{ items+=`<div class="spin-item${k===idx?' sel':''}" data-k="${k}" onclick="spinPickIdx(${k})">${_spinState.fmt(v)}</div>`; });
+  ov.innerHTML=`<div class="spin-box">
+    <div class="spin-title">${title}</div>
+    <div style="position:relative">
+      <div class="spin-highlight"></div>
+      <div class="spin-wheel" id="spinWheel"><div class="spin-pad"></div>${items}<div class="spin-pad"></div></div>
+    </div>
+    <div class="spin-foot">
+      <button class="spin-ok" onclick="spinConfirm()">✓ تأیید</button>
+      <button class="spin-cancel" onclick="closeSpinner()">انصراف</button>
+    </div>
+  </div>`;
+  const wheel=document.getElementById('spinWheel');
+  // اسکرول به مقدار فعلی (هر آیتم ۳۶px)
+  requestAnimationFrame(()=>{ wheel.scrollTop=idx*36; });
+  let st;
+  wheel.addEventListener('scroll',()=>{
+    clearTimeout(st);
+    const k=Math.round(wheel.scrollTop/36);
+    if(k!==_spinState.lastIdx && k>=0 && k<values.length){
+      _spinState.lastIdx=k; _spinState.idx=k;
+      wkTick();
+      wheel.querySelectorAll('.spin-item').forEach((el,j)=>el.classList.toggle('sel',j===k));
+    }
+    // snap نرم بعد از توقف
+    st=setTimeout(()=>{ wheel.scrollTo({top:_spinState.idx*36,behavior:'smooth'}); },90);
+  });
+}
+function spinPickIdx(k){
+  const wheel=document.getElementById('spinWheel'); if(!wheel) return;
+  _spinState.idx=k; wheel.scrollTo({top:k*36,behavior:'smooth'});
+}
+function spinConfirm(){ const v=_spinState.values[_spinState.idx]; const cb=_spinState.onPick; closeSpinner(); if(typeof cb==='function') cb(v); }
+function closeSpinner(){ const ov=document.getElementById('spinOverlay'); if(ov) ov.remove(); }
+// بازکردن اسپینر برای ست حرکت i
+function wkSetsSpin(i){
+  const vals=[]; for(let s=1;s<=12;s++) vals.push(s);
+  openSpinner('تعداد ست', vals, _wkList[i].sets, v=>faDigits(v)+' ست', v=>{
+    _wkList[i].sets=v; _wkList[i].rest=_wkList[i].sets>1?(_wkList[i].rest||20):0; wkClickUp(); renderWkList();
+  });
+}
+// بازکردن اسپینر برای زمان هر ست حرکت i (۱۰ تا ۱۸۰۰ ثانیه، پله‌ی ۵)
+function wkDurSpin(i){
+  const vals=[]; for(let s=10;s<=1800;s+=5) vals.push(s);
+  openSpinner('زمان هر ست (ثانیه)', vals, _wkList[i].dur, v=>faDigits(v)+'ث', v=>{
+    _wkList[i].dur=v; wkClickUp(); renderWkList();
+  });
+}
+function wkMove(i,dir){ const j=i+dir; if(j<0||j>=_wkList.length) return; [_wkList[i],_wkList[j]]=[_wkList[j],_wkList[i]]; renderWkList(); }
 function wkRemove(i){ _wkList.splice(i,1); renderWkList(); }
 function wkStart(){
   if(!_wkList.length) return;
   _wkList.forEach(it=>it.done=false);
-  _wkRunning=true; _wkActive=0; _wkRemain=_wkList[0].dur;
+  _wkRunning=true; _wkActive=0; _wkSet=1; _wkPhase='work'; _wkRemain=_wkList[0].dur;
+  if(_wkAudioCtx&&_wkAudioCtx.state==='suspended') _wkAudioCtx.resume();
+  wkStartSound();
+  setTimeout(()=>wkStartBeat(),300);  // بیت بعد از صدای شروع
   renderWkList(); wkResume();
 }
 function wkResume(){
   if(_wkTimer) return;
+  if(_wkAudioCtx&&_wkAudioCtx.state==='suspended') _wkAudioCtx.resume();
+  if(_wkPhase==='work' && !_wkBeatTimer) wkStartBeat();  // ادامه‌ی بیت بعد از مکث
   _wkTimer=setInterval(()=>{
     _wkRemain--;
+    if(_wkRemain<=3 && _wkRemain>0) wkTick();  // تیک سه ثانیه‌ی آخر
     if(_wkRemain<=0){
-      clearInterval(_wkTimer); _wkTimer=null;
-      // صدای بوق کوتاه (اگر مرورگر اجازه دهد)
-      try{ const a=new AudioContext(); const o=a.createOscillator(); o.connect(a.destination); o.frequency.value=660; o.start(); setTimeout(()=>{o.stop();a.close();},250);}catch(e){}
-      _wkRemain=0; renderWkList();
+      wkAdvance();
     }else{
-      // فقط عدد کرنومتر را به‌روز کن (سبک‌تر از رندر کامل)
-      const box=document.getElementById('wkList');
-      const el=box?box.querySelector('div[style*="38px"]'):null;
+      const el=document.getElementById('wkClock');
       if(el){ const mm=String(Math.floor(_wkRemain/60)).padStart(2,'0'),ss=String(_wkRemain%60).padStart(2,'0'); el.textContent=faDigits(mm+':'+ss);} else renderWkList();
     }
   },1000);
   renderWkList();
 }
-function wkPause(){ if(_wkTimer){ clearInterval(_wkTimer); _wkTimer=null; } renderWkList(); }
-function wkDoneStep(){
-  if(_wkTimer){ clearInterval(_wkTimer); _wkTimer=null; }
-  if(_wkActive>=0 && _wkActive<_wkList.length) _wkList[_wkActive].done=true;
-  // حرکت بعدی که انجام نشده
+// پیشرفت خودکار: ست بعدی، استراحت، یا حرکت بعدی
+function wkAdvance(){
+  clearInterval(_wkTimer); _wkTimer=null;
+  wkStopBeat();  // بیت هر ست با پایانش قطع می‌شود
+  const it=_wkList[_wkActive];
+  if(_wkPhase==='work'){
+    if(_wkSet < it.sets){
+      // ست تمام شد، برو استراحت (اگر باشد) بعد ست بعدی
+      wkSetDone();
+      if(it.rest>0){ _wkPhase='rest'; _wkRemain=it.rest; wkRestSound(); renderWkList(); wkResume(); return; }
+      _wkSet++; _wkRemain=it.dur; wkStartBeat(); renderWkList(); wkResume(); return;
+    }else{
+      // همه‌ی ست‌های این حرکت تمام شد
+      wkSetDone();
+      it.done=true;
+      wkNextExercise(); return;
+    }
+  }else{
+    // استراحت تمام شد، ست بعدی
+    _wkPhase='work'; _wkSet++; _wkRemain=it.dur; wkBeep(587,0.12,'sine',0.18); wkStartBeat(); renderWkList(); wkResume(); return;
+  }
+}
+function wkNextExercise(){
   let next=-1;
   for(let i=0;i<_wkList.length;i++){ if(!_wkList[i].done){ next=i; break; } }
   if(next<0){ wkFinish(); return; }
-  _wkActive=next; _wkRemain=_wkList[next].dur;
+  _wkActive=next; _wkSet=1; _wkPhase='work'; _wkRemain=_wkList[next].dur;
+  wkStartBeat();
   renderWkList(); wkResume();
+}
+function wkPause(){ if(_wkTimer){ clearInterval(_wkTimer); _wkTimer=null; } wkStopBeat(); renderWkList(); }
+function wkSkip(){ // رد کردن ست/فاز فعلی
+  if(_wkTimer){ clearInterval(_wkTimer); _wkTimer=null; }
+  _wkRemain=0; wkAdvance();
 }
 function wkStop(){
   if(_wkTimer){ clearInterval(_wkTimer); _wkTimer=null; }
-  _wkRunning=false; _wkActive=-1;
+  wkStopBeat();
+  _wkRunning=false; _wkActive=-1; _wkSet=1; _wkPhase='work';
   renderWkList();
 }
 function wkFinish(){
   if(_wkTimer){ clearInterval(_wkTimer); _wkTimer=null; }
-  _wkRunning=false; _wkActive=-1;
-  // ثبت خودکار در تاریخچه
+  wkStopBeat();
+  _wkRunning=false; _wkActive=-1; _wkSet=1; _wkPhase='work';
+  wkFinishSound();
   const done=_wkList.filter(it=>it.done);
   if(done.length){
     const today=new Date();
     const jT=g2j(today.getFullYear(),today.getMonth()+1,today.getDate());
-    const date=faDigits(jT.jy+'/'+String(jT.jm).padStart(2,'0')+'/'+String(jT.jd).padStart(2,'0'));
+    const date=faDigits(jT[0]+'/'+String(jT[1]).padStart(2,'0')+'/'+String(jT[2]).padStart(2,'0'));
+    const time=String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
     const d=loadExLog();
-    d.entries.push({date, items:done.map(it=>({name:it.name,set:findEx(it.id)?findEx(it.id).set:'—'})), ts:Date.now()});
+    d.entries.push({date, time, slot:'', items:done.map(it=>({name:it.name,set:`${faDigits(it.sets)} ست × ${faDigits(it.dur)}ث`})), ts:Date.now()});
     saveExLog(d);
     renderExHistory();
     const c=document.getElementById('c-ex-history'); if(c) c.classList.remove('closed');
   }
   const box=document.getElementById('wkList');
-  if(box) box.innerHTML=`<div style="text-align:center;padding:16px;background:#14312a;border-radius:9px"><div style="font-size:32px">🎉</div><div style="color:var(--teal);font-weight:700;font-size:15px;margin-top:6px">تمرین تمام شد! آفرین!</div><div style="font-size:12px;color:var(--muted);margin-top:4px">${faDigits(done.length)} حرکت انجام دادی و در تاریخچه ثبت شد.</div><button class="quick-btn" style="margin-top:10px;flex:0 0 auto;padding:8px 20px" onclick="_wkList=[];renderExWorkout()">تمرین جدید</button></div>`;
+  if(box) box.innerHTML=`<div style="text-align:center;padding:20px;background:linear-gradient(135deg,#14312a,#1b2938);border-radius:12px;border:1px solid var(--teal-dim)"><div style="font-size:38px">🎉</div><div style="color:var(--teal);font-weight:800;font-size:16px;margin-top:6px">تمرین تمام شد! آفرین!</div><div style="font-size:12px;color:var(--muted);margin-top:4px">${faDigits(done.length)} حرکت انجام دادی و در تاریخچه ثبت شد.</div><button class="quick-btn" style="margin-top:12px;flex:0 0 auto;padding:9px 22px" onclick="_wkList=[];renderExWorkout()">تمرین جدید 🔄</button></div>`;
 }
 function renderExHistory(){
   const box=document.getElementById('exHistory'); if(!box) return;
@@ -4298,8 +4787,9 @@ function renderExHistory(){
   const msgs=['هر قدم می‌ارزد! 💪','ادامه بده، بدنت ازت ممنونه! 🌱','عالی پیش می‌روی! 🔥','پشتکارت تحسین‌برانگیز است! 🏅'];
   h+=`<div style="background:#14312a;border-radius:8px;padding:8px 10px;font-size:12px;color:var(--teal);margin-bottom:12px;text-align:center">${msgs[total%msgs.length]}</div>`;
   entries.slice(0,20).forEach(e=>{
+    const meta=[e.time?faDigits(e.time):'', e.slot||''].filter(Boolean).join(' · ');
     h+=`<div style="background:var(--panel-2);border-radius:8px;padding:9px;margin-bottom:6px">
-      <div style="font-size:12px;font-weight:600;color:var(--teal);margin-bottom:4px">${faDigits(e.date)}</div>`;
+      <div style="font-size:12px;font-weight:600;color:var(--teal);margin-bottom:4px">${faDigits(e.date)}${meta?` <span style="color:var(--muted);font-weight:500">— ${meta}</span>`:''}</div>`;
     e.items.forEach(it=>{ h+=`<div style="font-size:11.5px;color:var(--ink)">• ${it.name} <span style="color:var(--muted);font-size:10.5px">(${it.set})</span></div>`; });
     h+=`</div>`;
   });
@@ -4427,12 +4917,16 @@ function renderLabPackages(){
   for(const pk in LAB_PACKAGES){
     const p=LAB_PACKAGES[pk];
     const count = p.tests==='ALL' ? Object.values(LAB_LIBRARY).reduce((s,g)=>s+Object.keys(g.items).length,0) : p.tests.length;
-    h+=`<div style="background:var(--panel-2);border-radius:9px;padding:11px;border:1px solid var(--line)">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-        <div style="flex:1"><b>${p.icon} ${p.fa}</b> <span style="color:var(--muted);font-size:11px">(${faDigits(count)} آزمایش)</span></div>
-        <button class="quick-btn" style="flex:0 0 auto;font-size:11px;padding:6px 14px" onclick="selectLabPackage('${pk}')">انتخاب</button>
+    h+=`<div style="background:linear-gradient(135deg,var(--panel-2),var(--panel));border-radius:12px;padding:12px 13px;border:1px solid var(--line);box-shadow:0 1px 3px rgba(0,0,0,0.2)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:24px;flex:0 0 auto">${p.icon}</div>
+        <div style="flex:1">
+          <b style="font-size:13.5px">${p.fa}</b>
+          <span style="display:inline-block;color:var(--teal);font-size:10.5px;background:var(--teal-dim);border-radius:10px;padding:1px 8px;margin-right:4px">${faDigits(count)} آزمایش</span>
+        </div>
+        <button class="quick-btn" style="flex:0 0 auto;font-size:11px;padding:7px 15px" onclick="selectLabPackage('${pk}')">انتخاب</button>
       </div>
-      <div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:6px">${p.desc}</div>
+      <div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:7px">${p.desc}</div>
     </div>`;
   }
   h+='</div>';
@@ -4453,8 +4947,8 @@ function renderLabEntry(){
   const today=new Date();
   const jToday=g2j(today.getFullYear(),today.getMonth()+1,today.getDate());
   let h='';
-  h+=`<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--muted)">تاریخ آزمایش:</label>
-    <input type="text" id="labDate" value="${faDigits(jToday.jy+'/'+String(jToday.jm).padStart(2,'0')+'/'+String(jToday.jd).padStart(2,'0'))}" style="width:130px;margin-right:8px" placeholder="۱۴۰۵/۰۵/۲۰"></div>`;
+  h+=`<div style="margin-bottom:12px"><label style="font-size:13px;color:var(--muted);margin-bottom:6px">تاریخ آزمایش:</label>
+    ${jDateFieldHTML('labDate', jDateStr(jToday[0],jToday[1],jToday[2]))}</div>`;
   if(!d.selected||!d.selected.length){
     h+=`<div style="color:var(--muted);font-size:12.5px">اول یک بسته‌ی پیشنهادی انتخاب کن، یا از پایین آزمایش دلخواه اضافه کن.</div>`;
   }else{
@@ -4464,14 +4958,17 @@ function renderLabEntry(){
       for(const g in LAB_LIBRARY){ if(LAB_LIBRARY[g].items[k]){ (byGroup[g]=byGroup[g]||[]).push(k); break; } }
     });
     for(const g in byGroup){
-      h+=`<div style="font-weight:700;color:var(--teal);font-size:12px;margin:10px 0 4px">${LAB_LIBRARY[g].cat}</div>`;
+      h+=`<div class="lab-cat-head">${LAB_LIBRARY[g].cat}</div>`;
       byGroup[g].forEach(k=>{
         const t=LAB_LIBRARY[g].items[k];
         const rng = (t.lo!==null&&t.hi!==null) ? `${faDigits(t.lo)}-${faDigits(t.hi)}` : '—';
-        h+=`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-          <button onclick="removeLabTest('${k}')" title="حذف این آزمایش" style="flex:0 0 auto;background:none;border:none;color:#c66;cursor:pointer;font-size:15px;padding:0 2px">✕</button>
-          <label style="flex:1;font-size:12px;line-height:1.5" title="${t.desc}">${t.fa}<br><span style="color:var(--muted);font-size:10px;direction:ltr;display:inline-block">${t.en||''} • ${rng} ${t.unit}</span></label>
-          <input type="number" step="any" id="lab_${k}" style="width:78px;flex:0 0 auto" placeholder="مقدار">
+        h+=`<div class="lab-row">
+          <button class="lab-del" onclick="removeLabTest('${k}')" title="حذف این آزمایش">✕</button>
+          <div class="lab-info" title="${t.desc}">
+            <span class="lab-fa">${t.fa}</span>
+            <span class="lab-en">${t.en||''} • ${rng} ${t.unit}</span>
+          </div>
+          <input type="number" step="any" id="lab_${k}" class="lab-val" placeholder="مقدار" inputmode="decimal">
         </div>`;
       });
     }
