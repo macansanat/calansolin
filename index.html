@@ -352,6 +352,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .lab-imp-row .imp-en{color:var(--muted);font-size:10.5px;direction:ltr;display:block;margin-top:1px}
 .lab-imp-row .imp-val{width:96px;flex:0 0 auto;background:var(--field);border:1px solid var(--teal-dim);border-radius:9px;padding:9px;font-family:inherit;font-size:15px;color:var(--ink);text-align:center}
 .lab-imp-row .imp-del{flex:0 0 auto;background:var(--red-dim,#5a2b28);border:none;color:#f2b8b3;cursor:pointer;font-size:14px;width:32px;height:32px;border-radius:8px}
+.lab-imp-row .imp-i{flex:0 0 auto;width:30px;height:30px;font-size:14px}
 .lab-imp-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 .lab-imp-actions button{flex:1 1 auto;border-radius:10px;padding:12px;font-family:inherit;font-weight:800;font-size:13.5px;cursor:pointer;border:none}
 .imp-apply{background:var(--teal-dim);color:#d6f5ee}
@@ -1018,7 +1019,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۷.۲</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۷.۳</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -5621,8 +5622,8 @@ function buildLabAliases(){
   const add=(key,alias,qual)=>{ const a=labMatchNorm(alias); if(a.length>=2 && !/^\d+$/.test(a)) LAB_ALIASES.push({key,alias:a,qual, re:a.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/\s+/g,'\\s+')}); };
   for(const g in LAB_LIBRARY){ for(const k in LAB_LIBRARY[g].items){
     const t=LAB_LIBRARY[g].items[k]; const qual=!!t.qual;
-    // از نام انگلیسی: بدون پرانتز + داخل پرانتز
-    if(t.en){ add(k,t.en.replace(/\(.*?\)/g,' '),qual); (t.en.match(/\(([^)]+)\)/g)||[]).forEach(p=>add(k,p.replace(/[()]/g,''),qual)); }
+    // از نام انگلیسی: بدون پرانتز + داخل پرانتز (فقط اگر ≥۳ حرف، تا نمادهای کوتاه مثل Mg/K/Na با واحدها اشتباه نگیرند)
+    if(t.en){ add(k,t.en.replace(/\(.*?\)/g,' '),qual); (t.en.match(/\(([^)]+)\)/g)||[]).forEach(p=>{ const inside=p.replace(/[()]/g,''); if(labMatchNorm(inside).length>=3) add(k,inside,qual); }); }
     // نام‌های متداول دستی
     (LAB_ALIAS_EXTRA[k]||[]).forEach(a=>add(k,a,qual));
   }}
@@ -5641,8 +5642,10 @@ function matchLabLine(line){
     if(m){ best=a; bestIdx=m.index+m[0].length; break; }
   }
   if(!best) return null;
-  // حذف اعداد ترتیبی (1st, 2nd, ...) که مقدار نیستند
-  const after=(' '+norm.slice(bestIdx)+' ').replace(/\b\d+(?:st|nd|rd|th)\b/gi,' ');
+  // حذف اعداد ترتیبی (1st) و اعداد چسبیده به واحد زمان (1h, 2 hrs) که مقدار نیستند
+  const after=(' '+norm.slice(bestIdx)+' ')
+    .replace(/\b\d+(?:st|nd|rd|th)\b/gi,' ')
+    .replace(/\b\d+\s*(?:hrs?|hours?|h|mins?|minutes?)\b/gi,' ');
   let value='';
   // عددِ مستقل (نه چسبیده به حرف مثل D3/B12) = مقدار
   const numRe=/(?<![a-z0-9.])-?\d+(?:\.\d+)?/i;
@@ -5656,10 +5659,19 @@ function matchLabLine(line){
   }
   return {key:best.key, value};
 }
+// خطوط تفسیری/محدوده‌ی مرجع را می‌شناسد تا اشتباه به‌عنوان نتیجه خوانده نشوند
+function labSkipLine(line){
+  const s=String(line).toLowerCase();
+  if(/\b(pre[- ]?diabetic|impaired fasting|impaired glucose|\bigt\b|\bifg\b|acceptable level|non[- ]?fasting|life[- ]?threatening|nkdep|mdrd|recommendation|reference range|if result|hyperinsulinemia|dumping syndrome|carbohydrate absorption|glycemic index|higher fbs)\b/.test(s)) return true;
+  if(/:\s*[<>]/.test(s)) return true;                             // «Diabetic : > 125»
+  if(/:\s*\d+(?:\.\d+)?\s*[-–]\s*\d+/.test(s)) return true;        // «Normal : 70 - 100»
+  return false;
+}
 // از آرایه‌ای از خطوط، فهرست {key,value} یکتا می‌سازد
 function parseLabLines(lines){
   const map=new Map();
   lines.forEach(ln=>{
+    if(labSkipLine(ln)) return;
     const r=matchLabLine(ln);
     if(!r) return;
     if(!map.has(r.key)) map.set(r.key,r.value);
@@ -5744,12 +5756,16 @@ function renderLabImportPreview(rows){
       <div style="font-size:12px;color:var(--muted);line-height:1.9">شاید عکس کم‌کیفیت بوده یا نام‌ها متفاوت‌اند. می‌توانی عکس واضح‌تری بدهی، یا از فرم پایین آزمایش‌ها را دستی جستجو و اضافه کنی.</div>`;
     return;
   }
+  const jt=g2j(new Date().getFullYear(),new Date().getMonth()+1,new Date().getDate());
   let h=`<div class="lab-imp-head">✅ ${faDigits(rows.length)} آزمایش شناسایی شد — بررسی و در صورت نیاز اصلاح کن، بعد «اعمال» را بزن:</div>`;
+  h+=`<div style="margin:2px 0 12px"><label style="font-size:12.5px;color:var(--muted);margin-bottom:6px">📅 تاریخ این برگه‌ی آزمایش:</label>${jDateFieldHTML('labImportDate', jDateStr(jt[0],jt[1],jt[2]))}</div>`;
   rows.forEach(r=>{
     const t=findLabTest(r.key); if(!t) return;
+    const rng = t.qual ? 'کیفی' : ((t.lo!==null&&t.hi!==null) ? `${faDigits(t.lo)}–${faDigits(t.hi)} ${t.unit}` : (t.unit||''));
     h+=`<div class="lab-imp-row" data-key="${r.key}">
       <button class="imp-del" onclick="this.closest('.lab-imp-row').remove()" title="حذف این ردیف">✕</button>
-      <div class="imp-name">${t.fa}${t.en?`<span class="imp-en">${t.en}</span>`:''}</div>
+      <button class="lab-i imp-i" onclick="openLabInfo('${r.key}')" title="توضیح این آزمایش">i</button>
+      <div class="imp-name">${t.fa}<span class="imp-en">${t.en?t.en+' • ':''}${rng}</span></div>
       <input class="imp-val" value="${(r.value!=null?String(r.value):'').replace(/"/g,'&quot;')}" placeholder="مقدار">
     </div>`;
   });
@@ -5757,7 +5773,7 @@ function renderLabImportPreview(rows){
     <button class="imp-apply" onclick="applyLabImport()">✅ اعمال و پر کردن فرم</button>
     <button class="imp-cancel" onclick="clearLabImport()">لغو</button>
   </div>
-  <div class="formula-note" style="color:var(--amber)">⚕️ حتماً همه را با برگه‌ی خودت مقایسه کن؛ ممکن است چند مورد اشتباه خوانده شده باشد. تفسیر نتایج با پزشک است.</div>`;
+  <div class="formula-note" style="color:var(--amber)">⚕️ حتماً همه را با برگه‌ی خودت مقایسه کن (محدوده‌ی مرجع کنار هر آزمایش کمک می‌کند)؛ ممکن است چند مورد اشتباه خوانده شده باشد. تفسیر نتایج با پزشک است.</div>`;
   box.innerHTML=h;
 }
 function clearLabImport(){ const b=document.getElementById('labImportPreview'); if(b) b.innerHTML=''; const p=document.getElementById('labImportProgress'); if(p) p.textContent=''; }
@@ -5766,12 +5782,15 @@ function applyLabImport(){
   const rowsEls=[...box.querySelectorAll('.lab-imp-row')];
   if(!rowsEls.length){ clearLabImport(); return; }
   const picked=rowsEls.map(el=>({key:el.getAttribute('data-key'), value:(el.querySelector('.imp-val')||{}).value||''}));
+  const impDate=(document.getElementById('labImportDate')||{}).value||'';
   const d=loadLabs(); d.selected=d.selected||[];
   picked.forEach(p=>{ if(p.key && !d.selected.includes(p.key)) d.selected.push(p.key); });
   saveLabs(d);
   renderLabEntry();
   // پر کردن مقادیر
   picked.forEach(p=>{ const el=document.getElementById('lab_'+p.key); if(el && String(p.value).trim()!=='') el.value=String(p.value).trim(); });
+  // انتقال تاریخ برگه به فرم ثبت
+  if(impDate){ const dd=document.getElementById('labDate'); if(dd) dd.value=impDate; }
   clearLabImport();
   const c=document.getElementById('c-labs-entry'); if(c) c.classList.remove('closed');
   const entry=document.getElementById('labEntry'); if(entry) entry.scrollIntoView({behavior:'smooth',block:'start'});
