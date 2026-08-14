@@ -1019,7 +1019,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۸.۱</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۸.۲</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -5401,6 +5401,12 @@ function renderLabEntry(){
   const today=new Date();
   const jToday=g2j(today.getFullYear(),today.getMonth()+1,today.getDate());
   let h='';
+  if(_editLabTs){
+    h+=`<div style="background:var(--teal-dim);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12.5px;color:#d6f5ee;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+      <span>✏️ در حال ویرایش نتیجه‌ی ثبت‌شده — مقادیر را اصلاح کن یا آزمایش جا‌مانده را از پایین اضافه کن.</span>
+      <button class="mini-btn" style="border-color:#d6f5ee;color:#d6f5ee" onclick="cancelEditLabEntry()">لغو ویرایش</button>
+    </div>`;
+  }
   h+=`<div style="margin-bottom:12px"><label style="font-size:13px;color:var(--muted);margin-bottom:6px">تاریخ آزمایش:</label>
     ${jDateFieldHTML('labDate', jDateStr(jToday[0],jToday[1],jToday[2]))}</div>`;
   if(!d.selected||!d.selected.length){
@@ -5429,7 +5435,7 @@ function renderLabEntry(){
         </div>`;
       });
     }
-    h+=`<button class="quick-btn" style="width:100%;margin-top:10px" onclick="saveLabEntry()">💾 ذخیره‌ی نتایج این تاریخ</button>`;
+    h+=`<button class="quick-btn" style="width:100%;margin-top:10px${_editLabTs?';background:var(--teal-dim);color:#d6f5ee':''}" onclick="saveLabEntry()">${_editLabTs?'💾 به‌روزرسانی این نتیجه':'💾 ذخیره‌ی نتایج این تاریخ'}</button>`;
   }
   h+=`<div style="margin-top:14px;border-top:1px solid var(--line);padding-top:10px">
     <div style="font-size:12px;color:var(--muted);margin-bottom:6px">افزودن آزمایش از کتابخانه — نام فارسی یا انگلیسی را از برگه‌ی آزمایش تایپ کن:</div>
@@ -6005,6 +6011,7 @@ function removeLabTest(k){
   const d=loadLabs(); d.selected=(d.selected||[]).filter(x=>x!==k);
   saveLabs(d); renderLabEntry();
 }
+let _editLabTs=null;  // اگر ست باشد، ذخیره به‌جای ثبت جدید، همان نتیجه را به‌روزرسانی می‌کند
 function saveLabEntry(){
   const d=loadLabs();
   const date=document.getElementById('labDate').value.trim();
@@ -6016,13 +6023,37 @@ function saveLabEntry(){
   });
   if(!Object.keys(vals).length){ alert('حداقل یک مقدار وارد کن'); return; }
   d.entries=d.entries||[];
-  d.entries.push({date, vals, ts:Date.now()});
+  if(_editLabTs){
+    const idx=d.entries.findIndex(e=>e.ts===_editLabTs);
+    if(idx>=0){ d.entries[idx].date=date; d.entries[idx].vals=vals; }
+    else d.entries.push({date, vals, ts:Date.now()});   // اگر پیدا نشد، به‌عنوان جدید ثبت کن
+    _editLabTs=null;
+  }else{
+    d.entries.push({date, vals, ts:Date.now()});
+  }
   saveLabs(d);
+  renderLabEntry();      // پاک‌سازی حالت ویرایش و مقادیر
   renderLabHistory();
   const c=document.getElementById('c-labs-history'); if(c) c.classList.remove('closed');
   (d.selected||[]).forEach(k=>{ const el=document.getElementById('lab_'+k); if(el) el.value=''; });
   document.getElementById('labHistory').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
+// ویرایش یک نتیجه‌ی ثبت‌شده: مقادیرش را در فرم بالا می‌آورد
+function editLabEntry(ts){
+  const d=loadLabs();
+  const e=(d.entries||[]).find(x=>x.ts===ts); if(!e) return;
+  d.selected=d.selected||[];
+  Object.keys(e.vals).forEach(k=>{ if(!d.selected.includes(k)) d.selected.push(k); });
+  saveLabs(d);
+  _editLabTs=ts;
+  renderLabEntry();
+  // پر کردن مقادیر و تاریخ این نتیجه
+  Object.keys(e.vals).forEach(k=>{ const el=document.getElementById('lab_'+k); if(el) el.value=e.vals[k]; });
+  const dd=document.getElementById('labDate'); if(dd && e.date) dd.value=e.date;
+  const c=document.getElementById('c-labs-entry'); if(c) c.classList.remove('closed');
+  document.getElementById('labEntry').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function cancelEditLabEntry(){ _editLabTs=null; renderLabEntry(); }
 function labStatus(key,val){
   const t=findLabTest(key); if(!t||t.lo===null||t.hi===null) return 'na';
   if(val<t.lo) return 'low';
@@ -6030,8 +6061,12 @@ function labStatus(key,val){
   return 'normal';
 }
 function deleteLabEntry(ts){
-  if(!confirm('این نتیجه‌ی ثبت‌شده حذف شود؟')) return;
-  const d=loadLabs(); d.entries=(d.entries||[]).filter(e=>e.ts!==ts); saveLabs(d); renderLabHistory();
+  const d=loadLabs(); const e=(d.entries||[]).find(x=>x.ts===ts);
+  const when=e?faDigits(e.date):'';
+  if(!confirm('⚠️ نتیجه‌ی ثبت‌شده‌ی تاریخ '+when+' برای همیشه حذف می‌شود و قابل بازگردانی نیست.\n\nمطمئنی؟')) return;
+  d.entries=(d.entries||[]).filter(e=>e.ts!==ts);
+  if(_editLabTs===ts){ _editLabTs=null; renderLabEntry(); }
+  saveLabs(d); renderLabHistory();
 }
 function renderLabHistory(){
   const box=document.getElementById('labHistory'); if(!box) return;
@@ -6078,10 +6113,16 @@ function renderLabHistory(){
   });
   h+=`</tbody></table></div>`;
   h+=`<div style="font-size:11px;color:var(--muted);margin-top:8px">↑ بالای محدوده &nbsp; ↓ زیر محدوده &nbsp; رنگ سبز = طبیعی. محدوده‌ها تقریبی‌اند؛ معیار، برگه‌ی آزمایشگاه خودت است.</div>`;
-  // امکان حذف هر نتیجه‌ی ثبت‌شده
-  h+=`<div style="margin-top:10px;font-size:11px;color:var(--muted)">حذف یک نتیجه‌ی ثبت‌شده:</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">`;
-  entries.forEach(e=>{ h+=`<button onclick="deleteLabEntry(${e.ts})" style="background:none;border:1px solid #a44;color:#c88;border-radius:6px;font-size:10.5px;padding:4px 8px;cursor:pointer">✕ ${faDigits(e.date)}</button>`; });
-  h+=`</div>`;
+  // ویرایش / حذف هر نتیجه‌ی ثبت‌شده
+  h+=`<div style="margin-top:14px;border-top:1px solid var(--line);padding-top:10px;font-size:12px;color:var(--muted);margin-bottom:6px">ویرایش یا حذف نتیجه‌ی ثبت‌شده:</div>`;
+  entries.forEach(e=>{
+    const n=Object.keys(e.vals||{}).length;
+    h+=`<div style="display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:6px">
+      <span style="flex:1;font-size:12.5px">📅 ${faDigits(e.date)} <span style="color:var(--muted);font-size:11px">(${faDigits(n)} آزمایش)</span></span>
+      <button class="mini-btn" onclick="editLabEntry(${e.ts})">✏️ ویرایش</button>
+      <button onclick="deleteLabEntry(${e.ts})" title="حذف برای همیشه" style="background:var(--red-dim,#5a2b28);border:none;color:#f2b8b3;cursor:pointer;font-size:14px;width:34px;height:34px;border-radius:8px;flex:0 0 auto">🗑</button>
+    </div>`;
+  });
   box.innerHTML=h;
 }
 function renderLabsTab(){
