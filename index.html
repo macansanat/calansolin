@@ -66,21 +66,67 @@ body.nav-bottom{padding-bottom:100px}
 .qa-item:active .qa-ico{transform:scale(.88)}
 .qa-cancel{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--muted);border-radius:13px;padding:13px;font-family:inherit;font-weight:700;font-size:13.5px;cursor:pointer}
 /* فرم سریع قند خون */
-.qbg-modal{display:none;position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.6);padding:16px;overflow-y:auto}
+.qbg-modal{display:none;position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.6);padding:16px;overflow-y:auto;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
 .qbg-modal.show{display:flex;align-items:center;justify-content:center}
-.qbg-box{width:100%;max-width:400px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
-.qbg-title{font-size:16px;font-weight:800;margin-bottom:6px}
-.qbg-sub{font-size:11.5px;color:var(--muted);line-height:1.8;margin-bottom:16px}
-.qbg-lbl{display:block;font-size:12.5px;color:var(--muted);margin:0 0 6px;font-weight:600}
-.qbg-in{width:100%;background:var(--field);border:1px solid var(--teal-dim);border-radius:11px;padding:12px;font-family:inherit;font-size:16px;color:var(--ink);margin-bottom:14px}
-.qbg-actions{display:flex;gap:10px;margin-top:4px}
-.qbg-cancel{flex:0 0 auto;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:11px;padding:12px 18px;font-family:inherit;font-weight:700;font-size:13.5px;cursor:pointer}
-.qbg-save{flex:1;background:linear-gradient(160deg,var(--teal),var(--teal-dim));border:none;color:#fff;border-radius:11px;padding:12px;font-family:inherit;font-weight:800;font-size:14px;cursor:pointer}
+.qbg-box{position:relative;width:100%;max-width:400px;background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 24px 64px rgba(0,0,0,.55)}
+.qbg-x{position:absolute;top:14px;left:14px;width:30px;height:30px;border-radius:50%;background:var(--field);border:1px solid var(--line);color:var(--muted);font-size:14px;cursor:pointer;line-height:1}
+.qbg-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
+.qbg-badge{flex:0 0 auto;width:44px;height:44px;border-radius:13px;background:rgba(224,104,95,.16);display:flex;align-items:center;justify-content:center;font-size:22px}
+.qbg-title{font-size:16px;font-weight:800;line-height:1.4}
+.qbg-sub{font-size:11px;color:var(--muted);line-height:1.7;margin-top:3px}
+.qbg-val-wrap{position:relative;margin-bottom:16px}
+.qbg-val-wrap input{width:100%;background:var(--field);border:1.5px solid var(--teal-dim);border-radius:14px;padding:16px 18px;font-family:inherit;font-size:30px;font-weight:800;color:var(--teal);text-align:center;direction:ltr}
+.qbg-val-wrap input:focus{outline:none;border-color:var(--teal)}
+.qbg-val-wrap .qbg-unit{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;direction:ltr;pointer-events:none}
+.qbg-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:18px}
+.qbg-lbl{display:block;font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:600}
+.qbg-in{width:100%;background:var(--field);border:1px solid var(--teal-dim);border-radius:11px;padding:12px;font-family:inherit;font-size:15px;color:var(--ink)}
+.qbg-grid .jdate-field{width:100%}
+.qbg-grid .jdate-input{flex:1;min-width:0}
+.qbg-actions{display:flex;gap:10px}
+.qbg-cancel{flex:0 0 auto;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:12px;padding:13px 20px;font-family:inherit;font-weight:700;font-size:13.5px;cursor:pointer}
+.qbg-save{flex:1;background:linear-gradient(160deg,var(--teal),var(--teal-dim));border:none;color:#fff;border-radius:12px;padding:13px;font-family:inherit;font-weight:800;font-size:14.5px;cursor:pointer}
 .qbg-save:active{filter:brightness(1.1)}
 /* انتخابگر حالت منو */
 .navmode-seg{display:flex;gap:8px;background:var(--field);border:1px solid var(--line);border-radius:13px;padding:5px}
 .navmode-seg button{flex:1;background:transparent;border:none;color:var(--muted);border-radius:10px;padding:12px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s}
 .navmode-seg button.on{background:linear-gradient(160deg,var(--teal),var(--teal-dim));color:#fff;box-shadow:0 3px 10px rgba(63,185,163,.28)}
+/* ===== داشبورد خانه ===== */
+.dash-hero{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:22px;margin-bottom:16px;text-align:center;position:relative;overflow:hidden}
+.dash-hero::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--teal),transparent)}
+.dash-hero.low{border-color:rgba(91,143,214,.45)}.dash-hero.low::after{background:linear-gradient(90deg,transparent,#5b8fd6,transparent)}
+.dash-hero.high{border-color:rgba(224,104,95,.45)}.dash-hero.high::after{background:linear-gradient(90deg,transparent,#e0685f,transparent)}
+.dash-hero.in{border-color:rgba(63,185,163,.45)}
+.dh-label{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px}
+.dh-main{display:flex;align-items:baseline;justify-content:center;gap:6px;direction:ltr}
+.dh-num{font-size:56px;font-weight:800;line-height:1}
+.dh-unit{font-size:14px;color:var(--muted)}
+.dh-arrow{font-size:30px;font-weight:800;align-self:center}
+.dh-meta{margin-top:12px;font-size:12px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap}
+.dh-pill{padding:3px 12px;border-radius:20px;font-weight:800;font-size:11.5px}
+.dh-dot{opacity:.45}
+.dash-hero.empty{padding:30px 22px}
+.dh-empty-ic{font-size:34px;margin-bottom:8px}
+.dh-empty-t{font-size:15px;font-weight:800;margin-bottom:6px}
+.dh-empty-s{font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:16px}
+.dash-btn{background:linear-gradient(160deg,var(--teal),var(--teal-dim));border:none;color:#fff;border-radius:12px;padding:12px 22px;font-family:inherit;font-weight:800;font-size:14px;cursor:pointer}
+.dash-sec-t{font-size:13.5px;font-weight:800;margin:18px 0 10px;display:flex;align-items:center;gap:6px}
+.dash-sec-s{font-size:10.5px;color:var(--muted);font-weight:600}
+.dash-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dash-tile{background:linear-gradient(160deg,var(--field),var(--panel));border:1px solid var(--line);border-radius:14px;padding:16px 12px;text-align:center}
+.dash-tile .dt-v{font-size:25px;font-weight:800;direction:ltr;line-height:1.15}
+.dash-tile .dt-l{font-size:11px;color:var(--muted);margin-top:4px}
+.dash-today{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dtoday-item{display:flex;align-items:center;gap:11px;background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:13px 14px}
+.dtoday-item .dti-ico{font-size:21px;flex:0 0 auto}
+.dtoday-item .dti-v{font-size:15.5px;font-weight:800;line-height:1.2}
+.dtoday-item .dti-l{font-size:10.5px;color:var(--muted);margin-top:2px}
+.dash-short{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.dash-scard{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:15px 8px;font-family:inherit;font-size:12px;font-weight:700;color:var(--ink);cursor:pointer;transition:border-color .15s,transform .1s}
+.dash-scard:hover{border-color:var(--teal)}
+.dash-scard:active{transform:scale(.96)}
+.dash-scard .ds-ic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.dash-note{margin-top:18px;font-size:11.5px;color:var(--amber);line-height:1.85;background:var(--panel);border:1px dashed var(--line);border-radius:12px;padding:13px}
 /* توست کوتاه */
 .ui-toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);z-index:130;background:var(--teal-dim);color:#eafff8;border:1px solid var(--teal);border-radius:12px;padding:11px 18px;font-size:13px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none}
 .ui-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -582,7 +628,8 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </header>
 <!-- نوار تب بالا (حالت قدیم) -->
 <div class="tabs">
-  <button class="tab active" data-tab="calc" onclick="switchTab('calc',this)">🧮 ماشین‌حساب</button>
+  <button class="tab active" data-tab="home" onclick="switchTab('home',this)">🏠 خانه</button>
+  <button class="tab" data-tab="calc" onclick="switchTab('calc',this)">🧮 ماشین‌حساب</button>
   <button class="tab" data-tab="plan" onclick="switchTab('plan',this)">📅 برنامه‌ی هفتگی</button>
   <button class="tab" data-tab="cgm" onclick="switchTab('cgm',this)">📈 تحلیل CGM</button>
   <button class="tab" data-tab="labs" onclick="switchTab('labs',this)">🧪 آزمایش‌ها</button>
@@ -591,12 +638,12 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 <!-- نوار ناوبری پایین (حالت جدید) -->
 <nav class="bottomnav">
-  <button class="tab bnav active" data-tab="calc" onclick="switchTab('calc',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><line x1="8.5" y1="6.5" x2="15.5" y2="6.5"/><line x1="8.7" y1="11" x2="8.7" y2="11"/><line x1="12" y1="11" x2="12" y2="11"/><line x1="15.3" y1="11" x2="15.3" y2="11"/><line x1="8.7" y1="14.5" x2="8.7" y2="14.5"/><line x1="12" y1="14.5" x2="12" y2="14.5"/><line x1="15.3" y1="14.5" x2="15.3" y2="14.5"/><line x1="8.7" y1="18" x2="12" y2="18"/></svg></span><span class="bn-lbl">حساب دوز</span></button>
+  <button class="tab bnav active" data-tab="home" onclick="switchTab('home',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.4 12 4l9 7.4"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/></svg></span><span class="bn-lbl">خانه</span></button>
+  <button class="tab bnav" data-tab="calc" onclick="switchTab('calc',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><line x1="8.5" y1="6.5" x2="15.5" y2="6.5"/><line x1="8.7" y1="11" x2="8.7" y2="11"/><line x1="12" y1="11" x2="12" y2="11"/><line x1="15.3" y1="11" x2="15.3" y2="11"/><line x1="8.7" y1="14.5" x2="8.7" y2="14.5"/><line x1="12" y1="14.5" x2="12" y2="14.5"/><line x1="15.3" y1="14.5" x2="15.3" y2="14.5"/><line x1="8.7" y1="18" x2="12" y2="18"/></svg></span><span class="bn-lbl">حساب دوز</span></button>
   <button class="tab bnav" data-tab="plan" onclick="switchTab('plan',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="12" y1="8" x2="16" y2="8"/><line x1="12" y1="12" x2="16" y2="12"/><line x1="12" y1="16" x2="15" y2="16"/></svg></span><span class="bn-lbl">دفترچه</span></button>
   <button class="tab bnav" data-tab="cgm" onclick="switchTab('cgm',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 15 7 15 10 8 14 18 17 12 21 12"/></svg></span><span class="bn-lbl">قند CGM</span></button>
   <button class="bnav-fab" onclick="openQuickAdd()" aria-label="ثبت سریع" title="ثبت سریع"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg></button>
   <button class="tab bnav" data-tab="labs" onclick="switchTab('labs',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"/><path d="M10 3v6.5l-3.7 7.6a2.1 2.1 0 0 0 1.9 3h7.6a2.1 2.1 0 0 0 1.9-3L14 9.5V3"/><line x1="8.5" y1="14" x2="15.5" y2="14"/></svg></span><span class="bn-lbl">آزمایش</span></button>
-  <button class="tab bnav" data-tab="exercise" onclick="switchTab('exercise',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><rect x="2.5" y="8" width="3" height="8" rx="1.2"/><rect x="18.5" y="8" width="3" height="8" rx="1.2"/><rect x="5.5" y="9.5" width="2.2" height="5" rx="1"/><rect x="16.3" y="9.5" width="2.2" height="5" rx="1"/></svg></span><span class="bn-lbl">ورزش</span></button>
   <button class="tab bnav" data-tab="profile" onclick="switchTab('profile',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg></span><span class="bn-lbl">پروفایل</span></button>
 </nav>
 
@@ -620,12 +667,16 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 <!-- فرم سریع قند خون -->
 <div class="qbg-modal" id="qbgModal" onclick="if(event.target===this)closeQuickBG()">
   <div class="qbg-box">
-    <div class="qbg-title">🩸 ثبت قند خون دستی</div>
-    <div class="qbg-sub">قند اندازه‌گیری‌شده با گلوکومتر را اینجا ثبت کن. در آمار داده‌ها و کالیبراسیون CGM استفاده می‌شود.</div>
-    <label class="qbg-lbl">زمان اندازه‌گیری</label>
-    <input type="datetime-local" id="qbgTime" class="qbg-in">
-    <label class="qbg-lbl">قند خون (mg/dL)</label>
-    <input type="number" id="qbgVal" class="qbg-in" inputmode="decimal" placeholder="مثلاً ۱۲۰">
+    <button class="qbg-x" onclick="closeQuickBG()" title="بستن">✕</button>
+    <div class="qbg-head"><span class="qbg-badge">🩸</span><div><div class="qbg-title">ثبت قند خون دستی</div><div class="qbg-sub">قند گلوکومتر را ثبت کن — در آمار و کالیبراسیون CGM استفاده می‌شود.</div></div></div>
+    <div class="qbg-val-wrap">
+      <input type="number" id="qbgVal" inputmode="decimal" placeholder="۱۲۰">
+      <span class="qbg-unit">mg/dL</span>
+    </div>
+    <div class="qbg-grid">
+      <div><label class="qbg-lbl">تاریخ (شمسی)</label><div id="qbgDateWrap"></div></div>
+      <div><label class="qbg-lbl">ساعت</label><input type="time" id="qbgTimeH" class="qbg-in"></div>
+    </div>
     <div class="qbg-actions">
       <button class="qbg-cancel" onclick="closeQuickBG()">لغو</button>
       <button class="qbg-save" onclick="saveQuickBG()">💾 ذخیره</button>
@@ -633,8 +684,13 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
 </div>
 
+<!-- ============ صفحه‌ی خانه (داشبورد) ============ -->
+<div class="page active" id="page-home">
+  <div id="dashboard"></div>
+</div>
+
 <!-- ============ صفحه‌ی ماشین‌حساب ============ -->
-<div class="page active" id="page-calc">
+<div class="page" id="page-calc">
 <div class="card coll" id="c-carb">
   <h2 onclick="toggleCard('c-carb')"><span><span class="step-num">1</span>محاسبه‌ی کربوهیدرات وعده</span></h2>
   <div class="card-body">
@@ -1245,7 +1301,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۸.۹</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۹.۰</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2139,6 +2195,89 @@ async function storageSet(k,v){
   try{ localStorage.setItem(k,v); }catch(e){}
 }
 
+/* ====== داشبورد خانه ====== */
+function dashAgo(date){
+  const mins=Math.round((Date.now()-date.getTime())/60000);
+  if(mins<1) return 'همین الان';
+  if(mins<60) return faDigits(mins)+' دقیقه پیش';
+  const hrs=Math.round(mins/60);
+  if(hrs<24) return faDigits(hrs)+' ساعت پیش';
+  const days=Math.round(hrs/24); return faDigits(days)+' روز پیش';
+}
+function dashGluStatus(v){
+  if(v<70) return {k:'low',c:'#9fc0f0',t:'پایین'};
+  if(v>180) return {k:'high',c:'#f0a29b',t:'بالای محدوده'};
+  return {k:'in',c:'#6fd39a',t:'در محدوده'};
+}
+function renderDashboard(){
+  const box=document.getElementById('dashboard'); if(!box) return;
+  // آخرین قند: جدیدترین بین CGM و گلوکومتر دستی
+  let latest=null, source='', trend=null;
+  if(window._cgmReadings && window._cgmReadings.length){
+    const sorted=window._cgmReadings.filter(r=>r.t&&r.t.dateObj).sort((a,b)=>a.t.dateObj-b.t.dateObj);
+    const n=sorted.length;
+    if(n){ latest={glu:sorted[n-1].glu, date:sorted[n-1].t.dateObj}; source='CGM';
+      if(n>=2 && (sorted[n-1].t.dateObj-sorted[n-2].t.dateObj)<=20*60000){
+        const d=sorted[n-1].glu-sorted[n-2].glu; trend=d>4?'up':d<-4?'down':'flat';
+      }
+    }
+  }
+  try{ const bg=loadBG(); if(bg&&bg.length){
+    const mb=bg.reduce((a,x)=>(!a||new Date(x.iso)>new Date(a.iso))?x:a,null);
+    if(mb && (!latest || new Date(mb.iso)>latest.date)){ latest={glu:mb.glu,date:new Date(mb.iso)}; source='گلوکومتر'; trend=null; }
+  } }catch(e){}
+  let h='';
+  if(latest){
+    const st=dashGluStatus(latest.glu);
+    const arrow=trend==='up'?'↑':trend==='down'?'↓':trend==='flat'?'→':'';
+    h+=`<div class="dash-hero ${st.k}">
+      <div class="dh-label">آخرین قند خون</div>
+      <div class="dh-main"><span class="dh-num" style="color:${st.c}">${faDigits(Math.round(latest.glu))}</span><span class="dh-unit">mg/dL</span>${arrow?`<span class="dh-arrow" style="color:${st.c}">${arrow}</span>`:''}</div>
+      <div class="dh-meta"><span class="dh-pill" style="background:${st.c}22;color:${st.c}">${st.t}</span><span class="dh-dot">•</span>${dashAgo(latest.date)}<span class="dh-dot">•</span>${source}</div>
+    </div>`;
+  }else{
+    h+=`<div class="dash-hero empty">
+      <div class="dh-empty-ic">🩸</div>
+      <div class="dh-empty-t">هنوز داده‌ی قندی نداری</div>
+      <div class="dh-empty-s">با دکمه‌ی ＋ قند خون را ثبت کن، یا فایل CGM را از پروفایل وارد کن.</div>
+      <button class="dash-btn" onclick="openQuickBG()">🩸 ثبت قند خون</button>
+    </div>`;
+  }
+  // کاشی‌های خلاصه‌ی قند
+  const s=window._cgmStats;
+  if(s){
+    const tiles=[
+      ['در محدوده (TIR)', Math.round(s.tir)+'٪', s.tir>=70?'#6fd39a':'#e0a355'],
+      ['میانگین قند', Math.round(s.avg), '#5fd3bd'],
+      ['A1c تخمینی (GMI)', (s.gmi!=null?s.gmi.toFixed(1)+'٪':'—'), '#9fc0f0'],
+      ['نوسان (CV)', (s.cv!=null?Math.round(s.cv)+'٪':'—'), (s.cv!=null&&s.cv<=36)?'#6fd39a':'#e0a355'],
+    ];
+    h+=`<div class="dash-sec-t">📊 خلاصه‌ی قند <span class="dash-sec-s">(کل داده‌ی CGM)</span></div><div class="dash-tiles">`;
+    tiles.forEach(t=>{ h+=`<div class="dash-tile"><div class="dt-v" style="color:${t[2]}">${faDigits(String(t[1]))}</div><div class="dt-l">${t[0]}</div></div>`; });
+    h+=`</div>`;
+  }
+  // امروز
+  let todayMeals=0, lastIns=null, lastMeal=null;
+  try{ const pk=dayKey(new Date()); const arr=(planData&&planData[pk])||[];
+    todayMeals=arr.length;
+    arr.forEach(m=>{ if(m.time){ if(!lastMeal||m.time>lastMeal.time) lastMeal=m; } if(m.insDose){ if(!lastIns||(m.time>lastIns.time)) lastIns=m; } });
+  }catch(e){}
+  h+=`<div class="dash-sec-t">📅 امروز</div><div class="dash-today">
+    <div class="dtoday-item"><span class="dti-ico">🍽️</span><div><div class="dti-v">${faDigits(todayMeals)}</div><div class="dti-l">وعده‌ی ثبت‌شده</div></div></div>
+    <div class="dtoday-item"><span class="dti-ico">💉</span><div><div class="dti-v">${lastIns?faDigits(String(lastIns.insDose))+' واحد':'—'}</div><div class="dti-l">آخرین انسولین${lastIns&&lastIns.time?' · '+faDigits(lastIns.time):''}</div></div></div>
+  </div>`;
+  // میان‌برها
+  h+=`<div class="dash-sec-t">⚡ میان‌برها</div><div class="dash-short">
+    <button class="dash-scard" onclick="openQuickBG()"><span class="ds-ic" style="background:rgba(224,104,95,.16)">🩸</span>ثبت قند</button>
+    <button class="dash-scard" onclick="quickAdd('meal')"><span class="ds-ic" style="background:rgba(224,163,85,.16)">🍽️</span>ثبت وعده</button>
+    <button class="dash-scard" onclick="switchTab('cgm')"><span class="ds-ic" style="background:rgba(63,185,163,.16)">📈</span>تحلیل قند</button>
+    <button class="dash-scard" onclick="switchTab('exercise')"><span class="ds-ic" style="background:rgba(91,143,214,.16)">🏃</span>ورزش</button>
+    <button class="dash-scard" onclick="switchTab('labs')"><span class="ds-ic" style="background:rgba(154,134,224,.16)">🧪</span>آزمایش</button>
+    <button class="dash-scard" onclick="switchTab('calc')"><span class="ds-ic" style="background:rgba(63,185,163,.16)">🧮</span>حساب دوز</button>
+  </div>`;
+  h+=`<div class="dash-note">⚕️ این داشبورد فقط آینه‌ی گذشته است تا آگاه‌تر باشی و بهتر با پزشکت صحبت کنی — تشخیص و هر تصمیم درمانی فقط با پزشک است.</div>`;
+  box.innerHTML=h;
+}
 /* ====== تب‌ها (نوار پایین) ====== */
 function switchTab(name,btn){
   // هماهنگ‌سازی وضعیت فعال در هر دو نوار (بالا و پایین) بر اساس data-tab
@@ -2146,6 +2285,7 @@ function switchTab(name,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const pg=document.getElementById('page-'+name); if(pg) pg.classList.add('active');
   window.scrollTo({top:0,behavior:'auto'});
+  if(name==='home'){ renderDashboard(); }
   if(name==='plan'){ goToToday(); }
   if(name==='labs'){ renderLabsTab(); }
   if(name==='exercise'){ renderExerciseTab(); }
@@ -2174,7 +2314,9 @@ function quickAdd(type){
 function openQuickBG(){
   const m=document.getElementById('qbgModal'); if(!m) return;
   const d=new Date(); const p=n=>String(n).padStart(2,'0');
-  document.getElementById('qbgTime').value=`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate());
+  document.getElementById('qbgDateWrap').innerHTML=jDateFieldHTML('qbgDate', jDateStr(j[0],j[1],j[2]));
+  document.getElementById('qbgTimeH').value=`${p(d.getHours())}:${p(d.getMinutes())}`;
   document.getElementById('qbgVal').value='';
   m.classList.add('show');
   setTimeout(()=>document.getElementById('qbgVal').focus(),50);
@@ -2184,17 +2326,22 @@ function saveQuickBG(){
   const raw=(document.getElementById('qbgVal').value||'').trim();
   const v=parseFloat(faToEnDigits(raw));
   if(isNaN(v)||v<=0){ alert('قند خون را وارد کن (عدد mg/dL).'); return; }
-  const tv=document.getElementById('qbgTime').value;
-  const d=tv?new Date(tv):new Date();
+  const pj=parseJDate((document.getElementById('qbgDate')||{}).value||'');
+  if(!pj){ alert('تاریخ را انتخاب کن.'); return; }
+  const g=j2g(pj[0],pj[1],pj[2]); // [gy,gm,gd]
+  const tstr=(document.getElementById('qbgTimeH')||{}).value||'00:00';
+  const tp=tstr.split(':'); const hh=parseInt(tp[0],10)||0, mm=parseInt(tp[1],10)||0;
+  const d=new Date(g[0],g[1]-1,g[2],hh,mm);
   if(isNaN(d.getTime())){ alert('زمان معتبر نیست.'); return; }
   const p=n=>String(n).padStart(2,'0');
-  const timeStr=`${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  const shStr=`${jDateStr(pj[0],pj[1],pj[2])} ${p(hh)}:${p(mm)}`;
   let arr=loadBG();
-  if(!arr.some(x=>x.time===timeStr)) arr.push({time:timeStr, iso:d.toISOString(), glu:v, manual:true});
+  if(!arr.some(x=>x.iso===d.toISOString())) arr.push({time:shStr, iso:d.toISOString(), glu:v, manual:true});
   try{ localStorage.setItem(BGKEY,JSON.stringify(arr)); }catch(e){}
   closeQuickBG();
   uiToast(`✓ قند ${faDigits(String(v))} ثبت شد`);
   const st=document.getElementById('dataStats'); if(st) renderDataStats();
+  if(typeof renderDashboard==='function') renderDashboard();
 }
 /* توست کوتاه */
 let _toastTimer=null;
@@ -7261,6 +7408,7 @@ applyNavMode();
   renderCGMFilesList();
   const p=document.getElementById('page-plan');
   if(p&&p.classList.contains('active')) renderWeek();
+  renderDashboard();
 })();
 </script>
 </body>
