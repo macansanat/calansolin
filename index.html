@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>دستیار آموزشی دیابت — ماشین‌حساب و برنامه‌ی هفتگی</title>
+<title>دستیار دیابت</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
@@ -18,16 +18,24 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Vazirmatn',sans-serif;background:var(--bg);color:var(--ink);line-height:1.85;padding:24px 14px 70px;font-size:15.5px}
 .wrap{max-width:760px;margin:0 auto}
-header{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:20px}
-.eyebrow{color:var(--teal);font-size:12.5px;font-weight:700;letter-spacing:.4px;margin-bottom:8px}
-h1{font-size:22px;font-weight:800;line-height:1.5}
-.sub{color:var(--muted);font-size:13.5px;margin-top:8px}
+header{position:relative;margin-bottom:22px;padding:20px 22px;background:linear-gradient(150deg,var(--panel-2),var(--panel) 72%);border:1px solid var(--line);border-radius:20px;overflow:hidden}
+header::before{content:'';position:absolute;top:-45%;right:-8%;width:220px;height:220px;background:radial-gradient(circle,rgba(63,185,163,.15),transparent 70%);pointer-events:none}
+header::after{content:'';position:absolute;bottom:0;right:0;left:0;height:3px;background:linear-gradient(90deg,transparent,var(--teal),transparent)}
+.brand{display:flex;align-items:center;gap:14px;position:relative}
+.brand-mark{flex:0 0 auto;width:52px;height:52px;border-radius:15px;background:linear-gradient(145deg,var(--teal),var(--teal-dim));display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(63,185,163,.30),inset 0 1px 0 rgba(255,255,255,.25)}
+.brand-mark svg{width:30px;height:30px;display:block}
+.brand-text{flex:1;min-width:0}
+h1{font-size:25px;font-weight:800;line-height:1.3;letter-spacing:-.3px}
+.tagline{color:var(--muted);font-size:11px;margin-top:6px;letter-spacing:.2px;font-weight:600;display:inline-flex;align-items:center;gap:5px}
+.tagline::before{content:'⚕️';font-size:10px;opacity:.85}
 .safety{background:var(--panel);border:1px solid var(--amber);border-right:4px solid var(--amber);border-radius:12px;padding:14px 16px;margin-bottom:20px;font-size:13.5px}
 .safety b{color:var(--amber)}
 /* tabs */
-.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;background:var(--panel);padding:6px;border-radius:14px;border:1px solid var(--line)}
-.tab{flex:1 1 auto;min-width:90px;text-align:center;padding:11px;border-radius:10px;cursor:pointer;font-weight:700;font-size:14px;color:var(--muted);border:none;background:transparent;font-family:inherit}
-.tab.active{background:var(--teal-dim);color:#d6f5ee}
+.tabs{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:22px;background:linear-gradient(180deg,var(--panel-2),var(--panel));padding:7px;border-radius:16px;border:1px solid var(--line);box-shadow:inset 0 1px 3px rgba(0,0,0,.25)}
+.tab{flex:1 1 auto;min-width:96px;text-align:center;padding:10px 8px;border-radius:11px;cursor:pointer;font-weight:700;font-size:13.5px;color:var(--muted);border:1px solid transparent;background:transparent;font-family:inherit;transition:background .18s,color .18s,box-shadow .18s,transform .1s;-webkit-tap-highlight-color:transparent}
+.tab:hover{color:var(--ink);background:rgba(255,255,255,.03)}
+.tab:active{transform:scale(.97)}
+.tab.active{background:linear-gradient(160deg,var(--teal),var(--teal-dim));color:#fff;border-color:rgba(63,185,163,.5);box-shadow:0 4px 12px rgba(63,185,163,.28),inset 0 1px 0 rgba(255,255,255,.2);font-weight:800}
 .page{display:none}.page.active{display:block}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:18px}
 .card h2{font-size:16px;font-weight:800;margin-bottom:16px;padding-right:12px;border-right:3px solid var(--teal);line-height:1.4;display:flex;justify-content:space-between;align-items:center}
@@ -503,9 +511,15 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 <body>
 <div class="wrap">
 <header>
-  <div class="eyebrow">دستیار آموزشی دیابت</div>
-  <h1>ماشین‌حساب دوز و برنامه‌ی هفتگی</h1>
-  <div class="sub">ابزار آموزشی برای یادگیری — نه جایگزین پزشک</div>
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 2.4S4.8 9.7 4.8 14.8a7.2 7.2 0 1 0 14.4 0C19.2 9.7 12 2.4 12 2.4Z" fill="#fff"/><path d="M7.4 15.1h2.3l1.1-2.5 1.6 4.1 1.1-1.6h2.1" fill="none" stroke="#1a5049" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="brand-text">
+      <h1>دستیار دیابت</h1>
+      <div class="tagline">ابزار آموزشی برای یادگیری — نه جایگزین پزشک</div>
+    </div>
+  </div>
 </header>
 <div class="tabs">
   <button class="tab active" onclick="switchTab('calc',this)">🧮 ماشین‌حساب</button>
@@ -1116,7 +1130,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۸.۴</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۸.۵</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
