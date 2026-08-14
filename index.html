@@ -910,7 +910,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
 </div>
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۶.۳</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۶.۴</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -4288,7 +4288,7 @@ function renderExPlan(){
   let h='<div style="font-size:12px;color:var(--muted);margin-bottom:10px">یک هدف انتخاب کن تا برنامه‌ی مناسبش را ببینی:</div>';
   h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px">';
   for(const pk in EX_PLANS){ const p=EX_PLANS[pk];
-    h+=`<button class="exPlanBtn" data-pk="${pk}" onclick="showExPlan('${pk}')" style="background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px 8px;cursor:pointer;color:var(--ink);font-family:inherit;text-align:right;transition:all .15s">
+    h+=`<button class="exPlanBtn" data-pk="${pk}" onclick="uiDing();showExPlan('${pk}')" style="background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px 8px;cursor:pointer;color:var(--ink);font-family:inherit;text-align:right;transition:all .15s">
       <div style="font-size:20px;margin-bottom:3px">${p.icon}</div>
       <div style="font-size:12px;font-weight:700">${p.fa}</div></button>`;
   }
@@ -4437,6 +4437,21 @@ function wkBeep(freq,dur,type,vol){
   }catch(e){}
 }
 function wkTick(){ wkBeep(880,0.05,'square',0.06); }          // تیک ثانیه
+// دینگ عمومی برای دکمه‌های UI (مستقل از تاگل صدای کرنومتر) — در هر دو تب ورزش و آزمایش
+function uiDing(){
+  try{
+    if(!_wkAudioCtx) _wkAudioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    const ctx=_wkAudioCtx;
+    if(ctx.state==='suspended'){ ctx.resume(); }
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type='sine'; o.frequency.setValueAtTime(660,ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(880,ctx.currentTime+0.08); // دینگِ کوتاهِ بالارونده
+    g.gain.setValueAtTime(0.16, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.14);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime+0.14);
+  }catch(e){}
+}
 function wkClickUp(){ wkBeep(740,0.07,'sine',0.14); }         // کلیک افزایش (نت بالاتر)
 function wkClickDown(){ wkBeep(560,0.07,'sine',0.14); }       // کلیک کاهش (نت پایین‌تر)
 function wkStartSound(){ wkBeep(523,0.12,'sine',0.18); setTimeout(()=>wkBeep(784,0.16,'sine',0.18),120); } // شروع (دو نت بالارونده)
@@ -4519,11 +4534,11 @@ function renderExWorkout(){
   h+=`<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
     <select id="wkAddSelect" style="flex:1;min-width:150px"><option value="">— افزودن حرکت —</option>`;
   for(const g in EX_LIBRARY){ h+=`<optgroup label="${EX_LIBRARY[g].cat}">`; EX_LIBRARY[g].items.forEach(ex=>{ h+=`<option value="${ex.id}">${ex.name}</option>`; }); h+=`</optgroup>`; }
-  h+=`</select> <button class="quick-btn" style="flex:0 0 auto;font-size:13px;padding:9px 14px" onclick="wkAdd()">افزودن</button>
+  h+=`</select> <button class="quick-btn" style="flex:0 0 auto;font-size:13px;padding:9px 14px" onclick="uiDing();wkAdd()">افزودن</button>
     <button id="wkSoundBtn" class="quick-btn" style="flex:0 0 auto;font-size:15px;padding:9px 11px" onclick="wkToggleSound()" title="صدای راهنما">${_wkSound?'🔊':'🔇'}</button>
     <button id="wkMusicBtn" class="quick-btn" style="flex:0 0 auto;font-size:15px;padding:9px 11px" onclick="wkToggleMusic()" title="بیت ورزشی">${_wkMusic?'🎵':'🎵̶'}</button></div>`;
   h+=`<div style="margin-top:10px;font-size:13px;color:var(--muted)">یا یک برنامه‌ی آماده:</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">`;
-  for(const pk in EX_PLANS){ h+=`<button class="quick-btn" style="font-size:12px;padding:8px 12px;flex:0 0 auto" onclick="wkLoadPlan('${pk}')">${EX_PLANS[pk].icon} ${EX_PLANS[pk].fa}</button>`; }
+  for(const pk in EX_PLANS){ h+=`<button class="quick-btn" style="font-size:12px;padding:8px 12px;flex:0 0 auto" onclick="uiDing();wkLoadPlan('${pk}')">${EX_PLANS[pk].icon} ${EX_PLANS[pk].fa}</button>`; }
   h+=`</div><div id="wkList" style="margin-top:12px"></div>`;
   box.innerHTML=h;
   renderWkList();
@@ -4924,7 +4939,7 @@ function renderLabPackages(){
           <b style="font-size:13.5px">${p.fa}</b>
           <span style="display:inline-block;color:var(--teal);font-size:10.5px;background:var(--teal-dim);border-radius:10px;padding:1px 8px;margin-right:4px">${faDigits(count)} آزمایش</span>
         </div>
-        <button class="quick-btn" style="flex:0 0 auto;font-size:11px;padding:7px 15px" onclick="selectLabPackage('${pk}')">انتخاب</button>
+        <button class="quick-btn" style="flex:0 0 auto;font-size:11px;padding:7px 15px" onclick="uiDing();selectLabPackage('${pk}')">انتخاب</button>
       </div>
       <div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:7px">${p.desc}</div>
     </div>`;
