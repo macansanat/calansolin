@@ -136,6 +136,31 @@ body.nav-bottom{padding-bottom:100px}
 .dash-scard:active{transform:scale(.96)}
 .dash-scard .ds-ic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px}
 .dash-note{margin-top:18px;font-size:11.5px;color:var(--amber);line-height:1.85;background:var(--panel);border:1px dashed var(--line);border-radius:12px;padding:13px}
+/* گزارش روزانه */
+.daily-nav{display:flex;align-items:center;gap:8px}
+.daily-nav .dn-arrow{flex:0 0 auto;background:var(--panel-2);border:1px solid var(--line);color:var(--teal);border-radius:11px;padding:11px 13px;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
+.daily-nav .dn-arrow:disabled{color:#455; cursor:default}
+.daily-nav .dn-date{flex:1;text-align:center}
+.daily-nav .dn-day{font-size:13px;font-weight:800}
+.daily-nav .dn-full{font-size:12px;color:var(--muted);direction:rtl;margin-top:2px}
+.dn-today{width:100%;margin-top:12px;background:var(--teal-dim);border:none;color:#eafff8;border-radius:11px;padding:11px;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
+.daily-sleep{margin-top:12px;font-size:12.5px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.daily-sleep b{color:var(--blue)}
+.daily-empty{font-size:12.5px;color:var(--muted);background:var(--field);border:1px dashed var(--line);border-radius:12px;padding:16px;line-height:1.8;text-align:center}
+.daily-tl{position:relative}
+.dtl-item{display:flex;align-items:flex-start;gap:11px;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:12px;margin-bottom:8px}
+.dtl-time{flex:0 0 auto;width:42px;text-align:center;font-size:12px;font-weight:800;color:var(--teal);direction:ltr;padding-top:8px}
+.dtl-ico{flex:0 0 auto;width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px}
+.dtl-body{flex:1;min-width:0}
+.dtl-title{font-size:13.5px;font-weight:800;line-height:1.4}
+.dtl-detail{font-size:11.5px;color:var(--muted);line-height:1.7;margin-top:2px}
+/* گزارش کلی */
+.ov-link{width:100%;margin-top:10px;background:var(--panel-2);border:1px solid var(--teal-dim);color:var(--teal);border-radius:12px;padding:13px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s}
+.ov-link:hover{background:var(--teal-dim);color:#eafff8}
+.ov-card{background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:6px 14px}
+.ov-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.ov-row:last-child{border-bottom:none}
+.ov-row b{color:var(--ink);font-size:13.5px}
 /* توست کوتاه */
 .ui-toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);z-index:130;background:var(--teal-dim);color:#eafff8;border:1px solid var(--teal);border-radius:12px;padding:11px 18px;font-size:13px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none}
 .ui-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -638,6 +663,8 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 <!-- نوار تب بالا (حالت قدیم) -->
 <div class="tabs">
   <button class="tab active" data-tab="home" onclick="switchTab('home',this)">🏠 خانه</button>
+  <button class="tab" data-tab="daily" onclick="switchTab('daily',this)">📋 گزارش روزانه</button>
+  <button class="tab" data-tab="overview" onclick="switchTab('overview',this)">📊 گزارش کلی</button>
   <button class="tab" data-tab="calc" onclick="switchTab('calc',this)">🧮 ماشین‌حساب</button>
   <button class="tab" data-tab="plan" onclick="switchTab('plan',this)">📅 برنامه‌ی هفتگی</button>
   <button class="tab" data-tab="cgm" onclick="switchTab('cgm',this)">📈 تحلیل CGM</button>
@@ -648,9 +675,9 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 <!-- نوار ناوبری پایین (حالت جدید) -->
 <nav class="bottomnav">
   <button class="tab bnav active" data-tab="home" onclick="switchTab('home',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.4 12 4l9 7.4"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/></svg></span><span class="bn-lbl">خانه</span></button>
-  <button class="tab bnav" data-tab="cgm" onclick="switchTab('cgm',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 15 7 15 10 8 14 18 17 12 21 12"/></svg></span><span class="bn-lbl">قند CGM</span></button>
+  <button class="tab bnav" data-tab="daily" onclick="switchTab('daily',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="7" r="1.2"/><circle cx="5" cy="12" r="1.2"/><circle cx="5" cy="17" r="1.2"/><line x1="9" y1="7" x2="20" y2="7"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="17" x2="16" y2="17"/></svg></span><span class="bn-lbl">روزانه</span></button>
   <button class="bnav-fab" onclick="openQuickAdd()" aria-label="ثبت سریع" title="ثبت سریع"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg></button>
-  <button class="tab bnav" data-tab="labs" onclick="switchTab('labs',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"/><path d="M10 3v6.5l-3.7 7.6a2.1 2.1 0 0 0 1.9 3h7.6a2.1 2.1 0 0 0 1.9-3L14 9.5V3"/><line x1="8.5" y1="14" x2="15.5" y2="14"/></svg></span><span class="bn-lbl">آزمایش</span></button>
+  <button class="tab bnav" data-tab="overview" onclick="switchTab('overview',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="20" y2="20"/><rect x="6" y="11" width="3" height="8"/><rect x="11" y="5" width="3" height="14"/><rect x="16" y="14" width="3" height="5"/></svg></span><span class="bn-lbl">گزارش کلی</span></button>
   <button class="tab bnav" data-tab="profile" onclick="switchTab('profile',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg></span><span class="bn-lbl">پروفایل</span></button>
 </nav>
 
@@ -760,6 +787,16 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 <!-- ============ صفحه‌ی خانه (داشبورد) ============ -->
 <div class="page active" id="page-home">
   <div id="dashboard"></div>
+</div>
+
+<!-- ============ گزارش روزانه ============ -->
+<div class="page" id="page-daily">
+  <div id="dailyReport"></div>
+</div>
+
+<!-- ============ گزارش کلی ============ -->
+<div class="page" id="page-overview">
+  <div id="overviewReport"></div>
 </div>
 
 <!-- ============ صفحه‌ی ماشین‌حساب ============ -->
@@ -1374,7 +1411,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۹.۱</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۹.۲</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2351,6 +2388,112 @@ function renderDashboard(){
   h+=`<div class="dash-note">⚕️ این داشبورد فقط آینه‌ی گذشته است تا آگاه‌تر باشی و بهتر با پزشکت صحبت کنی — تشخیص و هر تصمیم درمانی فقط با پزشک است.</div>`;
   box.innerHTML=h;
 }
+/* ====== گزارش روزانه ====== */
+let _dailyDate=new Date(); _dailyDate.setHours(0,0,0,0);
+function dailyNav(delta){ _dailyDate.setDate(_dailyDate.getDate()+delta); renderDailyReport(); }
+function dailyToday(){ _dailyDate=new Date(); _dailyDate.setHours(0,0,0,0); renderDailyReport(); }
+function renderDailyReport(){
+  const box=document.getElementById('dailyReport'); if(!box) return;
+  const dref=new Date(_dailyDate); const key=dayKey(dref);
+  const j=g2j(dref.getFullYear(),dref.getMonth()+1,dref.getDate());
+  const dayName=J_DAYS[(dref.getDay()+1)%7];
+  const isToday=(key===dayKey(new Date()));
+  const hourMin=d=>d.getHours()*60+d.getMinutes();
+  const fmtHM=d=>faDigits(String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'));
+  const smFromT=t=>{ if(!t) return 0; const p=String(t).split(':'); return (parseInt(p[0],10)||0)*60+(parseInt(p[1],10)||0); };
+  let ev=[];
+  try{ (planData[key]||[]).forEach(m=>{
+    let det=[];
+    if(m.foods&&m.foods.length) det.push(m.foods.map(f=>f.name||f).join('، '));
+    else if(m.carb) det.push('کربوهیدرات '+faDigits(m.carb)+' گرم');
+    if(m.insDose) det.push('انسولین '+faDigits(m.insDose)+' واحد');
+    if(m.bgBefore) det.push('قند قبل '+faDigits(m.bgBefore));
+    if(m.bgAfter) det.push('بعد '+faDigits(m.bgAfter));
+    ev.push({sm:smFromT(m.time), time:m.time?faDigits(m.time):'', ico:'🍽️', color:'#e9b877', title:m.type||'وعده', detail:det.join(' · ')});
+  }); }catch(e){}
+  try{ const bz=(planData._basal||{})[key]; if(bz){ ev.push({sm:bz.time?smFromT(bz.time):1440, time:bz.time?faDigits(bz.time):'', ico:'💉', color:'#5fd3bd', title:'انسولین پایه', detail:(bz.type?bz.type+' · ':'')+faDigits(bz.dose)+' واحد'}); } }catch(e){}
+  try{ loadBG().forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🩸', color:'#f0a29b', title:'قند خون', detail:faDigits(x.glu)+' mg/dL'}); } }); }catch(e){}
+  const jlog=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'[]'); }catch(e){ return []; } };
+  jlog('med_log_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'💊', color:'#c3b4f0', title:'دارو', detail:x.name+(x.dose?' · '+x.dose:'')}); } });
+  jlog('mood_log_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🙂', color:'#e9b877', title:'حالت روحی', detail:x.mood+(x.note?' · '+x.note:'')}); } });
+  try{ (loadExLog().entries||[]).forEach(x=>{ if(x.ts&&dayKey(new Date(x.ts))===key){ const d=new Date(x.ts); ev.push({sm:x.time?smFromT(x.time):hourMin(d), time:x.time?faDigits(x.time):fmtHM(d), ico:'🏃', color:'#9fc0f0', title:'ورزش', detail:(x.items||[]).map(it=>it.name).join('، ')}); } }); }catch(e){}
+  try{ loadExercise().forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🏃', color:'#9fc0f0', title:'ورزش', detail:(x.what||'')+(x.dur?' · '+faDigits(x.dur)+' دقیقه':'')}); } }); }catch(e){}
+  let sleepRec=null; jlog('sleep_log_v1').forEach(x=>{ const sd=parseJDate(x.date); if(sd&&sd[0]===j[0]&&sd[1]===j[1]&&sd[2]===j[2]) sleepRec=x; });
+  ev.sort((a,b)=>a.sm-b.sm);
+  let cgmDay=null;
+  if(window._cgmReadings&&window._cgmReadings.length){
+    const rs=window._cgmReadings.filter(r=>r.t&&r.t.dateObj&&dayKey(r.t.dateObj)===key).map(r=>r.glu);
+    if(rs.length){ const avg=rs.reduce((a,b)=>a+b,0)/rs.length; const inr=rs.filter(g=>g>=70&&g<=180).length; cgmDay={avg,min:Math.min(...rs),max:Math.max(...rs),tir:Math.round(inr/rs.length*100)}; }
+  }
+  let h=`<div class="card"><div class="daily-nav">
+    <button onclick="dailyNav(-1)" class="dn-arrow">‹ قبل</button>
+    <div class="dn-date"><div class="dn-day">${dayName}${isToday?' · امروز':''}</div><div class="dn-full">${faDigits(jDateStr(j[0],j[1],j[2]))}</div></div>
+    <button onclick="dailyNav(1)" class="dn-arrow"${isToday?' disabled':''}>بعد ›</button>
+  </div>${isToday?'':`<button class="dn-today" onclick="dailyToday()">↩︎ برو به امروز</button>`}</div>`;
+  if(cgmDay){
+    h+=`<div class="dash-sec-t">📈 قند این روز</div><div class="dash-tiles">
+      <div class="dash-tile"><div class="dt-v" style="color:${cgmDay.tir>=70?'#6fd39a':'#e0a355'}">${faDigits(cgmDay.tir)}٪</div><div class="dt-l">در محدوده</div></div>
+      <div class="dash-tile"><div class="dt-v" style="color:#5fd3bd">${faDigits(Math.round(cgmDay.avg))}</div><div class="dt-l">میانگین</div></div>
+      <div class="dash-tile"><div class="dt-v" style="color:#9fc0f0">${faDigits(Math.round(cgmDay.min))}</div><div class="dt-l">کمترین</div></div>
+      <div class="dash-tile"><div class="dt-v" style="color:#f0a29b">${faDigits(Math.round(cgmDay.max))}</div><div class="dt-l">بیشترین</div></div>
+    </div>`;
+  }
+  if(sleepRec){ h+=`<div class="daily-sleep">😴 خواب این شب: <b>${faDigits(sleepRec.hours)} ساعت</b>${sleepRec.quality?' · '+sleepRec.quality:''}</div>`; }
+  h+=`<div class="dash-sec-t">🕒 رویدادهای روز</div>`;
+  if(!ev.length){ h+=`<div class="daily-empty">برای این روز رویدادی ثبت نشده. از دکمه‌ی ＋ می‌توانی اضافه کنی.</div>`; }
+  else{
+    h+=`<div class="daily-tl">`;
+    ev.forEach(e=>{ h+=`<div class="dtl-item">
+      <div class="dtl-time">${e.time||'—'}</div>
+      <div class="dtl-ico" style="background:${e.color}22">${e.ico}</div>
+      <div class="dtl-body"><div class="dtl-title">${e.title}</div>${e.detail?`<div class="dtl-detail">${e.detail}</div>`:''}</div>
+    </div>`; });
+    h+=`</div>`;
+  }
+  box.innerHTML=h;
+}
+/* ====== گزارش کلی ====== */
+function renderOverview(){
+  const box=document.getElementById('overviewReport'); if(!box) return;
+  let h='';
+  const s=window._cgmStats;
+  h+=`<div class="dash-sec-t">📈 کنترل قند <span class="dash-sec-s">(کل داده‌ی CGM)</span></div>`;
+  if(s){
+    h+=`<div class="dash-tiles">
+      <div class="dash-tile"><div class="dt-v" style="color:${s.tir>=70?'#6fd39a':'#e0a355'}">${faDigits(Math.round(s.tir))}٪</div><div class="dt-l">در محدوده (TIR)</div></div>
+      <div class="dash-tile"><div class="dt-v" style="color:#5fd3bd">${faDigits(Math.round(s.avg))}</div><div class="dt-l">میانگین</div></div>
+      <div class="dash-tile"><div class="dt-v" style="color:#9fc0f0">${s.gmi!=null?faDigits(s.gmi.toFixed(1))+'٪':'—'}</div><div class="dt-l">A1c تخمینی</div></div>
+      <div class="dash-tile"><div class="dt-v" style="color:${s.cv!=null&&s.cv<=36?'#6fd39a':'#e0a355'}">${s.cv!=null?faDigits(Math.round(s.cv))+'٪':'—'}</div><div class="dt-l">نوسان (CV)</div></div>
+    </div>
+    <button class="ov-link" onclick="switchTab('cgm')">📉 نمودار AGP و تحلیل کامل قند ›</button>`;
+  }else{
+    h+=`<div class="daily-empty">هنوز داده‌ی CGM وارد نشده. از دکمه‌ی ＋ → «فایل CGM» واردش کن.</div>`;
+  }
+  h+=`<div class="dash-sec-t">🧪 آزمایش‌ها</div>`;
+  try{ const ld=loadLabs(); const ent=(ld.entries||[]).slice().sort((a,b)=>a.ts-b.ts);
+    if(ent.length){ const last=ent[ent.length-1]; const ranges=(ld.ranges||{}); let out=0;
+      for(const k in last.vals){ const st=labStatus(k,last.vals[k],ranges); if(st==='high'||st==='low') out++; }
+      h+=`<div class="ov-card">
+        <div class="ov-row"><span>آخرین نتیجه</span><b>${faDigits(last.date)}</b></div>
+        <div class="ov-row"><span>نوبت‌های ثبت‌شده</span><b>${faDigits(ent.length)}</b></div>
+        <div class="ov-row"><span>خارج از محدوده (آخرین)</span><b style="color:${out?'#f0a29b':'#6fd39a'}">${faDigits(out)}</b></div>
+      </div>
+      <button class="ov-link" onclick="switchTab('labs')">🧪 روند و جزئیات آزمایش‌ها ›</button>`;
+    }else{ h+=`<div class="daily-empty">هنوز نتیجه‌ای ثبت نشده.</div>`; }
+  }catch(e){ h+=`<div class="daily-empty">—</div>`; }
+  const wk=Date.now()-7*864e5;
+  const cntSince=(k,f)=>{ try{ return JSON.parse(localStorage.getItem(k)||'[]').filter(x=>x[f]&&new Date(x[f]).getTime()>=wk).length; }catch(e){ return 0; } };
+  let exWk=0; try{ exWk=(loadExLog().entries||[]).filter(x=>x.ts>=wk).length + loadExercise().filter(x=>x.iso&&new Date(x.iso).getTime()>=wk).length; }catch(e){}
+  let sleepAvg='—'; try{ const sl=JSON.parse(localStorage.getItem('sleep_log_v1')||'[]').filter(x=>x.iso&&new Date(x.iso).getTime()>=wk); if(sl.length) sleepAvg=faDigits((sl.reduce((a,b)=>a+(+b.hours||0),0)/sl.length).toFixed(1)); }catch(e){}
+  h+=`<div class="dash-sec-t">🌱 سبک زندگی <span class="dash-sec-s">(۷ روز اخیر)</span></div><div class="dash-tiles">
+    <div class="dash-tile"><div class="dt-v" style="color:#9fc0f0">${faDigits(exWk)}</div><div class="dt-l">🏃 جلسه ورزش</div></div>
+    <div class="dash-tile"><div class="dt-v" style="color:#5fd3bd">${sleepAvg}</div><div class="dt-l">😴 میانگین خواب (ساعت)</div></div>
+    <div class="dash-tile"><div class="dt-v" style="color:#c3b4f0">${faDigits(cntSince('med_log_v1','iso'))}</div><div class="dt-l">💊 ثبت دارو</div></div>
+    <div class="dash-tile"><div class="dt-v" style="color:#e9b877">${faDigits(cntSince('mood_log_v1','iso'))}</div><div class="dt-l">🙂 حالت روحی</div></div>
+  </div>`;
+  h+=`<div class="dash-note">⚕️ این گزارش فقط خلاصه‌ای برای مرور و گفتگو با پزشک است — تشخیص و تصمیم درمانی فقط با پزشک.</div>`;
+  box.innerHTML=h;
+}
 /* ====== تب‌ها (نوار پایین) ====== */
 function switchTab(name,btn){
   // هماهنگ‌سازی وضعیت فعال در هر دو نوار (بالا و پایین) بر اساس data-tab
@@ -2359,6 +2502,8 @@ function switchTab(name,btn){
   const pg=document.getElementById('page-'+name); if(pg) pg.classList.add('active');
   window.scrollTo({top:0,behavior:'auto'});
   if(name==='home'){ renderDashboard(); }
+  if(name==='daily'){ renderDailyReport(); }
+  if(name==='overview'){ renderOverview(); }
   if(name==='plan'){ goToToday(); }
   if(name==='labs'){ renderLabsTab(); }
   if(name==='exercise'){ renderExerciseTab(); }
