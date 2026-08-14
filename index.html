@@ -979,7 +979,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۶.۹</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۷.۰</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -5392,14 +5392,12 @@ function renderLabEntry(){
     h+=`<button class="quick-btn" style="width:100%;margin-top:10px" onclick="saveLabEntry()">💾 ذخیره‌ی نتایج این تاریخ</button>`;
   }
   h+=`<div style="margin-top:14px;border-top:1px solid var(--line);padding-top:10px">
-    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">افزودن آزمایش دیگر از کتابخانه:</div>
-    <select id="labAddSelect" style="width:68%"><option value="">— انتخاب آزمایش —</option>`;
-  for(const g in LAB_LIBRARY){
-    h+=`<optgroup label="${LAB_LIBRARY[g].cat}">`;
-    for(const k in LAB_LIBRARY[g].items){ const it=LAB_LIBRARY[g].items[k]; h+=`<option value="${k}">${it.fa}${it.en?' — '+it.en:''}</option>`; }
-    h+=`</optgroup>`;
-  }
-  h+=`</select> <button class="quick-btn" style="font-size:11px;padding:8px 12px" onclick="addLabTest()">افزودن</button></div>`;
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">افزودن آزمایش از کتابخانه — نام فارسی یا انگلیسی را از برگه‌ی آزمایش تایپ کن:</div>
+    <div class="food-search-wrap">
+      <input type="text" id="labSearchInput" class="food-search" placeholder="مثلاً: HbA1c ، کراتینین ، LDL ، ادرار ..." oninput="doLabSearch(this)" autocomplete="off">
+      <div class="search-results" id="labSearchResults"></div>
+    </div>
+  </div>`;
   box.innerHTML=h;
   // برگرداندن مقادیر و تاریخِ قبل از بازسازی
   Object.keys(prevVals).forEach(id=>{ const el=document.getElementById(id); if(el) el.value=prevVals[id]; });
@@ -5438,6 +5436,44 @@ function addLabTest(){
   const d=loadLabs(); d.selected=d.selected||[];
   if(!d.selected.includes(sel.value)) d.selected.push(sel.value);
   saveLabs(d); renderLabEntry();
+}
+// ===== سرچ هوشمند در کتابخانه‌ی آزمایش (فارسی/انگلیسی) =====
+let LAB_SEARCH_INDEX=null;
+function buildLabSearchIndex(){
+  LAB_SEARCH_INDEX=[];
+  for(const g in LAB_LIBRARY){
+    for(const k in LAB_LIBRARY[g].items){
+      const it=LAB_LIBRARY[g].items[k];
+      LAB_SEARCH_INDEX.push({key:k, cat:LAB_LIBRARY[g].cat, fa:it.fa, en:it.en||'',
+        norm:(normalizeFa(it.fa)+' '+(it.en||'')+' '+LAB_LIBRARY[g].cat).toLowerCase()});
+    }
+  }
+}
+function doLabSearch(input){
+  if(!LAB_SEARCH_INDEX) buildLabSearchIndex();
+  const box=document.getElementById('labSearchResults'); if(!box) return;
+  const q=normalizeFa(input.value).toLowerCase();
+  if(!q){ box.classList.remove('show'); box.innerHTML=''; return; }
+  const sel=new Set((loadLabs().selected)||[]);
+  const matches=LAB_SEARCH_INDEX.filter(x=>x.norm.includes(q)).slice(0,40);
+  if(!matches.length){ box.innerHTML='<div class="search-empty">آزمایشی با این نام پیدا نشد</div>'; box.classList.add('show'); return; }
+  box.innerHTML=matches.map(m=>{
+    const added=sel.has(m.key);
+    return `<div class="search-item" ${added?'':`onclick="pickLabSearch('${m.key}')"`} style="${added?'opacity:.5;cursor:default':''}">
+      <span>${m.fa}${m.en?` <span style="color:var(--muted);font-size:11px;direction:ltr">${m.en}</span>`:''}</span>
+      <span class="cat">${added?'✓ در لیست':m.cat}</span>
+    </div>`;
+  }).join('');
+  box.classList.add('show');
+}
+function pickLabSearch(key){
+  const d=loadLabs(); d.selected=d.selected||[];
+  if(!d.selected.includes(key)) d.selected.push(key);
+  saveLabs(d);
+  renderLabEntry();
+  // اسکرول به ردیف آزمایشِ تازه‌اضافه‌شده تا کاربر ببیندش
+  const row=document.getElementById('lab_'+key);
+  if(row) row.closest('.lab-row').scrollIntoView({behavior:'smooth',block:'center'});
 }
 function removeLabTest(k){
   const d=loadLabs(); d.selected=(d.selected||[]).filter(x=>x!==k);
