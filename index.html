@@ -362,6 +362,84 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .lab-row .lab-i{flex:0 0 auto;background:var(--teal-dim);border:none;color:#d6f5ee;cursor:pointer;font-weight:800;font-style:italic;font-family:Georgia,serif;font-size:15px;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center}
 .lab-row .lab-i:active{background:#2a7568}
 .lab-cat-head{font-weight:800;color:var(--teal);font-size:13.5px;margin:16px 0 8px}
+/* ===== نوار باز/بستن همه ===== */
+.lab-toolbar{display:flex;gap:8px;margin-bottom:14px}
+.lab-toolbar button{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:11px;padding:10px;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer;transition:all .15s}
+.lab-toolbar button:hover{border-color:var(--teal);color:var(--teal)}
+.lab-toolbar button:active{transform:scale(.97)}
+/* ===== بسته‌های پیشنهادی — کاشی فشرده ===== */
+.lab-pkg-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.lab-pkg{position:relative;background:linear-gradient(150deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:13px;padding:12px 12px 11px;cursor:pointer;transition:all .16s;overflow:hidden}
+.lab-pkg::before{content:'';position:absolute;inset:0 auto 0 0;width:3px;background:var(--teal);opacity:.55}
+.lab-pkg:hover{border-color:var(--teal);transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.28)}
+.lab-pkg:active{transform:translateY(0)}
+.lab-pkg .lp-top{display:flex;align-items:center;gap:8px}
+.lab-pkg .lp-icon{font-size:21px;line-height:1;flex:0 0 auto}
+.lab-pkg .lp-name{font-size:12.5px;font-weight:800;line-height:1.45;flex:1;min-width:0}
+.lab-pkg .lp-count{display:inline-block;color:var(--teal);font-size:10px;font-weight:700;background:var(--teal-dim);border-radius:20px;padding:2px 9px;margin-top:8px}
+.lab-pkg .lp-info{position:absolute;top:9px;left:9px;width:22px;height:22px;border-radius:50%;background:var(--field);border:1px solid var(--line);color:var(--muted);font-style:italic;font-family:Georgia,serif;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;z-index:2}
+.lab-pkg .lp-info:active{background:var(--teal-dim);color:#d6f5ee}
+/* ===== ترکیب‌های ذخیره‌شده‌ی من ===== */
+.lab-tmpl-wrap{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.lab-tmpl-head{font-size:12.5px;font-weight:800;color:var(--ink);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.lab-tmpl-sub{font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7}
+.lab-tmpl-chips{display:flex;flex-wrap:wrap;gap:8px}
+.lab-tmpl{display:flex;align-items:center;gap:2px;background:var(--panel-2);border:1px solid var(--line);border-radius:22px;padding:2px 4px 2px 3px;transition:border-color .15s}
+.lab-tmpl:hover{border-color:var(--teal)}
+.lab-tmpl .lt-load{background:transparent;border:none;color:var(--ink);font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;padding:7px 5px 7px 11px;display:flex;align-items:center;gap:7px}
+.lab-tmpl .lt-load .lt-count{color:var(--teal);font-size:10px;font-weight:700;background:var(--teal-dim);border-radius:20px;padding:1px 7px}
+.lab-tmpl .lt-del{flex:0 0 auto;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:15px;width:26px;height:26px;border-radius:50%;line-height:1}
+.lab-tmpl .lt-del:hover{background:var(--red-dim,#5a2b28);color:#f2b8b3}
+.lab-tmpl-empty{font-size:11.5px;color:var(--muted);background:var(--field);border:1px dashed var(--line);border-radius:11px;padding:12px;line-height:1.8}
+.lab-save-combo{width:100%;margin-top:10px;background:var(--panel-2);border:1px dashed var(--teal-dim);color:var(--teal);border-radius:11px;padding:11px;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer;transition:all .15s}
+.lab-save-combo:hover{background:var(--teal-dim);color:#d6f5ee;border-style:solid}
+/* ===== نتایج ثبت‌شده و روند — جدول ===== */
+.lab-hist-title{font-size:13px;font-weight:800;color:var(--ink);margin:2px 0 10px}
+.lab-htbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:13px;-webkit-overflow-scrolling:touch}
+.lab-htbl{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+.lab-htbl th,.lab-htbl td{padding:10px 11px;text-align:center;white-space:nowrap;border-bottom:1px solid var(--line)}
+.lab-htbl thead th{background:var(--panel-2);color:var(--muted);font-size:11.5px;font-weight:700;position:sticky;top:0}
+.lab-htbl tbody tr:last-child td{border-bottom:none}
+.lab-htbl tbody tr:nth-child(even) td{background:rgba(255,255,255,.015)}
+.lab-htbl .lh-name{text-align:right;position:sticky;right:0;background:var(--panel);min-width:120px;box-shadow:-6px 0 8px -8px rgba(0,0,0,.6) inset}
+.lab-htbl tbody tr:nth-child(even) .lh-name{background:var(--panel)}
+.lab-htbl .lh-name b{font-size:13px;font-weight:700;color:var(--ink)}
+.lab-htbl .lh-name .lh-en{color:var(--muted);font-size:9.5px;direction:ltr;display:block;margin-top:1px}
+.lab-htbl .lh-val{font-size:14px;font-weight:800}
+.lab-htbl .lh-mark{font-size:11px;margin-right:1px}
+.lab-htbl .lh-rng{color:var(--muted);font-size:10.5px}
+.lab-htbl .lh-none{color:#3a4a5c}
+.lab-htbl-legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--muted);margin-top:10px;line-height:1.7}
+.lab-htbl-legend .lg-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:4px;vertical-align:middle}
+.lab-hist-manage{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+.lab-hist-manage .lhm-head{font-size:12px;color:var(--muted);margin-bottom:8px}
+.lab-hist-entry{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:7px;transition:border-color .15s}
+.lab-hist-entry:hover{border-color:var(--teal-dim)}
+.lab-hist-entry .lhe-date{flex:1;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
+.lab-hist-entry .lhe-count{color:var(--muted);font-size:10.5px;font-weight:600;background:var(--field);border-radius:20px;padding:2px 9px}
+.lab-hist-entry .lhe-del{flex:0 0 auto;background:var(--red-dim,#5a2b28);border:none;color:#f2b8b3;cursor:pointer;font-size:15px;width:34px;height:34px;border-radius:9px}
+.lab-hist-entry .lhe-del:active{background:#7a3b36}
+/* ===== باکس موارد خارج از محدوده ===== */
+.lab-alert{background:linear-gradient(150deg,rgba(224,104,95,.12),rgba(224,104,95,.05));border:1px solid rgba(224,104,95,.45);border-radius:14px;padding:14px;margin-bottom:16px}
+.lab-alert-head{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.lab-alert-head .la-badge{width:34px;height:34px;border-radius:10px;background:rgba(224,104,95,.18);display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto}
+.lab-alert-head .la-ttl{font-size:13.5px;font-weight:800;color:#f0a29b;line-height:1.4}
+.lab-alert-head .la-sub{font-size:10.5px;color:var(--muted);font-weight:600}
+.lab-alert-item{display:flex;align-items:flex-start;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:11px 12px;margin-bottom:8px}
+.lab-alert-item:last-of-type{margin-bottom:0}
+.lab-alert-item .lai-arrow{flex:0 0 auto;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900}
+.lab-alert-item .lai-arrow.hi{background:rgba(224,104,95,.18);color:#f0a29b}
+.lab-alert-item .lai-arrow.lo{background:rgba(91,143,214,.18);color:#9fc0f0}
+.lab-alert-item .lai-body{flex:1;min-width:0}
+.lab-alert-item .lai-name{font-size:13px;font-weight:800;line-height:1.4}
+.lab-alert-item .lai-name .lai-en{color:var(--muted);font-size:10px;font-weight:600;direction:ltr}
+.lab-alert-item .lai-val{font-size:11.5px;margin-top:2px}
+.lab-alert-item .lai-val .lai-num{font-weight:800}
+.lab-alert-item .lai-val .lai-num.hi{color:#f0a29b}
+.lab-alert-item .lai-val .lai-num.lo{color:#9fc0f0}
+.lab-alert-item .lai-msg{font-size:11px;color:var(--muted);line-height:1.7;margin-top:4px}
+.lab-alert-foot{font-size:11px;color:var(--amber);margin-top:11px;line-height:1.7;display:flex;gap:6px}
+@media(max-width:330px){.lab-pkg-grid{grid-template-columns:1fr}}
 /* ===== مودال اطلاعات آزمایش ===== */
 .lab-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;padding:16px;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .lab-modal.show{display:flex;align-items:flex-start;justify-content:center}
@@ -780,7 +858,11 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div class="page" id="page-labs">
-  <div class="card" id="c-labs-intro">
+  <div class="lab-toolbar">
+    <button onclick="labCollapseAll(false)">▾ باز کردن همه</button>
+    <button onclick="labCollapseAll(true)">▸ بستن همه</button>
+  </div>
+  <div class="card coll" id="c-labs-intro">
     <h2 onclick="toggleCard('c-labs-intro')"><span>🧪 آزمایش‌های دیابت</span></h2>
     <div class="card-body">
       <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:10px">
@@ -789,11 +871,14 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <div class="formula-note" style="color:var(--amber)">⚕️ این لیست‌ها فقط پیشنهاد برای گفتگو با پزشک‌اند — تشخیص یا تجویز نیستند. پزشک تصمیم می‌گیرد کدام آزمایش لازم است. محدوده‌های نرمال بین آزمایشگاه‌ها کمی فرق دارند؛ همیشه محدوده‌ی برگه‌ی آزمایشگاه خودت را معیار بگیر.</div>
     </div>
   </div>
-  <div class="card" id="c-labs-packages">
-    <h2 onclick="toggleCard('c-labs-packages')"><span>📦 بسته‌های پیشنهادی</span></h2>
-    <div class="card-body"><div id="labPackages"></div></div>
+  <div class="card coll" id="c-labs-packages">
+    <h2 onclick="toggleCard('c-labs-packages')"><span>📦 بسته‌ها و ترکیب‌های من</span></h2>
+    <div class="card-body">
+      <div id="labPackages"></div>
+      <div id="labTemplates"></div>
+    </div>
   </div>
-  <div class="card" id="c-labs-import">
+  <div class="card coll closed" id="c-labs-import">
     <h2 onclick="toggleCard('c-labs-import')"><span>📷 وارد کردن خودکار از برگه‌ی آزمایش</span></h2>
     <div class="card-body">
       <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:10px">
@@ -810,11 +895,11 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <div id="labImportPreview"></div>
     </div>
   </div>
-  <div class="card" id="c-labs-entry">
+  <div class="card coll" id="c-labs-entry">
     <h2 onclick="toggleCard('c-labs-entry')"><span>➕ ثبت نتیجه‌ی آزمایش</span></h2>
     <div class="card-body"><div id="labEntry"></div></div>
   </div>
-  <div class="card" id="c-labs-history">
+  <div class="card coll" id="c-labs-history">
     <h2 onclick="toggleCard('c-labs-history')"><span>📊 نتایج ثبت‌شده و روند</span></h2>
     <div class="card-body"><div id="labHistory"></div></div>
   </div>
@@ -1019,7 +1104,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۸.۲</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۸.۳</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -5361,26 +5446,40 @@ function findLabTest(key){
   for(const grp in LAB_LIBRARY){ if(LAB_LIBRARY[grp].items[key]) return LAB_LIBRARY[grp].items[key]; }
   return null;
 }
+function pkgTestCount(p){ return p.tests==='ALL' ? Object.values(LAB_LIBRARY).reduce((s,g)=>s+Object.keys(g.items).length,0) : p.tests.length; }
 function renderLabPackages(){
   const box=document.getElementById('labPackages'); if(!box) return;
-  let h='<div style="display:flex;flex-direction:column;gap:8px">';
+  let h='<div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;line-height:1.7">یک بسته را انتخاب کن تا آزمایش‌هایش در فرم ثبت بیاید. برای دیدن توضیح و فهرست، روی <b style="font-style:italic;font-family:Georgia,serif;color:var(--teal)">i</b> بزن.</div>';
+  h+='<div class="lab-pkg-grid">';
   for(const pk in LAB_PACKAGES){
     const p=LAB_PACKAGES[pk];
-    const count = p.tests==='ALL' ? Object.values(LAB_LIBRARY).reduce((s,g)=>s+Object.keys(g.items).length,0) : p.tests.length;
-    h+=`<div style="background:linear-gradient(135deg,var(--panel-2),var(--panel));border-radius:12px;padding:12px 13px;border:1px solid var(--line);box-shadow:0 1px 3px rgba(0,0,0,0.2)">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="font-size:24px;flex:0 0 auto">${p.icon}</div>
-        <div style="flex:1">
-          <b style="font-size:13.5px">${p.fa}</b>
-          <span style="display:inline-block;color:var(--teal);font-size:10.5px;background:var(--teal-dim);border-radius:10px;padding:1px 8px;margin-right:4px">${faDigits(count)} آزمایش</span>
-        </div>
-        <button class="quick-btn" style="flex:0 0 auto;font-size:11px;padding:7px 15px" onclick="uiDing();selectLabPackage('${pk}')">انتخاب</button>
+    const count = pkgTestCount(p);
+    h+=`<div class="lab-pkg" onclick="uiDing();selectLabPackage('${pk}')">
+      <button class="lp-info" onclick="event.stopPropagation();openPkgInfo('${pk}')" title="توضیح این بسته">i</button>
+      <div class="lp-top">
+        <span class="lp-icon">${p.icon}</span>
+        <span class="lp-name">${p.fa}</span>
       </div>
-      <div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:7px">${p.desc}</div>
+      <span class="lp-count">${faDigits(count)} آزمایش</span>
     </div>`;
   }
   h+='</div>';
   box.innerHTML=h;
+}
+function openPkgInfo(pk){
+  const p=LAB_PACKAGES[pk]; if(!p) return;
+  let tests = p.tests==='ALL' ? [] : p.tests;
+  if(p.tests==='ALL'){ for(const g in LAB_LIBRARY) for(const k in LAB_LIBRARY[g].items) tests.push(k); }
+  let h=`<div class="lm-title">${p.icon} ${p.fa}</div>`;
+  h+=`<div class="lm-range">${faDigits(pkgTestCount(p))} آزمایش</div>`;
+  h+=`<div class="lm-sec"><div class="lm-h">📌 برای چه کسی</div><div class="lm-body">${p.desc}</div></div>`;
+  h+=`<div class="lm-sec"><div class="lm-h">🧪 آزمایش‌های این بسته</div><div class="lm-body" style="line-height:2.1">`;
+  tests.forEach(k=>{ const t=labFindTest(k); if(t) h+=`<span style="display:inline-block;background:var(--panel-2);border:1px solid var(--line);border-radius:16px;padding:2px 10px;margin:0 0 6px 4px;font-size:12px">${t.fa}</span>`; });
+  h+=`</div></div>`;
+  h+=`<button class="quick-btn" style="width:100%;margin-top:6px" onclick="closeLabInfo();uiDing();selectLabPackage('${pk}')">✓ انتخاب این بسته</button>`;
+  h+=`<div class="lm-foot">⚕️ این بسته فقط پیشنهاد برای گفتگو با پزشک است — تشخیص یا تجویز نیست. پزشک تصمیم می‌گیرد کدام آزمایش لازم است.</div>`;
+  document.getElementById('labModalBody').innerHTML=h;
+  const m=document.getElementById('labModal'); m.classList.add('show'); m.scrollTop=0;
 }
 function selectLabPackage(pk){
   const p=LAB_PACKAGES[pk];
@@ -5390,6 +5489,63 @@ function selectLabPackage(pk){
   renderLabEntry();
   const c=document.getElementById('c-labs-entry'); if(c) c.classList.remove('closed');
   document.getElementById('labEntry').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+// ===== ترکیب‌های ذخیره‌شده‌ی من (پنل‌های شخصی آزمایش) =====
+function renderLabTemplates(){
+  const box=document.getElementById('labTemplates'); if(!box) return;
+  const d=loadLabs(); const tmpls=d.templates||[];
+  let h='<div class="lab-tmpl-wrap">';
+  h+=`<div class="lab-tmpl-head">🗂️ ترکیب‌های من</div>`;
+  h+=`<div class="lab-tmpl-sub">آزمایش‌هایی که مرتب با هم انجام می‌دهی را یک‌بار با یک نام ذخیره کن؛ دفعه‌ی بعد با یک کلیک همان ترکیب می‌آید. چند ترکیب می‌توانی داشته باشی.</div>`;
+  if(!tmpls.length){
+    h+=`<div class="lab-tmpl-empty">هنوز ترکیبی ذخیره نکرده‌ای. آزمایش‌هایت را در فرم پایین انتخاب کن، بعد دکمه‌ی «💾 ذخیره‌ی این ترکیب با یک نام» را بزن.</div>`;
+  }else{
+    h+='<div class="lab-tmpl-chips">';
+    tmpls.forEach((tm,i)=>{
+      h+=`<div class="lab-tmpl">
+        <button class="lt-load" onclick="loadLabTemplate(${i})" title="آوردن این ترکیب">🗂️ ${tm.name} <span class="lt-count">${faDigits((tm.tests||[]).length)}</span></button>
+        <button class="lt-del" onclick="deleteLabTemplate(${i})" title="حذف این ترکیب">✕</button>
+      </div>`;
+    });
+    h+='</div>';
+  }
+  h+='</div>';
+  box.innerHTML=h;
+}
+function saveLabTemplate(){
+  const d=loadLabs();
+  if(!d.selected||!d.selected.length){ alert('اول چند آزمایش را انتخاب کن، بعد ترکیب را ذخیره کن.'); return; }
+  const name=(prompt('یک نام برای این ترکیب بگذار (مثلاً: «آزمایش دوره‌ای من» یا «کبد و کلیه»):')||'').trim();
+  if(!name) return;
+  d.templates=d.templates||[];
+  const idx=d.templates.findIndex(t=>t.name===name);
+  const rec={name, tests:[...d.selected], ts:Date.now()};
+  if(idx>=0){ if(!confirm('ترکیبی با این نام هست. جایگزین شود؟')) return; d.templates[idx]=rec; }
+  else d.templates.push(rec);
+  saveLabs(d);
+  renderLabTemplates();
+  const c=document.getElementById('c-labs-packages'); if(c) c.classList.remove('closed');
+}
+function loadLabTemplate(i){
+  const d=loadLabs(); const tm=(d.templates||[])[i]; if(!tm) return;
+  d.selected=[...(tm.tests||[])]; saveLabs(d);
+  uiDing();
+  renderLabEntry();
+  const c=document.getElementById('c-labs-entry'); if(c) c.classList.remove('closed');
+  document.getElementById('labEntry').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function deleteLabTemplate(i){
+  const d=loadLabs(); const tm=(d.templates||[])[i]; if(!tm) return;
+  if(!confirm('ترکیب «'+tm.name+'» حذف شود؟ (نتایج ثبت‌شده‌ات دست‌نخورده می‌مانند.)')) return;
+  d.templates.splice(i,1); saveLabs(d); renderLabTemplates();
+}
+// باز/بستن همه‌ی کارت‌های تب آزمایش
+function labCollapseAll(closed){
+  ['c-labs-intro','c-labs-packages','c-labs-import','c-labs-entry','c-labs-history'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    el.classList.toggle('closed', closed);
+    try{ const st=JSON.parse(localStorage.getItem('coll_state')||'{}'); st[id]=closed; localStorage.setItem('coll_state',JSON.stringify(st)); }catch(e){}
+  });
 }
 function renderLabEntry(){
   const box=document.getElementById('labEntry'); if(!box) return;
@@ -5436,6 +5592,9 @@ function renderLabEntry(){
       });
     }
     h+=`<button class="quick-btn" style="width:100%;margin-top:10px${_editLabTs?';background:var(--teal-dim);color:#d6f5ee':''}" onclick="saveLabEntry()">${_editLabTs?'💾 به‌روزرسانی این نتیجه':'💾 ذخیره‌ی نتایج این تاریخ'}</button>`;
+    if(!_editLabTs){
+      h+=`<button class="lab-save-combo" onclick="saveLabTemplate()">💾 ذخیره‌ی این ترکیب با یک نام (برای دفعه‌ی بعد)</button>`;
+    }
   }
   h+=`<div style="margin-top:14px;border-top:1px solid var(--line);padding-top:10px">
     <div style="font-size:12px;color:var(--muted);margin-bottom:6px">افزودن آزمایش از کتابخانه — نام فارسی یا انگلیسی را از برگه‌ی آزمایش تایپ کن:</div>
@@ -6086,47 +6245,65 @@ function renderLabHistory(){
   }
   let h='';
   if(alerts.length){
-    h+=`<div style="background:#3a1f1f;border:1px solid #a44;border-radius:9px;padding:10px;margin-bottom:12px">
-      <div style="color:#f88;font-weight:700;font-size:13px;margin-bottom:6px">⚠️ موارد خارج از محدوده (در آخرین نتیجه)</div>`;
+    h+=`<div class="lab-alert">
+      <div class="lab-alert-head">
+        <div class="la-badge">⚠️</div>
+        <div><div class="la-ttl">موارد خارج از محدوده</div><div class="la-sub">در آخرین نتیجه (${faDigits(last.date)})</div></div>
+      </div>`;
     alerts.forEach(a=>{
-      h+=`<div style="font-size:12px;line-height:1.8;margin-bottom:6px;color:#fdd">
-        <b>${a.fa}${a.en?' ('+a.en+')':''}: ${faDigits(a.val)}</b> (${a.st==='high'?'بالا':'پایین'}) — ${a.msg||''}</div>`;
+      const hi=a.st==='high';
+      h+=`<div class="lab-alert-item">
+        <div class="lai-arrow ${hi?'hi':'lo'}">${hi?'↑':'↓'}</div>
+        <div class="lai-body">
+          <div class="lai-name">${a.fa}${a.en?` <span class="lai-en">${a.en}</span>`:''}</div>
+          <div class="lai-val"><span class="lai-num ${hi?'hi':'lo'}">${faDigits(a.val)}</span> — ${hi?'بالاتر از محدوده':'پایین‌تر از محدوده'}</div>
+          ${a.msg?`<div class="lai-msg">${a.msg}</div>`:''}
+        </div>
+      </div>`;
     });
-    h+=`<div style="font-size:11px;color:var(--amber);margin-top:4px">این‌ها فقط برای گفتگو با پزشک‌اند، نه تشخیص. حتماً با پزشکت بررسی کن.</div></div>`;
+    h+=`<div class="lab-alert-foot"><span>⚕️</span><span>این‌ها فقط برای گفتگو با پزشک‌اند، نه تشخیص. حتماً با پزشکت بررسی کن.</span></div></div>`;
   }
-  h+=`<div style="overflow-x:auto"><table class="rtbl" style="font-size:11.5px;min-width:${140+entries.length*70}px"><thead><tr><th style="text-align:right">آزمایش</th>`;
+  h+=`<div class="lab-hist-title">📈 روند نتایج</div>`;
+  h+=`<div class="lab-htbl-wrap"><table class="lab-htbl"><thead><tr><th class="lh-name" style="text-align:right">آزمایش</th>`;
   entries.forEach(e=>{ h+=`<th>${faDigits(e.date)}</th>`; });
   h+=`<th>محدوده</th></tr></thead><tbody>`;
   allKeys.forEach(k=>{
     const t=findLabTest(k); if(!t) return;
-    h+=`<tr><td style="text-align:right;line-height:1.4">${t.fa}<br><span style="color:var(--muted);font-size:9px;direction:ltr;display:inline-block">${t.en||''}</span></td>`;
+    h+=`<tr><td class="lh-name"><b>${t.fa}</b>${t.en?`<span class="lh-en">${t.en}</span>`:''}</td>`;
     entries.forEach(e=>{
       if(e.vals[k]!==undefined){
         const st=labStatus(k,e.vals[k]);
-        const color = st==='high'?'#f88':st==='low'?'#8bf':st==='normal'?'#6d6':'var(--ink)';
+        const color = st==='high'?'#f0a29b':st==='low'?'#9fc0f0':st==='normal'?'#6fd39a':'var(--ink)';
         const mark = st==='high'?'↑':st==='low'?'↓':'';
-        h+=`<td style="color:${color};font-weight:600">${faDigits(e.vals[k])}${mark}</td>`;
-      }else h+=`<td style="color:#444">—</td>`;
+        h+=`<td><span class="lh-val" style="color:${color}">${faDigits(e.vals[k])}<span class="lh-mark">${mark}</span></span></td>`;
+      }else h+=`<td class="lh-none">—</td>`;
     });
-    const rng=(t.lo!==null&&t.hi!==null)?`${faDigits(t.lo)}-${faDigits(t.hi)}`:'—';
-    h+=`<td style="color:var(--muted);font-size:10px">${rng} ${t.unit}</td></tr>`;
+    const rng=(t.lo!==null&&t.hi!==null)?`${faDigits(t.lo)}–${faDigits(t.hi)}`:'—';
+    h+=`<td class="lh-rng">${rng} ${t.unit}</td></tr>`;
   });
   h+=`</tbody></table></div>`;
-  h+=`<div style="font-size:11px;color:var(--muted);margin-top:8px">↑ بالای محدوده &nbsp; ↓ زیر محدوده &nbsp; رنگ سبز = طبیعی. محدوده‌ها تقریبی‌اند؛ معیار، برگه‌ی آزمایشگاه خودت است.</div>`;
+  h+=`<div class="lab-htbl-legend">
+    <span><span class="lg-dot" style="background:#f0a29b"></span>↑ بالای محدوده</span>
+    <span><span class="lg-dot" style="background:#9fc0f0"></span>↓ زیر محدوده</span>
+    <span><span class="lg-dot" style="background:#6fd39a"></span>طبیعی</span>
+    <span>محدوده‌ها تقریبی‌اند؛ معیار، برگه‌ی آزمایشگاه خودت است.</span>
+  </div>`;
   // ویرایش / حذف هر نتیجه‌ی ثبت‌شده
-  h+=`<div style="margin-top:14px;border-top:1px solid var(--line);padding-top:10px;font-size:12px;color:var(--muted);margin-bottom:6px">ویرایش یا حذف نتیجه‌ی ثبت‌شده:</div>`;
-  entries.forEach(e=>{
+  h+=`<div class="lab-hist-manage"><div class="lhm-head">✏️ ویرایش یا حذف نتیجه‌ی ثبت‌شده:</div>`;
+  [...entries].reverse().forEach(e=>{
     const n=Object.keys(e.vals||{}).length;
-    h+=`<div style="display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:6px">
-      <span style="flex:1;font-size:12.5px">📅 ${faDigits(e.date)} <span style="color:var(--muted);font-size:11px">(${faDigits(n)} آزمایش)</span></span>
+    h+=`<div class="lab-hist-entry">
+      <span class="lhe-date">📅 ${faDigits(e.date)} <span class="lhe-count">${faDigits(n)} آزمایش</span></span>
       <button class="mini-btn" onclick="editLabEntry(${e.ts})">✏️ ویرایش</button>
-      <button onclick="deleteLabEntry(${e.ts})" title="حذف برای همیشه" style="background:var(--red-dim,#5a2b28);border:none;color:#f2b8b3;cursor:pointer;font-size:14px;width:34px;height:34px;border-radius:8px;flex:0 0 auto">🗑</button>
+      <button class="lhe-del" onclick="deleteLabEntry(${e.ts})" title="حذف برای همیشه">🗑</button>
     </div>`;
   });
+  h+=`</div>`;
   box.innerHTML=h;
 }
 function renderLabsTab(){
   renderLabPackages();
+  renderLabTemplates();
   renderLabEntry();
   renderLabHistory();
 }
