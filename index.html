@@ -98,7 +98,7 @@ select{cursor:pointer;text-overflow:ellipsis;padding-right:10px;padding-left:28p
 .macro-box{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:12px}
 .macro-title{font-size:13.5px;font-weight:800;color:var(--ink);margin-bottom:12px}
 .macro-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.macro-cell{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:12px 6px;text-align:center}
+.macro-cell{background:linear-gradient(160deg,var(--field),var(--panel));border:1px solid var(--line);border-radius:11px;padding:13px 6px;text-align:center}
 .macro-cell .mv{font-size:20px;font-weight:800;direction:ltr;line-height:1.2}
 .macro-cell .ml{font-size:10.5px;color:var(--muted);margin-top:3px}
 .macro-cell.carb .mv{color:var(--blue)}
@@ -106,13 +106,19 @@ select{cursor:pointer;text-overflow:ellipsis;padding-right:10px;padding-left:28p
 .macro-cell.fat .mv{color:var(--amber)}
 .macro-cell.kcal .mv{color:var(--violet)}
 .macro-note{font-size:12.5px;color:var(--ink);margin-top:12px;line-height:1.8;padding-top:10px;border-top:1px dashed var(--line)}
+.dstat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.dstat{background:linear-gradient(160deg,var(--field),var(--panel));border:1px solid var(--line);border-radius:12px;padding:13px 8px;text-align:center}
+.dstat .ds-ico{font-size:17px;line-height:1}
+.dstat .ds-v{font-size:22px;font-weight:800;color:var(--teal);direction:ltr;line-height:1.2;margin-top:3px}
+.dstat .ds-l{font-size:10.5px;color:var(--muted);margin-top:2px;line-height:1.45}
+@media(max-width:400px){.dstat-grid{grid-template-columns:repeat(2,1fr)}}
 .result{background:linear-gradient(180deg,#16212e,#12202c);border:1px solid var(--teal-dim);border-radius:16px;padding:22px;margin-top:6px}
 .result h2{border-right-color:var(--amber)}
 .dose-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:8px}
-.dose-box{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:16px 12px;text-align:center}
-.dose-box .v{font-size:26px;font-weight:800;direction:ltr;line-height:1.2}
-.dose-box .l{font-size:11.5px;color:var(--muted);margin-top:4px}
-.dose-box.total{border-color:var(--teal);background:rgba(63,185,163,.08)}
+.dose-box{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:13px;padding:16px 10px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.dose-box .v{font-size:26px;font-weight:800;direction:ltr;line-height:1.15}
+.dose-box .l{font-size:11px;color:var(--muted);margin-top:5px}
+.dose-box.total{border-color:var(--teal);background:linear-gradient(160deg,rgba(63,185,163,.16),rgba(63,185,163,.05));box-shadow:0 3px 12px rgba(63,185,163,.14)}
 .dose-box.total .v{color:var(--teal)}
 .dose-box.carb .v{color:var(--blue)}
 .dose-box.corr .v{color:var(--violet)}
@@ -192,8 +198,9 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .week-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .week-nav .today{background:var(--panel-2);border:1px solid var(--line);border-radius:20px;padding:6px 16px;font-weight:700;font-size:14px;direction:rtl}
 .day-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:16px}
-.day-tab{flex:0 0 auto;min-width:64px;text-align:center;padding:10px 8px;border-radius:12px;cursor:pointer;background:var(--panel);border:1px solid var(--line);font-size:13px;font-weight:700}
-.day-tab.active{background:var(--teal-dim);color:#d6f5ee;border-color:var(--teal-dim)}
+.day-tab{flex:0 0 auto;min-width:64px;text-align:center;padding:10px 8px;border-radius:12px;cursor:pointer;background:var(--panel);border:1px solid var(--line);font-size:13px;font-weight:700;transition:background .16s,border-color .16s,transform .1s}
+.day-tab:active{transform:scale(.96)}
+.day-tab.active{background:linear-gradient(160deg,var(--teal),var(--teal-dim));color:#fff;border-color:rgba(63,185,163,.5);box-shadow:0 3px 10px rgba(63,185,163,.24)}
 .day-tab small{display:block;color:var(--muted);font-size:10.5px;font-weight:400;margin-top:2px;direction:ltr}
 .day-tab.active small{color:#a9dfd5}
 .meal-block{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
@@ -294,10 +301,13 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .rem-hint.show{display:block}
 @media(max-width:560px){
   body{padding:16px 10px 60px}
-  .row,.row-3,.dose-grid,.food-grid,.meal-block .meta{grid-template-columns:1fr}
+  .row,.row-3,.food-grid,.meal-block .meta{grid-template-columns:1fr}
   .food-grid-2{grid-template-columns:1.6fr 1fr;gap:10px}
   .food-grid-2>div:first-child{grid-column:1/-1}
   .macro-grid{grid-template-columns:repeat(2,1fr)}
+  .dose-grid{gap:8px}
+  .dose-box{padding:14px 6px}
+  .dose-box .v{font-size:23px}
   input,select{font-size:14px;padding:10px 11px}
   select{padding-left:26px;font-size:14px}
   .card{padding:16px 14px}
@@ -1120,7 +1130,10 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
         <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:10px">
           فایل بکاپی که قبلاً گرفته‌ای را انتخاب کن. اطلاعات فعلی این دستگاه با محتوای فایل <b style="color:var(--amber)">جایگزین</b> می‌شود.
         </div>
-        <input type="file" id="backupFile" accept=".json,application/json" onchange="importBackupFile(this)" style="width:100%;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:11px;font-family:inherit;font-size:13px;color:var(--ink)">
+        <label class="cgm-upload" style="background:var(--panel-2);color:var(--teal);border-color:var(--teal-dim)">
+          <input type="file" id="backupFile" accept=".json,application/json" onchange="importBackupFile(this)" style="display:none">
+          <span>📂 انتخاب فایل بکاپ (JSON)</span>
+        </label>
         <div id="restoreMsg" style="font-size:12.5px;margin-top:10px"></div>
       </div>
 
@@ -1130,7 +1143,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۸.۵</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۸.۶</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2107,14 +2120,14 @@ async function renderDataStats(){
   try{ const e=JSON.parse((await storageGet(EX_KEY))||'[]'); if(Array.isArray(e)) exLog=e.length; }catch(e){}
   try{ const b=JSON.parse((await storageGet(BGKEY))||'[]'); if(Array.isArray(b)) bg=b.length; }catch(e){}
   const rows=[
-    ['🍽️ وعده‌های ثبت‌شده',meals],
-    ['📈 نقاط داده‌ی قند CGM',cgm],
-    ['🩸 قند خون دستی',bg],
-    ['🧪 نتایج آزمایش',labs],
-    ['🏃 جلسات ورزش',exLog],
+    ['🍽️','وعده‌های ثبت‌شده',meals],
+    ['📈','نقاط قند CGM',cgm],
+    ['🩸','قند خون دستی',bg],
+    ['🧪','نتایج آزمایش',labs],
+    ['🏃','جلسات ورزش',exLog],
   ];
-  document.getElementById('dataStats').innerHTML=`<div class="chips">`+
-    rows.map(r=>`<span class="chip">${r[0]}: <b>${faDigits(String(r[1]))}</b></span>`).join('')+`</div>`;
+  document.getElementById('dataStats').innerHTML=`<div class="dstat-grid">`+
+    rows.map(r=>`<div class="dstat"><div class="ds-ico">${r[0]}</div><div class="ds-v"${r[2]===0?' style="color:var(--muted)"':''}>${faDigits(String(r[2]))}</div><div class="ds-l">${r[1]}</div></div>`).join('')+`</div>`;
 }
 
 
