@@ -1019,7 +1019,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۸.۰</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۸.۱</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -5723,6 +5723,9 @@ function matchLabLine(line){
     const kw=after.match(LAB_QUAL_WORDS);
     if(kw) value=kw[0];
     else if(firstNum) value=firstNum[0];
+    // آزمایش کیفی بدون نتیجه‌ی معنادار (نه کلمه‌ی کیفی، نه عدد) = فانتوم
+    // (مثل «Complete Blood Count» که به u_blood می‌خورد) → رد کن
+    if(value==='') return null;
   } else {
     if(firstNum) value=firstNum[0];
   }
@@ -5747,14 +5750,25 @@ function labLooksLikeResult(ln){
   if(s.length<=60 && /(?<![a-z0-9.])\d{2,}(?:\.\d+)?/i.test(s)) return true;
   return false;
 }
+// در CBC، ردیف‌های «Differential» (درصد) و «Absolute Count» (تعداد) نامِ یکسان دارند
+// (Neutrophil, Lymphocyte, ...). این نگاشت، نسخه‌ی درصدی را به نسخه‌ی مطلق تبدیل می‌کند
+// وقتی زیر عنوان «Absolute Count» هستیم.
+const LAB_PCT_TO_ABS={neut_pct:'neut_abs',lymph_pct:'lymph_abs',mono_pct:'mono_abs',eos_pct:'eos_abs'};
 // از آرایه‌ای از خطوط، فهرست {key,value} یکتا می‌سازد + ثبت خطوط شناسایی‌نشده
 function parseLabLines(lines){
-  const map=new Map(); const unmatched=[];
+  const map=new Map(); const unmatched=[]; let absMode=false;
   lines.forEach(ln=>{
+    const s=String(ln);
+    // ردیابی عنوان بخش: بعد از «Absolute Count» تا «ESR» یا پایان، در حالت مطلق هستیم
+    if(/\babsolute\s+count\b/i.test(s)){ absMode=true; return; }
+    if(/\b(differential|cell\s+count|\besr\b|hematology|biochemistry|urinalysis|hormone)\b/i.test(s)) absMode=false;
     const r=matchLabLine(ln);
-    if(!r){ if(labLooksLikeResult(ln)) unmatched.push(String(ln).trim()); return; }
-    if(!map.has(r.key)) map.set(r.key,r.value);
-    else if(!map.get(r.key) && r.value) map.set(r.key,r.value); // مقدار بهتر جایگزین خالی
+    if(!r){ if(labLooksLikeResult(ln)) unmatched.push(s.trim()); return; }
+    // در حالت مطلق، اگر آزمایش درصدیِ افتراقی بود، به کلید مطلقِ متناظر ببر
+    let key=r.key;
+    if(absMode && LAB_PCT_TO_ABS[key] && !/%/.test(s)) key=LAB_PCT_TO_ABS[key];
+    if(!map.has(key)) map.set(key,r.value);
+    else if(!map.get(key) && r.value) map.set(key,r.value); // مقدار بهتر جایگزین خالی
   });
   window._lastUnmatched=unmatched.slice(0,15);
   return [...map.entries()].map(([key,value])=>({key,value}));
