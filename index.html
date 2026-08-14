@@ -1019,7 +1019,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۷.۳</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۷.۴</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -5614,8 +5614,8 @@ const LAB_ALIAS_EXTRA={
   u_mucus:['mucus'],u_yeast:['yeast'],u_cast:['casts','cast'],u_crystal:['crystals','crystal'],
 };
 // عادی‌سازی برای تطبیق: حروف کوچک، حذف خط‌تیره/اسلش، فاصله‌ی یکنواخت
-// نقطه را نگه می‌داریم چون در مقدارهای اعشاری (مثل 0.9) مهم است
-function labMatchNorm(s){ return normalizeFa(String(s)).toLowerCase().replace(/[\/\-–—_,:()]/g,' ').replace(/\s+/g,' ').trim(); }
+// نقطه را نگه می‌داریم (اعشار مقدار) و «:» را هم (تا محدوده‌ی مرجعِ بعد از دو‌نقطه شناسایی شود)
+function labMatchNorm(s){ return normalizeFa(String(s)).toLowerCase().replace(/[\/\-–—_,()]/g,' ').replace(/\s+/g,' ').trim(); }
 let LAB_ALIASES=null;
 function buildLabAliases(){
   LAB_ALIASES=[];
@@ -5649,29 +5649,25 @@ function matchLabLine(line){
   let value='';
   // عددِ مستقل (نه چسبیده به حرف مثل D3/B12) = مقدار
   const numRe=/(?<![a-z0-9.])-?\d+(?:\.\d+)?/i;
+  // نخستین عدد بعد از نام. اگر بلافاصله بعد از : یا < یا > باشد یعنی محدوده/تفسیر است
+  // (مثل «Glucose : 101 - 125»)، نه نتیجه → این خط را رد کن. اما «Normal : 70-100»
+  // که بعد از نتیجه‌ی واقعی روی همان ردیف می‌آید، عددِ اولش (نتیجه) پذیرفته می‌شود.
+  const firstNum=numRe.exec(after);
+  const firstIsRange = firstNum && ':<>='.indexOf((after.slice(0,firstNum.index).replace(/\s+$/,'').slice(-1)||' '))>=0;
+  if(firstIsRange && !(best.qual && LAB_QUAL_WORDS.test(after))) return null;
   if(best.qual){
     const kw=after.match(LAB_QUAL_WORDS);
     if(kw) value=kw[0];
-    else { const n=after.match(numRe); if(n) value=n[0]; }
+    else if(firstNum) value=firstNum[0];
   } else {
-    // نخستین عددِ بعد از نام آزمایش = مقدار (بازه‌ی مرجع معمولاً بعد از آن می‌آید)
-    const n=after.match(numRe); if(n) value=n[0];
+    if(firstNum) value=firstNum[0];
   }
   return {key:best.key, value};
-}
-// خطوط تفسیری/محدوده‌ی مرجع را می‌شناسد تا اشتباه به‌عنوان نتیجه خوانده نشوند
-function labSkipLine(line){
-  const s=String(line).toLowerCase();
-  if(/\b(pre[- ]?diabetic|impaired fasting|impaired glucose|\bigt\b|\bifg\b|acceptable level|non[- ]?fasting|life[- ]?threatening|nkdep|mdrd|recommendation|reference range|if result|hyperinsulinemia|dumping syndrome|carbohydrate absorption|glycemic index|higher fbs)\b/.test(s)) return true;
-  if(/:\s*[<>]/.test(s)) return true;                             // «Diabetic : > 125»
-  if(/:\s*\d+(?:\.\d+)?\s*[-–]\s*\d+/.test(s)) return true;        // «Normal : 70 - 100»
-  return false;
 }
 // از آرایه‌ای از خطوط، فهرست {key,value} یکتا می‌سازد
 function parseLabLines(lines){
   const map=new Map();
   lines.forEach(ln=>{
-    if(labSkipLine(ln)) return;
     const r=matchLabLine(ln);
     if(!r) return;
     if(!map.has(r.key)) map.set(r.key,r.value);
