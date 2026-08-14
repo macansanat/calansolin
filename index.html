@@ -25,8 +25,8 @@ h1{font-size:22px;font-weight:800;line-height:1.5}
 .safety{background:var(--panel);border:1px solid var(--amber);border-right:4px solid var(--amber);border-radius:12px;padding:14px 16px;margin-bottom:20px;font-size:13.5px}
 .safety b{color:var(--amber)}
 /* tabs */
-.tabs{display:flex;gap:8px;margin-bottom:22px;background:var(--panel);padding:6px;border-radius:14px;border:1px solid var(--line)}
-.tab{flex:1;text-align:center;padding:11px;border-radius:10px;cursor:pointer;font-weight:700;font-size:14px;color:var(--muted);border:none;background:transparent;font-family:inherit}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;background:var(--panel);padding:6px;border-radius:14px;border:1px solid var(--line)}
+.tab{flex:1 1 auto;min-width:90px;text-align:center;padding:11px;border-radius:10px;cursor:pointer;font-weight:700;font-size:14px;color:var(--muted);border:none;background:transparent;font-family:inherit}
 .tab.active{background:var(--teal-dim);color:#d6f5ee}
 .page{display:none}.page.active{display:block}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:18px}
@@ -379,6 +379,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <button class="tab" onclick="switchTab('cgm',this)">📈 تحلیل CGM</button>
   <button class="tab" onclick="switchTab('labs',this)">🧪 آزمایش‌ها</button>
   <button class="tab" onclick="switchTab('exercise',this)">🏃 ورزش</button>
+  <button class="tab" onclick="switchTab('profile',this)">👤 پروفایل</button>
 </div>
 
 <!-- ============ صفحه‌ی ماشین‌حساب ============ -->
@@ -909,8 +910,50 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <div class="card-body"><div id="exHistory"></div></div>
   </div>
 </div>
+
+<!-- ============ صفحه‌ی پروفایل کاربر ============ -->
+<div class="page" id="page-profile">
+  <div class="card" id="c-profile-me">
+    <h2 onclick="toggleCard('c-profile-me')"><span>👤 پروفایل من</span></h2>
+    <div class="card-body">
+      <div id="profileTabSummary"></div>
+      <button class="mini-btn" style="margin-top:14px" onclick="uiDing();goEditProfile()">✏️ ویرایش پروفایل در ماشین‌حساب</button>
+    </div>
+  </div>
+
+  <div class="card" id="c-profile-stats">
+    <h2 onclick="toggleCard('c-profile-stats')"><span>📦 داده‌های ذخیره‌شده روی این دستگاه</span></h2>
+    <div class="card-body">
+      <div id="dataStats"></div>
+      <div class="formula-note">همه‌ی داده‌ها فقط در همین مرورگر و روی همین دستگاه ذخیره می‌شوند و هیچ‌جا فرستاده نمی‌شوند. اگر مرورگر را پاک کنی یا دستگاه را عوض کنی، از دست می‌روند — برای همین از بخش پایین «بکاپ» بگیر.</div>
+    </div>
+  </div>
+
+  <div class="card" id="c-profile-backup">
+    <h2 onclick="toggleCard('c-profile-backup')"><span>💾 بکاپ و بازیابی داده‌ها</span></h2>
+    <div class="card-body">
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:12px">
+        همه‌ی اطلاعاتت (پروفایل، وعده‌ها، انسولین پایه، داده‌ی قند CGM، آزمایش‌ها، ورزش‌ها و تنظیمات) را در یک فایل واحد ذخیره کن. با این فایل می‌توانی داده را به دستگاه دیگر (مثلاً از گوشی به لپ‌تاپ) منتقل کنی یا برای روز مبادا نگه داری.
+      </div>
+      <button class="add-btn" style="width:100%" onclick="uiDing();exportBackup()">⬇️ گرفتن بکاپ (دانلود فایل JSON)</button>
+      <div id="backupMsg" style="font-size:12.5px;margin-top:10px"></div>
+
+      <div style="margin-top:20px;border-top:1px dashed var(--line);padding-top:16px">
+        <div style="font-size:13.5px;font-weight:800;color:var(--teal);margin-bottom:8px">↩️ بازیابی از فایل بکاپ</div>
+        <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:10px">
+          فایل بکاپی که قبلاً گرفته‌ای را انتخاب کن. اطلاعات فعلی این دستگاه با محتوای فایل <b style="color:var(--amber)">جایگزین</b> می‌شود.
+        </div>
+        <input type="file" id="backupFile" accept=".json,application/json" onchange="importBackupFile(this)" style="width:100%;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:11px;font-family:inherit;font-size:13px;color:var(--ink)">
+        <div id="restoreMsg" style="font-size:12.5px;margin-top:10px"></div>
+      </div>
+
+      <div class="formula-note" style="color:var(--amber)">⚕️ این فایل شامل داده‌های سلامتی توست؛ آن را جایی امن نگه دار و فقط با کسانی که به آن‌ها اعتماد داری به اشتراک بگذار.</div>
+    </div>
+  </div>
+</div>
+
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۶.۴</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۶.۵</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -1813,6 +1856,7 @@ function switchTab(name,btn){
   if(name==='plan'){ goToToday(); }
   if(name==='labs'){ renderLabsTab(); }
   if(name==='exercise'){ renderExerciseTab(); }
+  if(name==='profile'){ renderProfileTab(); }
 }
 function goToToday(){
   const today=new Date(); today.setHours(0,0,0,0);
@@ -1861,6 +1905,120 @@ async function loadProfile(){
     document.getElementById('isf').value=p.isf||'';
     if(p.tdd) calcRatios(); showSaved(p); calcDose();
   }catch(e){}
+}
+
+/* ====== تب پروفایل + بکاپ/بازیابی ====== */
+// کلیدهای localStorage که در بکاپ گنجانده می‌شوند (نقشه‌ی داده‌ی کاربر).
+// از مقادیر رشته‌ای مستقیم استفاده می‌شود چون بعضی از این const‌ها (CGMKEY, BGKEY, ...)
+// پایین‌تر در فایل تعریف شده‌اند و ارجاع به خودِ متغیر اینجا TDZ می‌دهد.
+const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters'];
+
+async function renderProfileTab(){
+  // خلاصه‌ی پروفایل
+  let p=null; try{ p=JSON.parse((await storageGet(PKEY))||'null'); }catch(e){}
+  const el=document.getElementById('profileTabSummary');
+  if(p){
+    const ins=(p.insulinType==='regular')?'کوتاه':'سریع';
+    el.innerHTML=`<div class="chips">
+      <span class="chip">دیابت: <b>${p.diabetesType?(DTYPE_FA[p.diabetesType]||p.diabetesType):'—'}</b></span>
+      <span class="chip">سن: <b>${p.age||'—'}</b></span>
+      <span class="chip">وزن: <b>${p.weight||'—'}</b> کیلو</span>
+      <span class="chip">انسولین سریع: <b>${ins}</b></span>
+      ${p.basalInsulin?`<span class="chip">پایه: <b>${p.basalInsulin}</b></span>`:''}
+      <span class="chip">TDD: <b>${p.tdd||'—'}</b></span>
+      <span class="chip">I:C = 1:<b>${p.ic||'—'}</b></span>
+      <span class="chip">ISF = <b>${p.isf||'—'}</b></span>
+    </div>`;
+  } else {
+    el.innerHTML=`<div class="saved-hint" style="font-size:13px">هنوز پروفایلی ذخیره نشده. برای ثبت، دکمه‌ی زیر را بزن و در بخش «پروفایل و انسولین روزانه» مشخصاتت را وارد کن.</div>`;
+  }
+  renderDataStats();
+}
+
+async function renderDataStats(){
+  // شمارش داده‌ها برای اطمینان از اینکه چه چیزی بکاپ می‌شود
+  let meals=0, cgm=0, labs=0, exLog=0, bg=0;
+  try{ const pl=JSON.parse((await storageGet(WKEY))||'{}');
+    for(const k in pl){ if(k==='_basal') continue; if(Array.isArray(pl[k])) meals+=pl[k].length; }
+  }catch(e){}
+  try{ const c=JSON.parse((await storageGet(CGMKEY))||'[]'); if(Array.isArray(c)) cgm=c.length; }catch(e){}
+  try{ const l=JSON.parse((await storageGet(LABS_KEY))||'[]'); if(Array.isArray(l)) labs=l.length; }catch(e){}
+  try{ const e=JSON.parse((await storageGet(EX_KEY))||'[]'); if(Array.isArray(e)) exLog=e.length; }catch(e){}
+  try{ const b=JSON.parse((await storageGet(BGKEY))||'[]'); if(Array.isArray(b)) bg=b.length; }catch(e){}
+  const rows=[
+    ['🍽️ وعده‌های ثبت‌شده',meals],
+    ['📈 نقاط داده‌ی قند CGM',cgm],
+    ['🩸 قند خون دستی',bg],
+    ['🧪 نتایج آزمایش',labs],
+    ['🏃 جلسات ورزش',exLog],
+  ];
+  document.getElementById('dataStats').innerHTML=`<div class="chips">`+
+    rows.map(r=>`<span class="chip">${r[0]}: <b>${faDigits(String(r[1]))}</b></span>`).join('')+`</div>`;
+}
+
+function goEditProfile(){
+  const calcBtn=document.querySelector('.tabs .tab'); // اولین تب = ماشین‌حساب
+  if(calcBtn) switchTab('calc',calcBtn);
+  const card=document.getElementById('c-profile');
+  if(card){ card.classList.remove('closed'); }
+  editProfile();
+  if(card) card.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+async function exportBackup(){
+  const msg=document.getElementById('backupMsg');
+  try{
+    const data={};
+    for(const k of BACKUP_KEYS){ const v=await storageGet(k); if(v!=null) data[k]=v; }
+    const payload={app:'diabetes-assistant',schema:1,appVersion:'6.5',exported:new Date().toISOString(),data};
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    const j=g2j(new Date().getFullYear(),new Date().getMonth()+1,new Date().getDate());
+    const pad=n=>String(n).padStart(2,'0');
+    const fname=`diabetes-backup-${j[0]}-${pad(j[1])}-${pad(j[2])}.json`;
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=fname;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    const kb=Math.max(1,Math.round(blob.size/1024));
+    msg.style.color='var(--teal)';
+    msg.textContent=`✓ بکاپ ساخته شد: ${fname} (${faDigits(String(kb))} کیلوبایت). فایل را جایی امن نگه دار.`;
+  }catch(e){
+    msg.style.color='var(--red)';
+    msg.textContent='خطا در ساخت بکاپ: '+(e&&e.message?e.message:e);
+  }
+}
+
+async function importBackupFile(input){
+  const msg=document.getElementById('restoreMsg');
+  const file=input.files&&input.files[0];
+  if(!file){ return; }
+  msg.style.color='var(--muted)'; msg.textContent='در حال خواندن فایل…';
+  try{
+    const text=await file.text();
+    const payload=JSON.parse(text);
+    if(!payload || payload.app!=='diabetes-assistant' || typeof payload.data!=='object'){
+      msg.style.color='var(--red)';
+      msg.textContent='این فایل یک بکاپ معتبر این برنامه نیست.';
+      input.value=''; return;
+    }
+    const keys=Object.keys(payload.data).filter(k=>BACKUP_KEYS.includes(k));
+    if(!keys.length){
+      msg.style.color='var(--red)';
+      msg.textContent='فایل هیچ داده‌ی قابل‌بازیابی ندارد.';
+      input.value=''; return;
+    }
+    let when=''; try{ when=payload.exported?(' (ساخته‌شده در '+jalaliStr(new Date(payload.exported))+')'):''; }catch(e){}
+    const ok=confirm('اطلاعات فعلی این دستگاه با محتوای این بکاپ'+when+' جایگزین می‌شود و صفحه دوباره بارگذاری می‌شود.\n\nادامه می‌دهی؟');
+    if(!ok){ input.value=''; msg.textContent=''; return; }
+    for(const k of keys){ await storageSet(k,payload.data[k]); }
+    msg.style.color='var(--teal)';
+    msg.textContent='✓ بازیابی شد. در حال بارگذاری دوباره…';
+    setTimeout(()=>location.reload(),700);
+  }catch(e){
+    msg.style.color='var(--red)';
+    msg.textContent='خطا در خواندن فایل: '+(e&&e.message?e.message:e);
+    input.value='';
+  }
 }
 
 /* ====== غذا ====== */
