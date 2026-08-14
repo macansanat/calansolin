@@ -1019,7 +1019,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۷.۹</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۸.۰</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -5728,15 +5728,24 @@ function matchLabLine(line){
   }
   return {key:best.key, value};
 }
-// خطوطی که احتمالاً یک نتیجه‌اند ولی نامشان شناسایی نشد (برای انتخاب دستی کاربر)
+// «عدد + واحد آزمایشگاهی» = امضای یک ردیفِ نتیجه (حتی اگر نامش خوانده نشده باشد)
+const LAB_VALUE_UNIT=/\d+(?:\.\d+)?\s*\*?\s*[hl]?\s*(?:mg\s*\/\s*dl|g\s*\/\s*dl|ng\s*\/\s*ml|pg\s*\/\s*ml|µ?u\s*\/\s*ml|u\s*\/\s*l|iu\s*\/\s*l|mm\s*\/\s*hr|ml\s*\/\s*min|mmol|µmol|umol|mg\s*\/\s*g|k\s*\/\s*µl|1000\s*\/\s*µl|mil\s*\/\s*µl|meq|fl\b|pg\b|%|mm\b)/i;
+// خطوطی که احتمالاً یک نتیجه‌اند ولی نامشان شناسایی نشد (برای انتخاب دستی کاربر).
+// قواعد از روی خروجی OCR واقعیِ برگه‌ها ساخته شده — نه حدس.
 function labLooksLikeResult(ln){
   const s=String(ln).trim();
-  if(s.length<4||s.length>110) return false;
-  if(!/\d/.test(s)) return false;                       // بدون عدد، نتیجه نیست
-  if(!/[a-z]{3,}/i.test(s)) return false;               // بدون واژه‌ی معنادار
-  if(/:\s*[<>]/.test(s)) return false;                  // «Diabetic : > 125»
-  if(/\b(normal|diabetic|igt|ifg|pre[- ]?diabetic|acceptable|fasting\s*:|non fasting|life[- ]?threatening|if result|recommendation|according|reference|method|result|unit)\b/i.test(s)) return false;
-  return true;
+  if(s.length<4||s.length>150) return false;
+  if(!/\d/.test(s)) return false;                        // بدون عدد، نتیجه نیست
+  if(!/[a-z]{3,}/i.test(s)) return false;                // بدون واژه‌ی معنادار
+  // «عدد + واحد» قوی‌ترین نشانه‌ی ردیف نتیجه است؛ حتی اگر متن تفسیری هم در همان ردیف باشد
+  if(LAB_VALUE_UNIT.test(s)) return true;
+  // خط محدوده/تفسیر: عددی که بلافاصله بعد از : یا < یا > آمده و واحدی ندارد
+  if(/[:<>=]\s*\d/.test(s)) return false;
+  // جمله‌های تفسیریِ بدون واحد («If result 30 to 59 : Suggests»، «Change in eGFR of greater than15%»)
+  if(/^\s*(if\s+result|change\s+in|acceptable|non\s+fasting|fasting\s*:|normal\b|diabetic\b|igt\b|ifg\b|pre[- ]?diabetic)/i.test(s)) return false;
+  // خط کوتاه با عددِ مستقلِ حداقل دو رقمی (یا اعشاری)
+  if(s.length<=60 && /(?<![a-z0-9.])\d{2,}(?:\.\d+)?/i.test(s)) return true;
+  return false;
 }
 // از آرایه‌ای از خطوط، فهرست {key,value} یکتا می‌سازد + ثبت خطوط شناسایی‌نشده
 function parseLabLines(lines){
