@@ -1019,7 +1019,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۷.۷</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۷.۸</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -5663,17 +5663,27 @@ function labFuzzyMatch(norm){
   while((m=re.exec(norm))) toks.push({s:m[0], start:m.index, end:m.index+m[0].length});
   if(!toks.length) return null;
   let bestRes=null, bestScore=Infinity;
+  const L=a=>a.length>=13?3:(a.length>=12?2:1);    // هرچه نام بلندتر، تحمل خطای بیشتر
+  const tryCand=(a,cand,maxD,endIdx)=>{
+    if(Math.abs(cand.length-a.alias.length)>maxD) return;
+    // لنگر: وقتی بیش از یک خطا می‌پذیریم، حرف اول باید یکی باشد (جلوگیری از تطبیق غلط)
+    if(maxD>1 && cand.charAt(0)!==a.alias.charAt(0)) return;
+    const d=labEditDist(cand,a.alias,maxD);
+    if(d<=maxD && d<bestScore){ bestScore=d; bestRes={alias:a, endIdx}; }
+  };
   for(const a of LAB_ALIASES){
     if(a.alias.length<6) continue;                 // نام‌های کوتاه فازی نشوند (خطر تطبیق غلط)
     const n=a.alias.split(' ').length;
-    const maxD=a.alias.length>=12?2:1;             // هرچه نام بلندتر، تحمل بیشتر
+    const maxD=L(a.alias);
     for(let i=0;i+n<=toks.length;i++){
-      const cand=toks.slice(i,i+n).map(t=>t.s).join(' ');
-      if(Math.abs(cand.length-a.alias.length)>maxD) continue;
-      const d=labEditDist(cand,a.alias,maxD);
-      if(d<=maxD && d<bestScore){
-        bestScore=d; bestRes={alias:a, endIdx:toks[i+n-1].end};
-        if(d===0) return bestRes;
+      tryCand(a, toks.slice(i,i+n).map(t=>t.s).join(' '), maxD, toks[i+n-1].end);
+      if(bestScore===0) return bestRes;
+      // OCR گاهی یک کلمه را تکه‌تکه می‌کند («Trigly cerides»)؛ چسباندن ۲ تا ۳ توکن مجاور
+      if(n===1){
+        for(let k=2;k<=3 && i+k<=toks.length;k++){
+          tryCand(a, toks.slice(i,i+k).map(t=>t.s).join(''), maxD, toks[i+k-1].end);
+          if(bestScore===0) return bestRes;
+        }
       }
     }
   }
@@ -5686,7 +5696,8 @@ function matchLabLine(line){
   if(norm.length<2) return null;
   let best=null,bestIdx=-1;
   for(const a of LAB_ALIASES){ // مرتب‌شده از طولانی به کوتاه؛ اولین تطبیق = اختصاصی‌ترین
-    const m=new RegExp('\\b'+a.re+'\\b').exec(norm);
+    // مرز فقط نسبت به «حرف» است، نه رقم — تا «Triglycerides223» (که OCR بدون فاصله می‌دهد) هم بگیرد
+    const m=new RegExp('(?<![a-z0-9])'+a.re+'(?![a-z])').exec(norm);
     if(m){ best=a; bestIdx=m.index+m[0].length; break; }
   }
   // اگر تطبیق دقیق نشد، تطبیق فازی: OCR اغلب یکی-دو حرف را غلط می‌خواند
