@@ -1019,7 +1019,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۷.۴</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۷.۵</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -5642,10 +5642,12 @@ function matchLabLine(line){
     if(m){ best=a; bestIdx=m.index+m[0].length; break; }
   }
   if(!best) return null;
-  // حذف اعداد ترتیبی (1st) و اعداد چسبیده به واحد زمان (1h, 2 hrs) که مقدار نیستند
+  // حذف اعداد ترتیبی (1st) و اعداد واحد زمان که مقدار نیستند.
+  // «h» فقط وقتی چسبیده باشد (مثل «1h» = ۱ ساعت)، نه «223 H» که پرچم High است.
   const after=(' '+norm.slice(bestIdx)+' ')
     .replace(/\b\d+(?:st|nd|rd|th)\b/gi,' ')
-    .replace(/\b\d+\s*(?:hrs?|hours?|h|mins?|minutes?)\b/gi,' ');
+    .replace(/\b\d+h\b/gi,' ')
+    .replace(/\b\d+\s*(?:hrs|hours?|mins|minutes?)\b/gi,' ');
   let value='';
   // عددِ مستقل (نه چسبیده به حرف مثل D3/B12) = مقدار
   const numRe=/(?<![a-z0-9.])-?\d+(?:\.\d+)?/i;
@@ -5679,6 +5681,46 @@ function parseLabLines(lines){
 function loadExtScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=()=>res(); s.onerror=()=>rej(new Error('بارگذاری کتابخانه ناموفق بود')); document.head.appendChild(s); }); }
 async function ensureTesseract(){ if(window.Tesseract) return; await loadExtScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js'); }
 async function ensurePdfjs(){ if(window.pdfjsLib) return; await loadExtScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'); if(window.pdfjsLib) window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }
+// ---- بازسازی ردیف‌های جدول از روی مختصات کلمات (OCR) ----
+// کلمات را بر اساس y (ارتفاع) به ردیف گروه می‌کند تا نام آزمایش و مقدارِ ستونِ دور، هم‌ردیف بمانند.
+function wordsToLines(words){
+  if(!words.length) return [];
+  const sorted=[...words].sort((a,b)=>a.y-b.y);
+  const avgH=sorted.reduce((s,w)=>s+(w.h||10),0)/sorted.length;
+  const tol=Math.max(6,(avgH||12)*0.6);
+  const lines=[]; let cur=[]; let curY=null;
+  sorted.forEach(w=>{
+    if(curY===null || Math.abs(w.y-curY)<=tol){ cur.push(w); curY=(curY===null)?w.y:(curY*0.6+w.y*0.4); }
+    else { lines.push(cur); cur=[w]; curY=w.y; }
+  });
+  if(cur.length) lines.push(cur);
+  return lines.map(row=>row.sort((a,b)=>a.x-b.x).map(w=>w.text).join(' ')).filter(l=>l.trim());
+}
+// از خروجی Tesseract، کلمات را با مختصاتشان جمع می‌کند (چه آرایه‌ی words، چه ساختار بلوکی v5)
+function collectTessWords(data){
+  const out=[];
+  const push=w=>{ if(!w) return; const bb=w.bbox||w; if(bb && typeof bb.x0==='number' && typeof bb.y0==='number'){ const t=(w.text||'').trim(); if(t) out.push({text:t,x:bb.x0,y:(bb.y0+bb.y1)/2,h:(bb.y1-bb.y0)}); } };
+  if(data){
+    if(Array.isArray(data.words)&&data.words.length){ data.words.forEach(push); }
+    else if(Array.isArray(data.blocks)){ data.blocks.forEach(b=>(b.paragraphs||[]).forEach(p=>(p.lines||[]).forEach(l=>(l.words||[]).forEach(push)))); }
+  }
+  return out;
+}
+// OCR یک تصویر/کانواس → آرایه‌ی خطوطِ بازسازی‌شده (با fallback به متن خام)
+async function ocrToLines(img,prog,label){
+  await ensureTesseract();
+  let data;
+  try{
+    const worker=await window.Tesseract.createWorker('eng',1,{logger:m=>{ if(prog&&m.status==='recognizing text') prog.textContent=`${label} ${faDigits(Math.round(m.progress*100))}٪`; }});
+    try{ ({data}=await worker.recognize(img,{},{blocks:true})); }
+    finally{ await worker.terminate(); }
+  }catch(e){
+    ({data}=await window.Tesseract.recognize(img,'eng',{logger:m=>{ if(prog&&m.status==='recognizing text') prog.textContent=`${label} ${faDigits(Math.round(m.progress*100))}٪`; }}));
+  }
+  const words=collectTessWords(data);
+  if(words.length>5) return wordsToLines(words);
+  return (data&&data.text?data.text:'').split(/\r?\n/).filter(l=>l.trim());
+}
 // ---- استخراج از هر فرمت ----
 async function extractFromExcel(file){
   const buf=await file.arrayBuffer();
@@ -5707,21 +5749,19 @@ async function extractFromPDF(file,prog){
   // اگر متن واقعی کم بود، احتمالاً PDF اسکن‌شده است → OCR روی تصویر صفحات
   if(totalLen<40){
     if(prog) prog.textContent='این PDF اسکن‌شده است؛ در حال خواندن با پردازش تصویر…';
-    lines=[]; await ensureTesseract();
+    lines=[];
     for(let p=1;p<=pdf.numPages;p++){
       const page=await pdf.getPage(p); const vp=page.getViewport({scale:2});
       const cv=document.createElement('canvas'); cv.width=vp.width; cv.height=vp.height;
       await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
-      const {data}=await window.Tesseract.recognize(cv,'eng',{logger:m=>{ if(prog&&m.status==='recognizing text') prog.textContent=`خواندن صفحه‌ی ${faDigits(p)}… ${faDigits(Math.round(m.progress*100))}٪`; }});
-      (data.text||'').split(/\r?\n/).forEach(l=>{ if(l.trim()) lines.push(l); });
+      const rowLines=await ocrToLines(cv,prog,`خواندن صفحه‌ی ${faDigits(p)}…`);
+      rowLines.forEach(l=>lines.push(l));
     }
   }
   return parseLabLines(lines);
 }
 async function extractFromImage(file,prog){
-  await ensureTesseract();
-  const {data}=await window.Tesseract.recognize(file,'eng',{logger:m=>{ if(prog&&m.status==='recognizing text') prog.textContent=`خواندن عکس… ${faDigits(Math.round(m.progress*100))}٪`; }});
-  const lines=(data.text||'').split(/\r?\n/).filter(l=>l.trim());
+  const lines=await ocrToLines(file,prog,'خواندن عکس…');
   return parseLabLines(lines);
 }
 // ---- هندلر آپلود ----
