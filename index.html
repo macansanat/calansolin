@@ -16,7 +16,7 @@
   --amber:#e0a355;--red:#e0685f;--blue:#5b8fd6;--violet:#9a86e0;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Vazirmatn',sans-serif;background:var(--bg);color:var(--ink);line-height:1.85;padding:24px 14px 100px;font-size:15.5px}
+body{font-family:'Vazirmatn',sans-serif;background:var(--bg);color:var(--ink);line-height:1.85;padding:24px 14px 70px;font-size:15.5px}
 .wrap{max-width:760px;margin:0 auto}
 header{position:relative;margin-bottom:22px;padding:20px 22px;background:linear-gradient(150deg,var(--panel-2),var(--panel) 72%);border:1px solid var(--line);border-radius:20px;overflow:hidden}
 header::before{content:'';position:absolute;top:-45%;right:-8%;width:220px;height:220px;background:radial-gradient(circle,rgba(63,185,163,.15),transparent 70%);pointer-events:none}
@@ -30,6 +30,16 @@ h1{font-size:25px;font-weight:800;line-height:1.3;letter-spacing:-.3px}
 .tagline::before{content:'⚕️';font-size:10px;opacity:.85}
 .safety{background:var(--panel);border:1px solid var(--amber);border-right:4px solid var(--amber);border-radius:12px;padding:14px 16px;margin-bottom:20px;font-size:13.5px}
 .safety b{color:var(--amber)}
+/* ===== نوار تب بالا (حالت قدیم) ===== */
+.tabs{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:22px;background:linear-gradient(180deg,var(--panel-2),var(--panel));padding:7px;border-radius:16px;border:1px solid var(--line);box-shadow:inset 0 1px 3px rgba(0,0,0,.25)}
+.tabs .tab{flex:1 1 auto;min-width:96px;text-align:center;padding:10px 8px;border-radius:11px;cursor:pointer;font-weight:700;font-size:13.5px;color:var(--muted);border:1px solid transparent;background:transparent;font-family:inherit;transition:background .18s,color .18s;-webkit-tap-highlight-color:transparent}
+.tabs .tab:hover{color:var(--ink);background:rgba(255,255,255,.03)}
+.tabs .tab:active{transform:scale(.97)}
+.tabs .tab.active{background:linear-gradient(160deg,var(--teal),var(--teal-dim));color:#fff;border-color:rgba(63,185,163,.5);box-shadow:0 4px 12px rgba(63,185,163,.28);font-weight:800}
+/* نمایش/پنهان بر اساس حالت منو */
+body.nav-top .bottomnav{display:none}
+body.nav-bottom .tabs{display:none}
+body.nav-bottom{padding-bottom:100px}
 /* ===== نوار ناوبری پایین + دکمه‌ی وسط ===== */
 .bottomnav{position:fixed;left:0;right:0;bottom:0;z-index:80;display:flex;align-items:flex-end;justify-content:space-around;gap:2px;background:rgba(20,30,42,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:9px 6px calc(9px + env(safe-area-inset-bottom));box-shadow:0 -6px 22px rgba(0,0,0,.35)}
 .tab.bnav{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;background:transparent;border:none;color:var(--muted);font-family:inherit;cursor:pointer;padding:4px 2px;border-radius:10px;transition:color .15s;-webkit-tap-highlight-color:transparent}
@@ -65,6 +75,10 @@ h1{font-size:25px;font-weight:800;line-height:1.3;letter-spacing:-.3px}
 .qbg-cancel{flex:0 0 auto;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:11px;padding:12px 18px;font-family:inherit;font-weight:700;font-size:13.5px;cursor:pointer}
 .qbg-save{flex:1;background:linear-gradient(160deg,var(--teal),var(--teal-dim));border:none;color:#fff;border-radius:11px;padding:12px;font-family:inherit;font-weight:800;font-size:14px;cursor:pointer}
 .qbg-save:active{filter:brightness(1.1)}
+/* انتخابگر حالت منو */
+.navmode-seg{display:flex;gap:8px;background:var(--field);border:1px solid var(--line);border-radius:13px;padding:5px}
+.navmode-seg button{flex:1;background:transparent;border:none;color:var(--muted);border-radius:10px;padding:12px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s}
+.navmode-seg button.on{background:linear-gradient(160deg,var(--teal),var(--teal-dim));color:#fff;box-shadow:0 3px 10px rgba(63,185,163,.28)}
 /* توست کوتاه */
 .ui-toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);z-index:130;background:var(--teal-dim);color:#eafff8;border:1px solid var(--teal);border-radius:12px;padding:11px 18px;font-size:13px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none}
 .ui-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -332,7 +346,8 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .rem-hint{font-size:12px;color:var(--blue);margin-top:8px;display:none}
 .rem-hint.show{display:block}
 @media(max-width:560px){
-  body{padding:16px 10px 94px}
+  body{padding:16px 10px 60px}
+  body.nav-bottom{padding-bottom:94px}
   .row,.row-3,.food-grid,.meal-block .meta{grid-template-columns:1fr}
   .food-grid-2{grid-template-columns:1.6fr 1fr;gap:10px}
   .food-grid-2>div:first-child{grid-column:1/-1}
@@ -563,6 +578,16 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     </div>
   </div>
 </header>
+<!-- نوار تب بالا (حالت قدیم) -->
+<div class="tabs">
+  <button class="tab active" data-tab="calc" onclick="switchTab('calc',this)">🧮 ماشین‌حساب</button>
+  <button class="tab" data-tab="plan" onclick="switchTab('plan',this)">📅 برنامه‌ی هفتگی</button>
+  <button class="tab" data-tab="cgm" onclick="switchTab('cgm',this)">📈 تحلیل CGM</button>
+  <button class="tab" data-tab="labs" onclick="switchTab('labs',this)">🧪 آزمایش‌ها</button>
+  <button class="tab" data-tab="exercise" onclick="switchTab('exercise',this)">🏃 ورزش</button>
+  <button class="tab" data-tab="profile" onclick="switchTab('profile',this)">👤 پروفایل</button>
+</div>
+<!-- نوار ناوبری پایین (حالت جدید) -->
 <nav class="bottomnav">
   <button class="tab bnav active" data-tab="calc" onclick="switchTab('calc',this)"><span class="bn-ico">🧮</span><span class="bn-lbl">حساب</span></button>
   <button class="tab bnav" data-tab="plan" onclick="switchTab('plan',this)"><span class="bn-ico">📅</span><span class="bn-lbl">برنامه</span></button>
@@ -1049,6 +1074,15 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 
 <!-- ============ صفحه‌ی پروفایل کاربر ============ -->
 <div class="page" id="page-profile">
+<div class="card" id="c-profile-nav">
+  <h2><span>🧭 چیدمان منو</span></h2>
+  <div class="card-body">
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:12px">
+      انتخاب کن منوی حرکت بین بخش‌ها بالای صفحه باشد (حالت قدیم) یا پایین صفحه با دکمه‌ی <b style="color:var(--teal)">＋</b> برای ثبت سریع (حالت جدید، مثل اپ‌های موبایل). هر وقت خواستی می‌توانی برگردی.
+    </div>
+    <div id="navModeSetting"></div>
+  </div>
+</div>
 <div class="card coll" id="c-profile">
   <h2 onclick="toggleCard('c-profile')">
     <span><span class="step-num">1</span>پروفایل و انسولین روزانه</span>
@@ -1209,7 +1243,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۸.۷</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۸.۸</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2105,9 +2139,8 @@ async function storageSet(k,v){
 
 /* ====== تب‌ها (نوار پایین) ====== */
 function switchTab(name,btn){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  const b=btn||document.querySelector('.tab[data-tab="'+name+'"]');
-  if(b) b.classList.add('active');
+  // هماهنگ‌سازی وضعیت فعال در هر دو نوار (بالا و پایین) بر اساس data-tab
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.getAttribute('data-tab')===name));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const pg=document.getElementById('page-'+name); if(pg) pg.classList.add('active');
   window.scrollTo({top:0,behavior:'auto'});
@@ -2170,6 +2203,23 @@ function uiToast(msg){
   clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
 }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeQuickAdd(); closeQuickBG(); } });
+/* ====== حالت چیدمان منو: بالا (قدیم) یا پایین (جدید) ====== */
+const NAVMODE_KEY='nav_mode';
+function getNavMode(){ try{ return localStorage.getItem(NAVMODE_KEY)||'top'; }catch(e){ return 'top'; } }
+function setNavMode(m){ try{ localStorage.setItem(NAVMODE_KEY,m); }catch(e){} applyNavMode(); renderNavSetting(); uiToast(m==='bottom'?'منوی پایین فعال شد':'منوی بالا فعال شد'); }
+function applyNavMode(){
+  const m=getNavMode();
+  document.body.classList.toggle('nav-bottom', m==='bottom');
+  document.body.classList.toggle('nav-top', m!=='bottom');
+}
+function renderNavSetting(){
+  const box=document.getElementById('navModeSetting'); if(!box) return;
+  const m=getNavMode();
+  box.innerHTML=`<div class="navmode-seg">
+    <button class="${m!=='bottom'?'on':''}" onclick="setNavMode('top')">⬆️ منوی بالا</button>
+    <button class="${m==='bottom'?'on':''}" onclick="setNavMode('bottom')">⬇️ منوی پایین</button>
+  </div>`;
+}
 function goToToday(){
   const today=new Date(); today.setHours(0,0,0,0);
   curWeekStart=weekStart(today);
@@ -2227,7 +2277,8 @@ const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_file
 
 async function renderProfileTab(){
   // فرم پروفایل (c-profile) حالا خودش داخل این تب است و وضعیت ذخیره‌شده را نشان می‌دهد.
-  // اینجا فقط شمارش داده‌ها را تازه می‌کنیم.
+  // اینجا فقط شمارش داده‌ها و تنظیم حالت منو را تازه می‌کنیم.
+  renderNavSetting();
   renderDataStats();
 }
 
@@ -7198,6 +7249,7 @@ function restoreCollState(){
 
 buildSearchIndex();
 addFoodRow();
+applyNavMode();
 (async()=>{
   await loadProfile();
   await loadPlan();
