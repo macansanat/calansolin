@@ -345,6 +345,17 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .lav-add:active{background:#2a7568}
 .lav-skip{flex:0 0 auto;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:12px;cursor:pointer}
 .lav-hint{font-size:11px;color:var(--muted);margin-top:9px;line-height:1.7}
+/* پیش‌نمایش نتیجه‌ی خواندن برگه */
+.lab-imp-head{font-size:13px;font-weight:800;color:var(--teal);margin:12px 0 8px;line-height:1.7}
+.lab-imp-row{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin-bottom:7px}
+.lab-imp-row .imp-name{flex:1;min-width:0;font-size:13.5px;font-weight:700;line-height:1.4}
+.lab-imp-row .imp-en{color:var(--muted);font-size:10.5px;direction:ltr;display:block;margin-top:1px}
+.lab-imp-row .imp-val{width:96px;flex:0 0 auto;background:var(--field);border:1px solid var(--teal-dim);border-radius:9px;padding:9px;font-family:inherit;font-size:15px;color:var(--ink);text-align:center}
+.lab-imp-row .imp-del{flex:0 0 auto;background:var(--red-dim,#5a2b28);border:none;color:#f2b8b3;cursor:pointer;font-size:14px;width:32px;height:32px;border-radius:8px}
+.lab-imp-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.lab-imp-actions button{flex:1 1 auto;border-radius:10px;padding:12px;font-family:inherit;font-weight:800;font-size:13.5px;cursor:pointer;border:none}
+.imp-apply{background:var(--teal-dim);color:#d6f5ee}
+.imp-cancel{background:transparent;border:1px solid var(--line)!important;color:var(--muted)}
 .lab-row .lab-del{flex:0 0 auto;background:var(--red-dim,#5a2b28);border:none;color:#f2b8b3;cursor:pointer;font-size:15px;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center}
 .lab-row .lab-del:active{background:#7a3b36}
 .lab-row .lab-i{flex:0 0 auto;background:var(--teal-dim);border:none;color:#d6f5ee;cursor:pointer;font-weight:800;font-style:italic;font-family:Georgia,serif;font-size:15px;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center}
@@ -781,6 +792,23 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <h2 onclick="toggleCard('c-labs-packages')"><span>📦 بسته‌های پیشنهادی</span></h2>
     <div class="card-body"><div id="labPackages"></div></div>
   </div>
+  <div class="card" id="c-labs-import">
+    <h2 onclick="toggleCard('c-labs-import')"><span>📷 وارد کردن خودکار از برگه‌ی آزمایش</span></h2>
+    <div class="card-body">
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:10px">
+        عکسِ برگه‌ی آزمایش، فایل PDF یا اکسل را بده تا برنامه خودش آزمایش‌ها و مقادیر را بخواند و در فرم پایین بگذارد. بعد هر چیزی که اشتباه خوانده شد را اصلاح می‌کنی و ذخیره می‌کنی — دیگر لازم نیست همه را دستی تایپ کنی.
+      </div>
+      <label class="cgm-upload" id="labImportLabel">
+        <input type="file" id="labReportFile" accept="image/*,.pdf,.xlsx,.xls,.csv" style="display:none" onchange="handleLabReportFile(this)">
+        <span id="labImportText">📷 انتخاب عکس / PDF / اکسل برگه‌ی آزمایش</span>
+      </label>
+      <div class="formula-note" style="margin-top:8px">📄 فرمت‌های پشتیبانی‌شده: عکس (JPG، PNG)، PDF و اکسل (XLSX، CSV).</div>
+      <div class="formula-note" style="margin-top:4px">💡 برگه‌ها معمولاً انگلیسی‌اند و همین دقت را بالا می‌برد. برای عکس: نور کافی، صاف و بدون کجی، و بهتر است هر بخش را جدا عکس بگیری.</div>
+      <div class="formula-note" style="color:var(--teal);margin-top:4px">✓ همه‌ی پردازش داخل مرورگر خودت انجام می‌شود و هیچ عکس یا فایلی جایی فرستاده نمی‌شود.</div>
+      <div id="labImportProgress" style="font-size:12.5px;margin-top:10px;line-height:1.8"></div>
+      <div id="labImportPreview"></div>
+    </div>
+  </div>
   <div class="card" id="c-labs-entry">
     <h2 onclick="toggleCard('c-labs-entry')"><span>➕ ثبت نتیجه‌ی آزمایش</span></h2>
     <div class="card-body"><div id="labEntry"></div></div>
@@ -990,7 +1018,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۷.۱</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۷.۲</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -5514,6 +5542,239 @@ function confirmLabAdd(key,skip){
   // اسکرول به ردیف تازه
   const row=document.getElementById('lab_'+key);
   if(row) row.closest('.lab-row').scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+/* ===================== وارد کردن خودکار از برگه‌ی آزمایش (عکس/PDF/اکسل) ===================== */
+// نام‌های متداول هر آزمایش روی برگه‌های واقعی (برای تطبیق دقیق‌تر از روی متن استخراج‌شده)
+const LAB_ALIAS_EXTRA={
+  hba1c:['hba1c','hb a1c','a1c','glycosylated','glycated'],
+  fbs:['fasting blood glucose','fasting glucose','fasting blood sugar','fbs'],
+  ppbs:['post prandial','2 hrs post prandial','2 hours post prandial','2hpp','pp glucose','blood glucose 2 hrs'],
+  rbs:['random blood sugar','random blood glucose','rbs'],
+  ogtt:['glucose tolerance','ogtt'],
+  fructosamine:['fructosamine'],
+  eag:['mean blood glucose','estimated average glucose','estimated avg glucose','mean glucose','eag'],
+  cpeptide:['c peptide','cpeptide'],
+  insulin:['fasting insulin'],
+  homair:['homa ir','homair','homa'],
+  antigad:['anti gad','gad antibody','gad'],
+  antiia2:['anti ia2','ia2'],
+  creatinine:['creatinine'],
+  bun:['blood urea nitrogen','urea','bun'],
+  egfr:['estimated gfr','egfr','gfr'],
+  microalbumin:['urine microalbumin','microalbumin','micro albumin','albumin creatinine ratio'],
+  chol:['total cholesterol'],
+  ldl:['ldl cholesterol','ldl'],
+  hdl:['hdl cholesterol','hdl'],
+  tg:['triglycerides','triglyceride','tg'],
+  vldl:['vldl cholesterol','vldl'],
+  nonhdl:['non hdl cholesterol','non hdl','non hdl cholestrol'],
+  chol_hdl:['cholesterol hdl ratio','cholesterol hdl'],
+  ldl_hdl:['atherogenic','ldl hdl ratio','ldl hdl'],
+  ast:['sgot','ast','aspartate'],
+  alt:['sgpt','alt','alanine'],
+  alp:['alkaline phosphatase','alp'],
+  ggt:['ggt','gamma glutamyl'],
+  tbili:['total bilirubin'],
+  dbili:['conjugated bilirubin','direct bilirubin'],
+  albumin:['albumin'],
+  totprotein:['total protein'],
+  tsh:['tsh','thyroid stimulating'],
+  t4:['thyroxine','t4'],
+  t3:['t3'],
+  b12:['vitamin b12','cobalamin','b12'],
+  vitd:['vitamin d','vit d','25 oh vitamin','25 hydroxy','d3'],
+  folate:['folate','folic acid'],
+  mg:['magnesium'],
+  b1:['thiamine','vitamin b1'],
+  ferritin:['ferritin'],
+  iron:['serum iron','iron'],
+  calcium:['calcium'],
+  potassium:['potassium'],
+  sodium:['sodium'],
+  bp_sys:['systolic'],
+  bp_dia:['diastolic'],
+  crp:['c reactive protein','hs crp','crp'],
+  homocysteine:['homocysteine'],
+  uricacid:['uric acid'],
+  hb:['hemoglobin','haemoglobin'],
+  hct:['hematocrit','haematocrit','hct','pcv'],
+  rbc:['red blood cell','rbc'],
+  wbc:['white blood cell','wbc'],
+  plt:['platelet','plt'],
+  mcv:['mcv'],mch:['mch'],mchc:['mchc'],rdw:['rdw'],pdw:['pdw'],mpv:['mpv'],
+  esr:['sedimentation','sed rate','esr'],
+  neut_pct:['neutrophil'],lymph_pct:['lymphocyte'],mono_pct:['monocyte'],eos_pct:['eosinophil'],baso_pct:['basophil'],
+  neut_abs:['absolute neutrophil'],lymph_abs:['absolute lymphocyte'],mono_abs:['absolute monocyte'],eos_abs:['absolute eosinophil'],
+  u_color:['color','colour'],u_appearance:['appearance'],u_sg:['specific gravity'],u_ph:['ph'],
+  u_protein:['protein'],u_glucose:['glucose'],u_ketones:['ketones','ketone'],u_blood:['blood'],
+  u_urobilinogen:['urobilinogen'],u_bilirubin:['bilirubin'],u_nitrite:['nitrite'],u_ascorbic:['ascorbic'],
+  u_wbc:['wbc hpf','pus cell'],u_rbc:['rbc hpf'],u_epithelial:['epithelial'],u_bacteria:['bacteria'],
+  u_mucus:['mucus'],u_yeast:['yeast'],u_cast:['casts','cast'],u_crystal:['crystals','crystal'],
+};
+// عادی‌سازی برای تطبیق: حروف کوچک، حذف خط‌تیره/اسلش، فاصله‌ی یکنواخت
+// نقطه را نگه می‌داریم چون در مقدارهای اعشاری (مثل 0.9) مهم است
+function labMatchNorm(s){ return normalizeFa(String(s)).toLowerCase().replace(/[\/\-–—_,:()]/g,' ').replace(/\s+/g,' ').trim(); }
+let LAB_ALIASES=null;
+function buildLabAliases(){
+  LAB_ALIASES=[];
+  const add=(key,alias,qual)=>{ const a=labMatchNorm(alias); if(a.length>=2 && !/^\d+$/.test(a)) LAB_ALIASES.push({key,alias:a,qual, re:a.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/\s+/g,'\\s+')}); };
+  for(const g in LAB_LIBRARY){ for(const k in LAB_LIBRARY[g].items){
+    const t=LAB_LIBRARY[g].items[k]; const qual=!!t.qual;
+    // از نام انگلیسی: بدون پرانتز + داخل پرانتز
+    if(t.en){ add(k,t.en.replace(/\(.*?\)/g,' '),qual); (t.en.match(/\(([^)]+)\)/g)||[]).forEach(p=>add(k,p.replace(/[()]/g,''),qual)); }
+    // نام‌های متداول دستی
+    (LAB_ALIAS_EXTRA[k]||[]).forEach(a=>add(k,a,qual));
+  }}
+  // طولانی‌ترین‌ها اول → تطبیق اختصاصی‌تر برنده می‌شود
+  LAB_ALIASES.sort((a,b)=>b.alias.length-a.alias.length);
+}
+const LAB_QUAL_WORDS=/\b(not seen|negative|positive|trace|normal|nil|absent|present|occasional|numerous|plenty|moderate|many|few|rare|clear|cloudy|turbid|hazy|colou?rless|yellow|amber|straw|pale|dark|seen|reactive|non reactive|detected)\b/i;
+// از یک خط متن، آزمایش و مقدار را حدس می‌زند
+function matchLabLine(line){
+  if(!LAB_ALIASES) buildLabAliases();
+  const norm=labMatchNorm(line);
+  if(norm.length<2) return null;
+  let best=null,bestIdx=-1;
+  for(const a of LAB_ALIASES){ // مرتب‌شده از طولانی به کوتاه؛ اولین تطبیق = اختصاصی‌ترین
+    const m=new RegExp('\\b'+a.re+'\\b').exec(norm);
+    if(m){ best=a; bestIdx=m.index+m[0].length; break; }
+  }
+  if(!best) return null;
+  // حذف اعداد ترتیبی (1st, 2nd, ...) که مقدار نیستند
+  const after=(' '+norm.slice(bestIdx)+' ').replace(/\b\d+(?:st|nd|rd|th)\b/gi,' ');
+  let value='';
+  // عددِ مستقل (نه چسبیده به حرف مثل D3/B12) = مقدار
+  const numRe=/(?<![a-z0-9.])-?\d+(?:\.\d+)?/i;
+  if(best.qual){
+    const kw=after.match(LAB_QUAL_WORDS);
+    if(kw) value=kw[0];
+    else { const n=after.match(numRe); if(n) value=n[0]; }
+  } else {
+    // نخستین عددِ بعد از نام آزمایش = مقدار (بازه‌ی مرجع معمولاً بعد از آن می‌آید)
+    const n=after.match(numRe); if(n) value=n[0];
+  }
+  return {key:best.key, value};
+}
+// از آرایه‌ای از خطوط، فهرست {key,value} یکتا می‌سازد
+function parseLabLines(lines){
+  const map=new Map();
+  lines.forEach(ln=>{
+    const r=matchLabLine(ln);
+    if(!r) return;
+    if(!map.has(r.key)) map.set(r.key,r.value);
+    else if(!map.get(r.key) && r.value) map.set(r.key,r.value); // مقدار بهتر جایگزین خالی
+  });
+  return [...map.entries()].map(([key,value])=>({key,value}));
+}
+// ---- بارگذاری تنبل کتابخانه‌ها ----
+function loadExtScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=()=>res(); s.onerror=()=>rej(new Error('بارگذاری کتابخانه ناموفق بود')); document.head.appendChild(s); }); }
+async function ensureTesseract(){ if(window.Tesseract) return; await loadExtScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js'); }
+async function ensurePdfjs(){ if(window.pdfjsLib) return; await loadExtScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'); if(window.pdfjsLib) window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }
+// ---- استخراج از هر فرمت ----
+async function extractFromExcel(file){
+  const buf=await file.arrayBuffer();
+  const wb=XLSX.read(new Uint8Array(buf),{type:'array'});
+  const lines=[];
+  wb.SheetNames.forEach(sn=>{
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1});
+    rows.forEach(r=>{ if(Array.isArray(r)&&r.length){ lines.push(r.map(c=>c==null?'':String(c)).join(' ')); } });
+  });
+  return parseLabLines(lines);
+}
+async function extractFromPDF(file,prog){
+  await ensurePdfjs();
+  const buf=await file.arrayBuffer();
+  const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+  let lines=[]; let totalLen=0;
+  for(let p=1;p<=pdf.numPages;p++){
+    if(prog) prog.textContent=`خواندن PDF… صفحه‌ی ${faDigits(p)} از ${faDigits(pdf.numPages)}`;
+    const page=await pdf.getPage(p);
+    const tc=await page.getTextContent();
+    // گروه‌بندی آیتم‌ها بر اساس y برای بازسازی خطوط
+    const byRow={};
+    tc.items.forEach(it=>{ const y=Math.round(it.transform[5]); const x=it.transform[4]; (byRow[y]=byRow[y]||[]).push({x,s:it.str}); totalLen+=(it.str||'').length; });
+    Object.keys(byRow).map(Number).sort((a,b)=>b-a).forEach(y=>{ const row=byRow[y].sort((a,b)=>a.x-b.x).map(o=>o.s).join(' '); if(row.trim()) lines.push(row); });
+  }
+  // اگر متن واقعی کم بود، احتمالاً PDF اسکن‌شده است → OCR روی تصویر صفحات
+  if(totalLen<40){
+    if(prog) prog.textContent='این PDF اسکن‌شده است؛ در حال خواندن با پردازش تصویر…';
+    lines=[]; await ensureTesseract();
+    for(let p=1;p<=pdf.numPages;p++){
+      const page=await pdf.getPage(p); const vp=page.getViewport({scale:2});
+      const cv=document.createElement('canvas'); cv.width=vp.width; cv.height=vp.height;
+      await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+      const {data}=await window.Tesseract.recognize(cv,'eng',{logger:m=>{ if(prog&&m.status==='recognizing text') prog.textContent=`خواندن صفحه‌ی ${faDigits(p)}… ${faDigits(Math.round(m.progress*100))}٪`; }});
+      (data.text||'').split(/\r?\n/).forEach(l=>{ if(l.trim()) lines.push(l); });
+    }
+  }
+  return parseLabLines(lines);
+}
+async function extractFromImage(file,prog){
+  await ensureTesseract();
+  const {data}=await window.Tesseract.recognize(file,'eng',{logger:m=>{ if(prog&&m.status==='recognizing text') prog.textContent=`خواندن عکس… ${faDigits(Math.round(m.progress*100))}٪`; }});
+  const lines=(data.text||'').split(/\r?\n/).filter(l=>l.trim());
+  return parseLabLines(lines);
+}
+// ---- هندلر آپلود ----
+async function handleLabReportFile(input){
+  const f=input.files&&input.files[0]; if(!f) return;
+  const prog=document.getElementById('labImportProgress');
+  prog.style.color='var(--muted)';
+  const name=(f.name||'').toLowerCase();
+  try{
+    let rows=[];
+    if(/\.(xlsx|xls|csv)$/.test(name)){ prog.textContent='در حال خواندن اکسل…'; rows=await extractFromExcel(f); }
+    else if(/\.pdf$/.test(name)||f.type==='application/pdf'){ prog.textContent='در حال خواندن PDF…'; rows=await extractFromPDF(f,prog); }
+    else if((f.type&&f.type.startsWith('image/'))||/\.(jpe?g|png|webp|bmp|gif|heic)$/.test(name)){ prog.textContent='در حال خواندن عکس… (بار اول کمی طول می‌کشد)'; rows=await extractFromImage(f,prog); }
+    else { prog.style.color='var(--red)'; prog.textContent='این فرمت پشتیبانی نمی‌شود. عکس، PDF یا اکسل بده.'; input.value=''; return; }
+    prog.textContent='';
+    renderLabImportPreview(rows);
+  }catch(e){
+    prog.style.color='var(--red)';
+    prog.textContent='خطا در خواندن فایل: '+(e&&e.message?e.message:e)+' — می‌توانی مقادیر را دستی وارد کنی.';
+  }
+  input.value='';
+}
+// ---- پیش‌نمایش قابل‌ویرایش ----
+function renderLabImportPreview(rows){
+  const box=document.getElementById('labImportPreview'); if(!box) return;
+  if(!rows||!rows.length){
+    box.innerHTML=`<div class="lab-imp-head" style="color:var(--amber)">هیچ آزمایشی از فایل شناسایی نشد.</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.9">شاید عکس کم‌کیفیت بوده یا نام‌ها متفاوت‌اند. می‌توانی عکس واضح‌تری بدهی، یا از فرم پایین آزمایش‌ها را دستی جستجو و اضافه کنی.</div>`;
+    return;
+  }
+  let h=`<div class="lab-imp-head">✅ ${faDigits(rows.length)} آزمایش شناسایی شد — بررسی و در صورت نیاز اصلاح کن، بعد «اعمال» را بزن:</div>`;
+  rows.forEach(r=>{
+    const t=findLabTest(r.key); if(!t) return;
+    h+=`<div class="lab-imp-row" data-key="${r.key}">
+      <button class="imp-del" onclick="this.closest('.lab-imp-row').remove()" title="حذف این ردیف">✕</button>
+      <div class="imp-name">${t.fa}${t.en?`<span class="imp-en">${t.en}</span>`:''}</div>
+      <input class="imp-val" value="${(r.value!=null?String(r.value):'').replace(/"/g,'&quot;')}" placeholder="مقدار">
+    </div>`;
+  });
+  h+=`<div class="lab-imp-actions">
+    <button class="imp-apply" onclick="applyLabImport()">✅ اعمال و پر کردن فرم</button>
+    <button class="imp-cancel" onclick="clearLabImport()">لغو</button>
+  </div>
+  <div class="formula-note" style="color:var(--amber)">⚕️ حتماً همه را با برگه‌ی خودت مقایسه کن؛ ممکن است چند مورد اشتباه خوانده شده باشد. تفسیر نتایج با پزشک است.</div>`;
+  box.innerHTML=h;
+}
+function clearLabImport(){ const b=document.getElementById('labImportPreview'); if(b) b.innerHTML=''; const p=document.getElementById('labImportProgress'); if(p) p.textContent=''; }
+function applyLabImport(){
+  const box=document.getElementById('labImportPreview'); if(!box) return;
+  const rowsEls=[...box.querySelectorAll('.lab-imp-row')];
+  if(!rowsEls.length){ clearLabImport(); return; }
+  const picked=rowsEls.map(el=>({key:el.getAttribute('data-key'), value:(el.querySelector('.imp-val')||{}).value||''}));
+  const d=loadLabs(); d.selected=d.selected||[];
+  picked.forEach(p=>{ if(p.key && !d.selected.includes(p.key)) d.selected.push(p.key); });
+  saveLabs(d);
+  renderLabEntry();
+  // پر کردن مقادیر
+  picked.forEach(p=>{ const el=document.getElementById('lab_'+p.key); if(el && String(p.value).trim()!=='') el.value=String(p.value).trim(); });
+  clearLabImport();
+  const c=document.getElementById('c-labs-entry'); if(c) c.classList.remove('closed');
+  const entry=document.getElementById('labEntry'); if(entry) entry.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function removeLabTest(k){
   const d=loadLabs(); d.selected=(d.selected||[]).filter(x=>x!==k);
