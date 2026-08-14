@@ -1019,7 +1019,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۷.۸</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۷.۹</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -5728,15 +5728,26 @@ function matchLabLine(line){
   }
   return {key:best.key, value};
 }
-// از آرایه‌ای از خطوط، فهرست {key,value} یکتا می‌سازد
+// خطوطی که احتمالاً یک نتیجه‌اند ولی نامشان شناسایی نشد (برای انتخاب دستی کاربر)
+function labLooksLikeResult(ln){
+  const s=String(ln).trim();
+  if(s.length<4||s.length>110) return false;
+  if(!/\d/.test(s)) return false;                       // بدون عدد، نتیجه نیست
+  if(!/[a-z]{3,}/i.test(s)) return false;               // بدون واژه‌ی معنادار
+  if(/:\s*[<>]/.test(s)) return false;                  // «Diabetic : > 125»
+  if(/\b(normal|diabetic|igt|ifg|pre[- ]?diabetic|acceptable|fasting\s*:|non fasting|life[- ]?threatening|if result|recommendation|according|reference|method|result|unit)\b/i.test(s)) return false;
+  return true;
+}
+// از آرایه‌ای از خطوط، فهرست {key,value} یکتا می‌سازد + ثبت خطوط شناسایی‌نشده
 function parseLabLines(lines){
-  const map=new Map();
+  const map=new Map(); const unmatched=[];
   lines.forEach(ln=>{
     const r=matchLabLine(ln);
-    if(!r) return;
+    if(!r){ if(labLooksLikeResult(ln)) unmatched.push(String(ln).trim()); return; }
     if(!map.has(r.key)) map.set(r.key,r.value);
     else if(!map.get(r.key) && r.value) map.set(r.key,r.value); // مقدار بهتر جایگزین خالی
   });
+  window._lastUnmatched=unmatched.slice(0,15);
   return [...map.entries()].map(([key,value])=>({key,value}));
 }
 // ---- بارگذاری تنبل کتابخانه‌ها ----
@@ -5897,6 +5908,7 @@ function renderLabImportPreview(rows){
       <input class="imp-val" value="${(r.value!=null?String(r.value):'').replace(/"/g,'&quot;')}" placeholder="مقدار">
     </div>`;
   });
+  h+=labUnmatchedHTML();
   h+=`<div class="lab-imp-actions">
     <button class="imp-apply" onclick="applyLabImport()">✅ اعمال و پر کردن فرم</button>
     <button class="imp-cancel" onclick="clearLabImport()">لغو</button>
@@ -5904,6 +5916,32 @@ function renderLabImportPreview(rows){
   <div class="formula-note" style="color:var(--amber)">⚕️ حتماً همه را با برگه‌ی خودت مقایسه کن (محدوده‌ی مرجع کنار هر آزمایش کمک می‌کند)؛ ممکن است چند مورد اشتباه خوانده شده باشد. تفسیر نتایج با پزشک است.</div>`;
   h+=labRawTextHTML();
   box.innerHTML=h;
+}
+// خطوطی که عدد دارند ولی نامشان شناسایی نشد — کاربر خودش آزمایشش را انتخاب می‌کند
+// (تور ایمنی: حتی اگر OCR نام را کاملاً خراب بخواند، مقدار گم نمی‌شود)
+function labUnmatchedHTML(){
+  const ls=window._lastUnmatched||[];
+  if(!ls.length) return '';
+  let opts='<option value="">— انتخاب آزمایش —</option>';
+  for(const g in LAB_LIBRARY){
+    opts+=`<optgroup label="${LAB_LIBRARY[g].cat}">`;
+    for(const k in LAB_LIBRARY[g].items){ const it=LAB_LIBRARY[g].items[k]; opts+=`<option value="${k}">${it.fa}${it.en?' — '+it.en:''}</option>`; }
+    opts+='</optgroup>';
+  }
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  let h=`<details style="margin-top:14px" open>
+    <summary style="cursor:pointer;font-size:12.5px;color:var(--amber);font-weight:700">➕ ${faDigits(ls.length)} خط عددی که آزمایششان شناسایی نشد — اگر لازم است خودت انتخاب کن</summary>
+    <div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin:6px 0 8px">اگر آزمایشی از برگه‌ات اینجاست ولی بالا نیامده، از فهرست انتخابش کن تا با همان مقدار اضافه شود.</div>`;
+  ls.forEach(ln=>{
+    const num=(String(ln).match(/(?<![a-z0-9.])-?\d+(?:\.\d+)?/i)||[''])[0];
+    h+=`<div class="lab-imp-row lab-unm-row" style="flex-wrap:wrap">
+      <div style="flex:1 1 100%;font-size:11px;color:var(--muted);direction:ltr;text-align:left;word-break:break-word">${esc(ln)}</div>
+      <select class="imp-pick" style="flex:1 1 60%;min-width:0;font-size:12.5px;padding:9px">${opts}</select>
+      <input class="imp-val" style="width:84px" value="${esc(num)}" placeholder="مقدار">
+    </div>`;
+  });
+  h+='</details>';
+  return h;
 }
 // نمایش متن خامِ خوانده‌شده (کشویی) — اگر چیزی درست خوانده نشد، اینجا معلوم می‌شود چرا
 function labRawTextHTML(){
@@ -5921,7 +5959,12 @@ function applyLabImport(){
   const box=document.getElementById('labImportPreview'); if(!box) return;
   const rowsEls=[...box.querySelectorAll('.lab-imp-row')];
   if(!rowsEls.length){ clearLabImport(); return; }
-  const picked=rowsEls.map(el=>({key:el.getAttribute('data-key'), value:(el.querySelector('.imp-val')||{}).value||''}));
+  window._lastUnmatched=[];
+  const picked=rowsEls.map(el=>{
+    const sel=el.querySelector('.imp-pick');           // ردیف‌های شناسایی‌نشده: آزمایش را کاربر انتخاب کرده
+    const key=sel? sel.value : el.getAttribute('data-key');
+    return {key, value:(el.querySelector('.imp-val')||{}).value||''};
+  }).filter(p=>p.key);
   const impDate=(document.getElementById('labImportDate')||{}).value||'';
   const d=loadLabs(); d.selected=d.selected||[];
   picked.forEach(p=>{ if(p.key && !d.selected.includes(p.key)) d.selected.push(p.key); });
