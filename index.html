@@ -87,6 +87,15 @@ body.nav-bottom{padding-bottom:100px}
 .qbg-cancel{flex:0 0 auto;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:12px;padding:13px 20px;font-family:inherit;font-weight:700;font-size:13.5px;cursor:pointer}
 .qbg-save{flex:1;background:linear-gradient(160deg,var(--teal),var(--teal-dim));border:none;color:#fff;border-radius:12px;padding:13px;font-family:inherit;font-weight:800;font-size:14.5px;cursor:pointer}
 .qbg-save:active{filter:brightness(1.1)}
+.qseg{display:flex;gap:8px;margin-bottom:14px}
+.qseg button{flex:1;background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:11px;padding:12px 6px;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer;transition:all .15s}
+.qseg button.on{background:var(--teal-dim);border-color:var(--teal);color:#eafff8}
+.qmood-row{display:flex;gap:7px;margin-bottom:16px}
+.qmood-row button{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:12px;padding:11px 3px;font-family:inherit;font-weight:700;font-size:10.5px;cursor:pointer;transition:all .15s}
+.qmood-row button span{font-size:23px;line-height:1}
+.qmood-row button.on{background:var(--teal-dim);border-color:var(--teal);color:#eafff8;transform:translateY(-2px)}
+.qa-subt{font-size:11.5px;font-weight:700;color:var(--muted);margin:2px 2px 10px;text-align:right}
+.qa-subt:not(:first-of-type){margin-top:6px}
 /* انتخابگر حالت منو */
 .navmode-seg{display:flex;gap:8px;background:var(--field);border:1px solid var(--line);border-radius:13px;padding:5px}
 .navmode-seg button{flex:1;background:transparent;border:none;color:var(--muted);border-radius:10px;padding:12px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s}
@@ -639,8 +648,6 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 <!-- نوار ناوبری پایین (حالت جدید) -->
 <nav class="bottomnav">
   <button class="tab bnav active" data-tab="home" onclick="switchTab('home',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.4 12 4l9 7.4"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/></svg></span><span class="bn-lbl">خانه</span></button>
-  <button class="tab bnav" data-tab="calc" onclick="switchTab('calc',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><line x1="8.5" y1="6.5" x2="15.5" y2="6.5"/><line x1="8.7" y1="11" x2="8.7" y2="11"/><line x1="12" y1="11" x2="12" y2="11"/><line x1="15.3" y1="11" x2="15.3" y2="11"/><line x1="8.7" y1="14.5" x2="8.7" y2="14.5"/><line x1="12" y1="14.5" x2="12" y2="14.5"/><line x1="15.3" y1="14.5" x2="15.3" y2="14.5"/><line x1="8.7" y1="18" x2="12" y2="18"/></svg></span><span class="bn-lbl">حساب دوز</span></button>
-  <button class="tab bnav" data-tab="plan" onclick="switchTab('plan',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="12" y1="8" x2="16" y2="8"/><line x1="12" y1="12" x2="16" y2="12"/><line x1="12" y1="16" x2="15" y2="16"/></svg></span><span class="bn-lbl">دفترچه</span></button>
   <button class="tab bnav" data-tab="cgm" onclick="switchTab('cgm',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 15 7 15 10 8 14 18 17 12 21 12"/></svg></span><span class="bn-lbl">قند CGM</span></button>
   <button class="bnav-fab" onclick="openQuickAdd()" aria-label="ثبت سریع" title="ثبت سریع"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg></button>
   <button class="tab bnav" data-tab="labs" onclick="switchTab('labs',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"/><path d="M10 3v6.5l-3.7 7.6a2.1 2.1 0 0 0 1.9 3h7.6a2.1 2.1 0 0 0 1.9-3L14 9.5V3"/><line x1="8.5" y1="14" x2="15.5" y2="14"/></svg></span><span class="bn-lbl">آزمایش</span></button>
@@ -652,11 +659,20 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <div class="qa-sheet">
     <div class="qa-grip"></div>
     <div class="qa-title">ثبت سریع</div>
+    <div class="qa-subt">ثبت سریع</div>
     <div class="qa-grid">
-      <button class="qa-item" onclick="quickAdd('meal')"><span class="qa-ico" style="background:rgba(224,163,85,.18);color:#e9b877">🍽️</span>وعده</button>
-      <button class="qa-item" onclick="quickAdd('insulin')"><span class="qa-ico" style="background:rgba(63,185,163,.18);color:#5fd3bd">💉</span>انسولین پایه</button>
       <button class="qa-item" onclick="quickAdd('bg')"><span class="qa-ico" style="background:rgba(224,104,95,.18);color:#f0a29b">🩸</span>قند خون</button>
-      <button class="qa-item" onclick="quickAdd('exercise')"><span class="qa-ico" style="background:rgba(91,143,214,.18);color:#9fc0f0">🏃</span>ورزش</button>
+      <button class="qa-item" onclick="quickAdd('meal')"><span class="qa-ico" style="background:rgba(224,163,85,.18);color:#e9b877">🍽️</span>وعده</button>
+      <button class="qa-item" onclick="quickAdd('insulin')"><span class="qa-ico" style="background:rgba(63,185,163,.18);color:#5fd3bd">💉</span>انسولین</button>
+      <button class="qa-item" onclick="quickAdd('med')"><span class="qa-ico" style="background:rgba(154,134,224,.18);color:#c3b4f0">💊</span>دارو</button>
+      <button class="qa-item" onclick="quickAdd('sleep')"><span class="qa-ico" style="background:rgba(91,143,214,.18);color:#9fc0f0">😴</span>خواب</button>
+      <button class="qa-item" onclick="quickAdd('mood')"><span class="qa-ico" style="background:rgba(224,163,85,.16);color:#e9b877">🙂</span>حالت روحی</button>
+    </div>
+    <div class="qa-subt">شروع و رفتن به بخش</div>
+    <div class="qa-grid">
+      <button class="qa-item" onclick="quickAdd('startworkout')"><span class="qa-ico" style="background:rgba(63,185,163,.18);color:#5fd3bd">🏃</span>شروع ورزش</button>
+      <button class="qa-item" onclick="quickAdd('calc')"><span class="qa-ico" style="background:rgba(63,185,163,.14);color:#5fd3bd">🧮</span>حساب دوز</button>
+      <button class="qa-item" onclick="quickAdd('plan')"><span class="qa-ico" style="background:rgba(224,163,85,.14);color:#e9b877">📓</span>دفترچه</button>
       <button class="qa-item" onclick="quickAdd('lab')"><span class="qa-ico" style="background:rgba(154,134,224,.18);color:#c3b4f0">🧪</span>آزمایش</button>
       <button class="qa-item" onclick="quickAdd('cgmfile')"><span class="qa-ico" style="background:rgba(63,185,163,.14);color:#5fd3bd">📈</span>فایل CGM</button>
     </div>
@@ -681,6 +697,63 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <button class="qbg-cancel" onclick="closeQuickBG()">لغو</button>
       <button class="qbg-save" onclick="saveQuickBG()">💾 ذخیره</button>
     </div>
+  </div>
+</div>
+
+<!-- فرم سریع دارو -->
+<div class="qbg-modal" id="qmedModal" onclick="if(event.target===this)closeQEntry('qmedModal')">
+  <div class="qbg-box">
+    <button class="qbg-x" onclick="closeQEntry('qmedModal')" title="بستن">✕</button>
+    <div class="qbg-head"><span class="qbg-badge" style="background:rgba(154,134,224,.18)">💊</span><div><div class="qbg-title">ثبت دارو</div><div class="qbg-sub">داروی مصرف‌شده را ثبت کن تا سابقه‌اش را داشته باشی.</div></div></div>
+    <label class="qbg-lbl">نام دارو</label>
+    <input type="text" id="qmedName" class="qbg-in" placeholder="مثلاً متفورمین" style="margin-bottom:14px">
+    <label class="qbg-lbl">دوز / تعداد (اختیاری)</label>
+    <input type="text" id="qmedDose" class="qbg-in" placeholder="مثلاً ۵۰۰ میلی‌گرم — ۱ قرص" style="margin-bottom:14px">
+    <div class="qbg-grid">
+      <div><label class="qbg-lbl">تاریخ (شمسی)</label><div id="qmedDateWrap"></div></div>
+      <div><label class="qbg-lbl">ساعت</label><input type="time" id="qmedTime" class="qbg-in"></div>
+    </div>
+    <div class="qbg-actions"><button class="qbg-cancel" onclick="closeQEntry('qmedModal')">لغو</button><button class="qbg-save" onclick="saveQuickMed()">💾 ذخیره</button></div>
+  </div>
+</div>
+
+<!-- فرم سریع خواب -->
+<div class="qbg-modal" id="qsleepModal" onclick="if(event.target===this)closeQEntry('qsleepModal')">
+  <div class="qbg-box">
+    <button class="qbg-x" onclick="closeQEntry('qsleepModal')" title="بستن">✕</button>
+    <div class="qbg-head"><span class="qbg-badge" style="background:rgba(91,143,214,.18)">😴</span><div><div class="qbg-title">ثبت خواب</div><div class="qbg-sub">مدت و کیفیت خواب — خواب بر قند خون اثر می‌گذارد.</div></div></div>
+    <label class="qbg-lbl">مدت خواب (ساعت)</label>
+    <input type="number" id="qsleepHours" class="qbg-in" inputmode="decimal" placeholder="مثلاً ۷" style="margin-bottom:14px">
+    <label class="qbg-lbl">کیفیت خواب</label>
+    <div class="qseg" id="qsleepQual">
+      <button type="button" data-v="خوب" onclick="qsegPick('qsleepQual',this)">😴 خوب</button>
+      <button type="button" data-v="متوسط" onclick="qsegPick('qsleepQual',this)">😐 متوسط</button>
+      <button type="button" data-v="بد" onclick="qsegPick('qsleepQual',this)">😫 بد</button>
+    </div>
+    <label class="qbg-lbl">تاریخ (شمسی)</label><div id="qsleepDateWrap" style="margin-bottom:2px"></div>
+    <div class="qbg-actions" style="margin-top:16px"><button class="qbg-cancel" onclick="closeQEntry('qsleepModal')">لغو</button><button class="qbg-save" onclick="saveQuickSleep()">💾 ذخیره</button></div>
+  </div>
+</div>
+
+<!-- فرم سریع حالت روحی -->
+<div class="qbg-modal" id="qmoodModal" onclick="if(event.target===this)closeQEntry('qmoodModal')">
+  <div class="qbg-box">
+    <button class="qbg-x" onclick="closeQEntry('qmoodModal')" title="بستن">✕</button>
+    <div class="qbg-head"><span class="qbg-badge" style="background:rgba(224,163,85,.18)">🙂</span><div><div class="qbg-title">حالت روحی</div><div class="qbg-sub">الان چه حسی داری؟ استرس و خلق بر قند اثر دارد.</div></div></div>
+    <div class="qmood-row" id="qmoodPick">
+      <button type="button" data-v="عالی" onclick="qMoodPick(this)"><span>😄</span>عالی</button>
+      <button type="button" data-v="خوب" onclick="qMoodPick(this)"><span>🙂</span>خوب</button>
+      <button type="button" data-v="معمولی" onclick="qMoodPick(this)"><span>😐</span>معمولی</button>
+      <button type="button" data-v="بد" onclick="qMoodPick(this)"><span>🙁</span>بد</button>
+      <button type="button" data-v="خیلی بد" onclick="qMoodPick(this)"><span>😞</span>خیلی بد</button>
+    </div>
+    <label class="qbg-lbl">یادداشت (اختیاری)</label>
+    <input type="text" id="qmoodNote" class="qbg-in" placeholder="مثلاً استرس کاری" style="margin-bottom:14px">
+    <div class="qbg-grid">
+      <div><label class="qbg-lbl">تاریخ (شمسی)</label><div id="qmoodDateWrap"></div></div>
+      <div><label class="qbg-lbl">ساعت</label><input type="time" id="qmoodTime" class="qbg-in"></div>
+    </div>
+    <div class="qbg-actions"><button class="qbg-cancel" onclick="closeQEntry('qmoodModal')">لغو</button><button class="qbg-save" onclick="saveQuickMood()">💾 ذخیره</button></div>
   </div>
 </div>
 
@@ -1301,7 +1374,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۹.۰</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۹.۱</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2306,10 +2379,64 @@ function quickAdd(type){
   if(type==='meal') go('plan','c-addmeal');
   else if(type==='insulin') go('plan','c-basal');
   else if(type==='exercise') go('exercise','c-ex-log');
+  else if(type==='startworkout') go('exercise','c-ex-workout');
   else if(type==='lab') go('labs','c-labs-entry');
   else if(type==='cgmfile') go('profile','c-cgmup');
+  else if(type==='calc'){ switchTab('calc'); }
+  else if(type==='plan'){ switchTab('plan'); }
   else if(type==='bg') openQuickBG();
+  else if(type==='med') openQEntry('qmedModal','qmedDateWrap','qmedTime',['qmedName','qmedDose'],'qmedName');
+  else if(type==='sleep') openQEntry('qsleepModal','qsleepDateWrap',null,['qsleepHours'],'qsleepHours','qsleepQual');
+  else if(type==='mood') openQEntry('qmoodModal','qmoodDateWrap','qmoodTime',['qmoodNote'],null,'qmoodPick');
 }
+/* ====== فرم‌های سریعِ عمومی (دارو/خواب/حالت روحی) ====== */
+function openQEntry(modalId,dateWrapId,timeId,clearIds,focusId,segId){
+  const m=document.getElementById(modalId); if(!m) return;
+  const d=new Date(); const p=n=>String(n).padStart(2,'0');
+  const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate());
+  if(dateWrapId){ const w=document.getElementById(dateWrapId); const inpId=dateWrapId.replace('Wrap',''); if(w) w.innerHTML=jDateFieldHTML(inpId, jDateStr(j[0],j[1],j[2])); }
+  if(timeId){ const t=document.getElementById(timeId); if(t) t.value=`${p(d.getHours())}:${p(d.getMinutes())}`; }
+  (clearIds||[]).forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  if(segId){ document.querySelectorAll('#'+segId+' button').forEach(b=>b.classList.remove('on')); }
+  m.classList.add('show');
+  if(focusId) setTimeout(()=>{ const f=document.getElementById(focusId); if(f) f.focus(); },50);
+}
+function closeQEntry(modalId){ const m=document.getElementById(modalId); if(m) m.classList.remove('show'); }
+function qsegPick(segId,btn){ document.querySelectorAll('#'+segId+' button').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); }
+function qMoodPick(btn){ document.querySelectorAll('#qmoodPick button').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); }
+function qSegVal(segId){ const b=document.querySelector('#'+segId+' button.on'); return b?b.getAttribute('data-v'):''; }
+function qDateTimeISO(dateInpId,timeId){
+  const pj=parseJDate((document.getElementById(dateInpId)||{}).value||''); if(!pj) return null;
+  const g=j2g(pj[0],pj[1],pj[2]);
+  let hh=0,mm=0; if(timeId){ const tv=(document.getElementById(timeId)||{}).value||'00:00'; const tp=tv.split(':'); hh=parseInt(tp[0],10)||0; mm=parseInt(tp[1],10)||0; }
+  const d=new Date(g[0],g[1]-1,g[2],hh,mm); if(isNaN(d.getTime())) return null;
+  const p=n=>String(n).padStart(2,'0');
+  return {iso:d.toISOString(), sh:`${jDateStr(pj[0],pj[1],pj[2])}${timeId?' '+p(hh)+':'+p(mm):''}`};
+}
+function qLogPush(key,rec){ let arr=[]; try{ arr=JSON.parse(localStorage.getItem(key)||'[]'); }catch(e){} arr.push(rec); try{ localStorage.setItem(key,JSON.stringify(arr)); }catch(e){} }
+function saveQuickMed(){
+  const name=(document.getElementById('qmedName').value||'').trim();
+  if(!name){ alert('نام دارو را وارد کن.'); return; }
+  const dt=qDateTimeISO('qmedDate','qmedTime'); if(!dt){ alert('تاریخ را انتخاب کن.'); return; }
+  qLogPush('med_log_v1',{iso:dt.iso, time:dt.sh, name, dose:(document.getElementById('qmedDose').value||'').trim()});
+  closeQEntry('qmedModal'); uiToast('✓ دارو ثبت شد'); afterQuickLog();
+}
+function saveQuickSleep(){
+  const hRaw=faToEnDigits((document.getElementById('qsleepHours').value||'').trim());
+  const hours=parseFloat(hRaw);
+  if(isNaN(hours)||hours<=0||hours>24){ alert('مدت خواب را به ساعت وارد کن.'); return; }
+  const dt=qDateTimeISO('qsleepDate',null); if(!dt){ alert('تاریخ را انتخاب کن.'); return; }
+  qLogPush('sleep_log_v1',{iso:dt.iso, date:dt.sh, hours, quality:qSegVal('qsleepQual')});
+  closeQEntry('qsleepModal'); uiToast('✓ خواب ثبت شد'); afterQuickLog();
+}
+function saveQuickMood(){
+  const mood=qSegVal('qmoodPick');
+  if(!mood){ alert('یک حالت را انتخاب کن.'); return; }
+  const dt=qDateTimeISO('qmoodDate','qmoodTime'); if(!dt){ alert('تاریخ را انتخاب کن.'); return; }
+  qLogPush('mood_log_v1',{iso:dt.iso, time:dt.sh, mood, note:(document.getElementById('qmoodNote').value||'').trim()});
+  closeQEntry('qmoodModal'); uiToast('✓ حالت روحی ثبت شد'); afterQuickLog();
+}
+function afterQuickLog(){ const st=document.getElementById('dataStats'); if(st) renderDataStats(); if(typeof renderDashboard==='function') renderDashboard(); }
 /* فرم سریع قند خون دستی → bg_manual_v1 */
 function openQuickBG(){
   const m=document.getElementById('qbgModal'); if(!m) return;
@@ -2351,7 +2478,7 @@ function uiToast(msg){
   t.textContent=msg; t.classList.add('show');
   clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
 }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeQuickAdd(); closeQuickBG(); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeQuickAdd(); closeQuickBG(); closeQEntry('qmedModal'); closeQEntry('qsleepModal'); closeQEntry('qmoodModal'); } });
 /* ====== حالت چیدمان منو: بالا (قدیم) یا پایین (جدید) ====== */
 const NAVMODE_KEY='nav_mode';
 function getNavMode(){ try{ return localStorage.getItem(NAVMODE_KEY)||'top'; }catch(e){ return 'top'; } }
@@ -2422,7 +2549,7 @@ async function loadProfile(){
 // کلیدهای localStorage که در بکاپ گنجانده می‌شوند (نقشه‌ی داده‌ی کاربر).
 // از مقادیر رشته‌ای مستقیم استفاده می‌شود چون بعضی از این const‌ها (CGMKEY, BGKEY, ...)
 // پایین‌تر در فایل تعریف شده‌اند و ارجاع به خودِ متغیر اینجا TDZ می‌دهد.
-const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters'];
+const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1'];
 
 async function renderProfileTab(){
   // فرم پروفایل (c-profile) حالا خودش داخل این تب است و وضعیت ذخیره‌شده را نشان می‌دهد.
@@ -2441,12 +2568,17 @@ async function renderDataStats(){
   try{ const l=JSON.parse((await storageGet(LABS_KEY))||'[]'); if(Array.isArray(l)) labs=l.length; }catch(e){}
   try{ const e=JSON.parse((await storageGet(EX_KEY))||'[]'); if(Array.isArray(e)) exLog=e.length; }catch(e){}
   try{ const b=JSON.parse((await storageGet(BGKEY))||'[]'); if(Array.isArray(b)) bg=b.length; }catch(e){}
+  const cnt=k=>{ try{ const a=JSON.parse(localStorage.getItem(k)||'[]'); return Array.isArray(a)?a.length:0; }catch(e){ return 0; } };
+  const med=cnt('med_log_v1'), sleep=cnt('sleep_log_v1'), mood=cnt('mood_log_v1');
   const rows=[
     ['🍽️','وعده‌های ثبت‌شده',meals],
     ['📈','نقاط قند CGM',cgm],
     ['🩸','قند خون دستی',bg],
     ['🧪','نتایج آزمایش',labs],
     ['🏃','جلسات ورزش',exLog],
+    ['💊','ثبت دارو',med],
+    ['😴','ثبت خواب',sleep],
+    ['🙂','حالت روحی',mood],
   ];
   document.getElementById('dataStats').innerHTML=`<div class="dstat-grid">`+
     rows.map(r=>`<div class="dstat"><div class="ds-ico">${r[0]}</div><div class="ds-v"${r[2]===0?' style="color:var(--muted)"':''}>${faDigits(String(r[2]))}</div><div class="ds-l">${r[1]}</div></div>`).join('')+`</div>`;
@@ -5342,10 +5474,28 @@ function wkDurSpin(i){
 }
 function wkMove(i,dir){ const j=i+dir; if(j<0||j>=_wkList.length) return; [_wkList[i],_wkList[j]]=[_wkList[j],_wkList[i]]; renderWkList(); }
 function wkRemove(i){ _wkList.splice(i,1); renderWkList(); }
+// نگه‌داشتن صفحه روشن حین ورزش (Wake Lock) — روی اندروید و iOS 16.4+ کار می‌کند
+let _wkWakeLock=null;
+async function wkAcquireLock(){
+  try{ if('wakeLock' in navigator && !_wkWakeLock){ _wkWakeLock=await navigator.wakeLock.request('screen'); _wkWakeLock.addEventListener('release',()=>{ _wkWakeLock=null; }); } }catch(e){}
+}
+function wkReleaseLock(){ try{ if(_wkWakeLock){ _wkWakeLock.release(); _wkWakeLock=null; } }catch(e){} }
+// اگر کاربر به تب برگشت و ورزش هنوز فعال است، دوباره قفل را بگیر
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && _wkRunning && !_wkWakeLock) wkAcquireLock(); });
+// نمایش کنترل روی صفحه‌ی قفل (تا حدی که مرورگر اجازه دهد)
+function wkMediaSession(on){
+  try{ if(!('mediaSession' in navigator)) return;
+    if(on){ navigator.mediaSession.metadata=new MediaMetadata({title:'تمرین در حال اجرا',artist:'دستیار دیابت'}); navigator.mediaSession.playbackState='playing';
+      navigator.mediaSession.setActionHandler('pause',()=>wkPause());
+      navigator.mediaSession.setActionHandler('stop',()=>wkStop());
+    } else { navigator.mediaSession.playbackState='none'; }
+  }catch(e){}
+}
 function wkStart(){
   if(!_wkList.length) return;
   _wkList.forEach(it=>it.done=false);
   _wkRunning=true; _wkActive=0; _wkSet=1; _wkPhase='work'; _wkRemain=_wkList[0].dur;
+  wkAcquireLock(); wkMediaSession(true);
   if(_wkAudioCtx&&_wkAudioCtx.state==='suspended') _wkAudioCtx.resume();
   wkStartSound();
   setTimeout(()=>wkStartBeat(),300);  // بیت بعد از صدای شروع
@@ -5353,6 +5503,7 @@ function wkStart(){
 }
 function wkResume(){
   if(_wkTimer) return;
+  wkAcquireLock();
   if(_wkAudioCtx&&_wkAudioCtx.state==='suspended') _wkAudioCtx.resume();
   if(_wkPhase==='work' && !_wkBeatTimer) wkStartBeat();  // ادامه‌ی بیت بعد از مکث
   _wkTimer=setInterval(()=>{
@@ -5404,13 +5555,13 @@ function wkSkip(){ // رد کردن ست/فاز فعلی
 }
 function wkStop(){
   if(_wkTimer){ clearInterval(_wkTimer); _wkTimer=null; }
-  wkStopBeat();
+  wkStopBeat(); wkReleaseLock(); wkMediaSession(false);
   _wkRunning=false; _wkActive=-1; _wkSet=1; _wkPhase='work';
   renderWkList();
 }
 function wkFinish(){
   if(_wkTimer){ clearInterval(_wkTimer); _wkTimer=null; }
-  wkStopBeat();
+  wkStopBeat(); wkReleaseLock(); wkMediaSession(false);
   _wkRunning=false; _wkActive=-1; _wkSet=1; _wkPhase='work';
   wkFinishSound();
   const done=_wkList.filter(it=>it.done);
