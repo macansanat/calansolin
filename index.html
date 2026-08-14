@@ -1019,7 +1019,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۷.۶</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۷.۷</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -5564,7 +5564,7 @@ const LAB_ALIAS_EXTRA={
   bun:['blood urea nitrogen','urea','bun'],
   egfr:['estimated gfr','egfr','gfr'],
   microalbumin:['urine microalbumin','microalbumin','micro albumin','albumin creatinine ratio'],
-  chol:['total cholesterol'],
+  chol:['total cholesterol','cholesterol'],
   ldl:['ldl cholesterol','ldl'],
   hdl:['hdl cholesterol','hdl'],
   tg:['triglycerides','triglyceride','tg'],
@@ -5615,7 +5615,15 @@ const LAB_ALIAS_EXTRA={
 };
 // عادی‌سازی برای تطبیق: حروف کوچک، حذف خط‌تیره/اسلش، فاصله‌ی یکنواخت
 // نقطه را نگه می‌داریم (اعشار مقدار) و «:» را هم (تا محدوده‌ی مرجعِ بعد از دو‌نقطه شناسایی شود)
-function labMatchNorm(s){ return normalizeFa(String(s)).toLowerCase().replace(/[\/\-–—_,()]/g,' ').replace(/\s+/g,' ').trim(); }
+// مهم: OCR روی عکس، نقطه‌ی اعشار را اغلب کاما یا فاصله می‌خواند («1,13» / «1 . 13»)؛
+// پیش از حذف کاما، اعشار را ترمیم می‌کنیم وگرنه «1.13» به «1» تبدیل می‌شود.
+function labFixDecimals(s){
+  return String(s)
+    .replace(/(\d)\s*[,،٫]\s*(\d)/g,'$1.$2')   // 1,13 → 1.13
+    .replace(/(\d)\s*\.\s+(\d)/g,'$1.$2')       // «1. 13» → 1.13
+    .replace(/(\d)\s+\.(\d)/g,'$1.$2');         // «1 .13» → 1.13
+}
+function labMatchNorm(s){ return labFixDecimals(normalizeFa(String(s))).toLowerCase().replace(/[\/\-–—_,()]/g,' ').replace(/\s+/g,' ').trim(); }
 let LAB_ALIASES=null;
 function buildLabAliases(){
   LAB_ALIASES=[];
@@ -5631,6 +5639,46 @@ function buildLabAliases(){
   LAB_ALIASES.sort((a,b)=>b.alias.length-a.alias.length);
 }
 const LAB_QUAL_WORDS=/\b(not seen|negative|positive|trace|normal|nil|absent|present|occasional|numerous|plenty|moderate|many|few|rare|clear|cloudy|turbid|hazy|colou?rless|yellow|amber|straw|pale|dark|seen|reactive|non reactive|detected)\b/i;
+// فاصله‌ی ویرایشی با خروج زودهنگام (برای تطبیق فازی نام آزمایش)
+function labEditDist(a,b,max){
+  const la=a.length, lb=b.length;
+  if(Math.abs(la-lb)>max) return max+1;
+  let prev=new Array(lb+1), cur=new Array(lb+1);
+  for(let j=0;j<=lb;j++) prev[j]=j;
+  for(let i=1;i<=la;i++){
+    cur[0]=i; let rowMin=cur[0];
+    for(let j=1;j<=lb;j++){
+      const cost=a.charCodeAt(i-1)===b.charCodeAt(j-1)?0:1;
+      cur[j]=Math.min(prev[j]+1, cur[j-1]+1, prev[j-1]+cost);
+      if(cur[j]<rowMin) rowMin=cur[j];
+    }
+    if(rowMin>max) return max+1;
+    const t=prev; prev=cur; cur=t;
+  }
+  return prev[lb];
+}
+// تطبیق فازی: پنجره‌ی هم‌اندازه‌ی نام آزمایش را روی توکن‌های خط می‌لغزاند
+function labFuzzyMatch(norm){
+  const toks=[]; const re=/\S+/g; let m;
+  while((m=re.exec(norm))) toks.push({s:m[0], start:m.index, end:m.index+m[0].length});
+  if(!toks.length) return null;
+  let bestRes=null, bestScore=Infinity;
+  for(const a of LAB_ALIASES){
+    if(a.alias.length<6) continue;                 // نام‌های کوتاه فازی نشوند (خطر تطبیق غلط)
+    const n=a.alias.split(' ').length;
+    const maxD=a.alias.length>=12?2:1;             // هرچه نام بلندتر، تحمل بیشتر
+    for(let i=0;i+n<=toks.length;i++){
+      const cand=toks.slice(i,i+n).map(t=>t.s).join(' ');
+      if(Math.abs(cand.length-a.alias.length)>maxD) continue;
+      const d=labEditDist(cand,a.alias,maxD);
+      if(d<=maxD && d<bestScore){
+        bestScore=d; bestRes={alias:a, endIdx:toks[i+n-1].end};
+        if(d===0) return bestRes;
+      }
+    }
+  }
+  return bestRes;
+}
 // از یک خط متن، آزمایش و مقدار را حدس می‌زند
 function matchLabLine(line){
   if(!LAB_ALIASES) buildLabAliases();
@@ -5641,6 +5689,9 @@ function matchLabLine(line){
     const m=new RegExp('\\b'+a.re+'\\b').exec(norm);
     if(m){ best=a; bestIdx=m.index+m[0].length; break; }
   }
+  // اگر تطبیق دقیق نشد، تطبیق فازی: OCR اغلب یکی-دو حرف را غلط می‌خواند
+  // (مثلاً Triglycerides → Trigiycerides) و نباید کل ردیف از دست برود.
+  if(!best){ const fz=labFuzzyMatch(norm); if(fz){ best=fz.alias; bestIdx=fz.endIdx; } }
   if(!best) return null;
   // حذف اعداد ترتیبی (1st) و اعداد واحد زمان که مقدار نیستند.
   // «h» فقط وقتی چسبیده باشد (مثل «1h» = ۱ ساعت)، نه «223 H» که پرچم High است.
@@ -5708,13 +5759,45 @@ function collectTessWords(data){
   }
   return out;
 }
+// پیش‌پردازش عکس: بزرگ‌نمایی + خاکستری + کنتراست. روی عکس گوشی، تشخیص کاراکتر
+// (به‌ویژه نقطه‌ی اعشار و ارقام ریز) را به‌طور محسوسی بهتر می‌کند.
+async function preprocessImage(file){
+  try{
+    const bmp=await createImageBitmap(file);
+    const target=2200;
+    const scale=Math.min(3,Math.max(1,target/Math.max(bmp.width,bmp.height)));
+    const w=Math.round(bmp.width*scale), h=Math.round(bmp.height*scale);
+    const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+    const ctx=cv.getContext('2d',{willReadFrequently:true});
+    ctx.drawImage(bmp,0,0,w,h);
+    if(bmp.close) bmp.close();
+    const img=ctx.getImageData(0,0,w,h), p=img.data;
+    // خاکستری + کشش کنتراست بر اساس میانگین روشنایی
+    let sum=0;
+    for(let i=0;i<p.length;i+=4){ const g=(p[i]*0.299+p[i+1]*0.587+p[i+2]*0.114); p[i]=p[i+1]=p[i+2]=g; sum+=g; }
+    const mean=sum/(p.length/4);
+    const c=1.6; // شدت کنتراست
+    for(let i=0;i<p.length;i+=4){
+      let v=(p[i]-mean)*c+mean;
+      v=v<0?0:(v>255?255:v);
+      p[i]=p[i+1]=p[i+2]=v;
+    }
+    ctx.putImageData(img,0,0);
+    return cv;
+  }catch(e){ return file; } // اگر مرورگر فرمت را دیکد نکرد (مثلاً HEIC)، خود فایل را بده
+}
 // OCR یک تصویر/کانواس → آرایه‌ی خطوطِ بازسازی‌شده از روی مختصات کلمات (با fallback به متن خام)
 async function ocrToLines(img,prog,label){
   await ensureTesseract();
-  const {data}=await window.Tesseract.recognize(img,'eng',{logger:m=>{ if(prog&&m.status==='recognizing text') prog.textContent=`${label} ${faDigits(Math.round(m.progress*100))}٪`; }});
+  const {data}=await window.Tesseract.recognize(img,'eng',{
+    logger:m=>{ if(prog&&m.status==='recognizing text') prog.textContent=`${label} ${faDigits(Math.round(m.progress*100))}٪`; },
+    user_defined_dpi:'300',            // جلوگیری از تخمین غلط DPI روی عکس گوشی
+    preserve_interword_spaces:'1'
+  });
   const words=collectTessWords(data);
-  if(words.length>5) return wordsToLines(words);
-  return (data&&data.text?data.text:'').split(/\r?\n/).filter(l=>l.trim());
+  const lines=(words.length>5) ? wordsToLines(words) : (data&&data.text?data.text:'').split(/\r?\n/).filter(l=>l.trim());
+  window._lastOcrLines=(window._lastOcrLines||[]).concat(lines); // برای نمایش متن خام
+  return lines;
 }
 // ---- استخراج از هر فرمت ----
 async function extractFromExcel(file){
@@ -5756,7 +5839,9 @@ async function extractFromPDF(file,prog){
   return parseLabLines(lines);
 }
 async function extractFromImage(file,prog){
-  const lines=await ocrToLines(file,prog,'خواندن عکس…');
+  if(prog) prog.textContent='آماده‌سازی عکس…';
+  const img=await preprocessImage(file);
+  const lines=await ocrToLines(img,prog,'خواندن عکس…');
   return parseLabLines(lines);
 }
 // ---- هندلر آپلود ----
@@ -5764,6 +5849,7 @@ async function handleLabReportFile(input){
   const f=input.files&&input.files[0]; if(!f) return;
   const prog=document.getElementById('labImportProgress');
   prog.style.color='var(--muted)';
+  window._lastOcrLines=[];
   const name=(f.name||'').toLowerCase();
   try{
     let rows=[];
@@ -5805,7 +5891,19 @@ function renderLabImportPreview(rows){
     <button class="imp-cancel" onclick="clearLabImport()">لغو</button>
   </div>
   <div class="formula-note" style="color:var(--amber)">⚕️ حتماً همه را با برگه‌ی خودت مقایسه کن (محدوده‌ی مرجع کنار هر آزمایش کمک می‌کند)؛ ممکن است چند مورد اشتباه خوانده شده باشد. تفسیر نتایج با پزشک است.</div>`;
+  h+=labRawTextHTML();
   box.innerHTML=h;
+}
+// نمایش متن خامِ خوانده‌شده (کشویی) — اگر چیزی درست خوانده نشد، اینجا معلوم می‌شود چرا
+function labRawTextHTML(){
+  const ls=window._lastOcrLines||[];
+  if(!ls.length) return '';
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return `<details style="margin-top:10px">
+    <summary style="cursor:pointer;font-size:12px;color:var(--muted)">🔍 متن خامی که از فایل خوانده شد (${faDigits(ls.length)} خط)</summary>
+    <div style="max-height:240px;overflow:auto;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:6px;font-size:11px;line-height:1.8;direction:ltr;text-align:left;white-space:pre-wrap;word-break:break-word">${esc(ls.join('\n'))}</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px">اگر آزمایشی درست خوانده نشده، همین متن نشان می‌دهد مشکل از کجاست.</div>
+  </details>`;
 }
 function clearLabImport(){ const b=document.getElementById('labImportPreview'); if(b) b.innerHTML=''; const p=document.getElementById('labImportProgress'); if(p) p.textContent=''; }
 function applyLabImport(){
