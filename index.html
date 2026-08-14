@@ -42,20 +42,22 @@ body.nav-bottom .tabs{display:none}
 body.nav-bottom{padding-bottom:100px}
 /* ===== نوار ناوبری پایین + دکمه‌ی وسط ===== */
 .bottomnav{position:fixed;left:0;right:0;bottom:0;z-index:80;display:flex;align-items:flex-end;justify-content:space-around;gap:2px;background:rgba(20,30,42,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:9px 6px calc(9px + env(safe-area-inset-bottom));box-shadow:0 -6px 22px rgba(0,0,0,.35)}
-.tab.bnav{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;background:transparent;border:none;color:var(--muted);font-family:inherit;cursor:pointer;padding:4px 2px;border-radius:10px;transition:color .15s;-webkit-tap-highlight-color:transparent}
-.tab.bnav .bn-ico{font-size:19px;line-height:1;transition:transform .15s;filter:grayscale(.3) opacity(.85)}
-.tab.bnav .bn-lbl{font-size:9.5px;font-weight:700;letter-spacing:.1px}
-.tab.bnav:active .bn-ico{transform:scale(.9)}
+.tab.bnav{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;background:transparent;border:none;color:var(--muted);font-family:inherit;cursor:pointer;padding:2px;border-radius:10px;transition:color .18s;-webkit-tap-highlight-color:transparent}
+.tab.bnav .bn-ico{width:46px;height:27px;display:flex;align-items:center;justify-content:center;border-radius:20px;transition:background .2s}
+.tab.bnav .bn-ico svg{width:21px;height:21px;display:block}
+.tab.bnav .bn-lbl{font-size:9.5px;font-weight:700;letter-spacing:.1px;white-space:nowrap}
+.tab.bnav:active .bn-ico{transform:scale(.92)}
 .tab.bnav.active{color:var(--teal)}
-.tab.bnav.active .bn-ico{filter:none;transform:translateY(-1px)}
-.bnav-fab{flex:0 0 auto;width:56px;height:56px;margin:0 4px 6px;border-radius:50%;border:4px solid var(--bg);background:linear-gradient(145deg,var(--teal),var(--teal-dim));color:#fff;font-size:30px;font-weight:300;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 20px rgba(63,185,163,.5);transition:transform .12s,box-shadow .15s;-webkit-tap-highlight-color:transparent}
+.tab.bnav.active .bn-ico{background:var(--teal-dim)}
+.bnav-fab{flex:0 0 auto;width:56px;height:56px;margin:0 4px 8px;border-radius:50%;border:4px solid var(--bg);background:linear-gradient(145deg,var(--teal),var(--teal-dim));color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 20px rgba(63,185,163,.5);transition:transform .18s cubic-bezier(.34,1.56,.64,1),box-shadow .15s;-webkit-tap-highlight-color:transparent}
+.bnav-fab svg{width:26px;height:26px}
 .bnav-fab:hover{box-shadow:0 8px 26px rgba(63,185,163,.6)}
-.bnav-fab:active{transform:scale(.9)}
-/* شبکه‌ی ثبت سریع (bottom sheet) */
-.qa-overlay{position:fixed;inset:0;z-index:110;background:rgba(0,0,0,.55);display:none;align-items:flex-end}
-.qa-overlay.show{display:flex}
-.qa-sheet{width:100%;max-width:760px;margin:0 auto;background:var(--panel);border-radius:24px 24px 0 0;border-top:1px solid var(--line);padding:14px 18px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -12px 44px rgba(0,0,0,.55);animation:qaUp .24s cubic-bezier(.2,.8,.2,1)}
-@keyframes qaUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.bnav-fab:active{transform:scale(.88) rotate(90deg)}
+/* شبکه‌ی ثبت سریع (bottom sheet) — باز و بسته‌ی نرم */
+.qa-overlay{position:fixed;inset:0;z-index:110;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;opacity:0;visibility:hidden;transition:opacity .26s ease,visibility .26s ease}
+.qa-overlay.show{opacity:1;visibility:visible}
+.qa-sheet{width:100%;max-width:760px;margin:0 auto;background:var(--panel);border-radius:24px 24px 0 0;border-top:1px solid var(--line);padding:14px 18px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -12px 44px rgba(0,0,0,.55);transform:translateY(105%);transition:transform .34s cubic-bezier(.22,1,.36,1)}
+.qa-overlay.show .qa-sheet{transform:translateY(0)}
 .qa-grip{width:42px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 14px}
 .qa-title{font-size:15.5px;font-weight:800;text-align:center;margin-bottom:18px}
 .qa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 8px;margin-bottom:16px}
@@ -589,13 +591,13 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 <!-- نوار ناوبری پایین (حالت جدید) -->
 <nav class="bottomnav">
-  <button class="tab bnav active" data-tab="calc" onclick="switchTab('calc',this)"><span class="bn-ico">🧮</span><span class="bn-lbl">حساب</span></button>
-  <button class="tab bnav" data-tab="plan" onclick="switchTab('plan',this)"><span class="bn-ico">📅</span><span class="bn-lbl">برنامه</span></button>
-  <button class="tab bnav" data-tab="cgm" onclick="switchTab('cgm',this)"><span class="bn-ico">📈</span><span class="bn-lbl">CGM</span></button>
-  <button class="bnav-fab" onclick="openQuickAdd()" aria-label="ثبت سریع" title="ثبت سریع">＋</button>
-  <button class="tab bnav" data-tab="labs" onclick="switchTab('labs',this)"><span class="bn-ico">🧪</span><span class="bn-lbl">آزمایش</span></button>
-  <button class="tab bnav" data-tab="exercise" onclick="switchTab('exercise',this)"><span class="bn-ico">🏃</span><span class="bn-lbl">ورزش</span></button>
-  <button class="tab bnav" data-tab="profile" onclick="switchTab('profile',this)"><span class="bn-ico">👤</span><span class="bn-lbl">پروفایل</span></button>
+  <button class="tab bnav active" data-tab="calc" onclick="switchTab('calc',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><line x1="8.5" y1="6.5" x2="15.5" y2="6.5"/><line x1="8.7" y1="11" x2="8.7" y2="11"/><line x1="12" y1="11" x2="12" y2="11"/><line x1="15.3" y1="11" x2="15.3" y2="11"/><line x1="8.7" y1="14.5" x2="8.7" y2="14.5"/><line x1="12" y1="14.5" x2="12" y2="14.5"/><line x1="15.3" y1="14.5" x2="15.3" y2="14.5"/><line x1="8.7" y1="18" x2="12" y2="18"/></svg></span><span class="bn-lbl">حساب دوز</span></button>
+  <button class="tab bnav" data-tab="plan" onclick="switchTab('plan',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="12" y1="8" x2="16" y2="8"/><line x1="12" y1="12" x2="16" y2="12"/><line x1="12" y1="16" x2="15" y2="16"/></svg></span><span class="bn-lbl">دفترچه</span></button>
+  <button class="tab bnav" data-tab="cgm" onclick="switchTab('cgm',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 15 7 15 10 8 14 18 17 12 21 12"/></svg></span><span class="bn-lbl">قند CGM</span></button>
+  <button class="bnav-fab" onclick="openQuickAdd()" aria-label="ثبت سریع" title="ثبت سریع"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg></button>
+  <button class="tab bnav" data-tab="labs" onclick="switchTab('labs',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"/><path d="M10 3v6.5l-3.7 7.6a2.1 2.1 0 0 0 1.9 3h7.6a2.1 2.1 0 0 0 1.9-3L14 9.5V3"/><line x1="8.5" y1="14" x2="15.5" y2="14"/></svg></span><span class="bn-lbl">آزمایش</span></button>
+  <button class="tab bnav" data-tab="exercise" onclick="switchTab('exercise',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><rect x="2.5" y="8" width="3" height="8" rx="1.2"/><rect x="18.5" y="8" width="3" height="8" rx="1.2"/><rect x="5.5" y="9.5" width="2.2" height="5" rx="1"/><rect x="16.3" y="9.5" width="2.2" height="5" rx="1"/></svg></span><span class="bn-lbl">ورزش</span></button>
+  <button class="tab bnav" data-tab="profile" onclick="switchTab('profile',this)"><span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg></span><span class="bn-lbl">پروفایل</span></button>
 </nav>
 
 <!-- شبکه‌ی ثبت سریع -->
@@ -1189,7 +1191,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
 </div>
 <div class="card coll closed" id="c-log">
-  <h2 onclick="toggleCard('c-log')"><span>📥 وارد کردن از فایل + پاک کردن</span></h2>
+  <h2 onclick="toggleCard('c-log')"><span>📥 وارد کردن وعده‌ها، انسولین و قندِ گذشته از فایل اکسل</span></h2>
   <div class="card-body">
   <div class="log-import">
     <label class="log-upload">
@@ -1243,7 +1245,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۸.۸</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۸.۹</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
