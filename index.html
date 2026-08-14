@@ -458,6 +458,18 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .lm-hl{background:var(--panel-2);border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.9;margin-top:6px}
 .lm-hl b{color:var(--amber)}
 .lm-foot{margin-top:18px;border-top:1px dashed var(--line);padding-top:12px;font-size:12px;color:var(--amber);line-height:1.9}
+.lm-custom{display:inline-block;background:var(--amber);color:#2a1c07;border-radius:20px;padding:2px 9px;font-size:10.5px;font-weight:800;margin-right:6px;direction:rtl}
+.lm-range-edit{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:2px}
+.lm-range-edit>span{font-size:12.5px;color:var(--muted);flex:0 0 auto}
+.lm-range-edit input{width:80px;flex:0 0 auto;background:var(--panel-2);border:1px solid var(--teal-dim);border-radius:9px;padding:9px;font-family:inherit;font-size:15px;color:var(--ink);text-align:center;direction:ltr}
+.lm-range-edit .lre-unit{color:var(--teal);font-size:12px;direction:ltr}
+.lm-range-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.lm-range-actions button{border-radius:10px;padding:11px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer;border:none}
+.lm-range-actions .lre-save{flex:1;background:var(--teal-dim);color:#d6f5ee}
+.lm-range-actions .lre-save:active{background:#2a7568}
+.lm-range-actions .lre-reset{flex:0 0 auto;background:transparent;border:1px solid var(--line)!important;color:var(--muted)}
+.lre-note{font-size:11px;color:var(--muted);margin-top:8px;direction:rtl}
+.lab-row .lab-en .lab-cust,.lab-htbl .lh-rng .lab-cust{color:var(--amber);font-weight:800}
 /* ===== ردیف حرکت در «شروع تمرین» خواناتر ===== */
 .wk-row-name{font-weight:800;font-size:16px;line-height:1.4}
 .wk-row-meta{font-size:12.5px;color:var(--teal);margin-top:3px}
@@ -1104,7 +1116,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۸.۳</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۸.۴</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -5554,6 +5566,7 @@ function renderLabEntry(){
   box.querySelectorAll('input[id^="lab_"]').forEach(el=>{ if(el.value!=='') prevVals[el.id]=el.value; });
   const prevDate=(document.getElementById('labDate')||{}).value||'';
   const d=loadLabs();
+  const ranges=(d.ranges||{});
   const today=new Date();
   const jToday=g2j(today.getFullYear(),today.getMonth()+1,today.getDate());
   let h='';
@@ -5568,7 +5581,7 @@ function renderLabEntry(){
   if(!d.selected||!d.selected.length){
     h+=`<div style="color:var(--muted);font-size:12.5px">اول یک بسته‌ی پیشنهادی انتخاب کن، یا از پایین آزمایش دلخواه اضافه کن.</div>`;
   }else{
-    h+=`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">مقادیر آزمایش‌ها را وارد کن (هرکدام را داری). آزمایش‌هایی که پزشکت نداده را با ✕ حذف کن.</div>`;
+    h+=`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">مقادیر آزمایش‌ها را وارد کن (هرکدام را داری). آزمایش‌هایی که پزشکت نداده را با ✕ حذف کن. روی <b style="color:var(--teal);font-style:italic;font-family:Georgia,serif">i</b> هر آزمایش بزن تا توضیحش را ببینی یا <b style="color:var(--amber)">محدوده‌ی آزمایشگاه خودت</b> را برایش ثبت کنی.</div>`;
     const byGroup={};
     d.selected.forEach(k=>{
       for(const g in LAB_LIBRARY){ if(LAB_LIBRARY[g].items[k]){ (byGroup[g]=byGroup[g]||[]).push(k); break; } }
@@ -5577,13 +5590,14 @@ function renderLabEntry(){
       h+=`<div class="lab-cat-head">${LAB_LIBRARY[g].cat}</div>`;
       byGroup[g].forEach(k=>{
         const t=LAB_LIBRARY[g].items[k];
-        const rng = (t.lo!==null&&t.hi!==null) ? `${faDigits(t.lo)}-${faDigits(t.hi)}` : '—';
+        const er=getLabRange(k,ranges);
+        const rng = (er.lo!==null&&er.hi!==null) ? `${faDigits(er.lo)}-${faDigits(er.hi)}` : '—';
         h+=`<div class="lab-row">
           <button class="lab-del" onclick="removeLabTest('${k}')" title="حذف این آزمایش">✕</button>
-          <button class="lab-i" onclick="openLabInfo('${k}')" title="توضیح این آزمایش">i</button>
+          <button class="lab-i" onclick="openLabInfo('${k}')" title="${er.custom?'محدوده‌ی خودت فعال است — ':''}توضیح و محدوده">i</button>
           <div class="lab-info" title="${t.desc}">
             <span class="lab-fa">${t.fa}</span>
-            <span class="lab-en">${t.en||''} • ${rng} ${t.unit}</span>
+            <span class="lab-en">${t.en||''} • ${rng} ${t.unit}${er.custom?' <span class="lab-cust">🏷</span>':''}</span>
           </div>
           ${t.qual
             ? `<input type="text" id="lab_${k}" class="lab-val lab-val-q" placeholder="نتیجه">`
@@ -5612,10 +5626,11 @@ function labFindTest(k){ for(const g in LAB_LIBRARY){ if(LAB_LIBRARY[g].items[k]
 function openLabInfo(k){
   const t=labFindTest(k); if(!t) return;
   const info=LAB_INFO[k]||{};
-  const rng=t.qual?'کیفی (توصیفی)':((t.lo!==null&&t.hi!==null)?`${faDigits(t.lo)}–${faDigits(t.hi)} ${t.unit}`:(t.unit||'—'));
+  const er=getLabRange(k);
+  const rng=t.qual?'کیفی (توصیفی)':((er.lo!==null&&er.hi!==null)?`${faDigits(er.lo)}–${faDigits(er.hi)} ${t.unit}`:(t.unit||'—'));
   let h=`<div class="lm-title">${t.fa}</div>`;
   if(t.en) h+=`<div class="lm-en">${t.en}</div>`;
-  h+=`<div class="lm-range">محدوده‌ی مرجع: ${rng}</div>`;
+  h+=`<div class="lm-range">محدوده‌ی مرجع: ${rng}${er.custom?'<span class="lm-custom">🏷 محدوده‌ی تو</span>':''}</div>`;
   if(t.desc) h+=`<div class="lm-sec"><div class="lm-h">📌 توضیح مختصر</div><div class="lm-body">${t.desc}</div></div>`;
   if(info.full) h+=`<div class="lm-sec"><div class="lm-h">📖 توضیح جامع</div><div class="lm-body">${info.full}</div></div>`;
   if(info.factors&&info.factors.length){
@@ -5629,6 +5644,22 @@ function openLabInfo(k){
     if(t.high&&t.high.trim()) h+=`<div class="lm-hl"><b>بالاتر از حد:</b> ${t.high}</div>`;
     if(t.low&&t.low.trim()) h+=`<div class="lm-hl"><b>پایین‌تر از حد:</b> ${t.low}</div>`;
     h+=`</div>`;
+  }
+  if(!t.qual){
+    const defTxt=(t.lo!==null&&t.hi!==null)?`${faDigits(t.lo)}–${faDigits(t.hi)} ${t.unit}`:'ندارد';
+    h+=`<div class="lm-sec"><div class="lm-h">🏷 محدوده‌ی آزمایشگاه خودت</div>
+      <div class="lm-body" style="font-size:12.5px;margin-bottom:10px">اگر روی برگه‌ی آزمایشگاهت محدوده‌ی نرمالِ متفاوتی نوشته شده، همان را اینجا وارد کن تا معیارِ رنگ‌ها و هشدارها دقیقاً همان محدوده‌ی آزمایشگاه تو باشد. هر آزمایشگاه ممکن است کمی فرق داشته باشد.</div>
+      <div class="lm-range-edit">
+        <span>از</span><input id="labRangeLo" type="number" step="any" inputmode="decimal" value="${er.custom&&er.lo!=null?er.lo:''}" placeholder="${t.lo!=null?t.lo:'—'}">
+        <span>تا</span><input id="labRangeHi" type="number" step="any" inputmode="decimal" value="${er.custom&&er.hi!=null?er.hi:''}" placeholder="${t.hi!=null?t.hi:'—'}">
+        <span class="lre-unit">${t.unit||''}</span>
+      </div>
+      <div class="lm-range-actions">
+        <button class="lre-save" onclick="saveLabRange('${k}')">💾 ذخیره‌ی محدوده‌ی من</button>
+        ${er.custom?`<button class="lre-reset" onclick="resetLabRange('${k}')">بازگردانی به پیش‌فرض</button>`:''}
+      </div>
+      <div class="lre-note">پیش‌فرض برنامه برای این آزمایش: ${defTxt}${er.custom?' — الان محدوده‌ی خودت فعال است 🏷':''}. برای پاک کردن، هر دو کادر را خالی کن و ذخیره بزن.</div>
+    </div>`;
   }
   h+=`<div class="lm-foot">⚕️ این توضیح فقط آموزشی است تا بتوانی آگاهانه‌تر با پزشکت صحبت کنی — تشخیص و تفسیر نتیجه و هر تصمیم درمانی فقط با پزشک است. محدوده‌های نرمال بین آزمایشگاه‌ها کمی فرق دارد؛ معیار را برگه‌ی آزمایشگاه خودت بگیر.</div>`;
   document.getElementById('labModalBody').innerHTML=h;
@@ -5675,8 +5706,9 @@ function doLabSearch(input){
 function pickLabSearch(key){
   const t=findLabTest(key); if(!t) return;
   const box=document.getElementById('labSearchResults'); if(!box) return;
+  const er=getLabRange(key);
   const rng = t.qual ? 'کیفی (مثلاً Negative / Positive)'
-            : ((t.lo!==null&&t.hi!==null) ? `محدوده‌ی مرجع: ${faDigits(t.lo)}–${faDigits(t.hi)} ${t.unit}` : (t.unit||''));
+            : ((er.lo!==null&&er.hi!==null) ? `محدوده‌ی مرجع: ${faDigits(er.lo)}–${faDigits(er.hi)} ${t.unit}${er.custom?' 🏷':''}` : (t.unit||''));
   const inputHtml = t.qual
     ? `<input type="text" id="labAddValInput" placeholder="نتیجه" onkeydown="if(event.key==='Enter')confirmLabAdd('${key}')">`
     : `<input type="number" step="any" inputmode="decimal" id="labAddValInput" placeholder="مقدار" onkeydown="if(event.key==='Enter')confirmLabAdd('${key}')">`;
@@ -6088,7 +6120,8 @@ function renderLabImportPreview(rows){
   h+=`<div style="margin:2px 0 12px"><label style="font-size:12.5px;color:var(--muted);margin-bottom:6px">📅 تاریخ این برگه‌ی آزمایش:</label>${jDateFieldHTML('labImportDate', jDateStr(jt[0],jt[1],jt[2]))}</div>`;
   rows.forEach(r=>{
     const t=findLabTest(r.key); if(!t) return;
-    const rng = t.qual ? 'کیفی' : ((t.lo!==null&&t.hi!==null) ? `${faDigits(t.lo)}–${faDigits(t.hi)} ${t.unit}` : (t.unit||''));
+    const er=getLabRange(r.key);
+    const rng = t.qual ? 'کیفی' : ((er.lo!==null&&er.hi!==null) ? `${faDigits(er.lo)}–${faDigits(er.hi)} ${t.unit}${er.custom?' 🏷':''}` : (t.unit||''));
     h+=`<div class="lab-imp-row" data-key="${r.key}">
       <button class="imp-del" onclick="this.closest('.lab-imp-row').remove()" title="حذف این ردیف">✕</button>
       <button class="lab-i imp-i" onclick="openLabInfo('${r.key}')" title="توضیح این آزمایش">i</button>
@@ -6213,11 +6246,44 @@ function editLabEntry(ts){
   document.getElementById('labEntry').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function cancelEditLabEntry(){ _editLabTs=null; renderLabEntry(); }
-function labStatus(key,val){
-  const t=findLabTest(key); if(!t||t.lo===null||t.hi===null) return 'na';
-  if(val<t.lo) return 'low';
-  if(val>t.hi) return 'high';
+// محدوده‌ی مؤثر هر آزمایش: اگر کاربر محدوده‌ی آزمایشگاه خودش را وارد کرده، همان؛ وگرنه پیش‌فرض کتابخانه.
+// ranges (اختیاری) = نقشه‌ی d.ranges؛ در حلقه‌ها پاس بده تا loadLabs تکرار نشود.
+function getLabRange(key,ranges){
+  const t=findLabTest(key);
+  if(!t) return {lo:null,hi:null,custom:false,unit:''};
+  if(ranges===undefined){ ranges=(loadLabs().ranges)||{}; }
+  const o=ranges&&ranges[key];
+  if(o && (o.lo!=null || o.hi!=null)){
+    return {lo:(o.lo!=null?o.lo:t.lo), hi:(o.hi!=null?o.hi:t.hi), custom:true, unit:t.unit};
+  }
+  return {lo:t.lo, hi:t.hi, custom:false, unit:t.unit};
+}
+function labStatus(key,val,ranges){
+  const t=findLabTest(key); if(!t||t.qual) return 'na';
+  const r=getLabRange(key,ranges);
+  if(r.lo===null||r.lo===undefined||r.hi===null||r.hi===undefined) return 'na';
+  if(val<r.lo) return 'low';
+  if(val>r.hi) return 'high';
   return 'normal';
+}
+// ذخیره/بازگردانی محدوده‌ی شخصی آزمایشگاه کاربر
+function saveLabRange(key){
+  const loEl=document.getElementById('labRangeLo'), hiEl=document.getElementById('labRangeHi');
+  if(!loEl||!hiEl) return;
+  const loRaw=faToEnDigits(loEl.value).trim(), hiRaw=faToEnDigits(hiEl.value).trim();
+  const lo=loRaw===''?null:parseFloat(loRaw), hi=hiRaw===''?null:parseFloat(hiRaw);
+  if(lo!==null&&isNaN(lo)){ alert('کف محدوده باید عدد باشد.'); return; }
+  if(hi!==null&&isNaN(hi)){ alert('سقف محدوده باید عدد باشد.'); return; }
+  if(lo!==null&&hi!==null&&lo>hi){ alert('کف محدوده نباید از سقف بزرگ‌تر باشد.'); return; }
+  const d=loadLabs(); d.ranges=d.ranges||{};
+  if(lo===null&&hi===null){ delete d.ranges[key]; }
+  else d.ranges[key]={lo,hi};
+  saveLabs(d);
+  openLabInfo(key); renderLabEntry(); renderLabHistory();
+}
+function resetLabRange(key){
+  const d=loadLabs(); if(d.ranges){ delete d.ranges[key]; saveLabs(d); }
+  openLabInfo(key); renderLabEntry(); renderLabHistory();
 }
 function deleteLabEntry(ts){
   const d=loadLabs(); const e=(d.entries||[]).find(x=>x.ts===ts);
@@ -6231,13 +6297,14 @@ function renderLabHistory(){
   const box=document.getElementById('labHistory'); if(!box) return;
   const d=loadLabs();
   if(!d.entries||!d.entries.length){ box.innerHTML='<div style="color:var(--muted);font-size:12.5px">هنوز نتیجه‌ای ثبت نشده.</div>'; return; }
+  const ranges=(d.ranges||{});
   const allKeys=[];
   d.entries.forEach(e=>{ for(const k in e.vals) if(!allKeys.includes(k)) allKeys.push(k); });
   const entries=[...d.entries].sort((a,b)=>a.ts-b.ts);
   const last=entries[entries.length-1];
   let alerts=[];
   for(const k in last.vals){
-    const st=labStatus(k,last.vals[k]);
+    const st=labStatus(k,last.vals[k],ranges);
     if(st==='high'||st==='low'){
       const t=findLabTest(k);
       alerts.push({k,fa:t.fa,en:t.en,val:last.vals[k],st,msg:st==='high'?t.high:t.low});
@@ -6272,13 +6339,14 @@ function renderLabHistory(){
     h+=`<tr><td class="lh-name"><b>${t.fa}</b>${t.en?`<span class="lh-en">${t.en}</span>`:''}</td>`;
     entries.forEach(e=>{
       if(e.vals[k]!==undefined){
-        const st=labStatus(k,e.vals[k]);
+        const st=labStatus(k,e.vals[k],ranges);
         const color = st==='high'?'#f0a29b':st==='low'?'#9fc0f0':st==='normal'?'#6fd39a':'var(--ink)';
         const mark = st==='high'?'↑':st==='low'?'↓':'';
         h+=`<td><span class="lh-val" style="color:${color}">${faDigits(e.vals[k])}<span class="lh-mark">${mark}</span></span></td>`;
       }else h+=`<td class="lh-none">—</td>`;
     });
-    const rng=(t.lo!==null&&t.hi!==null)?`${faDigits(t.lo)}–${faDigits(t.hi)}`:'—';
+    const er=getLabRange(k,ranges);
+    const rng=(er.lo!==null&&er.hi!==null)?`${faDigits(er.lo)}–${faDigits(er.hi)}${er.custom?' <span class="lab-cust">🏷</span>':''}`:'—';
     h+=`<td class="lh-rng">${rng} ${t.unit}</td></tr>`;
   });
   h+=`</tbody></table></div>`;
