@@ -979,7 +979,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۶.۸</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۶.۹</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -5353,6 +5353,10 @@ function selectLabPackage(pk){
 }
 function renderLabEntry(){
   const box=document.getElementById('labEntry'); if(!box) return;
+  // نگه‌داشتن مقادیر تایپ‌شده‌ی ذخیره‌نشده و تاریخ، تا بازسازی لیست (حذف/افزودن آزمایش) آن‌ها را پاک نکند
+  const prevVals={};
+  box.querySelectorAll('input[id^="lab_"]').forEach(el=>{ if(el.value!=='') prevVals[el.id]=el.value; });
+  const prevDate=(document.getElementById('labDate')||{}).value||'';
   const d=loadLabs();
   const today=new Date();
   const jToday=g2j(today.getFullYear(),today.getMonth()+1,today.getDate());
@@ -5397,6 +5401,9 @@ function renderLabEntry(){
   }
   h+=`</select> <button class="quick-btn" style="font-size:11px;padding:8px 12px" onclick="addLabTest()">افزودن</button></div>`;
   box.innerHTML=h;
+  // برگرداندن مقادیر و تاریخِ قبل از بازسازی
+  Object.keys(prevVals).forEach(id=>{ const el=document.getElementById(id); if(el) el.value=prevVals[id]; });
+  if(prevDate){ const dd=document.getElementById('labDate'); if(dd) dd.value=prevDate; }
 }
 function labFindTest(k){ for(const g in LAB_LIBRARY){ if(LAB_LIBRARY[g].items[k]) return LAB_LIBRARY[g].items[k]; } return null; }
 function openLabInfo(k){
