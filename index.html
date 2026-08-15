@@ -1452,7 +1452,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۹.۴</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۹.۵</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2495,6 +2495,20 @@ function renderDailyReport(){
       <div class="dash-tile"><div class="dt-v" style="color:#9fc0f0">${faDigits(Math.round(cgmDay.min))}</div><div class="dt-l">کمترین</div></div>
       <div class="dash-tile"><div class="dt-v" style="color:#f0a29b">${faDigits(Math.round(cgmDay.max))}</div><div class="dt-l">بیشترین</div></div>
     </div>`;
+    // روند ساعتی قند (میانگین هر ۳ ساعت)
+    if(sparkPts.length>=4){
+      const buckets=Array.from({length:8},()=>[]);
+      sparkPts.forEach(p=>{ buckets[Math.min(7,Math.floor(p.m/180))].push(p.g); });
+      const bars=buckets.map((arr,i)=>({avg:arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:null, label:faDigits(i*3)}));
+      if(bars.filter(b=>b.avg!=null).length>=2){
+        const mxA=Math.max(280,...bars.filter(b=>b.avg!=null).map(b=>b.avg));
+        h+=`<div class="dash-sec-t">📊 روند ساعتی قند <span class="dash-sec-s">(میانگین هر ۳ ساعت)</span></div><div class="ov-trend">`;
+        bars.forEach(b=>{ if(b.avg==null){ h+=`<div class="ovt-col"><div class="ovt-cval">—</div><div class="ovt-track"></div><div class="ovt-clbl">${b.label}</div></div>`; return; }
+          const hp=Math.max(6,Math.round(b.avg/mxA*100)); const col=b.avg<70?'#9fc0f0':b.avg>180?'#e0a355':'#6fd39a';
+          h+=`<div class="ovt-col"><div class="ovt-cval">${faDigits(Math.round(b.avg))}</div><div class="ovt-track"><div class="ovt-fill" style="height:${hp}%;background:${col}"></div></div><div class="ovt-clbl">${b.label}</div></div>`; });
+        h+=`</div><div class="ov-trend-note">میانگین قند در هر بازه‌ی ۳ ساعته · سبز = در محدوده · زرد = بالا · آبی = پایین</div>`;
+      }
+    }
   }
   // تایم‌لاین
   h+=`<div class="dash-sec-t">🕒 رویدادهای روز ${ev.length?`<span class="dash-sec-s">(${faDigits(ev.length)} مورد)</span>`:''}</div>`;
