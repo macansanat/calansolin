@@ -179,6 +179,13 @@ body.nav-bottom{padding-bottom:100px}
 .ov-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--muted)}
 .ov-row:last-child{border-bottom:none}
 .ov-row b{color:var(--ink);font-size:13.5px}
+/* انتخابگر آهنگ ورزش */
+.wktr-grp{font-size:12px;font-weight:800;color:var(--teal);margin:6px 2px 10px}
+.wktr-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
+.wktr-item{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:12px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;transition:border-color .15s}
+.wktr-item:hover{border-color:var(--teal)}
+.wktr-item.on{border-color:var(--teal);background:var(--teal-dim);color:#eafff8}
+.wktr-item .wktr-emo{font-size:18px}
 /* کلید منبع قند */
 .dash-srcrow{display:flex;justify-content:flex-end;margin-bottom:12px}
 .ov-srcrow{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);display:flex;justify-content:flex-end}
@@ -778,6 +785,16 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <button class="qa-item" onclick="quickAdd('cgmfile')"><span class="qa-ico" style="background:rgba(63,185,163,.14);color:#5fd3bd">📈</span>فایل CGM</button>
     </div>
     <button class="qa-cancel" onclick="closeQuickAdd()">بستن</button>
+  </div>
+</div>
+
+<!-- انتخابگر آهنگ ورزش -->
+<div class="qa-overlay" id="wkTrackOverlay" onclick="if(event.target===this)closeWkTrack()">
+  <div class="qa-sheet">
+    <div class="qa-grip"></div>
+    <div class="qa-title">🎶 آهنگ تمرین</div>
+    <div id="wkTrackOpts"></div>
+    <button class="qa-cancel" style="margin-top:12px" onclick="closeWkTrack()">بستن</button>
   </div>
 </div>
 
@@ -1495,7 +1512,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۰.۱</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۰.۲</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2984,7 +3001,7 @@ function uiToast(msg){
   t.textContent=msg; t.classList.add('show');
   clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
 }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeQuickAdd(); closeQuickBG(); closeBgSrc(); closeQEntry('qmedModal'); closeQEntry('qsleepModal'); closeQEntry('qmoodModal'); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeQuickAdd(); closeQuickBG(); closeBgSrc(); if(typeof closeWkTrack==='function')closeWkTrack(); closeQEntry('qmedModal'); closeQEntry('qsleepModal'); closeQEntry('qmoodModal'); } });
 /* ====== حالت چیدمان منو: بالا (قدیم) یا پایین (جدید) ====== */
 const NAVMODE_KEY='nav_mode';
 function getNavMode(){ try{ return localStorage.getItem(NAVMODE_KEY)||'top'; }catch(e){ return 'top'; } }
@@ -5744,57 +5761,55 @@ function wkStartSound(){ wkBeep(523,0.12,'sine',0.18); setTimeout(()=>wkBeep(784
 function wkSetDone(){ wkBeep(659,0.15,'triangle',0.2); setTimeout(()=>wkBeep(523,0.2,'triangle',0.2),150); } // پایان ست
 function wkRestSound(){ wkBeep(440,0.1,'sine',0.15); }        // شروع استراحت
 function wkFinishSound(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>wkBeep(f,0.2,'sine',0.2),i*140)); } // پایان کل (فانفار)
-// --- بیت ورزشی (لوپ ریتمیک، آفلاین) که موقع هر ست پخش می‌شود ---
-let _wkBeatTimer=null;
+// --- کتابخانه‌ی آهنگ/بیت ورزشی (همه با Web Audio، آفلاین) ---
+let _wkBeatTimer=null, _wkMusicGain=null, _beatStep=0, _curTrack=null;
 let _wkMusic=true;   // موزیک روشن/خاموش
-const _beatPatterns=[
-  // هر الگو: توالی نت‌ها با زمان (بیت در دقیقه ~۱۲۰)
-  {bpm:128,bass:[65.4,65.4,98,65.4],hat:true},
-  {bpm:120,bass:[73.4,73.4,110,73.4],hat:true},
-  {bpm:132,bass:[82.4,82.4,61.7,82.4],hat:true},
+function getWkTrack(){ try{ return localStorage.getItem('wk_track')||'electro'; }catch(e){ return 'electro'; } }
+function setWkTrack(id){ try{ localStorage.setItem('wk_track',id); }catch(e){} closeWkTrack(); const t=WK_TRACKS.find(x=>x.id===id); const nb=document.getElementById('wkTrackBtn'); if(nb&&t) nb.textContent=t.emoji; if(_wkRunning&&_wkMusic&&_wkPhase==='work') wkStartBeat(); }
+// خروجیِ مشترکِ موزیک با صدای بلندتر
+function wkMg(){ const ctx=_wkAudioCtx; if(!ctx) return null; if(!_wkMusicGain){ _wkMusicGain=ctx.createGain(); _wkMusicGain.gain.value=1.4; _wkMusicGain.connect(ctx.destination); } return _wkMusicGain; }
+function wkTone(t,freq,dur,type,vol){ const ctx=_wkAudioCtx,out=wkMg(); if(!out) return; const o=ctx.createOscillator(),g=ctx.createGain(); o.type=type||'sine'; o.frequency.value=freq; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+0.012); g.gain.exponentialRampToValueAtTime(0.0008,t+dur); o.connect(g); g.connect(out); o.start(t); o.stop(t+dur+0.03); }
+function wkKick(t,vol){ const ctx=_wkAudioCtx,out=wkMg(); if(!out)return; const o=ctx.createOscillator(),g=ctx.createGain(); o.type='sine'; o.frequency.setValueAtTime(165,t); o.frequency.exponentialRampToValueAtTime(46,t+0.12); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.17); o.connect(g); g.connect(out); o.start(t); o.stop(t+0.19); }
+function wkHat(t,vol){ const ctx=_wkAudioCtx,out=wkMg(); if(!out)return; const o=ctx.createOscillator(),g=ctx.createGain(); o.type='square'; o.frequency.value=8200; g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.03); o.connect(g); g.connect(out); o.start(t); o.stop(t+0.04); }
+function wkSnare(t,vol){ const ctx=_wkAudioCtx,out=wkMg(); if(!out)return; const o=ctx.createOscillator(),g=ctx.createGain(); o.type='triangle'; o.frequency.value=180; g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.1); o.connect(g); g.connect(out); o.start(t); o.stop(t+0.11); const o2=ctx.createOscillator(),g2=ctx.createGain(); o2.type='square'; o2.frequency.value=1400; g2.gain.setValueAtTime(vol*0.5,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.06); o2.connect(g2); g2.connect(out); o2.start(t); o2.stop(t+0.07); }
+const _lowP=[65.4,73.4,82.4,98,110], _pent=[220,262,294,330,392,440,523,587];
+const WK_TRACKS=[
+  {id:'electro',name:'الکترو تند',emoji:'⚡',mood:'e',bpm:128,step(i,t){ if(i%8===0)wkKick(t,0.6); if(i%4===2)wkHat(t,0.13); if(i%4===0)wkTone(t,_lowP[(i/4)%_lowP.length],0.18,'triangle',0.32); }},
+  {id:'house',name:'هاوس',emoji:'🎧',mood:'e',bpm:124,step(i,t){ if(i%4===0)wkKick(t,0.58); if(i%4===2)wkHat(t,0.15); if(i%8===4)wkSnare(t,0.3); if(i%2===0)wkTone(t,_lowP[(i/2)%_lowP.length],0.12,'sawtooth',0.15); }},
+  {id:'techno',name:'تکنو',emoji:'🔊',mood:'e',bpm:132,step(i,t){ if(i%4===0)wkKick(t,0.62); if(i%2===1)wkHat(t,0.11); wkTone(t,82.4,0.06,'square',0.09); }},
+  {id:'hiphop',name:'هیپ‌هاپ',emoji:'🎤',mood:'e',bpm:92,step(i,t){ if(i===0||i===10)wkKick(t,0.58); if(i===8)wkSnare(t,0.32); if(i%2===0)wkHat(t,0.09); if(i===0)wkTone(t,110,0.4,'triangle',0.18); }},
+  {id:'pop',name:'پاپ پرانرژی',emoji:'🎉',mood:'e',bpm:120,step(i,t){ if(i%8===0)wkKick(t,0.55); if(i%8===4)wkSnare(t,0.3); if(i%2===0)wkHat(t,0.1); wkTone(t,_pent[i%_pent.length],0.1,'sawtooth',0.09); }},
+  {id:'drumline',name:'طبل رژه',emoji:'🥁',mood:'e',bpm:110,step(i,t){ if(i%4===0)wkKick(t,0.58); if(i===4||i===12)wkSnare(t,0.36); if(i%2===1)wkHat(t,0.13); }},
+  {id:'edm',name:'EDM آرپژ',emoji:'✨',mood:'e',bpm:128,step(i,t){ if(i%8===0)wkKick(t,0.55); wkTone(t,_pent[(i*2)%_pent.length],0.09,'sawtooth',0.13); if(i%4===2)wkHat(t,0.11); }},
+  {id:'ambient',name:'محیطیِ آرام',emoji:'🌊',mood:'c',bpm:50,step(i,t){ if(i%16===0)wkTone(t,_pent[0],2.4,'sine',0.24); if(i%16===8)wkTone(t,_pent[2],2.2,'sine',0.18); }},
+  {id:'meditation',name:'مدیتیشن',emoji:'🧘',mood:'c',bpm:44,step(i,t){ if(i%16===0)wkTone(t,196,3,'sine',0.24); if(i%16===6)wkTone(t,294,2.4,'sine',0.16); }},
+  {id:'lofi',name:'لو-فای',emoji:'☕',mood:'c',bpm:74,step(i,t){ if(i%8===0)wkKick(t,0.36); if(i%8===4)wkSnare(t,0.15); if(i%4===2)wkHat(t,0.06); if(i%8===0)wkTone(t,_pent[(i/8)%4],0.9,'triangle',0.18); }},
+  {id:'piano',name:'پیانوی آرام',emoji:'🎹',mood:'c',bpm:60,step(i,t){ if(i%4===0)wkTone(t,_pent[(i/4)%_pent.length],1.1,'triangle',0.22); }},
+  {id:'zen',name:'زنگ ذن',emoji:'🔔',mood:'c',bpm:40,step(i,t){ if(i%16===0)wkTone(t,523,2.6,'sine',0.24); if(i%16===10)wkTone(t,392,2.2,'sine',0.17); }},
 ];
-let _curBeat=null, _beatStep=0;
 function wkStartBeat(){
   if(!_wkMusic||!_wkSound) return;
   wkStopBeat();
-  try{
-    if(!_wkAudioCtx) _wkAudioCtx=new (window.AudioContext||window.webkitAudioContext)();
-    if(_wkAudioCtx.state==='suspended') _wkAudioCtx.resume();
-  }catch(e){ return; }
-  _curBeat=_beatPatterns[Math.floor(Math.random()*_beatPatterns.length)];
+  try{ if(!_wkAudioCtx) _wkAudioCtx=new (window.AudioContext||window.webkitAudioContext)(); if(_wkAudioCtx.state==='suspended') _wkAudioCtx.resume(); }catch(e){ return; }
+  _curTrack=WK_TRACKS.find(x=>x.id===getWkTrack())||WK_TRACKS[0];
   _beatStep=0;
-  const interval=60000/_curBeat.bpm/2; // نیم‌ضرب
-  _wkBeatTimer=setInterval(()=>{
-    const ctx=_wkAudioCtx; if(!ctx) return;
-    const t=ctx.currentTime;
-    const step=_beatStep%8;
-    // بیس در ضرب‌های اصلی
-    if(step%2===0){
-      const bassNote=_curBeat.bass[(step/2)%_curBeat.bass.length];
-      const o=ctx.createOscillator(), g=ctx.createGain();
-      o.type='triangle'; o.frequency.value=bassNote;
-      g.gain.setValueAtTime(0.22,t); g.gain.exponentialRampToValueAtTime(0.01,t+0.18);
-      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+0.2);
-    }
-    // های‌هت (نویز کوتاه) در ضرب‌های فرعی
-    if(_curBeat.hat && step%2===1){
-      const o=ctx.createOscillator(), g=ctx.createGain();
-      o.type='square'; o.frequency.value=8000;
-      g.gain.setValueAtTime(0.04,t); g.gain.exponentialRampToValueAtTime(0.005,t+0.04);
-      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+0.05);
-    }
-    // ضرب قوی (کیک) در شروع هر میزان
-    if(step===0){
-      const o=ctx.createOscillator(), g=ctx.createGain();
-      o.type='sine'; o.frequency.setValueAtTime(150,t); o.frequency.exponentialRampToValueAtTime(50,t+0.12);
-      g.gain.setValueAtTime(0.3,t); g.gain.exponentialRampToValueAtTime(0.01,t+0.15);
-      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+0.16);
-    }
-    _beatStep++;
-  }, interval);
+  const interval=60000/_curTrack.bpm/4; // شانزدهم
+  _wkBeatTimer=setInterval(()=>{ const ctx=_wkAudioCtx; if(!ctx) return; const t=ctx.currentTime+0.02; try{ _curTrack.step(_beatStep%16,t); }catch(e){} _beatStep++; }, interval);
 }
 function wkStopBeat(){ if(_wkBeatTimer){ clearInterval(_wkBeatTimer); _wkBeatTimer=null; } }
 function wkToggleMusic(){ _wkMusic=!_wkMusic; const b=document.getElementById('wkMusicBtn'); if(b) b.textContent=_wkMusic?'🎵':'🎵̶'; if(!_wkMusic) wkStopBeat(); else if(_wkRunning&&_wkPhase==='work') wkStartBeat(); }
+// انتخابگر آهنگ
+function openWkTrack(){ renderWkTrackOpts(); const o=document.getElementById('wkTrackOverlay'); if(o) o.classList.add('show'); }
+function closeWkTrack(){ const o=document.getElementById('wkTrackOverlay'); if(o) o.classList.remove('show'); }
+function renderWkTrackOpts(){
+  const box=document.getElementById('wkTrackOpts'); if(!box) return; const cur=getWkTrack();
+  const grp=(mood,title)=>{ let s=`<div class="wktr-grp">${title}</div><div class="wktr-grid">`; WK_TRACKS.filter(x=>x.mood===mood).forEach(x=>{ s+=`<button class="wktr-item${cur===x.id?' on':''}" onclick="setWkTrack('${x.id}')"><span class="wktr-emo">${x.emoji}</span>${x.name}</button>`; }); return s+`</div>`; };
+  box.innerHTML=grp('e','🔥 پرانرژی (برای تمرین‌های تند)')+grp('c','🌿 آرامش‌بخش (برای کشش و تنفس)');
+}
+// رفع قطع صدا بعد از قفل/آنلاک/مکث: با هر لمس یا برگشت به صفحه، AudioContext را از suspended درمی‌آوریم
+function wkAudioResume(){ try{ if(_wkAudioCtx&&_wkAudioCtx.state==='suspended') _wkAudioCtx.resume(); }catch(e){} }
+document.addEventListener('pointerdown',()=>{ if(_wkRunning) wkAudioResume(); }, true);
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&_wkRunning){ wkAudioResume(); if(_wkMusic&&_wkSound&&_wkTimer&&_wkPhase==='work'&&!_wkBeatTimer) wkStartBeat(); } });
 // --- پارس تعداد ست و زمان از متن ---
 function faToEnDigits(s){
   return String(s).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
@@ -5822,7 +5837,8 @@ function renderExWorkout(){
   for(const g in EX_LIBRARY){ h+=`<optgroup label="${EX_LIBRARY[g].cat}">`; EX_LIBRARY[g].items.forEach(ex=>{ h+=`<option value="${ex.id}">${ex.name}</option>`; }); h+=`</optgroup>`; }
   h+=`</select> <button class="quick-btn" style="flex:0 0 auto;font-size:13px;padding:9px 14px" onclick="uiDing();wkAdd()">افزودن</button>
     <button id="wkSoundBtn" class="quick-btn" style="flex:0 0 auto;font-size:15px;padding:9px 11px" onclick="wkToggleSound()" title="صدای راهنما">${_wkSound?'🔊':'🔇'}</button>
-    <button id="wkMusicBtn" class="quick-btn" style="flex:0 0 auto;font-size:15px;padding:9px 11px" onclick="wkToggleMusic()" title="بیت ورزشی">${_wkMusic?'🎵':'🎵̶'}</button></div>`;
+    <button id="wkMusicBtn" class="quick-btn" style="flex:0 0 auto;font-size:15px;padding:9px 11px" onclick="wkToggleMusic()" title="روشن/خاموش موزیک">${_wkMusic?'🎵':'🎵̶'}</button>
+    <button id="wkTrackBtn" class="quick-btn" style="flex:0 0 auto;font-size:15px;padding:9px 11px" onclick="openWkTrack()" title="انتخاب آهنگ">${(WK_TRACKS.find(x=>x.id===getWkTrack())||{emoji:'🎶'}).emoji}</button></div>`;
   h+=`<div style="margin-top:10px;font-size:13px;color:var(--muted)">یا یک برنامه‌ی آماده:</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">`;
   for(const pk in EX_PLANS){ h+=`<button class="quick-btn" style="font-size:12px;padding:8px 12px;flex:0 0 auto" onclick="uiDing();wkLoadPlan('${pk}')">${EX_PLANS[pk].icon} ${EX_PLANS[pk].fa}</button>`; }
   h+=`</div><div id="wkList" style="margin-top:12px"></div>`;
