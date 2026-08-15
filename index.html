@@ -519,8 +519,10 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .jcal-title select{display:inline-block;width:auto;padding:6px 8px;font-size:14px;margin:0 3px;background:var(--field)}
 .jcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .jcal-dow{text-align:center;font-size:11px;color:var(--muted);font-weight:700;padding:4px 0}
-.jcal-day{text-align:center;padding:9px 0;border-radius:9px;cursor:pointer;font-size:14.5px;background:var(--field);border:1px solid transparent}
+.jcal-day{position:relative;text-align:center;padding:9px 0 11px;border-radius:9px;cursor:pointer;font-size:14.5px;background:var(--field);border:1px solid transparent}
 .jcal-day:active{background:var(--teal-dim)}
+.jcal-dot{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--teal)}
+.jcal-day.selected .jcal-dot{background:#fff}
 .jcal-day.today{border-color:var(--teal);color:var(--teal);font-weight:800}
 .jcal-day.selected{background:var(--teal);color:#fff;font-weight:800}
 .jcal-day.empty{background:transparent;cursor:default}
@@ -1465,7 +1467,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۹.۸</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۹.۹</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2254,15 +2256,16 @@ function jFirstDow(jy,jm){
   const g=j2g(jy,jm,1); const dt=new Date(g[0],g[1]-1,g[2]);
   return (dt.getDay()+1)%7; // یک‌شنبه(0)->1 ... شنبه(6)->0
 }
-let _jcalState={inputId:null, jy:0, jm:0, jd:0, onPick:null};
+let _jcalState={inputId:null, jy:0, jm:0, jd:0, onPick:null, dotFn:null};
 // باز کردن تقویم برای یک input. اگر مقدار فعلی input معتبر باشد همان نمایش داده می‌شود، وگرنه امروز.
-function openJCal(inputId,onPick){
+// dotFn(jy,jm,jd)->bool اختیاری: روزهای دارای داده یک نقطه می‌گیرند.
+function openJCal(inputId,onPick,dotFn){
   const inp=document.getElementById(inputId);
   let jy,jm,jd;
   const parsed = inp ? parseJDate(inp.value) : null;
   if(parsed){ [jy,jm,jd]=parsed; }
   else{ const t=new Date(); const j=g2j(t.getFullYear(),t.getMonth()+1,t.getDate()); jy=j[0];jm=j[1];jd=j[2]; }
-  _jcalState={inputId, jy, jm, jd, onPick:onPick||null};
+  _jcalState={inputId, jy, jm, jd, onPick:onPick||null, dotFn:dotFn||null};
   renderJCal();
 }
 // خواندن رشته‌ی «yyyy/mm/dd» با ارقام فارسی یا انگلیسی
@@ -2291,7 +2294,8 @@ function renderJCal(){
   for(let d=1;d<=len;d++){
     const isToday=(jy===tj[0]&&jm===tj[1]&&d===tj[2]);
     const isSel=(d===jd);
-    cells+=`<div class="jcal-day${isToday?' today':''}${isSel?' selected':''}" onclick="pickJCalDay(${d})">${faDigits(d)}</div>`;
+    let dot=''; try{ if(_jcalState.dotFn && _jcalState.dotFn(jy,jm,d)) dot='<span class="jcal-dot"></span>'; }catch(e){}
+    cells+=`<div class="jcal-day${isToday?' today':''}${isSel?' selected':''}" onclick="pickJCalDay(${d})">${faDigits(d)}${dot}</div>`;
   }
   let monthOpts=''; for(let i=1;i<=12;i++) monthOpts+=`<option value="${i}"${i===jm?' selected':''}>${J_MONTHS[i-1]}</option>`;
   let yearOpts=''; for(let y=jy-3;y<=jy+3;y++) yearOpts+=`<option value="${y}"${y===jy?' selected':''}>${faDigits(y)}</option>`;
@@ -2446,13 +2450,29 @@ function renderDashboard(){
 let _dailyDate=new Date(); _dailyDate.setHours(0,0,0,0);
 function dailyNav(delta){ _dailyDate.setDate(_dailyDate.getDate()+delta); renderDailyReport(); }
 function dailyToday(){ _dailyDate=new Date(); _dailyDate.setHours(0,0,0,0); renderDailyReport(); }
+// مجموعه‌ی روزهایی که هر نوع داده‌ای دارند (برای نقطه‌ی تقویم)
+function dailyDataDaySet(){
+  const set=new Set();
+  const add=iso=>{ try{ const d=new Date(iso); if(!isNaN(d.getTime())) set.add(dayKey(d)); }catch(e){} };
+  try{ for(const k in planData){ if(k==='_basal') continue; if(Array.isArray(planData[k])&&planData[k].length) set.add(k); } const bz=planData._basal||{}; for(const k in bz) set.add(k); }catch(e){}
+  try{ loadBG().forEach(x=>{ if(x.iso) add(x.iso); }); }catch(e){}
+  const jl=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'[]'); }catch(e){ return []; } };
+  jl('med_log_v1').forEach(x=>x.iso&&add(x.iso));
+  jl('mood_log_v1').forEach(x=>x.iso&&add(x.iso));
+  jl('sleep_log_v1').forEach(x=>{ const pj=parseJDate(x.date); if(pj){ const g=j2g(pj[0],pj[1],pj[2]); set.add(dayKey(new Date(g[0],g[1]-1,g[2]))); } });
+  try{ (loadExLog().entries||[]).forEach(x=>{ if(x.ts) set.add(dayKey(new Date(x.ts))); }); }catch(e){}
+  try{ loadExercise().forEach(x=>x.iso&&add(x.iso)); }catch(e){}
+  try{ (window._cgmReadings||[]).forEach(r=>{ if(r.t&&r.t.dateObj) set.add(dayKey(r.t.dateObj)); }); }catch(e){}
+  return set;
+}
 // باز کردن تقویم شمسی برای انتخاب روزِ گزارش روزانه
 function openDailyCal(){
   const j=g2j(_dailyDate.getFullYear(),_dailyDate.getMonth()+1,_dailyDate.getDate());
   let inp=document.getElementById('dailyDateInput');
   if(!inp){ inp=document.createElement('input'); inp.type='hidden'; inp.id='dailyDateInput'; document.body.appendChild(inp); }
   inp.value=jDateStr(j[0],j[1],j[2]);
-  openJCal('dailyDateInput', onDailyDatePick);
+  const days=dailyDataDaySet();
+  openJCal('dailyDateInput', onDailyDatePick, (jy,jm,jd)=>{ const g=j2g(jy,jm,jd); return days.has(dayKey(new Date(g[0],g[1]-1,g[2]))); });
 }
 function onDailyDatePick(str){
   const pj=parseJDate(str); if(!pj) return;
@@ -2492,8 +2512,10 @@ function renderDailyReport(){
   let cgmDay=null, sparkPts=[];
   if(window._cgmReadings&&window._cgmReadings.length){
     const dayR=window._cgmReadings.filter(r=>r.t&&r.t.dateObj&&dayKey(r.t.dateObj)===key).sort((a,b)=>a.t.dateObj-b.t.dateObj);
-    if(dayR.length){ const rs=dayR.map(r=>r.glu); const avg=rs.reduce((a,b)=>a+b,0)/rs.length; const inr=rs.filter(g=>g>=70&&g<=180).length;
-      cgmDay={avg,min:Math.min(...rs),max:Math.max(...rs),tir:Math.round(inr/rs.length*100)};
+    if(dayR.length){ const rs=dayR.map(r=>r.glu); const N=rs.length; const avg=rs.reduce((a,b)=>a+b,0)/N;
+      const pc=f=>rs.filter(f).length/N*100;
+      cgmDay={avg,min:Math.min(...rs),max:Math.max(...rs),tir:Math.round(pc(g=>g>=70&&g<=180)),
+        vlo:pc(g=>g<54), lo:pc(g=>g>=54&&g<70), inr:pc(g=>g>=70&&g<=180), hi:pc(g=>g>180&&g<=250), vhi:pc(g=>g>250)};
       sparkPts=dayR.map(r=>({m:hourMin(r.t.dateObj), g:r.glu})); }
   }
   const hasAny = ev.length||cgmDay||sleepRec;
@@ -2519,6 +2541,9 @@ function renderDailyReport(){
     if(sparkPts.length>=2){
       h+=`<div class="dspark-card">${daySparkSVG(sparkPts)}<div class="dspark-hours"><span>۰</span><span>۶</span><span>۱۲</span><span>۱۸</span><span>۲۴</span></div><div class="dspark-lgnd"><span><i style="background:rgba(111,211,154,.5)"></i>محدوده‌ی هدف ۷۰–۱۸۰</span></div></div>`;
     }
+    // نوار محدوده‌ی این روز
+    const dseg=[[cgmDay.vlo,'#7d2d2d'],[cgmDay.lo,'#e0685f'],[cgmDay.inr,'#6fd39a'],[cgmDay.hi,'#e0a355'],[cgmDay.vhi,'#b5622a']];
+    h+=`<div class="ov-tirbar" style="margin-top:10px">`+dseg.map(a=>a[0]>0.4?`<div class="ovt-seg" style="width:${a[0]}%;background:${a[1]}"></div>`:'').join('')+`</div>`;
     h+=`<div class="dash-tiles" style="margin-top:10px">
       <div class="dash-tile"><div class="dt-v" style="color:${cgmDay.tir>=70?'#6fd39a':'#e0a355'}">${faDigits(cgmDay.tir)}٪</div><div class="dt-l">در محدوده</div></div>
       <div class="dash-tile"><div class="dt-v" style="color:#5fd3bd">${faDigits(Math.round(cgmDay.avg))}</div><div class="dt-l">میانگین</div></div>
