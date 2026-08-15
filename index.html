@@ -137,23 +137,38 @@ body.nav-bottom{padding-bottom:100px}
 .dash-scard .ds-ic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px}
 .dash-note{margin-top:18px;font-size:11.5px;color:var(--amber);line-height:1.85;background:var(--panel);border:1px dashed var(--line);border-radius:12px;padding:13px}
 /* گزارش روزانه */
+.daily-navcard{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:16px}
 .daily-nav{display:flex;align-items:center;gap:8px}
-.daily-nav .dn-arrow{flex:0 0 auto;background:var(--panel-2);border:1px solid var(--line);color:var(--teal);border-radius:11px;padding:11px 13px;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
-.daily-nav .dn-arrow:disabled{color:#455; cursor:default}
+.daily-nav .dn-arrow{flex:0 0 auto;background:var(--field);border:1px solid var(--line);color:var(--teal);border-radius:11px;padding:11px 14px;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
+.daily-nav .dn-arrow:disabled{color:#3a4a5c;cursor:default}
 .daily-nav .dn-date{flex:1;text-align:center}
-.daily-nav .dn-day{font-size:13px;font-weight:800}
-.daily-nav .dn-full{font-size:12px;color:var(--muted);direction:rtl;margin-top:2px}
+.daily-nav .dn-day{font-size:14px;font-weight:800}
+.daily-nav .dn-full{font-size:12.5px;color:var(--muted);direction:ltr;margin-top:2px}
 .dn-today{width:100%;margin-top:12px;background:var(--teal-dim);border:none;color:#eafff8;border-radius:11px;padding:11px;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
+.daily-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.daily-chip{display:flex;align-items:center;gap:6px;background:var(--panel-2);border:1px solid var(--line);border-radius:20px;padding:7px 13px;font-size:11.5px}
+.daily-chip .dc-ico{font-size:14px}
+.daily-chip .dc-l{color:var(--muted)}
+.daily-chip .dc-v{color:var(--teal);font-weight:800;direction:rtl}
+.dspark-card{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:14px 14px 11px}
+.dspark{width:100%;height:78px;display:block}
+.dspark-hours{display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);direction:ltr;margin-top:5px;padding:0 1px}
+.dspark-lgnd{font-size:10px;color:var(--muted);margin-top:8px;display:flex;align-items:center;gap:6px}
+.dspark-lgnd i{display:inline-block;width:14px;height:9px;border-radius:2px;vertical-align:middle}
 .daily-sleep{margin-top:12px;font-size:12.5px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .daily-sleep b{color:var(--blue)}
-.daily-empty{font-size:12.5px;color:var(--muted);background:var(--field);border:1px dashed var(--line);border-radius:12px;padding:16px;line-height:1.8;text-align:center}
-.daily-tl{position:relative}
-.dtl-item{display:flex;align-items:flex-start;gap:11px;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:12px;margin-bottom:8px}
-.dtl-time{flex:0 0 auto;width:42px;text-align:center;font-size:12px;font-weight:800;color:var(--teal);direction:ltr;padding-top:8px}
-.dtl-ico{flex:0 0 auto;width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px}
-.dtl-body{flex:1;min-width:0}
+.daily-empty{font-size:12.5px;color:var(--muted);background:var(--field);border:1px dashed var(--line);border-radius:12px;padding:18px;line-height:1.9;text-align:center}
+.daily-tl{position:relative;margin-top:2px}
+.dtl-item{display:flex;gap:12px}
+.dtl-rail{position:relative;flex:0 0 auto;width:38px;display:flex;justify-content:center}
+.dtl-rail::before{content:'';position:absolute;top:4px;bottom:-6px;left:calc(50% - 1px);width:2px;background:var(--line)}
+.dtl-item:last-child .dtl-rail::before{display:none}
+.dtl-ico{position:relative;z-index:1;width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid var(--bg)}
+.dtl-card{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:11px 13px;margin-bottom:12px}
+.dtl-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .dtl-title{font-size:13.5px;font-weight:800;line-height:1.4}
-.dtl-detail{font-size:11.5px;color:var(--muted);line-height:1.7;margin-top:2px}
+.dtl-time{flex:0 0 auto;font-size:11.5px;font-weight:700;color:var(--teal);direction:ltr;background:var(--field);border-radius:14px;padding:2px 9px}
+.dtl-detail{font-size:11.5px;color:var(--muted);line-height:1.75;margin-top:4px}
 /* گزارش کلی */
 .ov-link{width:100%;margin-top:10px;background:var(--panel-2);border:1px solid var(--teal-dim);color:var(--teal);border-radius:12px;padding:13px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s}
 .ov-link:hover{background:var(--teal-dim);color:#eafff8}
@@ -1411,7 +1426,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۹.۲</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۹.۳</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2401,7 +2416,7 @@ function renderDailyReport(){
   const hourMin=d=>d.getHours()*60+d.getMinutes();
   const fmtHM=d=>faDigits(String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'));
   const smFromT=t=>{ if(!t) return 0; const p=String(t).split(':'); return (parseInt(p[0],10)||0)*60+(parseInt(p[1],10)||0); };
-  let ev=[];
+  let ev=[]; let totalCarb=0, totalBolus=0, basalDose=0, bgCount=0;
   try{ (planData[key]||[]).forEach(m=>{
     let det=[];
     if(m.foods&&m.foods.length) det.push(m.foods.map(f=>f.name||f).join('، '));
@@ -2409,10 +2424,11 @@ function renderDailyReport(){
     if(m.insDose) det.push('انسولین '+faDigits(m.insDose)+' واحد');
     if(m.bgBefore) det.push('قند قبل '+faDigits(m.bgBefore));
     if(m.bgAfter) det.push('بعد '+faDigits(m.bgAfter));
+    totalCarb+=(+m.carb||0); totalBolus+=(+m.insDose||0);
     ev.push({sm:smFromT(m.time), time:m.time?faDigits(m.time):'', ico:'🍽️', color:'#e9b877', title:m.type||'وعده', detail:det.join(' · ')});
   }); }catch(e){}
-  try{ const bz=(planData._basal||{})[key]; if(bz){ ev.push({sm:bz.time?smFromT(bz.time):1440, time:bz.time?faDigits(bz.time):'', ico:'💉', color:'#5fd3bd', title:'انسولین پایه', detail:(bz.type?bz.type+' · ':'')+faDigits(bz.dose)+' واحد'}); } }catch(e){}
-  try{ loadBG().forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🩸', color:'#f0a29b', title:'قند خون', detail:faDigits(x.glu)+' mg/dL'}); } }); }catch(e){}
+  try{ const bz=(planData._basal||{})[key]; if(bz){ basalDose=(+bz.dose||0); ev.push({sm:bz.time?smFromT(bz.time):1440, time:bz.time?faDigits(bz.time):'', ico:'💉', color:'#5fd3bd', title:'انسولین پایه', detail:(bz.type?bz.type+' · ':'')+faDigits(bz.dose)+' واحد'}); } }catch(e){}
+  try{ loadBG().forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); bgCount++; ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🩸', color:'#f0a29b', title:'قند خون', detail:faDigits(x.glu)+' mg/dL'}); } }); }catch(e){}
   const jlog=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'[]'); }catch(e){ return []; } };
   jlog('med_log_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'💊', color:'#c3b4f0', title:'دارو', detail:x.name+(x.dose?' · '+x.dose:'')}); } });
   jlog('mood_log_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🙂', color:'#e9b877', title:'حالت روحی', detail:x.mood+(x.note?' · '+x.note:'')}); } });
@@ -2420,37 +2436,71 @@ function renderDailyReport(){
   try{ loadExercise().forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🏃', color:'#9fc0f0', title:'ورزش', detail:(x.what||'')+(x.dur?' · '+faDigits(x.dur)+' دقیقه':'')}); } }); }catch(e){}
   let sleepRec=null; jlog('sleep_log_v1').forEach(x=>{ const sd=parseJDate(x.date); if(sd&&sd[0]===j[0]&&sd[1]===j[1]&&sd[2]===j[2]) sleepRec=x; });
   ev.sort((a,b)=>a.sm-b.sm);
-  let cgmDay=null;
+  let cgmDay=null, sparkPts=[];
   if(window._cgmReadings&&window._cgmReadings.length){
-    const rs=window._cgmReadings.filter(r=>r.t&&r.t.dateObj&&dayKey(r.t.dateObj)===key).map(r=>r.glu);
-    if(rs.length){ const avg=rs.reduce((a,b)=>a+b,0)/rs.length; const inr=rs.filter(g=>g>=70&&g<=180).length; cgmDay={avg,min:Math.min(...rs),max:Math.max(...rs),tir:Math.round(inr/rs.length*100)}; }
+    const dayR=window._cgmReadings.filter(r=>r.t&&r.t.dateObj&&dayKey(r.t.dateObj)===key).sort((a,b)=>a.t.dateObj-b.t.dateObj);
+    if(dayR.length){ const rs=dayR.map(r=>r.glu); const avg=rs.reduce((a,b)=>a+b,0)/rs.length; const inr=rs.filter(g=>g>=70&&g<=180).length;
+      cgmDay={avg,min:Math.min(...rs),max:Math.max(...rs),tir:Math.round(inr/rs.length*100)};
+      sparkPts=dayR.map(r=>({m:hourMin(r.t.dateObj), g:r.glu})); }
   }
-  let h=`<div class="card"><div class="daily-nav">
+  const hasAny = ev.length||cgmDay||sleepRec;
+  let h=`<div class="daily-navcard"><div class="daily-nav">
     <button onclick="dailyNav(-1)" class="dn-arrow">‹ قبل</button>
-    <div class="dn-date"><div class="dn-day">${dayName}${isToday?' · امروز':''}</div><div class="dn-full">${faDigits(jDateStr(j[0],j[1],j[2]))}</div></div>
+    <div class="dn-date"><div class="dn-day">${dayName}${isToday?' · <span style="color:var(--teal)">امروز</span>':''}</div><div class="dn-full">${faDigits(jDateStr(j[0],j[1],j[2]))}</div></div>
     <button onclick="dailyNav(1)" class="dn-arrow"${isToday?' disabled':''}>بعد ›</button>
   </div>${isToday?'':`<button class="dn-today" onclick="dailyToday()">↩︎ برو به امروز</button>`}</div>`;
+  // نوار خلاصه‌ی روز
+  const chips=[];
+  if(totalCarb>0) chips.push(['🍞','کربوهیدرات', faDigits(Math.round(totalCarb))+' گرم']);
+  if(totalBolus+basalDose>0) chips.push(['💉','انسولین کل', faDigits(Math.round((totalBolus+basalDose)*10)/10)+' واحد']);
+  if(cgmDay) chips.push(['📈','میانگین قند', faDigits(Math.round(cgmDay.avg))]);
+  if(bgCount>0) chips.push(['🩸','قند دستی', faDigits(bgCount)+' بار']);
+  if(sleepRec) chips.push(['😴','خواب', faDigits(sleepRec.hours)+' ساعت']);
+  if(chips.length){ h+=`<div class="daily-chips">`+chips.map(c=>`<div class="daily-chip"><span class="dc-ico">${c[0]}</span><span class="dc-l">${c[1]}</span><b class="dc-v">${c[2]}</b></div>`).join('')+`</div>`; }
+  // نمودار قند روز
   if(cgmDay){
-    h+=`<div class="dash-sec-t">📈 قند این روز</div><div class="dash-tiles">
+    h+=`<div class="dash-sec-t">📈 قند این روز</div>`;
+    if(sparkPts.length>=2){
+      h+=`<div class="dspark-card">${daySparkSVG(sparkPts)}<div class="dspark-hours"><span>۰</span><span>۶</span><span>۱۲</span><span>۱۸</span><span>۲۴</span></div><div class="dspark-lgnd"><span><i style="background:rgba(111,211,154,.5)"></i>محدوده‌ی هدف ۷۰–۱۸۰</span></div></div>`;
+    }
+    h+=`<div class="dash-tiles" style="margin-top:10px">
       <div class="dash-tile"><div class="dt-v" style="color:${cgmDay.tir>=70?'#6fd39a':'#e0a355'}">${faDigits(cgmDay.tir)}٪</div><div class="dt-l">در محدوده</div></div>
       <div class="dash-tile"><div class="dt-v" style="color:#5fd3bd">${faDigits(Math.round(cgmDay.avg))}</div><div class="dt-l">میانگین</div></div>
       <div class="dash-tile"><div class="dt-v" style="color:#9fc0f0">${faDigits(Math.round(cgmDay.min))}</div><div class="dt-l">کمترین</div></div>
       <div class="dash-tile"><div class="dt-v" style="color:#f0a29b">${faDigits(Math.round(cgmDay.max))}</div><div class="dt-l">بیشترین</div></div>
     </div>`;
   }
-  if(sleepRec){ h+=`<div class="daily-sleep">😴 خواب این شب: <b>${faDigits(sleepRec.hours)} ساعت</b>${sleepRec.quality?' · '+sleepRec.quality:''}</div>`; }
-  h+=`<div class="dash-sec-t">🕒 رویدادهای روز</div>`;
-  if(!ev.length){ h+=`<div class="daily-empty">برای این روز رویدادی ثبت نشده. از دکمه‌ی ＋ می‌توانی اضافه کنی.</div>`; }
+  // تایم‌لاین
+  h+=`<div class="dash-sec-t">🕒 رویدادهای روز ${ev.length?`<span class="dash-sec-s">(${faDigits(ev.length)} مورد)</span>`:''}</div>`;
+  if(!ev.length){ h+=`<div class="daily-empty">${hasAny?'رویداد زمان‌داری برای این روز نیست.':'برای این روز چیزی ثبت نشده. از دکمه‌ی ＋ می‌توانی وعده، قند، انسولین، دارو، خواب یا حالت روحی اضافه کنی.'}</div>`; }
   else{
     h+=`<div class="daily-tl">`;
     ev.forEach(e=>{ h+=`<div class="dtl-item">
-      <div class="dtl-time">${e.time||'—'}</div>
-      <div class="dtl-ico" style="background:${e.color}22">${e.ico}</div>
-      <div class="dtl-body"><div class="dtl-title">${e.title}</div>${e.detail?`<div class="dtl-detail">${e.detail}</div>`:''}</div>
+      <div class="dtl-rail"><div class="dtl-ico" style="background:${e.color}22">${e.ico}</div></div>
+      <div class="dtl-card">
+        <div class="dtl-head"><span class="dtl-title">${e.title}</span>${e.time?`<span class="dtl-time">${e.time}</span>`:''}</div>
+        ${e.detail?`<div class="dtl-detail">${e.detail}</div>`:''}
+      </div>
     </div>`; });
     h+=`</div>`;
   }
   box.innerHTML=h;
+}
+// نمودار کوچک قند شبانه‌روز
+function daySparkSVG(pts){
+  const W=320,H=78,PT=6,PB=6;
+  const gMax=Math.max(240, Math.ceil(Math.max.apply(null,pts.map(p=>p.g))/20)*20), gMin=40;
+  const x=m=>(m/1440)*W;
+  const y=g=>{ const c=Math.max(gMin,Math.min(gMax,g)); return PT+(1-(c-gMin)/(gMax-gMin))*(H-PT-PB); };
+  const yLo=y(70), yHi=y(180);
+  const poly=pts.map(p=>x(p.m).toFixed(1)+','+y(p.g).toFixed(1)).join(' ');
+  let s=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" class="dspark">`;
+  s+=`<rect x="0" y="${yHi.toFixed(1)}" width="${W}" height="${(yLo-yHi).toFixed(1)}" fill="rgba(111,211,154,.13)"/>`;
+  s+=`<line x1="0" y1="${yHi.toFixed(1)}" x2="${W}" y2="${yHi.toFixed(1)}" stroke="rgba(111,211,154,.4)" stroke-width="1" stroke-dasharray="4 4"/>`;
+  s+=`<line x1="0" y1="${yLo.toFixed(1)}" x2="${W}" y2="${yLo.toFixed(1)}" stroke="rgba(159,192,240,.4)" stroke-width="1" stroke-dasharray="4 4"/>`;
+  [6,12,18].forEach(hh=>{ const gx=x(hh*60).toFixed(1); s+=`<line x1="${gx}" y1="0" x2="${gx}" y2="${H}" stroke="rgba(255,255,255,.05)" stroke-width="1"/>`; });
+  s+=`<polyline points="${poly}" fill="none" stroke="#5fd3bd" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+  return s;
 }
 /* ====== گزارش کلی ====== */
 function renderOverview(){
