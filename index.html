@@ -176,6 +176,32 @@ body.nav-bottom{padding-bottom:100px}
 .ov-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--muted)}
 .ov-row:last-child{border-bottom:none}
 .ov-row b{color:var(--ink);font-size:13.5px}
+.ov-hero{text-align:center;background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:12px}
+.ovh-big{font-size:48px;font-weight:800;line-height:1;direction:ltr}
+.ovh-big .ovh-pct{font-size:22px;font-weight:700}
+.ovh-sub{font-size:12px;color:var(--muted);margin-top:6px}
+.ovh-span{font-size:11px;color:var(--muted);margin-top:8px;background:var(--field);border-radius:20px;padding:4px 12px;display:inline-block;direction:rtl}
+.ov-tirbar{display:flex;direction:ltr;height:20px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--field)}
+.ov-tirbar .ovt-seg{height:100%}
+.ov-tir-legend{margin-top:10px;background:var(--panel-2);border:1px solid var(--line);border-radius:13px;padding:4px 13px}
+.ovt-lg{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);font-size:12px}
+.ovt-lg:last-child{border-bottom:none}
+.ovt-lg .ovt-dot{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
+.ovt-lg .ovt-name{color:var(--ink);font-weight:700}
+.ovt-lg .ovt-rng{color:var(--muted);font-size:10.5px;direction:ltr;flex:1}
+.ovt-lg .ovt-pct{font-size:13.5px;font-weight:800}
+.ov-trend{display:flex;align-items:flex-end;gap:6px;background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:14px 12px 10px;height:150px}
+.ovt-col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;gap:5px;min-width:0}
+.ovt-cval{font-size:10px;font-weight:800;color:var(--ink);direction:ltr}
+.ovt-track{width:100%;max-width:26px;flex:1;display:flex;align-items:flex-end;background:var(--field);border-radius:6px;overflow:hidden}
+.ovt-fill{width:100%;border-radius:6px 6px 0 0;min-height:4px;transition:height .3s}
+.ovt-clbl{font-size:10px;color:var(--muted);direction:ltr}
+.ov-trend-note{font-size:10.5px;color:var(--muted);margin-top:8px;line-height:1.7}
+.ov-a1c{display:flex;align-items:center;gap:14px;background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:10px}
+.ov-a1c .ova-v{font-size:38px;font-weight:800;line-height:1;direction:ltr}
+.ov-a1c .ova-v span{font-size:18px}
+.ov-a1c .ova-l{font-size:12.5px;color:var(--ink);font-weight:700;line-height:1.5}
+.ov-a1c .ova-l span{color:var(--muted);font-size:11px;font-weight:600;direction:ltr}
 /* توست کوتاه */
 .ui-toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);z-index:130;background:var(--teal-dim);color:#eafff8;border:1px solid var(--teal);border-radius:12px;padding:11px 18px;font-size:13px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none}
 .ui-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -1426,7 +1452,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۹.۳</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۹.۴</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2503,19 +2529,51 @@ function daySparkSVG(pts){
   return s;
 }
 /* ====== گزارش کلی ====== */
+function ovDailyAverages(days){
+  if(!window._cgmReadings||!window._cgmReadings.length) return [];
+  const map={};
+  window._cgmReadings.forEach(r=>{ if(r.t&&r.t.dateObj){ const k=dayKey(r.t.dateObj); (map[k]=map[k]||[]).push(r.glu); } });
+  const keys=Object.keys(map).sort().slice(-days);
+  return keys.map(k=>{ const a=map[k]; const p=k.split('-'); const jd=g2j(+p[0],+p[1],+p[2]);
+    const inr=a.filter(g=>g>=70&&g<=180).length; return {avg:a.reduce((x,y)=>x+y,0)/a.length, tir:Math.round(inr/a.length*100), label:faDigits(jd[2])}; });
+}
 function renderOverview(){
   const box=document.getElementById('overviewReport'); if(!box) return;
   let h='';
   const s=window._cgmStats;
   h+=`<div class="dash-sec-t">📈 کنترل قند <span class="dash-sec-s">(کل داده‌ی CGM)</span></div>`;
   if(s){
-    h+=`<div class="dash-tiles">
-      <div class="dash-tile"><div class="dt-v" style="color:${s.tir>=70?'#6fd39a':'#e0a355'}">${faDigits(Math.round(s.tir))}٪</div><div class="dt-l">در محدوده (TIR)</div></div>
-      <div class="dash-tile"><div class="dt-v" style="color:#5fd3bd">${faDigits(Math.round(s.avg))}</div><div class="dt-l">میانگین</div></div>
-      <div class="dash-tile"><div class="dt-v" style="color:#9fc0f0">${s.gmi!=null?faDigits(s.gmi.toFixed(1))+'٪':'—'}</div><div class="dt-l">A1c تخمینی</div></div>
+    // بازه‌ی داده
+    let spanTxt='', daysData=0;
+    try{ const ds=window._cgmReadings.map(r=>r.t&&r.t.dateObj).filter(Boolean); if(ds.length){ const mn=new Date(Math.min(...ds)),mx=new Date(Math.max(...ds)); daysData=Math.round((mx-mn)/864e5)+1; const jn=g2j(mn.getFullYear(),mn.getMonth()+1,mn.getDate()),jx=g2j(mx.getFullYear(),mx.getMonth()+1,mx.getDate()); spanTxt=`${faDigits(jDateStr(jn[0],jn[1],jn[2]))} تا ${faDigits(jDateStr(jx[0],jx[1],jx[2]))}`; } }catch(e){}
+    // هیرو TIR
+    h+=`<div class="ov-hero">
+      <div class="ovh-big" style="color:${s.tir>=70?'#6fd39a':'#e0a355'}">${faDigits(Math.round(s.tir))}<span class="ovh-pct">٪</span></div>
+      <div class="ovh-sub">زمان در محدوده‌ی هدف (۷۰–۱۸۰)</div>
+      ${daysData?`<div class="ovh-span">${faDigits(daysData)} روز داده · ${spanTxt}</div>`:''}
+    </div>`;
+    // نوار TIR رنگی + لجند
+    const asc=[[s.veryLow,'#7d2d2d'],[Math.max(0,s.tbr-s.veryLow),'#e0685f'],[s.tir,'#6fd39a'],[Math.max(0,s.tar-s.veryHigh),'#e0a355'],[s.veryHigh,'#b5622a']];
+    h+=`<div class="ov-tirbar">`+asc.map(a=>a[0]>0.4?`<div class="ovt-seg" style="width:${a[0]}%;background:${a[1]}"></div>`:'').join('')+`</div>`;
+    const seg=[['خیلی بالا','> ۲۵۰',s.veryHigh,'#b5622a'],['بالا','۱۸۰–۲۵۰',Math.max(0,s.tar-s.veryHigh),'#e0a355'],['در محدوده','۷۰–۱۸۰',s.tir,'#6fd39a'],['پایین','۵۴–۷۰',Math.max(0,s.tbr-s.veryLow),'#e0685f'],['خیلی پایین','< ۵۴',s.veryLow,'#7d2d2d']];
+    h+=`<div class="ov-tir-legend">`+seg.map(g=>`<div class="ovt-lg"><span class="ovt-dot" style="background:${g[3]}"></span><span class="ovt-name">${g[0]}</span><span class="ovt-rng">${g[1]}</span><b class="ovt-pct" style="color:${g[3]==='#6fd39a'?'#6fd39a':'var(--ink)'}">${faDigits(Math.round(g[2]))}٪</b></div>`).join('')+`</div>`;
+    // کاشی‌ها
+    h+=`<div class="dash-tiles" style="margin-top:12px">
+      <div class="dash-tile"><div class="dt-v" style="color:#5fd3bd">${faDigits(Math.round(s.avg))}</div><div class="dt-l">میانگین قند</div></div>
+      <div class="dash-tile"><div class="dt-v" style="color:#9fc0f0">${s.gmi!=null?faDigits(s.gmi.toFixed(1))+'٪':'—'}</div><div class="dt-l">A1c تخمینی (GMI)</div></div>
       <div class="dash-tile"><div class="dt-v" style="color:${s.cv!=null&&s.cv<=36?'#6fd39a':'#e0a355'}">${s.cv!=null?faDigits(Math.round(s.cv))+'٪':'—'}</div><div class="dt-l">نوسان (CV)</div></div>
+      <div class="dash-tile"><div class="dt-v" style="color:#c3b4f0">${faDigits(s.n)}</div><div class="dt-l">تعداد خوانش</div></div>
     </div>
     <button class="ov-link" onclick="switchTab('cgm')">📉 نمودار AGP و تحلیل کامل قند ›</button>`;
+    // روند میانگین روزانه
+    const avgs=ovDailyAverages(10);
+    if(avgs.length>=2){
+      const mxA=Math.max(280, ...avgs.map(a=>a.avg));
+      h+=`<div class="dash-sec-t">📅 روند میانگین قند <span class="dash-sec-s">(${faDigits(avgs.length)} روز اخیر)</span></div><div class="ov-trend">`;
+      avgs.forEach(a=>{ const hp=Math.max(6,Math.round(a.avg/mxA*100)); const col=a.avg<70?'#9fc0f0':a.avg>180?'#e0a355':'#6fd39a';
+        h+=`<div class="ovt-col"><div class="ovt-cval">${faDigits(Math.round(a.avg))}</div><div class="ovt-track"><div class="ovt-fill" style="height:${hp}%;background:${col}"></div></div><div class="ovt-clbl">${a.label}</div></div>`; });
+      h+=`</div><div class="ov-trend-note">رنگ سبز = میانگین در محدوده · زرد = بالا · آبی = پایین</div>`;
+    }
   }else{
     h+=`<div class="daily-empty">هنوز داده‌ی CGM وارد نشده. از دکمه‌ی ＋ → «فایل CGM» واردش کن.</div>`;
   }
@@ -2523,8 +2581,11 @@ function renderOverview(){
   try{ const ld=loadLabs(); const ent=(ld.entries||[]).slice().sort((a,b)=>a.ts-b.ts);
     if(ent.length){ const last=ent[ent.length-1]; const ranges=(ld.ranges||{}); let out=0;
       for(const k in last.vals){ const st=labStatus(k,last.vals[k],ranges); if(st==='high'||st==='low') out++; }
-      h+=`<div class="ov-card">
-        <div class="ov-row"><span>آخرین نتیجه</span><b>${faDigits(last.date)}</b></div>
+      // برجسته‌سازی HbA1c
+      let a1cHtml='';
+      if(last.vals.hba1c!=null){ const st=labStatus('hba1c',last.vals.hba1c,ranges); const col=st==='high'?'#f0a29b':st==='low'?'#9fc0f0':'#6fd39a';
+        a1cHtml=`<div class="ov-a1c"><div class="ova-v" style="color:${col}">${faDigits(last.vals.hba1c)}<span>٪</span></div><div class="ova-l">HbA1c آخرین<br><span>${faDigits(last.date)}</span></div></div>`; }
+      h+=a1cHtml+`<div class="ov-card">
         <div class="ov-row"><span>نوبت‌های ثبت‌شده</span><b>${faDigits(ent.length)}</b></div>
         <div class="ov-row"><span>خارج از محدوده (آخرین)</span><b style="color:${out?'#f0a29b':'#6fd39a'}">${faDigits(out)}</b></div>
       </div>
