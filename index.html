@@ -1495,7 +1495,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۰.۰</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۰.۱</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2407,19 +2407,29 @@ function dashGluStatus(v){
 }
 function renderDashboard(){
   const box=document.getElementById('dashboard'); if(!box) return;
-  // آخرین قند بر اساس منبع انتخاب‌شده
-  const src=effectiveBgSource();
+  // آخرین قند: در حالت خودکار جدیدترین منبع؛ در حالت صریح همان منبع
+  const uSrc=getBgSource();
   const hasAnyGlu = (window._cgmReadings&&window._cgmReadings.length) || loadBG().length>0;
-  let latest=null, source='', trend=null;
-  if(src==='cgm' && window._cgmReadings && window._cgmReadings.length){
+  // کاندید CGM
+  let cgmLatest=null, cgmTrend=null;
+  if(window._cgmReadings && window._cgmReadings.length){
     const sorted=window._cgmReadings.filter(r=>r.t&&r.t.dateObj).sort((a,b)=>a.t.dateObj-b.t.dateObj);
     const n=sorted.length;
-    if(n){ latest={glu:sorted[n-1].glu, date:sorted[n-1].t.dateObj}; source='CGM';
-      if(n>=2 && (sorted[n-1].t.dateObj-sorted[n-2].t.dateObj)<=20*60000){ const d=sorted[n-1].glu-sorted[n-2].glu; trend=d>4?'up':d<-4?'down':'flat'; }
-    }
-  } else if(src==='meter'){
-    try{ const bg=loadBG(); if(bg&&bg.length){ const mb=bg.reduce((a,x)=>(!a||new Date(x.iso)>new Date(a.iso))?x:a,null); if(mb){ latest={glu:mb.glu,date:new Date(mb.iso)}; source='گلوکومتر'; } } }catch(e){}
+    if(n){ cgmLatest={glu:sorted[n-1].glu, date:sorted[n-1].t.dateObj};
+      if(n>=2 && (sorted[n-1].t.dateObj-sorted[n-2].t.dateObj)<=20*60000){ const d=sorted[n-1].glu-sorted[n-2].glu; cgmTrend=d>4?'up':d<-4?'down':'flat'; } }
   }
+  // کاندید گلوکومتر
+  let bgLatest=null;
+  try{ const bg=loadBG(); if(bg&&bg.length){ const mb=bg.reduce((a,x)=>(!a||new Date(x.iso)>new Date(a.iso))?x:a,null); if(mb) bgLatest={glu:mb.glu,date:new Date(mb.iso)}; } }catch(e){}
+  let latest=null, source='', trend=null;
+  if(uSrc==='cgm'){ if(cgmLatest){ latest=cgmLatest; source='CGM'; trend=cgmTrend; } }
+  else if(uSrc==='meter'){ if(bgLatest){ latest=bgLatest; source='گلوکومتر'; } }
+  else { // خودکار: جدیدترین
+    if(cgmLatest && bgLatest){ if(bgLatest.date>cgmLatest.date){ latest=bgLatest; source='گلوکومتر'; } else { latest=cgmLatest; source='CGM'; trend=cgmTrend; } }
+    else if(cgmLatest){ latest=cgmLatest; source='CGM'; trend=cgmTrend; }
+    else if(bgLatest){ latest=bgLatest; source='گلوکومتر'; }
+  }
+  const src=resolveBgSrc((window._cgmReadings&&window._cgmReadings.length>=10), loadBG().length>0);
   let h='';
   if(hasAnyGlu) h+=`<div class="dash-srcrow">${bgSrcChip()}</div>`;
   if(latest){
@@ -2559,7 +2569,7 @@ function renderDailyReport(){
   }
   // قند دستیِ این روز + منبع مؤثر
   let dayBGpts=[]; try{ loadBG().forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ dayBGpts.push({t:new Date(x.iso).getTime(), g:x.glu}); } }); }catch(e){} dayBGpts.sort((a,b)=>a.t-b.t);
-  const daySrc=effectiveBgSource();
+  const daySrc=resolveBgSrc(!!cgmDay, dayBGpts.length>0);
   const dHasGlu=(window._cgmReadings&&window._cgmReadings.length)||loadBG().length>0;
   const hasAny = ev.length||cgmDay||sleepRec;
   let h=`<div class="daily-navcard"><div class="daily-nav">
@@ -2689,9 +2699,11 @@ function ovDailyAverages(readings,maxDays){
 /* ====== منبع نمایش قند: CGM یا گلوکومتر ====== */
 function getBgSource(){ try{ return localStorage.getItem('bg_source')||'auto'; }catch(e){ return 'auto'; } }
 function effectiveBgSource(){ const s=getBgSource(); if(s==='cgm'||s==='meter') return s; if(window._cgmReadings&&window._cgmReadings.length>=10) return 'cgm'; return (loadBG().length?'meter':'cgm'); }
+// تصمیم بر اساس دادهٔ همان زمینه: در حالت خودکار اگر CGM باشد CGM وگرنه گلوکومتر
+function resolveBgSrc(hasCgm,hasMeter){ const s=getBgSource(); if(s==='cgm')return 'cgm'; if(s==='meter')return 'meter'; return hasCgm?'cgm':(hasMeter?'meter':'cgm'); }
 function setBgSource(v){ try{ localStorage.setItem('bg_source',v); }catch(e){} closeBgSrc();
   ['home','overview','daily'].forEach(n=>{ const pg=document.getElementById('page-'+n); if(pg&&pg.classList.contains('active')){ if(n==='home')renderDashboard(); if(n==='overview')renderOverview(); if(n==='daily')renderDailyReport(); } }); }
-function bgSrcChip(){ const eff=effectiveBgSource(); const auto=getBgSource()==='auto'?' · خودکار':''; return `<button class="bgsrc-chip" onclick="openBgSrc()"><span class="bgs-ic">📟</span>منبع قند: <b>${eff==='cgm'?'CGM':'گلوکومتر'}</b><span class="bgs-auto">${auto}</span> <span class="bgs-caret">▾</span></button>`; }
+function bgSrcChip(){ const s=getBgSource(); const lbl=s==='cgm'?'CGM':s==='meter'?'گلوکومتر':'خودکار'; return `<button class="bgsrc-chip" onclick="openBgSrc()"><span class="bgs-ic">📟</span>منبع قند: <b>${lbl}</b> <span class="bgs-caret">▾</span></button>`; }
 function openBgSrc(){ renderBgSrcOpts(); const o=document.getElementById('bgSrcOverlay'); if(o) o.classList.add('show'); }
 function closeBgSrc(){ const o=document.getElementById('bgSrcOverlay'); if(o) o.classList.remove('show'); }
 function renderBgSrcOpts(){
@@ -2757,7 +2769,7 @@ function renderOverview(){
   let h='';
   const hasCgm=!!(window._cgmReadings&&window._cgmReadings.length);
   const hasAnyGlu = hasCgm || loadBG().length>0;
-  const src=effectiveBgSource();
+  const src=resolveBgSrc(ovRangeReadings().length>=10, ovRangeBG().length>0);
   // انتخابگر بازه‌ی روز + منبع قند
   if(hasAnyGlu){
     const opts=[[7,'۷'],[14,'۱۴'],[30,'۳۰'],[90,'۹۰'],['all','همه']];
