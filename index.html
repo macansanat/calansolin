@@ -179,6 +179,24 @@ body.nav-bottom{padding-bottom:100px}
 .ov-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--muted)}
 .ov-row:last-child{border-bottom:none}
 .ov-row b{color:var(--ink);font-size:13.5px}
+/* کلید منبع قند */
+.dash-srcrow{display:flex;justify-content:flex-end;margin-bottom:12px}
+.ov-srcrow{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);display:flex;justify-content:flex-end}
+.bgsrc-chip{display:inline-flex;align-items:center;gap:6px;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:20px;padding:7px 13px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:border-color .15s}
+.bgsrc-chip:hover{border-color:var(--teal)}
+.bgsrc-chip b{color:var(--teal)}
+.bgsrc-chip .bgs-auto{color:var(--muted);font-weight:600;font-size:10.5px}
+.bgsrc-chip .bgs-caret{color:var(--muted);font-size:10px}
+.bgsrc-opt{width:100%;display:flex;align-items:center;gap:10px;text-align:right;background:var(--panel-2);border:1px solid var(--line);border-radius:13px;padding:13px 14px;margin-bottom:9px;font-family:inherit;cursor:pointer;transition:border-color .15s}
+.bgsrc-opt:hover{border-color:var(--teal)}
+.bgsrc-opt.on{border-color:var(--teal);background:var(--teal-dim)}
+.bgsrc-opt .bgo-txt{flex:1;min-width:0}
+.bgsrc-opt .bgo-t{font-size:13.5px;font-weight:800;color:var(--ink)}
+.bgsrc-opt .bgo-eff{font-size:10px;color:var(--teal);font-weight:700;background:var(--field);border-radius:12px;padding:1px 7px;margin-right:4px}
+.bgsrc-opt .bgo-d{font-size:11px;color:var(--muted);line-height:1.7;margin-top:3px}
+.bgsrc-opt.on .bgo-d{color:#cfeee7}
+.bgsrc-opt .bgo-check{flex:0 0 auto;color:var(--teal);font-size:18px;font-weight:800}
+.bgsrc-opt.on .bgo-check{color:#eafff8}
 .ov-rangecard{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:12px 13px;margin-bottom:16px}
 .ov-range-lbl{font-size:11.5px;color:var(--muted);font-weight:700;margin-bottom:9px}
 .ov-range{display:flex;gap:6px}
@@ -760,6 +778,16 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <button class="qa-item" onclick="quickAdd('cgmfile')"><span class="qa-ico" style="background:rgba(63,185,163,.14);color:#5fd3bd">📈</span>فایل CGM</button>
     </div>
     <button class="qa-cancel" onclick="closeQuickAdd()">بستن</button>
+  </div>
+</div>
+
+<!-- منوی منبع نمایش قند -->
+<div class="qa-overlay" id="bgSrcOverlay" onclick="if(event.target===this)closeBgSrc()">
+  <div class="qa-sheet">
+    <div class="qa-grip"></div>
+    <div class="qa-title">منبع نمایش قند</div>
+    <div id="bgSrcOpts"></div>
+    <button class="qa-cancel" style="margin-top:14px" onclick="closeBgSrc()">بستن</button>
   </div>
 </div>
 
@@ -1467,7 +1495,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۹.۹</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۰.۰</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2379,22 +2407,21 @@ function dashGluStatus(v){
 }
 function renderDashboard(){
   const box=document.getElementById('dashboard'); if(!box) return;
-  // آخرین قند: جدیدترین بین CGM و گلوکومتر دستی
+  // آخرین قند بر اساس منبع انتخاب‌شده
+  const src=effectiveBgSource();
+  const hasAnyGlu = (window._cgmReadings&&window._cgmReadings.length) || loadBG().length>0;
   let latest=null, source='', trend=null;
-  if(window._cgmReadings && window._cgmReadings.length){
+  if(src==='cgm' && window._cgmReadings && window._cgmReadings.length){
     const sorted=window._cgmReadings.filter(r=>r.t&&r.t.dateObj).sort((a,b)=>a.t.dateObj-b.t.dateObj);
     const n=sorted.length;
     if(n){ latest={glu:sorted[n-1].glu, date:sorted[n-1].t.dateObj}; source='CGM';
-      if(n>=2 && (sorted[n-1].t.dateObj-sorted[n-2].t.dateObj)<=20*60000){
-        const d=sorted[n-1].glu-sorted[n-2].glu; trend=d>4?'up':d<-4?'down':'flat';
-      }
+      if(n>=2 && (sorted[n-1].t.dateObj-sorted[n-2].t.dateObj)<=20*60000){ const d=sorted[n-1].glu-sorted[n-2].glu; trend=d>4?'up':d<-4?'down':'flat'; }
     }
+  } else if(src==='meter'){
+    try{ const bg=loadBG(); if(bg&&bg.length){ const mb=bg.reduce((a,x)=>(!a||new Date(x.iso)>new Date(a.iso))?x:a,null); if(mb){ latest={glu:mb.glu,date:new Date(mb.iso)}; source='گلوکومتر'; } } }catch(e){}
   }
-  try{ const bg=loadBG(); if(bg&&bg.length){
-    const mb=bg.reduce((a,x)=>(!a||new Date(x.iso)>new Date(a.iso))?x:a,null);
-    if(mb && (!latest || new Date(mb.iso)>latest.date)){ latest={glu:mb.glu,date:new Date(mb.iso)}; source='گلوکومتر'; trend=null; }
-  } }catch(e){}
   let h='';
+  if(hasAnyGlu) h+=`<div class="dash-srcrow">${bgSrcChip()}</div>`;
   if(latest){
     const st=dashGluStatus(latest.glu);
     const arrow=trend==='up'?'↑':trend==='down'?'↓':trend==='flat'?'→':'';
@@ -2411,18 +2438,30 @@ function renderDashboard(){
       <button class="dash-btn" onclick="openQuickBG()">🩸 ثبت قند خون</button>
     </div>`;
   }
-  // کاشی‌های خلاصه‌ی قند
-  const s=window._cgmStats;
-  if(s){
-    const tiles=[
-      ['در محدوده (TIR)', Math.round(s.tir)+'٪', s.tir>=70?'#6fd39a':'#e0a355'],
-      ['میانگین قند', Math.round(s.avg), '#5fd3bd'],
-      ['A1c تخمینی (GMI)', (s.gmi!=null?s.gmi.toFixed(1)+'٪':'—'), '#9fc0f0'],
-      ['نوسان (CV)', (s.cv!=null?Math.round(s.cv)+'٪':'—'), (s.cv!=null&&s.cv<=36)?'#6fd39a':'#e0a355'],
-    ];
-    h+=`<div class="dash-sec-t">📊 خلاصه‌ی قند <span class="dash-sec-s">(کل داده‌ی CGM)</span></div><div class="dash-tiles">`;
-    tiles.forEach(t=>{ h+=`<div class="dash-tile"><div class="dt-v" style="color:${t[2]}">${faDigits(String(t[1]))}</div><div class="dt-l">${t[0]}</div></div>`; });
-    h+=`</div>`;
+  // کاشی‌های خلاصه‌ی قند بر اساس منبع
+  if(src==='cgm'){
+    const s=window._cgmStats;
+    if(s){
+      const tiles=[
+        ['در محدوده (TIR)', Math.round(s.tir)+'٪', s.tir>=70?'#6fd39a':'#e0a355'],
+        ['میانگین قند', Math.round(s.avg), '#5fd3bd'],
+        ['A1c تخمینی (GMI)', (s.gmi!=null?s.gmi.toFixed(1)+'٪':'—'), '#9fc0f0'],
+        ['نوسان (CV)', (s.cv!=null?Math.round(s.cv)+'٪':'—'), (s.cv!=null&&s.cv<=36)?'#6fd39a':'#e0a355'],
+      ];
+      h+=`<div class="dash-sec-t">📊 خلاصه‌ی قند <span class="dash-sec-s">(کل داده‌ی CGM)</span></div><div class="dash-tiles">`;
+      tiles.forEach(t=>{ h+=`<div class="dash-tile"><div class="dt-v" style="color:${t[2]}">${faDigits(String(t[1]))}</div><div class="dt-l">${t[0]}</div></div>`; });
+      h+=`</div>`;
+    }
+  } else if(src==='meter'){
+    const bs=bgStats(loadBG().map(x=>({g:x.glu})));
+    if(bs){
+      h+=`<div class="dash-sec-t">📊 خلاصه‌ی قند <span class="dash-sec-s">(گلوکومتر · همه‌ی اندازه‌گیری‌ها)</span></div><div class="dash-tiles">
+        <div class="dash-tile"><div class="dt-v" style="color:#5fd3bd">${faDigits(Math.round(bs.avg))}</div><div class="dt-l">میانگین قند</div></div>
+        <div class="dash-tile"><div class="dt-v" style="color:#6fd39a">${faDigits(bs.inRange)}<span style="font-size:13px;color:var(--muted)"> از ${faDigits(bs.n)}</span></div><div class="dt-l">در محدوده</div></div>
+        <div class="dash-tile"><div class="dt-v" style="color:#9fc0f0">${faDigits(Math.round(bs.min))}</div><div class="dt-l">کمترین</div></div>
+        <div class="dash-tile"><div class="dt-v" style="color:#f0a29b">${faDigits(Math.round(bs.max))}</div><div class="dt-l">بیشترین</div></div>
+      </div>`;
+    }
   }
   // امروز
   let todayMeals=0, lastIns=null, lastMeal=null;
@@ -2518,6 +2557,10 @@ function renderDailyReport(){
         vlo:pc(g=>g<54), lo:pc(g=>g>=54&&g<70), inr:pc(g=>g>=70&&g<=180), hi:pc(g=>g>180&&g<=250), vhi:pc(g=>g>250)};
       sparkPts=dayR.map(r=>({m:hourMin(r.t.dateObj), g:r.glu})); }
   }
+  // قند دستیِ این روز + منبع مؤثر
+  let dayBGpts=[]; try{ loadBG().forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ dayBGpts.push({t:new Date(x.iso).getTime(), g:x.glu}); } }); }catch(e){} dayBGpts.sort((a,b)=>a.t-b.t);
+  const daySrc=effectiveBgSource();
+  const dHasGlu=(window._cgmReadings&&window._cgmReadings.length)||loadBG().length>0;
   const hasAny = ev.length||cgmDay||sleepRec;
   let h=`<div class="daily-navcard"><div class="daily-nav">
     <button onclick="dailyNav(-1)" class="dn-arrow">‹ قبل</button>
@@ -2527,16 +2570,28 @@ function renderDailyReport(){
     </div>
     <button onclick="dailyNav(1)" class="dn-arrow"${isToday?' disabled':''}>بعد ›</button>
   </div>${isToday?'':`<button class="dn-today" onclick="dailyToday()">↩︎ برو به امروز</button>`}</div>`;
+  if(dHasGlu) h+=`<div class="dash-srcrow" style="margin-top:-4px">${bgSrcChip()}</div>`;
   // نوار خلاصه‌ی روز
   const chips=[];
   if(totalCarb>0) chips.push(['🍞','کربوهیدرات', faDigits(Math.round(totalCarb))+' گرم']);
   if(totalBolus+basalDose>0) chips.push(['💉','انسولین کل', faDigits(Math.round((totalBolus+basalDose)*10)/10)+' واحد']);
   if(cgmDay) chips.push(['📈','میانگین قند', faDigits(Math.round(cgmDay.avg))]);
+  else if(dayBGpts.length) chips.push(['📈','میانگین قند', faDigits(Math.round(dayBGpts.reduce((s,p)=>s+p.g,0)/dayBGpts.length))]);
   if(bgCount>0) chips.push(['🩸','قند دستی', faDigits(bgCount)+' بار']);
   if(sleepRec) chips.push(['😴','خواب', faDigits(sleepRec.hours)+' ساعت']);
   if(chips.length){ h+=`<div class="daily-chips">`+chips.map(c=>`<div class="daily-chip"><span class="dc-ico">${c[0]}</span><span class="dc-l">${c[1]}</span><b class="dc-v">${c[2]}</b></div>`).join('')+`</div>`; }
   // نمودار قند روز
-  if(cgmDay){
+  if(daySrc==='meter' && dayBGpts.length){
+    const dbs=bgStats(dayBGpts);
+    h+=`<div class="dash-sec-t">🩸 قند دستی این روز <span class="dash-sec-s">(${faDigits(dbs.n)} اندازه‌گیری)</span></div>`;
+    h+=`<div class="dspark-card">${bgScatterSVG(dayBGpts)}<div class="dspark-lgnd"><span><i class="agl" style="background:rgba(111,211,154,.5)"></i>محدوده‌ی هدف ۷۰–۱۸۰</span></div></div>`;
+    h+=`<div class="dash-tiles" style="margin-top:10px">
+      <div class="dash-tile"><div class="dt-v" style="color:#5fd3bd">${faDigits(Math.round(dbs.avg))}</div><div class="dt-l">میانگین</div></div>
+      <div class="dash-tile"><div class="dt-v" style="color:#6fd39a">${faDigits(dbs.inRange)}<span style="font-size:13px;color:var(--muted)"> از ${faDigits(dbs.n)}</span></div><div class="dt-l">در محدوده</div></div>
+      <div class="dash-tile"><div class="dt-v" style="color:#9fc0f0">${faDigits(Math.round(dbs.min))}</div><div class="dt-l">کمترین</div></div>
+      <div class="dash-tile"><div class="dt-v" style="color:#f0a29b">${faDigits(Math.round(dbs.max))}</div><div class="dt-l">بیشترین</div></div>
+    </div>`;
+  } else if(cgmDay){
     h+=`<div class="dash-sec-t">📈 قند این روز</div>`;
     if(sparkPts.length>=2){
       h+=`<div class="dspark-card">${daySparkSVG(sparkPts)}<div class="dspark-hours"><span>۰</span><span>۶</span><span>۱۲</span><span>۱۸</span><span>۲۴</span></div><div class="dspark-lgnd"><span><i style="background:rgba(111,211,154,.5)"></i>محدوده‌ی هدف ۷۰–۱۸۰</span></div></div>`;
@@ -2631,16 +2686,86 @@ function ovDailyAverages(readings,maxDays){
   return keys.map(k=>{ const a=map[k]; const p=k.split('-'); const jd=g2j(+p[0],+p[1],+p[2]);
     const inr=a.filter(g=>g>=70&&g<=180).length; return {avg:a.reduce((x,y)=>x+y,0)/a.length, tir:Math.round(inr/a.length*100), label:faDigits(jd[2])}; });
 }
+/* ====== منبع نمایش قند: CGM یا گلوکومتر ====== */
+function getBgSource(){ try{ return localStorage.getItem('bg_source')||'auto'; }catch(e){ return 'auto'; } }
+function effectiveBgSource(){ const s=getBgSource(); if(s==='cgm'||s==='meter') return s; if(window._cgmReadings&&window._cgmReadings.length>=10) return 'cgm'; return (loadBG().length?'meter':'cgm'); }
+function setBgSource(v){ try{ localStorage.setItem('bg_source',v); }catch(e){} closeBgSrc();
+  ['home','overview','daily'].forEach(n=>{ const pg=document.getElementById('page-'+n); if(pg&&pg.classList.contains('active')){ if(n==='home')renderDashboard(); if(n==='overview')renderOverview(); if(n==='daily')renderDailyReport(); } }); }
+function bgSrcChip(){ const eff=effectiveBgSource(); const auto=getBgSource()==='auto'?' · خودکار':''; return `<button class="bgsrc-chip" onclick="openBgSrc()"><span class="bgs-ic">📟</span>منبع قند: <b>${eff==='cgm'?'CGM':'گلوکومتر'}</b><span class="bgs-auto">${auto}</span> <span class="bgs-caret">▾</span></button>`; }
+function openBgSrc(){ renderBgSrcOpts(); const o=document.getElementById('bgSrcOverlay'); if(o) o.classList.add('show'); }
+function closeBgSrc(){ const o=document.getElementById('bgSrcOverlay'); if(o) o.classList.remove('show'); }
+function renderBgSrcOpts(){
+  const box=document.getElementById('bgSrcOpts'); if(!box) return; const s=getBgSource(); const eff=effectiveBgSource();
+  const opt=(v,t,d)=>`<button class="bgsrc-opt${s===v?' on':''}" onclick="setBgSource('${v}')"><div class="bgo-txt"><div class="bgo-t">${t}${v==='auto'?` <span class="bgo-eff">الان: ${eff==='cgm'?'CGM':'گلوکومتر'}</span>`:''}</div><div class="bgo-d">${d}</div></div>${s===v?'<span class="bgo-check">✓</span>':''}</button>`;
+  box.innerHTML=opt('auto','خودکار','اگر داده‌ی CGM باشد از آن، وگرنه از گلوکومتر.')
+    +opt('cgm','CGM (سنسور پیوسته)','نمودار AGP، TIR، GMI و آمار استاندارد.')
+    +opt('meter','گلوکومتر (اندازه‌گیری دستی)','نمودار نقطه‌ای و آمار ساده — برای کسی که سنسور CGM ندارد.');
+}
+// قند دستیِ بازه‌ی انتخاب‌شده‌ی گزارش کلی
+function ovRangeBG(){
+  const all=loadBG().filter(x=>x.iso).map(x=>({t:new Date(x.iso).getTime(), g:x.glu})).filter(x=>!isNaN(x.t)&&!isNaN(x.g));
+  if(!all.length) return [];
+  all.sort((a,b)=>a.t-b.t);
+  if(_ovRange==='all') return all;
+  const latest=all[all.length-1].t; const c=new Date(latest); c.setHours(0,0,0,0); c.setDate(c.getDate()-(_ovRange-1));
+  return all.filter(x=>x.t>=c.getTime());
+}
+function bgStats(pts){ if(!pts||!pts.length) return null; const v=pts.map(p=>p.g); const avg=v.reduce((a,b)=>a+b,0)/v.length; return {n:v.length, avg, min:Math.min(...v), max:Math.max(...v), inRange:v.filter(g=>g>=70&&g<=180).length}; }
+// نمودار نقطه‌ای قند دستی روی محور زمان (اسکترِ ساده، مقیاس یکنواخت تا دایره‌ها گرد بمانند)
+function bgScatterSVG(pts){
+  if(!pts||pts.length<1) return '';
+  const W=320,H=140,padL=6,padR=6,padT=8,padB=8;
+  const from=pts[0].t, to=pts[pts.length-1].t, span=Math.max(1,to-from);
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const gMax=Math.max(260, Math.ceil(Math.max.apply(null,pts.map(p=>p.g))/20)*20), gMin=40;
+  const X=t=> pts.length<2 ? padL+plotW/2 : padL+((t-from)/span)*plotW;
+  const Y=g=>{ const c=Math.max(gMin,Math.min(gMax,g)); return padT+plotH-(c-gMin)/(gMax-gMin)*plotH; };
+  const yLo=Y(70), yHi=Y(180);
+  let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">`;
+  s+=`<rect x="0" y="${yHi.toFixed(1)}" width="${W}" height="${(yLo-yHi).toFixed(1)}" fill="rgba(111,211,154,.13)"/>`;
+  s+=`<line x1="0" y1="${yHi.toFixed(1)}" x2="${W}" y2="${yHi.toFixed(1)}" stroke="rgba(111,211,154,.4)" stroke-width="1" stroke-dasharray="4 4"/>`;
+  s+=`<line x1="0" y1="${yLo.toFixed(1)}" x2="${W}" y2="${yLo.toFixed(1)}" stroke="rgba(159,192,240,.4)" stroke-width="1" stroke-dasharray="4 4"/>`;
+  if(pts.length>1){ const line=pts.map(p=>X(p.t).toFixed(1)+','+Y(p.g).toFixed(1)).join(' '); s+=`<polyline points="${line}" fill="none" stroke="rgba(95,211,189,.28)" stroke-width="1.2"/>`; }
+  pts.forEach(p=>{ const c=p.g<70?'#9fc0f0':p.g>180?'#e0a355':'#6fd39a'; s+=`<circle cx="${X(p.t).toFixed(1)}" cy="${Y(p.g).toFixed(1)}" r="2.8" fill="${c}" stroke="var(--panel)" stroke-width="0.7"/>`; });
+  s+=`</svg>`;
+  return s;
+}
+// نمای گلوکومتری برای گزارش کلی
+function ovMeterView(){
+  const pts=ovRangeBG(); const bs=bgStats(pts);
+  const rangeLbl=_ovRange==='all'?'کل داده':`${faDigits(_ovRange)} روز اخیر`;
+  let h=`<div class="dash-sec-t">🩸 قند گلوکومتر <span class="dash-sec-s">(${rangeLbl})</span></div>`;
+  if(!bs){ h+=`<div class="daily-empty">در این بازه اندازه‌گیری دستی‌ای ثبت نشده. از دکمه‌ی ＋ → «قند خون» ثبت کن.</div>`; return h; }
+  const p2=n=>String(n).padStart(2,'0');
+  const fj=g2j(new Date(pts[0].t).getFullYear(),new Date(pts[0].t).getMonth()+1,new Date(pts[0].t).getDate());
+  const tj=g2j(new Date(pts[pts.length-1].t).getFullYear(),new Date(pts[pts.length-1].t).getMonth()+1,new Date(pts[pts.length-1].t).getDate());
+  h+=`<div class="ov-hero"><div class="ovh-big" style="color:#5fd3bd">${faDigits(Math.round(bs.avg))}<span class="ovh-pct" style="font-size:16px"> mg/dL</span></div>
+    <div class="ovh-sub">میانگین ${faDigits(bs.n)} اندازه‌گیری دستی</div>
+    <div class="ovh-span">${faDigits(jDateStr(fj[0],fj[1],fj[2]))} تا ${faDigits(jDateStr(tj[0],tj[1],tj[2]))}</div></div>`;
+  h+=`<div class="dspark-card">${bgScatterSVG(pts)}<div class="dspark-lgnd"><span><i class="agl" style="background:rgba(111,211,154,.5)"></i>محدوده‌ی هدف ۷۰–۱۸۰</span><span><i class="agl" style="background:#6fd39a;border-radius:50%"></i>هر نقطه یک اندازه‌گیری</span></div></div>`;
+  h+=`<div class="dash-tiles" style="margin-top:10px">
+    <div class="dash-tile"><div class="dt-v" style="color:#6fd39a">${faDigits(bs.inRange)}<span style="font-size:14px;color:var(--muted)"> از ${faDigits(bs.n)}</span></div><div class="dt-l">در محدوده‌ (۷۰–۱۸۰)</div></div>
+    <div class="dash-tile"><div class="dt-v" style="color:#9fc0f0">${faDigits(Math.round(bs.min))}</div><div class="dt-l">کمترین</div></div>
+    <div class="dash-tile"><div class="dt-v" style="color:#f0a29b">${faDigits(Math.round(bs.max))}</div><div class="dt-l">بیشترین</div></div>
+    <div class="dash-tile"><div class="dt-v" style="color:#c3b4f0">${faDigits(bs.n)}</div><div class="dt-l">تعداد اندازه‌گیری</div></div>
+  </div>`;
+  h+=`<div class="dash-note">🩸 این آمار از اندازه‌گیری‌های دستیِ پراکنده است، نه سنسور پیوسته. TIR درصدی، GMI و AGP استاندارد به CGM نیاز دارند. این اعداد فقط برای مرور و گفتگو با پزشک‌اند.</div>`;
+  return h;
+}
 function renderOverview(){
   const box=document.getElementById('overviewReport'); if(!box) return;
   let h='';
   const hasCgm=!!(window._cgmReadings&&window._cgmReadings.length);
-  // انتخابگر بازه‌ی روز
-  if(hasCgm){
+  const hasAnyGlu = hasCgm || loadBG().length>0;
+  const src=effectiveBgSource();
+  // انتخابگر بازه‌ی روز + منبع قند
+  if(hasAnyGlu){
     const opts=[[7,'۷'],[14,'۱۴'],[30,'۳۰'],[90,'۹۰'],['all','همه']];
     h+=`<div class="ov-rangecard"><div class="ov-range-lbl">📅 بازه‌ی گزارش (روز)</div><div class="ov-range">`+
-      opts.map(o=>`<button class="${_ovRange===o[0]?'on':''}" onclick="setOvRange(${typeof o[0]==='string'?`'${o[0]}'`:o[0]})">${o[1]}</button>`).join('')+`</div></div>`;
+      opts.map(o=>`<button class="${_ovRange===o[0]?'on':''}" onclick="setOvRange(${typeof o[0]==='string'?`'${o[0]}'`:o[0]})">${o[1]}</button>`).join('')+`</div><div class="ov-srcrow">${bgSrcChip()}</div></div>`;
   }
+  if(src==='meter'){ h+=ovMeterView(); }
+  else {
   const readings=ovRangeReadings();
   const s=ovComputeStats(readings);
   const rangeLbl=_ovRange==='all'?'کل داده':`${faDigits(_ovRange)} روز اخیر`;
@@ -2689,6 +2814,7 @@ function renderOverview(){
   }else{
     h+=`<div class="daily-empty">${hasCgm?'در این بازه داده‌ای نیست — بازه‌ی بزرگ‌تری انتخاب کن.':'هنوز داده‌ی CGM وارد نشده. از دکمه‌ی ＋ → «فایل CGM» واردش کن.'}</div>`;
   }
+  } /* پایان else (منبع CGM) */
   h+=`<div class="dash-sec-t">🧪 آزمایش‌ها</div>`;
   try{ const ld=loadLabs(); const ent=(ld.entries||[]).slice().sort((a,b)=>a.ts-b.ts);
     if(ent.length){ const last=ent[ent.length-1]; const ranges=(ld.ranges||{}); let out=0;
@@ -2846,7 +2972,7 @@ function uiToast(msg){
   t.textContent=msg; t.classList.add('show');
   clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
 }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeQuickAdd(); closeQuickBG(); closeQEntry('qmedModal'); closeQEntry('qsleepModal'); closeQEntry('qmoodModal'); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeQuickAdd(); closeQuickBG(); closeBgSrc(); closeQEntry('qmedModal'); closeQEntry('qsleepModal'); closeQEntry('qmoodModal'); } });
 /* ====== حالت چیدمان منو: بالا (قدیم) یا پایین (جدید) ====== */
 const NAVMODE_KEY='nav_mode';
 function getNavMode(){ try{ return localStorage.getItem(NAVMODE_KEY)||'top'; }catch(e){ return 'top'; } }
