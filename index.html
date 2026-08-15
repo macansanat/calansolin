@@ -197,6 +197,11 @@ body.nav-bottom{padding-bottom:100px}
 .ovt-fill{width:100%;border-radius:6px 6px 0 0;min-height:4px;transition:height .3s}
 .ovt-clbl{font-size:10px;color:var(--muted);direction:ltr}
 .ov-trend-note{font-size:10.5px;color:var(--muted);margin-top:8px;line-height:1.7}
+.ov-agp-card{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:12px}
+.ov-agp-card svg{display:block;width:100%;height:auto}
+.ov-agp-lgnd{display:flex;flex-wrap:wrap;gap:14px;font-size:10.5px;color:var(--muted);margin-top:8px}
+.ov-agp-lgnd i.agl{display:inline-block;width:14px;height:10px;border-radius:2px;margin-left:5px;vertical-align:middle}
+.ov-agp-note{font-size:10.5px;color:var(--muted);margin-top:8px;line-height:1.7}
 .ov-a1c{display:flex;align-items:center;gap:14px;background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:10px}
 .ov-a1c .ova-v{font-size:38px;font-weight:800;line-height:1;direction:ltr}
 .ov-a1c .ova-v span{font-size:18px}
@@ -1452,7 +1457,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۹.۵</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۹.۶</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2577,8 +2582,17 @@ function renderOverview(){
       <div class="dash-tile"><div class="dt-v" style="color:#9fc0f0">${s.gmi!=null?faDigits(s.gmi.toFixed(1))+'٪':'—'}</div><div class="dt-l">A1c تخمینی (GMI)</div></div>
       <div class="dash-tile"><div class="dt-v" style="color:${s.cv!=null&&s.cv<=36?'#6fd39a':'#e0a355'}">${s.cv!=null?faDigits(Math.round(s.cv))+'٪':'—'}</div><div class="dt-l">نوسان (CV)</div></div>
       <div class="dash-tile"><div class="dt-v" style="color:#c3b4f0">${faDigits(s.n)}</div><div class="dt-l">تعداد خوانش</div></div>
-    </div>
-    <button class="ov-link" onclick="switchTab('cgm')">📉 نمودار AGP و تحلیل کامل قند ›</button>`;
+    </div>`;
+    // نمودار AGP (پروفایل روزانه‌ی قند روی یک شبانه‌روز)
+    try{ const agpPts=computeAGP();
+      if(agpPts && agpPts.filter(p=>p).length>=4){
+        h+=`<div class="dash-sec-t">📉 نمودار AGP <span class="dash-sec-s">(پروفایل روزانه‌ی قند)</span></div>
+        <div class="ov-agp-card">${agpSVG(agpPts,640,240,false)}
+        <div class="ov-agp-lgnd"><span><i class="agl" style="background:#3fb9a3;height:2px"></i>میانه</span><span><i class="agl" style="background:rgba(63,185,163,.32)"></i>۲۵–۷۵٪</span><span><i class="agl" style="background:rgba(63,185,163,.16)"></i>۵–۹۵٪</span></div>
+        <div class="ov-agp-note">همه‌ی روزها روی یک شبانه‌روز؛ خط وسط = میانه، نوارها پراکندگی. الگوی تکرارشونده‌ی روز را نشان می‌دهد.</div></div>`;
+      }
+    }catch(e){}
+    h+=`<button class="ov-link" onclick="switchTab('cgm')">🔍 تحلیل کامل قند و نقاط بحرانی ›</button>`;
     // روند میانگین روزانه
     const avgs=ovDailyAverages(10);
     if(avgs.length>=2){
