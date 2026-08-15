@@ -176,6 +176,11 @@ body.nav-bottom{padding-bottom:100px}
 .ov-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--muted)}
 .ov-row:last-child{border-bottom:none}
 .ov-row b{color:var(--ink);font-size:13.5px}
+.ov-rangecard{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:12px 13px;margin-bottom:16px}
+.ov-range-lbl{font-size:11.5px;color:var(--muted);font-weight:700;margin-bottom:9px}
+.ov-range{display:flex;gap:6px}
+.ov-range button{flex:1;background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:10px 4px;font-family:inherit;font-weight:800;font-size:13px;cursor:pointer;transition:all .15s}
+.ov-range button.on{background:linear-gradient(160deg,var(--teal),var(--teal-dim));color:#fff;border-color:rgba(63,185,163,.5);box-shadow:0 3px 10px rgba(63,185,163,.28)}
 .ov-hero{text-align:center;background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:12px}
 .ovh-big{font-size:48px;font-weight:800;line-height:1;direction:ltr}
 .ovh-big .ovh-pct{font-size:22px;font-weight:700}
@@ -1457,7 +1462,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۹.۶</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۹.۷</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2548,23 +2553,57 @@ function daySparkSVG(pts){
   return s;
 }
 /* ====== گزارش کلی ====== */
-function ovDailyAverages(days){
-  if(!window._cgmReadings||!window._cgmReadings.length) return [];
+let _ovRange=14; // بازه‌ی گزارش کلی به روز (یا 'all')
+function setOvRange(v){ _ovRange=v; renderOverview(); }
+// خوانش‌های CGM در بازه‌ی انتخاب‌شده (بر اساس آخرین روزِ داده)
+function ovRangeReadings(){
+  const valid=(window._cgmReadings||[]).filter(r=>r&&r.t&&r.t.dateObj);
+  if(!valid.length) return [];
+  if(_ovRange==='all') return valid;
+  const latest=new Date(Math.max.apply(null,valid.map(r=>r.t.dateObj)));
+  const cutoff=new Date(latest); cutoff.setHours(0,0,0,0); cutoff.setDate(cutoff.getDate()-(_ovRange-1));
+  return valid.filter(r=>r.t.dateObj>=cutoff);
+}
+// محاسبه‌ی آمار روی زیرمجموعه (هم‌ارز runCGMAnalysis)
+function ovComputeStats(readings){
+  if(!readings||!readings.length) return null;
+  const vals=readings.map(r=>r.glu); const n=vals.length;
+  const avg=vals.reduce((a,b)=>a+b,0)/n;
+  const tir=vals.filter(v=>v>=70&&v<=180).length/n*100;
+  const tar=vals.filter(v=>v>180).length/n*100;
+  const tbr=vals.filter(v=>v<70).length/n*100;
+  const veryLow=vals.filter(v=>v<54).length/n*100;
+  const veryHigh=vals.filter(v=>v>250).length/n*100;
+  const gmi=3.31+0.02392*avg;
+  const sd=Math.sqrt(vals.reduce((a,v)=>a+(v-avg)*(v-avg),0)/n);
+  return {n,avg,tir,tar,tbr,veryLow,veryHigh,gmi,cv:sd/avg*100};
+}
+function ovDailyAverages(readings,maxDays){
+  if(!readings||!readings.length) return [];
   const map={};
-  window._cgmReadings.forEach(r=>{ if(r.t&&r.t.dateObj){ const k=dayKey(r.t.dateObj); (map[k]=map[k]||[]).push(r.glu); } });
-  const keys=Object.keys(map).sort().slice(-days);
+  readings.forEach(r=>{ if(r.t&&r.t.dateObj){ const k=dayKey(r.t.dateObj); (map[k]=map[k]||[]).push(r.glu); } });
+  let keys=Object.keys(map).sort(); if(maxDays) keys=keys.slice(-maxDays);
   return keys.map(k=>{ const a=map[k]; const p=k.split('-'); const jd=g2j(+p[0],+p[1],+p[2]);
     const inr=a.filter(g=>g>=70&&g<=180).length; return {avg:a.reduce((x,y)=>x+y,0)/a.length, tir:Math.round(inr/a.length*100), label:faDigits(jd[2])}; });
 }
 function renderOverview(){
   const box=document.getElementById('overviewReport'); if(!box) return;
   let h='';
-  const s=window._cgmStats;
-  h+=`<div class="dash-sec-t">📈 کنترل قند <span class="dash-sec-s">(کل داده‌ی CGM)</span></div>`;
+  const hasCgm=!!(window._cgmReadings&&window._cgmReadings.length);
+  // انتخابگر بازه‌ی روز
+  if(hasCgm){
+    const opts=[[7,'۷'],[14,'۱۴'],[30,'۳۰'],[90,'۹۰'],['all','همه']];
+    h+=`<div class="ov-rangecard"><div class="ov-range-lbl">📅 بازه‌ی گزارش (روز)</div><div class="ov-range">`+
+      opts.map(o=>`<button class="${_ovRange===o[0]?'on':''}" onclick="setOvRange(${typeof o[0]==='string'?`'${o[0]}'`:o[0]})">${o[1]}</button>`).join('')+`</div></div>`;
+  }
+  const readings=ovRangeReadings();
+  const s=ovComputeStats(readings);
+  const rangeLbl=_ovRange==='all'?'کل داده':`${faDigits(_ovRange)} روز اخیر`;
+  h+=`<div class="dash-sec-t">📈 کنترل قند <span class="dash-sec-s">(${rangeLbl})</span></div>`;
   if(s){
     // بازه‌ی داده
     let spanTxt='', daysData=0;
-    try{ const ds=window._cgmReadings.map(r=>r.t&&r.t.dateObj).filter(Boolean); if(ds.length){ const mn=new Date(Math.min(...ds)),mx=new Date(Math.max(...ds)); daysData=Math.round((mx-mn)/864e5)+1; const jn=g2j(mn.getFullYear(),mn.getMonth()+1,mn.getDate()),jx=g2j(mx.getFullYear(),mx.getMonth()+1,mx.getDate()); spanTxt=`${faDigits(jDateStr(jn[0],jn[1],jn[2]))} تا ${faDigits(jDateStr(jx[0],jx[1],jx[2]))}`; } }catch(e){}
+    try{ const ds=readings.map(r=>r.t&&r.t.dateObj).filter(Boolean); if(ds.length){ const mn=new Date(Math.min(...ds)),mx=new Date(Math.max(...ds)); daysData=Math.round((mx-mn)/864e5)+1; const jn=g2j(mn.getFullYear(),mn.getMonth()+1,mn.getDate()),jx=g2j(mx.getFullYear(),mx.getMonth()+1,mx.getDate()); spanTxt=`${faDigits(jDateStr(jn[0],jn[1],jn[2]))} تا ${faDigits(jDateStr(jx[0],jx[1],jx[2]))}`; } }catch(e){}
     // هیرو TIR
     h+=`<div class="ov-hero">
       <div class="ovh-big" style="color:${s.tir>=70?'#6fd39a':'#e0a355'}">${faDigits(Math.round(s.tir))}<span class="ovh-pct">٪</span></div>
@@ -2584,7 +2623,7 @@ function renderOverview(){
       <div class="dash-tile"><div class="dt-v" style="color:#c3b4f0">${faDigits(s.n)}</div><div class="dt-l">تعداد خوانش</div></div>
     </div>`;
     // نمودار AGP (پروفایل روزانه‌ی قند روی یک شبانه‌روز)
-    try{ const agpPts=computeAGP();
+    try{ const agpPts=computeAGP(readings);
       if(agpPts && agpPts.filter(p=>p).length>=4){
         h+=`<div class="dash-sec-t">📉 نمودار AGP <span class="dash-sec-s">(پروفایل روزانه‌ی قند)</span></div>
         <div class="ov-agp-card">${agpSVG(agpPts,640,240,false)}
@@ -2594,16 +2633,16 @@ function renderOverview(){
     }catch(e){}
     h+=`<button class="ov-link" onclick="switchTab('cgm')">🔍 تحلیل کامل قند و نقاط بحرانی ›</button>`;
     // روند میانگین روزانه
-    const avgs=ovDailyAverages(10);
+    const avgs=ovDailyAverages(readings,14);
     if(avgs.length>=2){
       const mxA=Math.max(280, ...avgs.map(a=>a.avg));
-      h+=`<div class="dash-sec-t">📅 روند میانگین قند <span class="dash-sec-s">(${faDigits(avgs.length)} روز اخیر)</span></div><div class="ov-trend">`;
+      h+=`<div class="dash-sec-t">📅 روند میانگین قند <span class="dash-sec-s">(${faDigits(avgs.length)} روز)</span></div><div class="ov-trend">`;
       avgs.forEach(a=>{ const hp=Math.max(6,Math.round(a.avg/mxA*100)); const col=a.avg<70?'#9fc0f0':a.avg>180?'#e0a355':'#6fd39a';
         h+=`<div class="ovt-col"><div class="ovt-cval">${faDigits(Math.round(a.avg))}</div><div class="ovt-track"><div class="ovt-fill" style="height:${hp}%;background:${col}"></div></div><div class="ovt-clbl">${a.label}</div></div>`; });
       h+=`</div><div class="ov-trend-note">رنگ سبز = میانگین در محدوده · زرد = بالا · آبی = پایین</div>`;
     }
   }else{
-    h+=`<div class="daily-empty">هنوز داده‌ی CGM وارد نشده. از دکمه‌ی ＋ → «فایل CGM» واردش کن.</div>`;
+    h+=`<div class="daily-empty">${hasCgm?'در این بازه داده‌ای نیست — بازه‌ی بزرگ‌تری انتخاب کن.':'هنوز داده‌ی CGM وارد نشده. از دکمه‌ی ＋ → «فایل CGM» واردش کن.'}</div>`;
   }
   h+=`<div class="dash-sec-t">🧪 آزمایش‌ها</div>`;
   try{ const ld=loadLabs(); const ent=(ld.entries||[]).slice().sort((a,b)=>a.ts-b.ts);
@@ -4551,11 +4590,13 @@ function pctl(arr,p){
   const k=(a.length-1)*p/100, f=Math.floor(k);
   return (f+1<a.length)? a[f]+(k-f)*(a[f+1]-a[f]) : a[f];
 }
-function computeAGP(){
-  if(!window._cgmReadings||!window._cgmReadings.length) return null;
+function computeAGP(readings){
+  readings=readings||window._cgmReadings;
+  if(!readings||!readings.length) return null;
   // سطل‌های ۳۰ دقیقه‌ای بر اساس ساعت روز (۴۸ سطل)
   const buckets=Array.from({length:48},()=>[]);
-  window._cgmReadings.forEach(r=>{
+  readings.forEach(r=>{
+    if(!r.t||!r.t.dateObj) return;
     const d=r.t.dateObj;
     const idx=Math.floor((d.getHours()*60+d.getMinutes())/30);
     if(idx>=0&&idx<48) buckets[idx].push(r.glu);
