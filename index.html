@@ -94,6 +94,8 @@ body.nav-bottom{padding-bottom:100px}
 .qmood-row button{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:12px;padding:11px 3px;font-family:inherit;font-weight:700;font-size:10.5px;cursor:pointer;transition:all .15s}
 .qmood-row button span{font-size:23px;line-height:1}
 .qmood-row button.on{background:var(--teal-dim);border-color:var(--teal);color:#eafff8;transform:translateY(-2px)}
+.qins-note{font-size:10.5px;color:var(--muted);line-height:1.7;margin-bottom:14px}
+#qinsName{appearance:auto}
 .qa-subt{font-size:11.5px;font-weight:700;color:var(--muted);margin:2px 2px 10px;text-align:right}
 .qa-subt:not(:first-of-type){margin-top:6px}
 /* انتخابگر حالت منو */
@@ -828,6 +830,33 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
 </div>
 
+<!-- فرم سریع انسولین -->
+<div class="qbg-modal" id="qinsModal" onclick="if(event.target===this)closeQEntry('qinsModal')">
+  <div class="qbg-box">
+    <button class="qbg-x" onclick="closeQEntry('qinsModal')" title="بستن">✕</button>
+    <div class="qbg-head"><span class="qbg-badge" style="background:rgba(63,185,163,.18)">💉</span><div><div class="qbg-title">ثبت انسولین</div><div class="qbg-sub">نوع، اسم، دوز و زمان انسولین را ثبت کن.</div></div></div>
+    <label class="qbg-lbl">نوع انسولین</label>
+    <div class="qseg" id="qinsType">
+      <button type="button" data-v="rapid" class="on" onclick="qinsPickType(this)">⚡ سریع‌اثر</button>
+      <button type="button" data-v="basal" onclick="qinsPickType(this)">🛡️ پایه</button>
+    </div>
+    <label class="qbg-lbl">اسم انسولین</label>
+    <select id="qinsName" class="qbg-in" style="margin-bottom:14px"></select>
+    <label class="qbg-lbl">دوز (واحد)</label>
+    <input type="number" id="qinsDose" class="qbg-in" inputmode="decimal" step="0.5" placeholder="مثلاً ۶" style="margin-bottom:14px">
+    <div id="qinsCarbWrap">
+      <label class="qbg-lbl">کربوهیدرات وعده (اختیاری — برای محاسبه‌ی I:C)</label>
+      <input type="number" id="qinsCarb" class="qbg-in" inputmode="decimal" placeholder="گرم — اگر همراه غذا بود" style="margin-bottom:6px">
+      <div class="qins-note">اگر این انسولین سریع برای یک وعده‌ی غذایی بود، کربوهیدرات آن وعده را وارد کن تا در محاسبه‌ی I:C تخمینی حساب شود.</div>
+    </div>
+    <div class="qbg-grid">
+      <div><label class="qbg-lbl">تاریخ (شمسی)</label><div id="qinsDateWrap"></div></div>
+      <div><label class="qbg-lbl">ساعت</label><input type="time" id="qinsTime" class="qbg-in"></div>
+    </div>
+    <div class="qbg-actions"><button class="qbg-cancel" onclick="closeQEntry('qinsModal')">لغو</button><button class="qbg-save" onclick="saveQuickInsulin()">💾 ذخیره</button></div>
+  </div>
+</div>
+
 <!-- فرم سریع دارو -->
 <div class="qbg-modal" id="qmedModal" onclick="if(event.target===this)closeQEntry('qmedModal')">
   <div class="qbg-box">
@@ -1512,7 +1541,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۰.۲</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۰.۳</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2900,7 +2929,7 @@ function quickAdd(type){
     },80);
   };
   if(type==='meal') go('plan','c-addmeal');
-  else if(type==='insulin') go('plan','c-basal');
+  else if(type==='insulin') openQuickInsulin();
   else if(type==='exercise') go('exercise','c-ex-log');
   else if(type==='startworkout') go('exercise','c-ex-workout');
   else if(type==='lab') go('labs','c-labs-entry');
@@ -2960,6 +2989,51 @@ function saveQuickMood(){
   closeQEntry('qmoodModal'); uiToast('✓ حالت روحی ثبت شد'); afterQuickLog();
 }
 function afterQuickLog(){ const st=document.getElementById('dataStats'); if(st) renderDataStats(); if(typeof renderDashboard==='function') renderDashboard(); }
+/* ====== فرم سریع انسولین → planData ====== */
+const INS_RAPID=['اپیدرا (گلولیزین)','نووراپید / نوولاگ (آسپارت)','هومالوگ (لیسپرو)','فیاسپ (آسپارت سریع‌تر)','لیومجو (لیسپرو سریع‌تر)','رگولار / اکترپید (R)','هومولین R'];
+const INS_BASAL=['لانتوس (گلارژین U100)','توجئو (گلارژین U300)','لومیر (دتمیر)','ترسیبا (دگلودک)','بازاگلار (گلارژین)','NPH / هومولین N','اینسولاتارد','رایزودگ ۷۰/۳۰ (دگلودک/آسپارت)','نوومیکس ۳۰','نوومیکس ۵۰','هومولین ۷۰/۳۰','هومالوگ‌میکس ۲۵','میکستارد ۳۰'];
+let _qinsType='rapid';
+function qinsFillNames(){ const sel=document.getElementById('qinsName'); if(!sel) return; const list=_qinsType==='rapid'?INS_RAPID:INS_BASAL; sel.innerHTML=list.map(n=>`<option>${n}</option>`).join(''); }
+function qinsPickType(btn){ document.querySelectorAll('#qinsType button').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); _qinsType=btn.getAttribute('data-v'); qinsFillNames(); const cw=document.getElementById('qinsCarbWrap'); if(cw) cw.style.display=_qinsType==='rapid'?'block':'none'; }
+function openQuickInsulin(){
+  const m=document.getElementById('qinsModal'); if(!m) return;
+  _qinsType='rapid';
+  document.querySelectorAll('#qinsType button').forEach(b=>b.classList.toggle('on', b.getAttribute('data-v')==='rapid'));
+  qinsFillNames();
+  document.getElementById('qinsCarbWrap').style.display='block';
+  document.getElementById('qinsDose').value=''; document.getElementById('qinsCarb').value='';
+  const d=new Date(); const p=n=>String(n).padStart(2,'0'); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate());
+  document.getElementById('qinsDateWrap').innerHTML=jDateFieldHTML('qinsDate', jDateStr(j[0],j[1],j[2]));
+  document.getElementById('qinsTime').value=`${p(d.getHours())}:${p(d.getMinutes())}`;
+  m.classList.add('show');
+  setTimeout(()=>document.getElementById('qinsDose').focus(),50);
+}
+function saveQuickInsulin(){
+  const name=(document.getElementById('qinsName').value||'').trim();
+  const dose=parseFloat(faToEnDigits((document.getElementById('qinsDose').value||'').trim()));
+  if(isNaN(dose)||dose<=0){ alert('دوز انسولین را وارد کن (واحد).'); return; }
+  const pj=parseJDate((document.getElementById('qinsDate')||{}).value||''); if(!pj){ alert('تاریخ را انتخاب کن.'); return; }
+  const g=j2g(pj[0],pj[1],pj[2]);
+  const tstr=(document.getElementById('qinsTime')||{}).value||'00:00';
+  const p=n=>String(n).padStart(2,'0');
+  const key=`${g[0]}-${p(g[1])}-${p(g[2])}`;
+  if(_qinsType==='basal'){
+    if(!planData['_basal']) planData['_basal']={};
+    planData['_basal'][key]={type:name, dose:String(dose), time:tstr};
+  }else{
+    const carbRaw=faToEnDigits((document.getElementById('qinsCarb').value||'').trim());
+    const carb=carbRaw?parseFloat(carbRaw):'';
+    if(!Array.isArray(planData[key])) planData[key]=[];
+    planData[key].push({type:(carb?'انسولین + وعده':'انسولین سریع'), time:tstr, insType:name, insDose:String(dose), carb:(carb||''), bgBefore:'', bgAfter:'', peak:'', trough:'', foods:[], id:Date.now()});
+  }
+  savePlan();
+  closeQEntry('qinsModal');
+  uiToast(`✓ انسولین ${faDigits(String(dose))} واحد ثبت شد`);
+  if(typeof renderDashboard==='function') renderDashboard();
+  const dl=document.getElementById('page-daily'); if(dl&&dl.classList.contains('active')) renderDailyReport();
+  try{ if(typeof updateCalibration==='function') updateCalibration(); }catch(e){}
+  try{ if(typeof renderWeek==='function'){ const pp=document.getElementById('page-plan'); if(pp&&pp.classList.contains('active')) renderWeek(); } }catch(e){}
+}
 /* فرم سریع قند خون دستی → bg_manual_v1 */
 function openQuickBG(){
   const m=document.getElementById('qbgModal'); if(!m) return;
@@ -3001,7 +3075,7 @@ function uiToast(msg){
   t.textContent=msg; t.classList.add('show');
   clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
 }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeQuickAdd(); closeQuickBG(); closeBgSrc(); if(typeof closeWkTrack==='function')closeWkTrack(); closeQEntry('qmedModal'); closeQEntry('qsleepModal'); closeQEntry('qmoodModal'); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeQuickAdd(); closeQuickBG(); closeBgSrc(); if(typeof closeWkTrack==='function')closeWkTrack(); closeQEntry('qmedModal'); closeQEntry('qsleepModal'); closeQEntry('qmoodModal'); closeQEntry('qinsModal'); } });
 /* ====== حالت چیدمان منو: بالا (قدیم) یا پایین (جدید) ====== */
 const NAVMODE_KEY='nav_mode';
 function getNavMode(){ try{ return localStorage.getItem(NAVMODE_KEY)||'top'; }catch(e){ return 'top'; } }
