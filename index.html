@@ -174,6 +174,53 @@ body.nav-bottom{padding-bottom:100px}
 .dtl-title{font-size:13.5px;font-weight:800;line-height:1.4}
 .dtl-time{flex:0 0 auto;font-size:11.5px;font-weight:700;color:var(--teal);direction:ltr;background:var(--field);border-radius:14px;padding:2px 9px}
 .dtl-detail{font-size:11.5px;color:var(--muted);line-height:1.75;margin-top:4px}
+.dtl-item.clickable{cursor:pointer}
+.dtl-item.clickable .dtl-card{transition:border-color .15s,background .15s}
+.dtl-item.clickable:active .dtl-card{background:var(--panel-2)}
+.dtl-item.clickable:hover .dtl-card{border-color:var(--teal-dim)}
+.dtl-edit{flex:0 0 auto;font-size:11px;color:var(--muted);opacity:.7;margin-inline-start:2px}
+/* تفکیک انسولین پایه/سریع در گزارش روزانه */
+.insb-card{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:2px 0 6px}
+.insb-head{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:800;margin-bottom:8px}
+.insb-head b{color:var(--teal)}
+.insb-row{display:flex;align-items:center;gap:9px;padding:7px 0;border-top:1px solid var(--line);font-size:12px}
+.insb-tag{flex:0 0 auto;font-size:10.5px;font-weight:800;border-radius:8px;padding:3px 8px}
+.insb-tag.basal{background:rgba(95,211,189,.16);color:#5fd3bd}
+.insb-tag.rapid{background:rgba(233,184,119,.16);color:#e9b877}
+.insb-name{flex:1;min-width:0;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.insb-u{flex:0 0 auto;font-weight:800;color:var(--ink);direction:rtl}
+/* دکمه‌ی بیشتر/تاریخچه در سرِ رویدادها */
+.dl-events-h{justify-content:space-between}
+.dl-more-btn{margin-inline-start:auto;background:var(--field);border:1px solid var(--teal-dim);color:var(--teal);border-radius:20px;padding:6px 13px;font-family:inherit;font-weight:800;font-size:11.5px;cursor:pointer}
+.dl-more-btn:hover{background:var(--teal-dim);color:#eafff8}
+/* فرم ویرایش رویداد */
+#evEditModal{z-index:145}
+.ev-form .ev-fh{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.ev-badge{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 auto}
+.ev-ftitle{font-size:15px;font-weight:800}
+.ev-form textarea.qbg-in{resize:vertical;line-height:1.7}
+.ev-actions{display:flex;gap:9px;margin-top:16px}
+.ev-del{flex:0 0 auto;background:rgba(240,162,155,.12);border:1px solid rgba(240,162,155,.4);color:#f0a29b;border-radius:12px;padding:13px 15px;font-family:inherit;font-weight:800;font-size:14px;cursor:pointer}
+.ev-ro{background:var(--field);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.ev-ro-d{font-size:12px;color:var(--teal);font-weight:800;direction:ltr;margin-bottom:4px}
+.ev-ro-t{font-size:13px;color:var(--ink);line-height:1.7}
+.ev-note{font-size:11.5px;color:var(--muted);line-height:1.7;background:var(--field);border:1px dashed var(--line);border-radius:10px;padding:10px 12px}
+/* تاریخچه‌ی کل (Logbook) */
+.lb-box{max-width:440px}
+.lb-export{width:100%;margin:4px 0 14px;background:linear-gradient(160deg,var(--teal),var(--teal-dim));border:none;color:#fff;border-radius:12px;padding:12px;font-family:inherit;font-weight:800;font-size:13px;cursor:pointer}
+.lb-body-wrap{max-height:60vh;overflow-y:auto;margin:0 -4px;padding:0 4px}
+.lb-group{margin-bottom:14px}
+.lb-date{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;color:var(--teal);padding:8px 2px;position:sticky;top:0;background:var(--panel);z-index:1}
+.lb-cnt{margin-inline-start:auto;font-size:10.5px;font-weight:700;color:var(--muted)}
+.lb-item{display:flex;align-items:center;gap:10px;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:9px 11px;margin-bottom:7px;cursor:pointer;transition:border-color .15s}
+.lb-item:hover{border-color:var(--teal-dim)}
+.lb-item:active{background:var(--panel-2)}
+.lb-ico{flex:0 0 auto;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.lb-body{flex:1;min-width:0}
+.lb-t{font-size:12.5px;font-weight:800;display:flex;align-items:center;gap:7px}
+.lb-time{font-size:10.5px;font-weight:700;color:var(--teal);direction:ltr;background:var(--panel);border-radius:12px;padding:1px 8px}
+.lb-d{font-size:11px;color:var(--muted);line-height:1.6;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-chev{flex:0 0 auto;font-size:12px;color:var(--muted);opacity:.6}
 /* گزارش کلی */
 .ov-link{width:100%;margin-top:10px;background:var(--panel-2);border:1px solid var(--teal-dim);color:var(--teal);border-radius:12px;padding:13px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s}
 .ov-link:hover{background:var(--teal-dim);color:#eafff8}
@@ -914,6 +961,24 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
 </div>
 
+<!-- ویرایش یک رویداد (وعده/انسولین/قند/…) -->
+<div class="qbg-modal" id="evEditModal" onclick="if(event.target===this)closeEvEdit()">
+  <div class="qbg-box">
+    <button class="qbg-x" onclick="closeEvEdit()" title="بستن">✕</button>
+    <div id="evEditBody"></div>
+  </div>
+</div>
+
+<!-- تاریخچه‌ی کل رویدادها (Logbook) -->
+<div class="qbg-modal" id="logbookModal" onclick="if(event.target===this)closeLogbook()">
+  <div class="qbg-box lb-box">
+    <button class="qbg-x" onclick="closeLogbook()" title="بستن">✕</button>
+    <div class="qbg-head"><span class="qbg-badge" style="background:rgba(95,211,189,.18)">⏱️</span><div><div class="qbg-title">تاریخچه‌ی رویدادها</div><div class="qbg-sub">همه‌ی روزها بر اساس تاریخ — روی هر رویداد بزن تا ویرایشش کنی.</div></div></div>
+    <button class="lb-export" onclick="exportEventsXLSX()">📤 استخراج خروجی اکسل</button>
+    <div id="logbookBody" class="lb-body-wrap"></div>
+  </div>
+</div>
+
 <!-- ============ صفحه‌ی خانه (داشبورد) ============ -->
 <div class="page active" id="page-home">
   <div id="dashboard"></div>
@@ -1541,7 +1606,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۰.۳</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۰.۴</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div>
 <script>
@@ -2585,23 +2650,27 @@ function renderDailyReport(){
   const fmtHM=d=>faDigits(String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'));
   const smFromT=t=>{ if(!t) return 0; const p=String(t).split(':'); return (parseInt(p[0],10)||0)*60+(parseInt(p[1],10)||0); };
   let ev=[]; let totalCarb=0, totalBolus=0, basalDose=0, bgCount=0;
+  let totProt=0, totFat=0; let rapidIns=[]; let basalIns=null;
   try{ (planData[key]||[]).forEach(m=>{
     let det=[];
     if(m.foods&&m.foods.length) det.push(m.foods.map(f=>f.name||f).join('، '));
     else if(m.carb) det.push('کربوهیدرات '+faDigits(m.carb)+' گرم');
-    if(m.insDose) det.push('انسولین '+faDigits(m.insDose)+' واحد');
+    if(m.insDose) det.push('انسولین '+faDigits(m.insDose)+(m.insType?' واحد ('+m.insType+')':' واحد'));
     if(m.bgBefore) det.push('قند قبل '+faDigits(m.bgBefore));
     if(m.bgAfter) det.push('بعد '+faDigits(m.bgAfter));
     totalCarb+=(+m.carb||0); totalBolus+=(+m.insDose||0);
-    ev.push({sm:smFromT(m.time), time:m.time?faDigits(m.time):'', ico:'🍽️', color:'#e9b877', title:m.type||'وعده', detail:det.join(' · ')});
+    if(+m.insDose>0) rapidIns.push({name:(m.insType||'سریع'), dose:+m.insDose});
+    const mm=estMealMacros(m); totProt+=mm.p; totFat+=mm.fat;
+    const isIns=(!m.foods||!m.foods.length)&&+m.insDose>0;
+    ev.push({sm:smFromT(m.time), time:m.time?faDigits(m.time):'', ico:isIns?'💉':'🍽️', color:isIns?'#5fd3bd':'#e9b877', title:m.type||'وعده', detail:det.join(' · '), kind:'meal', key:key, id:m.id});
   }); }catch(e){}
-  try{ const bz=(planData._basal||{})[key]; if(bz){ basalDose=(+bz.dose||0); ev.push({sm:bz.time?smFromT(bz.time):1440, time:bz.time?faDigits(bz.time):'', ico:'💉', color:'#5fd3bd', title:'انسولین پایه', detail:(bz.type?bz.type+' · ':'')+faDigits(bz.dose)+' واحد'}); } }catch(e){}
-  try{ loadBG().forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); bgCount++; ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🩸', color:'#f0a29b', title:'قند خون', detail:faDigits(x.glu)+' mg/dL'}); } }); }catch(e){}
+  try{ const bz=(planData._basal||{})[key]; if(bz){ basalDose=(+bz.dose||0); basalIns={name:bz.type||'', dose:bz.dose}; ev.push({sm:bz.time?smFromT(bz.time):1440, time:bz.time?faDigits(bz.time):'', ico:'🛡️', color:'#5fd3bd', title:'انسولین پایه', detail:(bz.type?bz.type+' · ':'')+faDigits(bz.dose)+' واحد', kind:'basal', key:key}); } }catch(e){}
+  try{ loadBG().forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); bgCount++; ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🩸', color:'#f0a29b', title:'قند خون', detail:faDigits(x.glu)+' mg/dL', kind:'bg', iso:x.iso}); } }); }catch(e){}
   const jlog=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'[]'); }catch(e){ return []; } };
-  jlog('med_log_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'💊', color:'#c3b4f0', title:'دارو', detail:x.name+(x.dose?' · '+x.dose:'')}); } });
-  jlog('mood_log_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🙂', color:'#e9b877', title:'حالت روحی', detail:x.mood+(x.note?' · '+x.note:'')}); } });
-  try{ (loadExLog().entries||[]).forEach(x=>{ if(x.ts&&dayKey(new Date(x.ts))===key){ const d=new Date(x.ts); ev.push({sm:x.time?smFromT(x.time):hourMin(d), time:x.time?faDigits(x.time):fmtHM(d), ico:'🏃', color:'#9fc0f0', title:'ورزش', detail:(x.items||[]).map(it=>it.name).join('، ')}); } }); }catch(e){}
-  try{ loadExercise().forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🏃', color:'#9fc0f0', title:'ورزش', detail:(x.what||'')+(x.dur?' · '+faDigits(x.dur)+' دقیقه':'')}); } }); }catch(e){}
+  jlog('med_log_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'💊', color:'#c3b4f0', title:'دارو', detail:x.name+(x.dose?' · '+x.dose:''), kind:'med', iso:x.iso}); } });
+  jlog('mood_log_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🙂', color:'#e9b877', title:'حالت روحی', detail:x.mood+(x.note?' · '+x.note:''), kind:'mood', iso:x.iso}); } });
+  try{ (loadExLog().entries||[]).forEach(x=>{ if(x.ts&&dayKey(new Date(x.ts))===key){ const d=new Date(x.ts); ev.push({sm:x.time?smFromT(x.time):hourMin(d), time:x.time?faDigits(x.time):fmtHM(d), ico:'🏃', color:'#9fc0f0', title:'ورزش', detail:(x.items||[]).map(it=>it.name).join('، '), kind:'exlog', ts:x.ts}); } }); }catch(e){}
+  try{ loadExercise().forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🏃', color:'#9fc0f0', title:'ورزش', detail:(x.what||'')+(x.dur?' · '+faDigits(x.dur)+' دقیقه':''), kind:'exercise', iso:x.iso}); } }); }catch(e){}
   let sleepRec=null; jlog('sleep_log_v1').forEach(x=>{ const sd=parseJDate(x.date); if(sd&&sd[0]===j[0]&&sd[1]===j[1]&&sd[2]===j[2]) sleepRec=x; });
   ev.sort((a,b)=>a.sm-b.sm);
   let cgmDay=null, sparkPts=[];
@@ -2631,11 +2700,26 @@ function renderDailyReport(){
   const chips=[];
   if(totalCarb>0) chips.push(['🍞','کربوهیدرات', faDigits(Math.round(totalCarb))+' گرم']);
   if(totalBolus+basalDose>0) chips.push(['💉','انسولین کل', faDigits(Math.round((totalBolus+basalDose)*10)/10)+' واحد']);
+  if(totalCarb>0){ const kcal=Math.round(totalCarb*4 + totProt*4 + totFat*9);
+    chips.push(['🔥','کالری ~', faDigits(kcal)]);
+    if(totProt>0) chips.push(['🥩','پروتئین ~', faDigits(Math.round(totProt))+' گرم']);
+    if(totFat>0) chips.push(['🧈','چربی ~', faDigits(Math.round(totFat))+' گرم']);
+  }
   if(cgmDay) chips.push(['📈','میانگین قند', faDigits(Math.round(cgmDay.avg))]);
   else if(dayBGpts.length) chips.push(['📈','میانگین قند', faDigits(Math.round(dayBGpts.reduce((s,p)=>s+p.g,0)/dayBGpts.length))]);
   if(bgCount>0) chips.push(['🩸','قند دستی', faDigits(bgCount)+' بار']);
   if(sleepRec) chips.push(['😴','خواب', faDigits(sleepRec.hours)+' ساعت']);
   if(chips.length){ h+=`<div class="daily-chips">`+chips.map(c=>`<div class="daily-chip"><span class="dc-ico">${c[0]}</span><span class="dc-l">${c[1]}</span><b class="dc-v">${c[2]}</b></div>`).join('')+`</div>`; }
+  // تفکیک انسولین پایه/سریع (اسم و واحد)
+  if(rapidIns.length || basalIns){
+    const rapidTotal=rapidIns.reduce((s,r)=>s+r.dose,0);
+    const rg={}; rapidIns.forEach(r=>{ rg[r.name]=(rg[r.name]||0)+r.dose; });
+    let rows='';
+    if(basalIns){ rows+=`<div class="insb-row"><span class="insb-tag basal">پایه 🛡️</span><span class="insb-name">${basalIns.name||'—'}</span><b class="insb-u">${faDigits(basalIns.dose)} واحد</b></div>`; }
+    Object.keys(rg).forEach(nm=>{ rows+=`<div class="insb-row"><span class="insb-tag rapid">سریع ⚡</span><span class="insb-name">${nm}</span><b class="insb-u">${faDigits(Math.round(rg[nm]*10)/10)} واحد</b></div>`; });
+    const tot=(basalIns?(+basalIns.dose||0):0)+rapidTotal;
+    if(rows) h+=`<div class="insb-card"><div class="insb-head"><span>💉 انسولین امروز</span><b>${faDigits(Math.round(tot*10)/10)} واحد</b></div>${rows}</div>`;
+  }
   // نمودار قند روز
   if(daySrc==='meter' && dayBGpts.length){
     const dbs=bgStats(dayBGpts);
@@ -2677,14 +2761,14 @@ function renderDailyReport(){
     }
   }
   // تایم‌لاین
-  h+=`<div class="dash-sec-t">🕒 رویدادهای روز ${ev.length?`<span class="dash-sec-s">(${faDigits(ev.length)} مورد)</span>`:''}</div>`;
+  h+=`<div class="dash-sec-t dl-events-h">🕒 رویدادهای روز ${ev.length?`<span class="dash-sec-s">(${faDigits(ev.length)} مورد)</span>`:''}<button class="dl-more-btn" onclick="openLogbook()">تاریخچه‌ی کل ⏱️</button></div>`;
   if(!ev.length){ h+=`<div class="daily-empty">${hasAny?'رویداد زمان‌داری برای این روز نیست.':'برای این روز چیزی ثبت نشده. از دکمه‌ی ＋ می‌توانی وعده، قند، انسولین، دارو، خواب یا حالت روحی اضافه کنی.'}</div>`; }
   else{
     h+=`<div class="daily-tl">`;
-    ev.forEach(e=>{ h+=`<div class="dtl-item">
+    ev.forEach(e=>{ const clk=evOnclick(e,'daily'); h+=`<div class="dtl-item${clk?' clickable':''}"${clk?` onclick="${clk}"`:''}>
       <div class="dtl-rail"><div class="dtl-ico" style="background:${e.color}22">${e.ico}</div></div>
       <div class="dtl-card">
-        <div class="dtl-head"><span class="dtl-title">${e.title}</span>${e.time?`<span class="dtl-time">${e.time}</span>`:''}</div>
+        <div class="dtl-head"><span class="dtl-title">${e.title}</span>${e.time?`<span class="dtl-time">${e.time}</span>`:''}${clk?'<span class="dtl-edit">✎</span>':''}</div>
         ${e.detail?`<div class="dtl-detail">${e.detail}</div>`:''}
       </div>
     </div>`; });
@@ -2707,6 +2791,339 @@ function daySparkSVG(pts){
   [6,12,18].forEach(hh=>{ const gx=x(hh*60).toFixed(1); s+=`<line x1="${gx}" y1="0" x2="${gx}" y2="${H}" stroke="rgba(255,255,255,.05)" stroke-width="1"/>`; });
   s+=`<polyline points="${poly}" fill="none" stroke="#5fd3bd" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
   return s;
+}
+/* ====== ویرایش رویدادها + تاریخچه‌ی کل (Logbook) + خروجی اکسل ====== */
+// تخمین دستهٔ غذایی از روی نام (برای تخمین پروتئین/چربی — تقریبی و آموزشی)
+function foodCat(str){
+  if(!str) return null;
+  let s=normalizeFa(String(str).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}←-⇿⬀-⯿️]/gu,'').trim());
+  if(!s) return null;
+  let hit=(SEARCH_INDEX||[]).find(x=>x.norm===s);
+  if(!hit) hit=(SEARCH_INDEX||[]).find(x=>x.norm&&(s.includes(x.norm)||x.norm.includes(s)));
+  return hit?hit.cat:null;
+}
+// تخمین پروتئین/چربی یک وعده از روی نام غذاها (هر غذا ≈ یک واحد پایه)
+function estMealMacros(m){
+  let p=0, fat=0; const foods=(m&&m.foods)||[];
+  foods.forEach(f=>{ const cat=foodCat(f&&f.name?f.name:f); const base=MACRO_BY_CAT[cat]; if(base){ p+=base[0]; fat+=base[1]; } });
+  return {p, fat};
+}
+function jlogGet(k){ try{ return JSON.parse(localStorage.getItem(k)||'[]'); }catch(e){ return []; } }
+function jlogSet(k,arr){ try{ localStorage.setItem(k,JSON.stringify(arr)); }catch(e){} }
+function jFromKey(key){ const q=String(key).split('-'); return g2j(+q[0],+q[1],+q[2]); }
+// رشتهٔ onclick برای هر رویداد (منبع: daily یا logbook)
+function evOnclick(e,from){
+  const fr=from||'daily';
+  if(e.kind==='meal') return `openEventEditor('meal','${e.key}',${e.id},'${fr}')`;
+  if(e.kind==='basal') return `openEventEditor('basal','${e.key}',null,'${fr}')`;
+  if(e.kind==='bg') return `openEventEditor('bg','${e.iso}',null,'${fr}')`;
+  if(e.kind==='med') return `openEventEditor('med','${e.iso}',null,'${fr}')`;
+  if(e.kind==='mood') return `openEventEditor('mood','${e.iso}',null,'${fr}')`;
+  if(e.kind==='sleep') return `openEventEditor('sleep','${e.iso}',null,'${fr}')`;
+  if(e.kind==='exlog') return `openEventEditor('exlog',${e.ts},null,'${fr}')`;
+  if(e.kind==='exercise') return `openEventEditor('exercise','${e.iso}',null,'${fr}')`;
+  return '';
+}
+let _evEdit=null;
+function openEventEditor(kind,a,b,from){
+  _evEdit={kind, from:from||'daily'};
+  let body='';
+  if(kind==='meal'){ _evEdit.key=a; _evEdit.id=b; body=evMealForm(a,b); }
+  else if(kind==='basal'){ _evEdit.key=a; body=evBasalForm(a); }
+  else if(kind==='bg'){ _evEdit.iso=a; body=evBGForm(a); }
+  else if(kind==='med'){ _evEdit.iso=a; body=evMedForm(a); }
+  else if(kind==='mood'){ _evEdit.iso=a; body=evMoodForm(a); }
+  else if(kind==='sleep'){ _evEdit.iso=a; body=evSleepForm(a); }
+  else if(kind==='exlog'){ _evEdit.ts=a; body=evExForm(a,'exlog'); }
+  else if(kind==='exercise'){ _evEdit.iso=a; body=evExForm(a,'exercise'); }
+  if(!body){ uiToast&&uiToast('این رویداد پیدا نشد'); _evEdit=null; return; }
+  const box=document.getElementById('evEditBody'); if(box) box.innerHTML=body;
+  const m=document.getElementById('evEditModal'); if(m) m.classList.add('show');
+}
+function closeEvEdit(){ const m=document.getElementById('evEditModal'); if(m) m.classList.remove('show'); _evEdit=null; }
+function refreshAfterEdit(){
+  try{ const dl=document.getElementById('page-daily'); if(dl&&dl.classList.contains('active')) renderDailyReport(); }catch(e){}
+  try{ const lm=document.getElementById('logbookModal'); if(lm&&lm.classList.contains('show')) renderLogbook(); }catch(e){}
+  try{ const hm=document.getElementById('page-home'); if(hm&&hm.classList.contains('active')&&typeof renderDashboard==='function') renderDashboard(); }catch(e){}
+  try{ const pp=document.getElementById('page-plan'); if(pp&&pp.classList.contains('active')&&typeof renderSavedMeals==='function') renderSavedMeals(); }catch(e){}
+  try{ if(typeof updateCalibration==='function') updateCalibration(); }catch(e){}
+}
+/* --- فرم وعده / انسولین سریع --- */
+function evMealForm(key,id){
+  const list=planData[key]||[]; const m=Array.isArray(list)?list.find(x=>x.id===id):null; if(!m) return '';
+  const j=jFromKey(key);
+  const foodsTxt=(m.foods||[]).map(f=>f&&f.name?f.name:f).join('\n');
+  const types=['صبحانه','میان‌وعده صبح','ناهار','میان‌وعده عصر','شام','میان‌وعده شب','میان‌وعده','انسولین سریع','انسولین + وعده'];
+  const allT=types.concat(types.includes(m.type)?[]:(m.type?[m.type]:[]));
+  return `<div class="ev-form">
+    <div class="ev-fh"><span class="ev-badge" style="background:rgba(233,184,119,.18)">🍽️</span><div class="ev-ftitle">ویرایش وعده / انسولین سریع</div></div>
+    <label class="qbg-lbl">نوع</label>
+    <select id="evMealType" class="qbg-in">${allT.map(t=>`<option${t===m.type?' selected':''}>${t}</option>`).join('')}</select>
+    <label class="qbg-lbl">غذاها (هر کدام یک خط)</label>
+    <textarea id="evMealFoods" class="qbg-in" rows="3" placeholder="نان سنگک">${foodsTxt}</textarea>
+    <div class="qbg-grid">
+      <div><label class="qbg-lbl">تاریخ (شمسی)</label>${jDateFieldHTML('evMealDate', jDateStr(j[0],j[1],j[2]))}</div>
+      <div><label class="qbg-lbl">ساعت</label><input type="time" id="evMealTime" class="qbg-in" value="${m.time||''}"></div>
+    </div>
+    <div class="qbg-grid">
+      <div><label class="qbg-lbl">کربوهیدرات (گرم)</label><input type="number" id="evMealCarb" class="qbg-in" inputmode="decimal" value="${m.carb||''}"></div>
+      <div><label class="qbg-lbl">دوز انسولین (واحد)</label><input type="number" id="evMealDose" class="qbg-in" step="0.5" inputmode="decimal" value="${m.insDose||''}"></div>
+    </div>
+    <label class="qbg-lbl">نوع/اسم انسولین</label>
+    <input type="text" id="evMealInsType" class="qbg-in" value="${(m.insType||'').replace(/"/g,'&quot;')}" placeholder="مثلاً نووراپید">
+    <div class="qbg-grid">
+      <div><label class="qbg-lbl">قند قبل</label><input type="number" id="evMealBgB" class="qbg-in" inputmode="decimal" value="${m.bgBefore||''}"></div>
+      <div><label class="qbg-lbl">قند ۲ ساعت بعد</label><input type="number" id="evMealBgA" class="qbg-in" inputmode="decimal" value="${m.bgAfter||''}"></div>
+    </div>
+    <div class="ev-actions"><button class="qbg-save" onclick="saveEvMeal()">💾 ذخیره</button><button class="ev-del" onclick="delEvMeal()">🗑 حذف</button></div>
+  </div>`;
+}
+function saveEvMeal(){
+  if(!_evEdit) return; const key=_evEdit.key, id=_evEdit.id;
+  const list=planData[key]; if(!Array.isArray(list)) return;
+  const m=list.find(x=>x.id===id); if(!m){ closeEvEdit(); return; }
+  m.foods=(document.getElementById('evMealFoods').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
+  m.type=document.getElementById('evMealType').value;
+  m.time=document.getElementById('evMealTime').value;
+  m.carb=document.getElementById('evMealCarb').value;
+  m.insDose=document.getElementById('evMealDose').value;
+  m.insType=document.getElementById('evMealInsType').value;
+  m.bgBefore=document.getElementById('evMealBgB').value;
+  m.bgAfter=document.getElementById('evMealBgA').value;
+  const pj=parseJDate((document.getElementById('evMealDate')||{}).value||'');
+  if(pj){ const g=j2g(pj[0],pj[1],pj[2]); const p=n=>String(n).padStart(2,'0'); const nk=`${g[0]}-${p(g[1])}-${p(g[2])}`;
+    if(nk!==key){ planData[key]=list.filter(x=>x.id!==id); if(!Array.isArray(planData[nk])) planData[nk]=[]; planData[nk].push(m); } }
+  savePlan(); closeEvEdit(); uiToast('✓ ذخیره شد'); refreshAfterEdit();
+}
+function delEvMeal(){
+  if(!_evEdit) return; const key=_evEdit.key, id=_evEdit.id;
+  if(!Array.isArray(planData[key])){ closeEvEdit(); return; }
+  if(!confirm('این وعده/انسولین حذف شود؟')) return;
+  planData[key]=planData[key].filter(x=>x.id!==id);
+  savePlan(); closeEvEdit(); uiToast('✓ حذف شد'); refreshAfterEdit();
+}
+/* --- فرم انسولین پایه --- */
+function evBasalForm(key){
+  const bz=(planData._basal||{})[key]; if(!bz) return ''; const j=jFromKey(key);
+  const allN=INS_BASAL.concat(INS_BASAL.includes(bz.type)?[]:(bz.type?[bz.type]:[]));
+  return `<div class="ev-form">
+    <div class="ev-fh"><span class="ev-badge" style="background:rgba(95,211,189,.18)">🛡️</span><div class="ev-ftitle">ویرایش انسولین پایه</div></div>
+    <label class="qbg-lbl">اسم انسولین</label>
+    <select id="evBasalName" class="qbg-in">${allN.map(n=>`<option${n===bz.type?' selected':''}>${n}</option>`).join('')}</select>
+    <div class="qbg-grid">
+      <div><label class="qbg-lbl">دوز (واحد)</label><input type="number" id="evBasalDose" class="qbg-in" step="0.5" inputmode="decimal" value="${bz.dose||''}"></div>
+      <div><label class="qbg-lbl">ساعت</label><input type="time" id="evBasalTime" class="qbg-in" value="${bz.time||''}"></div>
+    </div>
+    <label class="qbg-lbl">تاریخ (شمسی)</label>${jDateFieldHTML('evBasalDate', jDateStr(j[0],j[1],j[2]))}
+    <div class="ev-actions"><button class="qbg-save" onclick="saveEvBasal()">💾 ذخیره</button><button class="ev-del" onclick="delEvBasal()">🗑 حذف</button></div>
+  </div>`;
+}
+function saveEvBasal(){
+  if(!_evEdit) return; const key=_evEdit.key;
+  if(!planData._basal||!planData._basal[key]){ closeEvEdit(); return; }
+  const name=document.getElementById('evBasalName').value;
+  const dose=document.getElementById('evBasalDose').value;
+  const time=document.getElementById('evBasalTime').value;
+  let nk=key; const pj=parseJDate((document.getElementById('evBasalDate')||{}).value||'');
+  if(pj){ const g=j2g(pj[0],pj[1],pj[2]); const p=n=>String(n).padStart(2,'0'); nk=`${g[0]}-${p(g[1])}-${p(g[2])}`; }
+  if(nk!==key) delete planData._basal[key];
+  planData._basal[nk]={type:name, dose:String(dose), time};
+  savePlan(); closeEvEdit(); uiToast('✓ ذخیره شد'); refreshAfterEdit();
+}
+function delEvBasal(){
+  if(!_evEdit) return; if(!confirm('انسولین پایه‌ی این روز حذف شود؟')) return;
+  if(planData._basal) delete planData._basal[_evEdit.key];
+  savePlan(); closeEvEdit(); uiToast('✓ حذف شد'); refreshAfterEdit();
+}
+/* --- فرم قند خون دستی --- */
+function evBGForm(iso){
+  const x=loadBG().find(r=>r.iso===iso); if(!x) return '';
+  const d=new Date(iso); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); const p=n=>String(n).padStart(2,'0');
+  return `<div class="ev-form">
+    <div class="ev-fh"><span class="ev-badge" style="background:rgba(240,162,155,.18)">🩸</span><div class="ev-ftitle">ویرایش قند خون دستی</div></div>
+    <label class="qbg-lbl">قند (mg/dL)</label>
+    <input type="number" id="evBgVal" class="qbg-in" inputmode="decimal" value="${x.glu||''}">
+    <div class="qbg-grid">
+      <div><label class="qbg-lbl">تاریخ (شمسی)</label>${jDateFieldHTML('evBgDate', jDateStr(j[0],j[1],j[2]))}</div>
+      <div><label class="qbg-lbl">ساعت</label><input type="time" id="evBgTime" class="qbg-in" value="${p(d.getHours())}:${p(d.getMinutes())}"></div>
+    </div>
+    <div class="ev-actions"><button class="qbg-save" onclick="saveEvBG()">💾 ذخیره</button><button class="ev-del" onclick="delEvBG()">🗑 حذف</button></div>
+  </div>`;
+}
+function saveEvBG(){
+  if(!_evEdit) return; const iso=_evEdit.iso; let arr=loadBG(); const x=arr.find(r=>r.iso===iso); if(!x){ closeEvEdit(); return; }
+  const v=parseFloat(faToEnDigits((document.getElementById('evBgVal').value||'').trim())); if(isNaN(v)||v<=0){ alert('قند را وارد کن.'); return; }
+  const pj=parseJDate((document.getElementById('evBgDate')||{}).value||''); if(!pj){ alert('تاریخ را انتخاب کن.'); return; }
+  const g=j2g(pj[0],pj[1],pj[2]); const tv=(document.getElementById('evBgTime').value||'00:00').split(':'); const hh=parseInt(tv[0],10)||0, mm=parseInt(tv[1],10)||0;
+  const d=new Date(g[0],g[1]-1,g[2],hh,mm); const p=n=>String(n).padStart(2,'0');
+  x.glu=v; x.iso=d.toISOString(); x.time=`${jDateStr(pj[0],pj[1],pj[2])} ${p(hh)}:${p(mm)}`;
+  jlogSet(BGKEY,arr); closeEvEdit(); uiToast('✓ ذخیره شد');
+  try{ const st=document.getElementById('dataStats'); if(st&&typeof renderDataStats==='function') renderDataStats(); }catch(e){}
+  refreshAfterEdit();
+}
+function delEvBG(){
+  if(!_evEdit) return; if(!confirm('این اندازه‌گیری قند حذف شود؟')) return;
+  jlogSet(BGKEY, loadBG().filter(r=>r.iso!==_evEdit.iso)); closeEvEdit(); uiToast('✓ حذف شد');
+  try{ const st=document.getElementById('dataStats'); if(st&&typeof renderDataStats==='function') renderDataStats(); }catch(e){}
+  refreshAfterEdit();
+}
+/* --- فرم دارو --- */
+function evMedForm(iso){
+  const x=jlogGet('med_log_v1').find(r=>r.iso===iso); if(!x) return '';
+  const d=new Date(iso); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); const p=n=>String(n).padStart(2,'0');
+  return `<div class="ev-form">
+    <div class="ev-fh"><span class="ev-badge" style="background:rgba(195,180,240,.18)">💊</span><div class="ev-ftitle">ویرایش دارو</div></div>
+    <label class="qbg-lbl">نام دارو</label>
+    <input type="text" id="evMedName" class="qbg-in" value="${(x.name||'').replace(/"/g,'&quot;')}">
+    <label class="qbg-lbl">دوز / تعداد (اختیاری)</label>
+    <input type="text" id="evMedDose" class="qbg-in" value="${(x.dose||'').replace(/"/g,'&quot;')}">
+    <div class="qbg-grid">
+      <div><label class="qbg-lbl">تاریخ (شمسی)</label>${jDateFieldHTML('evMedDate', jDateStr(j[0],j[1],j[2]))}</div>
+      <div><label class="qbg-lbl">ساعت</label><input type="time" id="evMedTime" class="qbg-in" value="${p(d.getHours())}:${p(d.getMinutes())}"></div>
+    </div>
+    <div class="ev-actions"><button class="qbg-save" onclick="saveEvMed()">💾 ذخیره</button><button class="ev-del" onclick="delEvMed()">🗑 حذف</button></div>
+  </div>`;
+}
+function saveEvMed(){
+  if(!_evEdit) return; const iso=_evEdit.iso; let arr=jlogGet('med_log_v1'); const x=arr.find(r=>r.iso===iso); if(!x){ closeEvEdit(); return; }
+  const name=(document.getElementById('evMedName').value||'').trim(); if(!name){ alert('نام دارو را وارد کن.'); return; }
+  const pj=parseJDate((document.getElementById('evMedDate')||{}).value||''); if(!pj){ alert('تاریخ را انتخاب کن.'); return; }
+  const g=j2g(pj[0],pj[1],pj[2]); const tv=(document.getElementById('evMedTime').value||'00:00').split(':'); const hh=parseInt(tv[0],10)||0, mm=parseInt(tv[1],10)||0;
+  const d=new Date(g[0],g[1]-1,g[2],hh,mm); const p=n=>String(n).padStart(2,'0');
+  x.name=name; x.dose=(document.getElementById('evMedDose').value||'').trim(); x.iso=d.toISOString(); x.time=`${jDateStr(pj[0],pj[1],pj[2])} ${p(hh)}:${p(mm)}`;
+  jlogSet('med_log_v1',arr); closeEvEdit(); uiToast('✓ ذخیره شد'); refreshAfterEdit();
+}
+function delEvMed(){ if(!_evEdit) return; if(!confirm('این دارو حذف شود؟')) return; jlogSet('med_log_v1', jlogGet('med_log_v1').filter(r=>r.iso!==_evEdit.iso)); closeEvEdit(); uiToast('✓ حذف شد'); refreshAfterEdit(); }
+/* --- فرم حالت روحی --- */
+function evMoodForm(iso){
+  const x=jlogGet('mood_log_v1').find(r=>r.iso===iso); if(!x) return '';
+  const d=new Date(iso); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); const p=n=>String(n).padStart(2,'0');
+  const moods=['عالی','خوب','معمولی','بد','خیلی بد'];
+  return `<div class="ev-form">
+    <div class="ev-fh"><span class="ev-badge" style="background:rgba(233,184,119,.18)">🙂</span><div class="ev-ftitle">ویرایش حالت روحی</div></div>
+    <label class="qbg-lbl">حالت</label>
+    <select id="evMoodVal" class="qbg-in">${moods.concat(moods.includes(x.mood)?[]:(x.mood?[x.mood]:[])).map(t=>`<option${t===x.mood?' selected':''}>${t}</option>`).join('')}</select>
+    <label class="qbg-lbl">یادداشت (اختیاری)</label>
+    <input type="text" id="evMoodNote" class="qbg-in" value="${(x.note||'').replace(/"/g,'&quot;')}">
+    <div class="qbg-grid">
+      <div><label class="qbg-lbl">تاریخ (شمسی)</label>${jDateFieldHTML('evMoodDate', jDateStr(j[0],j[1],j[2]))}</div>
+      <div><label class="qbg-lbl">ساعت</label><input type="time" id="evMoodTime" class="qbg-in" value="${p(d.getHours())}:${p(d.getMinutes())}"></div>
+    </div>
+    <div class="ev-actions"><button class="qbg-save" onclick="saveEvMood()">💾 ذخیره</button><button class="ev-del" onclick="delEvMood()">🗑 حذف</button></div>
+  </div>`;
+}
+function saveEvMood(){
+  if(!_evEdit) return; const iso=_evEdit.iso; let arr=jlogGet('mood_log_v1'); const x=arr.find(r=>r.iso===iso); if(!x){ closeEvEdit(); return; }
+  const pj=parseJDate((document.getElementById('evMoodDate')||{}).value||''); if(!pj){ alert('تاریخ را انتخاب کن.'); return; }
+  const g=j2g(pj[0],pj[1],pj[2]); const tv=(document.getElementById('evMoodTime').value||'00:00').split(':'); const hh=parseInt(tv[0],10)||0, mm=parseInt(tv[1],10)||0;
+  const d=new Date(g[0],g[1]-1,g[2],hh,mm); const p=n=>String(n).padStart(2,'0');
+  x.mood=document.getElementById('evMoodVal').value; x.note=(document.getElementById('evMoodNote').value||'').trim(); x.iso=d.toISOString(); x.time=`${jDateStr(pj[0],pj[1],pj[2])} ${p(hh)}:${p(mm)}`;
+  jlogSet('mood_log_v1',arr); closeEvEdit(); uiToast('✓ ذخیره شد'); refreshAfterEdit();
+}
+function delEvMood(){ if(!_evEdit) return; if(!confirm('این حالت روحی حذف شود؟')) return; jlogSet('mood_log_v1', jlogGet('mood_log_v1').filter(r=>r.iso!==_evEdit.iso)); closeEvEdit(); uiToast('✓ حذف شد'); refreshAfterEdit(); }
+/* --- فرم خواب --- */
+function evSleepForm(iso){
+  const x=jlogGet('sleep_log_v1').find(r=>r.iso===iso); if(!x) return '';
+  const d=new Date(iso); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate());
+  const quals=['خوب','متوسط','بد'];
+  return `<div class="ev-form">
+    <div class="ev-fh"><span class="ev-badge" style="background:rgba(159,192,240,.18)">😴</span><div class="ev-ftitle">ویرایش خواب</div></div>
+    <label class="qbg-lbl">مدت خواب (ساعت)</label>
+    <input type="number" id="evSleepHours" class="qbg-in" inputmode="decimal" value="${x.hours||''}">
+    <label class="qbg-lbl">کیفیت</label>
+    <select id="evSleepQual" class="qbg-in">${quals.concat(quals.includes(x.quality)?[]:(x.quality?[x.quality]:[])).map(t=>`<option${t===x.quality?' selected':''}>${t}</option>`).join('')}</select>
+    <label class="qbg-lbl">تاریخ (شمسی)</label>${jDateFieldHTML('evSleepDate', jDateStr(j[0],j[1],j[2]))}
+    <div class="ev-actions"><button class="qbg-save" onclick="saveEvSleep()">💾 ذخیره</button><button class="ev-del" onclick="delEvSleep()">🗑 حذف</button></div>
+  </div>`;
+}
+function saveEvSleep(){
+  if(!_evEdit) return; const iso=_evEdit.iso; let arr=jlogGet('sleep_log_v1'); const x=arr.find(r=>r.iso===iso); if(!x){ closeEvEdit(); return; }
+  const hours=parseFloat(faToEnDigits((document.getElementById('evSleepHours').value||'').trim())); if(isNaN(hours)||hours<=0||hours>24){ alert('مدت خواب را به ساعت وارد کن.'); return; }
+  const pj=parseJDate((document.getElementById('evSleepDate')||{}).value||''); if(!pj){ alert('تاریخ را انتخاب کن.'); return; }
+  const g=j2g(pj[0],pj[1],pj[2]); const d=new Date(g[0],g[1]-1,g[2],0,0);
+  x.hours=hours; x.quality=document.getElementById('evSleepQual').value; x.iso=d.toISOString(); x.date=jDateStr(pj[0],pj[1],pj[2]);
+  jlogSet('sleep_log_v1',arr); closeEvEdit(); uiToast('✓ ذخیره شد'); refreshAfterEdit();
+}
+function delEvSleep(){ if(!_evEdit) return; if(!confirm('این خواب حذف شود؟')) return; jlogSet('sleep_log_v1', jlogGet('sleep_log_v1').filter(r=>r.iso!==_evEdit.iso)); closeEvEdit(); uiToast('✓ حذف شد'); refreshAfterEdit(); }
+/* --- فرم ورزش (نمایش + حذف؛ ویرایش کامل در تب ورزش) --- */
+function evExForm(ref,kind){
+  let title='', detail='', dstr='';
+  if(kind==='exlog'){ const x=(loadExLog().entries||[]).find(e=>e.ts===ref); if(!x) return ''; const d=new Date(x.ts); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); dstr=jDateStr(j[0],j[1],j[2]); detail=(x.items||[]).map(it=>it.name).join('، '); title='جلسه‌ی ورزش'; }
+  else { const x=loadExercise().find(e=>e.iso===ref); if(!x) return ''; const d=new Date(x.iso); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); dstr=jDateStr(j[0],j[1],j[2]); detail=(x.what||'')+(x.dur?' · '+x.dur+' دقیقه':''); title='ورزش'; }
+  return `<div class="ev-form">
+    <div class="ev-fh"><span class="ev-badge" style="background:rgba(159,192,240,.18)">🏃</span><div class="ev-ftitle">${title}</div></div>
+    <div class="ev-ro"><div class="ev-ro-d">${faDigits(dstr)}</div><div class="ev-ro-t">${detail||'—'}</div></div>
+    <div class="ev-note">برای ویرایش کاملِ جزئیات ورزش به تب «ورزش» برو.</div>
+    <div class="ev-actions"><button class="qbg-save" onclick="gotoExFromEdit()">🏃 تب ورزش</button><button class="ev-del" onclick="delEvEx('${kind}',${kind==='exlog'?ref:`'${ref}'`})">🗑 حذف</button></div>
+  </div>`;
+}
+function gotoExFromEdit(){ closeEvEdit(); const lm=document.getElementById('logbookModal'); if(lm) lm.classList.remove('show'); if(typeof switchTab==='function') switchTab('exercise'); }
+function delEvEx(kind,ref){
+  if(!confirm('این رکورد ورزش حذف شود؟')) return;
+  if(kind==='exlog'){ const o=loadExLog(); o.entries=(o.entries||[]).filter(e=>e.ts!==ref); try{ localStorage.setItem(EX_KEY,JSON.stringify(o)); }catch(e){} }
+  else { try{ localStorage.setItem(EXKEY, JSON.stringify(loadExercise().filter(e=>e.iso!==ref))); }catch(e){} }
+  closeEvEdit(); uiToast('✓ حذف شد'); refreshAfterEdit();
+}
+/* ====== تاریخچه‌ی کل (Logbook) ====== */
+function collectAllEvents(){
+  const out=[]; const p=n=>String(n).padStart(2,'0');
+  const smFromT=t=>{ if(!t) return 0; const q=String(t).split(':'); return (parseInt(q[0],10)||0)*60+(parseInt(q[1],10)||0); };
+  const hm=d=>faDigits(p(d.getHours())+':'+p(d.getMinutes()));
+  for(const key in planData){
+    if(key==='_basal') continue; const list=planData[key]; if(!Array.isArray(list)) continue;
+    if(String(key).split('-').length!==3) continue;
+    list.forEach(m=>{ let det=[];
+      if(m.foods&&m.foods.length) det.push(m.foods.map(f=>f&&f.name?f.name:f).join('، '));
+      else if(m.carb) det.push('کربوهیدرات '+faDigits(m.carb)+' گرم');
+      if(m.insDose) det.push('انسولین '+faDigits(m.insDose)+(m.insType?' واحد ('+m.insType+')':' واحد'));
+      const isIns=(!m.foods||!m.foods.length)&&+m.insDose>0;
+      out.push({dateKey:key, sm:smFromT(m.time), time:m.time?faDigits(m.time):'', ico:isIns?'💉':'🍽️', color:isIns?'#5fd3bd':'#e9b877', title:m.type||'وعده', detail:det.join(' · '), kind:'meal', key, id:m.id}); });
+  }
+  const basals=(planData._basal||{});
+  for(const key in basals){ const bz=basals[key]; if(!bz||String(key).split('-').length!==3) continue;
+    out.push({dateKey:key, sm:bz.time?smFromT(bz.time):1440, time:bz.time?faDigits(bz.time):'', ico:'🛡️', color:'#5fd3bd', title:'انسولین پایه', detail:(bz.type?bz.type+' · ':'')+faDigits(bz.dose)+' واحد', kind:'basal', key}); }
+  try{ loadBG().forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'🩸', color:'#f0a29b', title:'قند خون', detail:faDigits(x.glu)+' mg/dL', kind:'bg', iso:x.iso}); }); }catch(e){}
+  jlogGet('med_log_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'💊', color:'#c3b4f0', title:'دارو', detail:x.name+(x.dose?' · '+x.dose:''), kind:'med', iso:x.iso}); });
+  jlogGet('mood_log_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'🙂', color:'#e9b877', title:'حالت روحی', detail:x.mood+(x.note?' · '+x.note:''), kind:'mood', iso:x.iso}); });
+  jlogGet('sleep_log_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:-1, time:'', ico:'😴', color:'#9fc0f0', title:'خواب', detail:faDigits(x.hours)+' ساعت'+(x.quality?' · '+x.quality:''), kind:'sleep', iso:x.iso}); });
+  try{ (loadExLog().entries||[]).forEach(x=>{ if(!x.ts) return; const d=new Date(x.ts); out.push({dateKey:dayKey(d), sm:x.time?smFromT(x.time):(d.getHours()*60+d.getMinutes()), time:x.time?faDigits(x.time):hm(d), ico:'🏃', color:'#9fc0f0', title:'ورزش', detail:(x.items||[]).map(it=>it.name).join('، '), kind:'exlog', ts:x.ts}); }); }catch(e){}
+  try{ loadExercise().forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'🏃', color:'#9fc0f0', title:'ورزش', detail:(x.what||'')+(x.dur?' · '+faDigits(x.dur)+' دقیقه':''), kind:'exercise', iso:x.iso}); }); }catch(e){}
+  return out;
+}
+function renderLogbook(){
+  const box=document.getElementById('logbookBody'); if(!box) return;
+  const evs=collectAllEvents();
+  if(!evs.length){ box.innerHTML='<div class="daily-empty">هنوز رویدادی ثبت نشده. از دکمه‌ی ＋ رویداد اضافه کن.</div>'; return; }
+  const groups={}; evs.forEach(e=>{ (groups[e.dateKey]=groups[e.dateKey]||[]).push(e); });
+  const keys=Object.keys(groups).sort().reverse();
+  let h='';
+  keys.forEach(k=>{ const q=k.split('-'); const j=g2j(+q[0],+q[1],+q[2]); const dObj=new Date(+q[0],+q[1]-1,+q[2]); const dayName=J_DAYS[(dObj.getDay()+1)%7];
+    const arr=groups[k].slice().sort((a,b)=>a.sm-b.sm);
+    h+=`<div class="lb-group"><div class="lb-date">${dayName} · ${faDigits(jDateStr(j[0],j[1],j[2]))}<span class="lb-cnt">${faDigits(arr.length)} رویداد</span></div>`;
+    arr.forEach(e=>{ h+=`<div class="lb-item" onclick="${evOnclick(e,'logbook')}">
+      <div class="lb-ico" style="background:${e.color}22">${e.ico}</div>
+      <div class="lb-body"><div class="lb-t">${e.title}${e.time?`<span class="lb-time">${e.time}</span>`:''}</div>${e.detail?`<div class="lb-d">${e.detail}</div>`:''}</div>
+      <div class="lb-chev">✎</div></div>`; });
+    h+=`</div>`;
+  });
+  box.innerHTML=h;
+}
+function openLogbook(){ renderLogbook(); const m=document.getElementById('logbookModal'); if(m) m.classList.add('show'); }
+function closeLogbook(){ const m=document.getElementById('logbookModal'); if(m) m.classList.remove('show'); }
+/* ====== خروجی اکسل از کل رویدادها ====== */
+function exportEventsXLSX(){
+  try{
+    if(typeof XLSX==='undefined'){ alert('کتابخانه‌ی اکسل هنوز بارگذاری نشده — چند لحظه بعد دوباره امتحان کن.'); return; }
+    const evs=collectAllEvents().sort((a,b)=> a.dateKey<b.dateKey?1:(a.dateKey>b.dateKey?-1:(a.sm-b.sm)));
+    if(!evs.length){ alert('رویدادی برای خروجی وجود ندارد.'); return; }
+    const rows=[['تاریخ (شمسی)','ساعت','نوع','جزئیات']];
+    evs.forEach(e=>{ const q=e.dateKey.split('-'); const j=g2j(+q[0],+q[1],+q[2]);
+      rows.push([jDateStr(j[0],j[1],j[2]), faToEnDigits(e.time||''), e.title, faToEnDigits(e.detail||'')]); });
+    const ws=XLSX.utils.aoa_to_sheet(rows); ws['!cols']=[{wch:14},{wch:8},{wch:18},{wch:52}];
+    const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'رویدادها');
+    XLSX.writeFile(wb,'دفترچه-رویدادها.xlsx');
+    uiToast('✓ فایل اکسل ساخته شد');
+  }catch(err){ alert('خطا در ساخت فایل: '+(err&&err.message?err.message:err)); }
 }
 /* ====== گزارش کلی ====== */
 let _ovRange=14; // بازه‌ی گزارش کلی به روز (یا 'all')
