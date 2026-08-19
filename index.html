@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" id="metaViewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -979,6 +979,8 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
 </div>
 
+<!-- لایه‌ی محتوای وسط — فقط این بخش با زوم دستی بزرگ می‌شود؛ هدر و نوارها ثابت می‌مانند -->
+<div id="zoomContent">
 <!-- ============ صفحه‌ی خانه (داشبورد) ============ -->
 <div class="page active" id="page-home">
   <div id="dashboard"></div>
@@ -1446,6 +1448,15 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <div id="navModeSetting"></div>
   </div>
 </div>
+<div class="card" id="c-profile-zoom">
+  <h2><span>🔍 بزرگ‌نمایی (زوم)</span></h2>
+  <div class="card-body">
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:12px">
+      اگر فعالش کنی، می‌توانی با <b style="color:var(--teal)">دو انگشت</b> فقط بخش وسط صفحه را بزرگ‌نمایی کنی؛ هدر بالا و نوار پایین ثابت می‌مانند و بزرگ نمی‌شوند. برای بازگشت، دوبار روی صفحه بزن. به‌صورت پیش‌فرض خاموش است.
+    </div>
+    <div id="zoomSetting"></div>
+  </div>
+</div>
 <div class="card coll" id="c-profile">
   <h2 onclick="toggleCard('c-profile')">
     <span><span class="step-num">1</span>پروفایل و انسولین روزانه</span>
@@ -1608,6 +1619,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
   نسخه‌ی <b style="color:var(--teal)">۱۰.۴</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
+</div><!-- /zoomContent -->
 </div>
 <script>
 // نشانگر زمان بارگذاری — کمک می‌کند مطمئن شوید نسخه‌ی تازه لود شده
@@ -3510,6 +3522,61 @@ function renderNavSetting(){
     <button class="${m==='bottom'?'on':''}" onclick="setNavMode('bottom')">⬇️ منوی پایین</button>
   </div>`;
 }
+
+// ===== بزرگ‌نمایی دستی فقط برای محتوای وسط (هدر/نوارها ثابت) =====
+const ZOOM_KEY='zoom_enabled_v1';
+let _zScale=1, _pinchDist=0, _pinchStartScale=1, _lastTap=0;
+function zoomEnabled(){ try{ return localStorage.getItem(ZOOM_KEY)==='1'; }catch(e){ return false; } }
+function applyZoomScale(){
+  const zc=document.getElementById('zoomContent'); if(!zc) return;
+  zc.style.zoom = (_zScale>1.001? String(_zScale) : '');
+}
+function resetZoom(){ _zScale=1; applyZoomScale(); }
+function setZoomEnabled(on){
+  try{ localStorage.setItem(ZOOM_KEY, on?'1':'0'); }catch(e){}
+  if(!on) resetZoom();
+  renderZoomSetting();
+  uiToast(on?'بزرگ‌نمایی فعال شد — با دو انگشت زوم کن':'بزرگ‌نمایی خاموش شد');
+}
+function renderZoomSetting(){
+  const box=document.getElementById('zoomSetting'); if(!box) return;
+  const on=zoomEnabled();
+  box.innerHTML=`<div class="navmode-seg">
+    <button class="${on?'on':''}" onclick="setZoomEnabled(true)">✅ روشن</button>
+    <button class="${!on?'on':''}" onclick="setZoomEnabled(false)">⛔ خاموش</button>
+  </div>`;
+}
+(function initZoomGestures(){
+  function d2(t){ const dx=t[0].clientX-t[1].clientX, dy=t[0].clientY-t[1].clientY; return Math.hypot(dx,dy); }
+  document.addEventListener('touchstart', function(e){
+    if(!zoomEnabled()) return;
+    if(e.touches.length===2){ _pinchDist=d2(e.touches); _pinchStartScale=_zScale; }
+    else if(e.touches.length===1){
+      const now=Date.now();
+      if(now-_lastTap<300 && _zScale>1.001){ resetZoom(); _lastTap=0; }
+      else _lastTap=now;
+    }
+  }, {passive:false});
+  document.addEventListener('touchmove', function(e){
+    if(!zoomEnabled()) return;
+    if(e.touches.length===2 && _pinchDist>0){
+      e.preventDefault();
+      const r=d2(e.touches)/_pinchDist;
+      _zScale=Math.min(3, Math.max(1, _pinchStartScale*r));
+      applyZoomScale();
+    }
+  }, {passive:false});
+  document.addEventListener('touchend', function(e){ if(e.touches.length<2) _pinchDist=0; }, {passive:true});
+  // دسکتاپ: Ctrl+چرخ ماوس
+  document.addEventListener('wheel', function(e){
+    if(!zoomEnabled() || !e.ctrlKey) return;
+    const zc=document.getElementById('zoomContent'); if(!zc) return;
+    e.preventDefault();
+    _zScale=Math.min(3, Math.max(1, _zScale - e.deltaY*0.002));
+    applyZoomScale();
+  }, {passive:false});
+})();
+
 function goToToday(){
   const today=new Date(); today.setHours(0,0,0,0);
   curWeekStart=weekStart(today);
@@ -3569,6 +3636,7 @@ async function renderProfileTab(){
   // فرم پروفایل (c-profile) حالا خودش داخل این تب است و وضعیت ذخیره‌شده را نشان می‌دهد.
   // اینجا فقط شمارش داده‌ها و تنظیم حالت منو را تازه می‌کنیم.
   renderNavSetting();
+  renderZoomSetting();
   renderDataStats();
 }
 
