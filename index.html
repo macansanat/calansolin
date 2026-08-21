@@ -69,6 +69,9 @@ body.nav-bottom{padding-bottom:100px}
 .qbg-modal{display:none;position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.6);padding:16px;overflow-y:auto;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
 .qbg-modal.show{display:flex;align-items:center;justify-content:center}
 .qbg-box{position:relative;width:100%;max-width:400px;background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 24px 64px rgba(0,0,0,.55)}
+/* مودال بلند (ثبت خوراکی): از بالا و با اسکرول داخلی تا کل فرم روی گوشی برسد */
+#customFoodModal.show{align-items:flex-start}
+#customFoodModal .qbg-box{max-height:calc(100vh - 32px);overflow-y:auto;-webkit-overflow-scrolling:touch}
 .qbg-x{position:absolute;top:14px;left:14px;width:30px;height:30px;border-radius:50%;background:var(--field);border:1px solid var(--line);color:var(--muted);font-size:14px;cursor:pointer;line-height:1}
 .qbg-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
 .qbg-badge{flex:0 0 auto;width:44px;height:44px;border-radius:13px;background:rgba(224,104,95,.16);display:flex;align-items:center;justify-content:center;font-size:22px}
@@ -357,6 +360,8 @@ select{cursor:pointer;text-overflow:ellipsis;padding-right:10px;padding-left:28p
 .cf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 .cf-grid label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:600}
 .cf-hr{border:none;border-top:1px solid var(--line);margin:16px 0 12px}
+.cf-photo-btn{width:100%;background:var(--teal-dim);border:1px solid var(--teal);color:#eafff8;border-radius:12px;padding:13px;font-family:inherit;font-weight:800;font-size:13.5px;cursor:pointer;margin-bottom:6px}
+.cf-photo-btn:active{filter:brightness(1.12)}
 .cf-sec{font-size:12.5px;font-weight:800;color:var(--teal);margin-bottom:8px}
 .mini-btn{background:transparent;border:1px solid var(--line);color:var(--teal);border-radius:8px;padding:6px 12px;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
 .mini-btn:hover{background:rgba(63,185,163,.08)}
@@ -1001,11 +1006,15 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 <div class="qbg-modal" id="customFoodModal" onclick="if(event.target===this)closeCustomFood()">
   <div class="qbg-box" style="max-width:440px">
     <button class="qbg-x" onclick="closeCustomFood()" title="بستن">✕</button>
-    <div class="qbg-head"><span class="qbg-badge" style="background:rgba(63,185,163,.18)">🧾</span><div><div class="qbg-title">ثبت محصول جدید</div><div class="qbg-sub">اطلاعات جدول تغذیه‌ی روی بسته‌بندی را وارد کن تا در کتابخانه‌ی شخصی‌ات ذخیره و در جستجوی ماشین‌حساب ظاهر شود.</div></div></div>
+    <div class="qbg-head"><span class="qbg-badge" style="background:rgba(63,185,163,.18)">🧾</span><div><div class="qbg-title">ثبت خوراکی جدید</div><div class="qbg-sub">اطلاعات جدول تغذیه‌ی روی بسته‌بندی را وارد کن تا در کتابخانه‌ی شخصی‌ات ذخیره و در جستجوی ماشین‌حساب ظاهر شود.</div></div></div>
 
     <div class="cf-msg" id="cfMsg"></div>
 
-    <label class="qbg-lbl">نام محصول</label>
+    <input type="file" id="cfPhoto" accept="image/*" capture="environment" style="display:none" onchange="handleCustomFoodPhoto(this)">
+    <button type="button" class="cf-photo-btn" onclick="document.getElementById('cfPhoto').click()">📷 خواندن خودکار از عکس برچسب تغذیه</button>
+    <div class="qins-note" id="cfPhotoNote">عکسِ جدول تغذیه را بده تا مقادیر (انرژی، کربوهیدرات، قند، پروتئین، چربی، وزن وعده) را خودم بخوانم و فرم را پر کنم؛ بعد اصلاحشان کن. همه‌ی پردازش داخل مرورگر خودت است. برچسب‌های انگلیسی دقیق‌تر خوانده می‌شوند.</div>
+
+    <label class="qbg-lbl">نام خوراکی</label>
     <input type="text" id="cfName" class="qbg-in" placeholder="مثلاً کره‌بادام‌زمینی رژیمی" style="margin-bottom:14px">
 
     <label class="qbg-lbl">مقادیر بر چه مبنایی روی برچسب نوشته شده؟</label>
@@ -1019,9 +1028,10 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <div class="qins-note" id="cfBasisNote">مقادیر را همان‌طور که روی برچسب برای «هر وعده / Serving» نوشته وارد کن؛ خودم به ۱۰۰ گرم تبدیل می‌کنم.</div>
 
     <hr class="cf-hr">
-    <div class="cf-sec">🍞 کربوهیدرات (مهم — مبنای دوز انسولین)</div>
+    <div class="cf-sec">🍞 کربوهیدرات (مبنای دوز انسولین)</div>
     <label class="qbg-lbl">کربوهیدرات کل (گرم)</label>
-    <input type="number" id="cfCarb" class="qbg-in" inputmode="decimal" placeholder="گرم" style="margin-bottom:14px">
+    <input type="number" id="cfCarb" class="qbg-in" inputmode="decimal" placeholder="گرم — اگر روی برچسب نبود خالی بگذار" style="margin-bottom:6px">
+    <div class="qins-note">خیلی از برچسب‌های ایرانی «کربوهیدرات» ندارند. اگر نبود، این را خالی بگذار و در عوض <b>انرژی (کالری)</b> و در صورت وجود پروتئین/چربی را وارد کن؛ خودم کربوهیدرات را از روی انرژی <b>تخمین</b> می‌زنم. (تخمینی — با پزشک/برچسب دقیق‌تر بسنج.)</div>
 
     <div class="cf-sec">ارزش تغذیه‌ای (اختیاری)</div>
     <div class="cf-grid">
@@ -1035,7 +1045,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <div class="qbg-actions"><button class="qbg-cancel" onclick="closeCustomFood()">بستن</button><button class="qbg-save" id="cfSaveBtn" onclick="saveCustomFood()">💾 ذخیره در کتابخانه</button></div>
 
     <hr class="cf-hr">
-    <div class="cf-sec">📚 محصولات ثبت‌شده‌ی من</div>
+    <div class="cf-sec">📚 خوراکی‌های ثبت‌شده‌ی من</div>
     <div class="cf-list" id="cfList"></div>
   </div>
 </div>
@@ -1070,7 +1080,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <div class="quick-actions" style="margin-top:12px">
     <button type="button" class="quick-btn" onclick="toggleFrequentPanelCalc()">⭐ وعده‌های پرمصرف</button>
     <button type="button" class="quick-btn" onclick="togglePastePanelCalc()">📋 پیست خوراکی‌ها</button>
-    <button type="button" class="quick-btn" onclick="openCustomFood()">🧾 ثبت محصول جدید</button>
+    <button type="button" class="quick-btn" onclick="openCustomFood()">🧾 ثبت خوراکی جدید</button>
   </div>
   <div id="frequentPanelCalc" style="display:none;margin-top:10px">
     <div id="frequentMealsBoxCalc" class="frequent-box"></div>
@@ -1682,7 +1692,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۰.۵</b> · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۰.۶</b> · انتشار: ۱۴۰۵/۰۵/۳۰ ·آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4166,10 +4176,17 @@ function cfSetBasis(b){
 }
 function saveCustomFood(){
   const name=sanitizeFoodName(document.getElementById('cfName').value);
-  if(!name){ alert('نام محصول را وارد کن.'); return; }
+  if(!name){ alert('نام خوراکی را وارد کن.'); return; }
   const num=id=>{ const el=document.getElementById(id); const v=parseFloat(faToEnDigits(el?el.value:'')); return isNaN(v)?0:v; };
-  const carb=num('cfCarb'), sugar=num('cfSugar'), prot=num('cfProt'), fat=num('cfFat'), fiber=num('cfFiber'), kcal=num('cfKcal');
+  const isEmpty=id=>{ const el=document.getElementById(id); return !el || String(el.value).trim()===''; };
+  const sugar=num('cfSugar'), prot=num('cfProt'), fat=num('cfFat'), fiber=num('cfFiber'), kcal=num('cfKcal');
   const serving=num('cfServing');
+  // کربوهیدرات: اگر روی برچسب نبود، از انرژی تخمین بزن (kcal = ۴کربو + ۴پروتئین + ۹چربی)
+  let carb, estimated=false;
+  if(isEmpty('cfCarb')){
+    if(kcal>0){ carb=Math.max(0,(kcal - 4*prot - 9*fat)/4); estimated=true; }
+    else carb=0;
+  } else { carb=num('cfCarb'); }
   const basis=window._cfBasis||'serving';
   let f;
   if(basis==='serving'){
@@ -4191,7 +4208,7 @@ function saveCustomFood(){
   resetCustomFoodForm();
   renderCustomFoodList();
   const msg=document.getElementById('cfMsg');
-  if(msg){ msg.textContent='✓ «'+name+'» '+(wasEdit?'به‌روزرسانی شد.':'ذخیره شد و در جستجوی ماشین‌حساب در دسترس است.'); msg.style.display='block'; setTimeout(()=>{ if(msg) msg.style.display='none'; },3000); }
+  if(msg){ msg.textContent='✓ «'+name+'» '+(wasEdit?'به‌روزرسانی شد.':'ذخیره شد و در جستجوی ماشین‌حساب در دسترس است.')+(estimated?' (کربوهیدرات از روی انرژی تخمین زده شد؛ در صورت امکان دقیقش را وارد کن.)':''); msg.style.display='block'; setTimeout(()=>{ if(msg) msg.style.display='none'; },4500); }
 }
 function editCustomFood(id){
   const f=loadCustomFoods().find(x=>x.id===id); if(!f) return;
@@ -4204,7 +4221,7 @@ function editCustomFood(id){
   const box=document.querySelector('#customFoodModal .qbg-box'); if(box) box.scrollTop=0;
 }
 function delCustomFood(id){
-  if(!confirm('این محصول از کتابخانه‌ی شخصی حذف شود؟')) return;
+  if(!confirm('این خوراکی از کتابخانه‌ی شخصی حذف شود؟')) return;
   const arr=loadCustomFoods().filter(x=>x.id!==id);
   saveCustomFoodsArr(arr);
   applyCustomFoods();
@@ -4214,7 +4231,7 @@ function delCustomFood(id){
 function renderCustomFoodList(){
   const box=document.getElementById('cfList'); if(!box) return;
   const arr=loadCustomFoods();
-  if(!arr.length){ box.innerHTML='<div class="cf-empty">هنوز محصولی ثبت نکرده‌ای. با فرم بالا اولین محصول را از روی برچسب تغذیه اضافه کن.</div>'; return; }
+  if(!arr.length){ box.innerHTML='<div class="cf-empty">هنوز خوراکی‌ای ثبت نکرده‌ای. با فرم بالا اولین خوراکی را از روی برچسب تغذیه اضافه کن.</div>'; return; }
   box.innerHTML=arr.map(f=>{
     const per=f.serving>0?`وعده ${faDigits(f.serving)}گ`:'۱۰۰گ';
     const nm=sanitizeFoodName(f.name);
@@ -4226,6 +4243,62 @@ function renderCustomFoodList(){
         <button type="button" onclick="delCustomFood('${f.id}')" title="حذف">🗑️</button>
       </div></div>`;
   }).join('');
+}
+// ===== خواندن برچسب تغذیه از عکس (OCR داخل مرورگر، مثل تب آزمایش) =====
+function cfNumFromText(text,patterns){
+  for(const p of patterns){
+    const m=text.match(p);
+    if(m&&m[1]!=null){ const v=parseFloat(m[1].replace(/\s/g,'').replace(',','.')); if(!isNaN(v)) return v; }
+  }
+  return null;
+}
+function parseNutritionText(raw){
+  const t=' '+faToEnDigits(String(raw||'')).replace(/[‌]/g,' ').replace(/\s+/g,' ').toLowerCase()+' ';
+  // برای «چربی کل»، ابتدا چربی ترانس/اشباع را حذف کن تا مقدار اشتباه گرفته نشود
+  const tFat=t.replace(/trans[^0-9]{0,20}\d+(?:[.,]\d+)?/ig,' ')
+              .replace(/saturated[^0-9]{0,20}\d+(?:[.,]\d+)?/ig,' ')
+              .replace(/(چربی\s*(?:ترانس|اشباع)|اسید\s*چرب)[^0-9]{0,20}\d+(?:[.,]\d+)?/g,' ');
+  const N='[^0-9]{0,15}(\\d+(?:[.,]\\d+)?)';
+  const R=s=>new RegExp(s,'i');
+  return {
+    serving: cfNumFromText(t,[R('serving\\s*size'+N),R('وعده'+N),R('serving'+N)]),
+    energy:  cfNumFromText(t,[R('energy'+N),R('(\\d+(?:[.,]\\d+)?)\\s*k?cal'),R('انرژی'+N),R('کالری'+N)]),
+    carb:    cfNumFromText(t,[R('carbohydrate?s?'+N),R('carb'+N),R('کربوهیدرات'+N)]),
+    sugar:   cfNumFromText(t,[R('sugars?'+N),R('قند'+N),R('شکر'+N)]),
+    protein: cfNumFromText(t,[R('protein'+N),R('پروتئین'+N)]),
+    fat:     cfNumFromText(tFat,[R('fat\\b'+N),R('چربی'+N)]),
+    fiber:   cfNumFromText(t,[R('fib(?:er|re)'+N),R('فیبر'+N)])
+  };
+}
+async function handleCustomFoodPhoto(inp){
+  const file=inp.files&&inp.files[0]; if(!file) return;
+  const note=document.getElementById('cfPhotoNote');
+  const setNote=s=>{ if(note) note.textContent=s; };
+  try{
+    if(!navigator.onLine && !window.Tesseract){ setNote('⚠️ خواندن از عکس به اینترنت نیاز دارد (بار اول). الان آفلاینی؛ مقادیر را دستی وارد کن.'); inp.value=''; return; }
+    setNote('در حال آماده‌سازی موتور خواندن…');
+    window._lastOcrLines=[];
+    const cv=await preprocessImage(file);
+    const lines=await ocrToLines(cv,note,'خواندن برچسب…');
+    const text=(lines||[]).join('  ');
+    const r=parseNutritionText(text);
+    // پر کردن فرم
+    const setV=(id,v)=>{ const e=document.getElementById(id); if(e&&v!=null) e.value=v; };
+    if(r.serving!=null){ cfSetBasis('serving'); setV('cfServing',r.serving); }
+    else cfSetBasis('100');
+    setV('cfKcal',r.energy);
+    setV('cfCarb',r.carb);
+    setV('cfSugar',r.sugar);
+    setV('cfProt',r.protein);
+    setV('cfFat',r.fat);
+    setV('cfFiber',r.fiber);
+    const found=['serving','energy','carb','sugar','protein','fat','fiber'].filter(k=>r[k]!=null).length;
+    if(found===0) setNote('چیزی خوانده نشد. عکس واضح‌تر (نور کافی، صاف، نزدیک به جدول) بده یا مقادیر را دستی وارد کن.');
+    else setNote('✓ '+faDigits(found)+' مقدار خوانده شد. حتماً همه را با برچسب چک کن و در صورت لزوم اصلاح کن؛ اگر کربوهیدرات نبود از انرژی تخمین زده می‌شود.');
+  }catch(e){
+    setNote('خطا در خواندن عکس. مقادیر را دستی وارد کن.');
+  }
+  inp.value='';
 }
 
 function calcCarbs(){
