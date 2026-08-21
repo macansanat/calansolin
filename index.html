@@ -4248,12 +4248,14 @@ function renderCustomFoodList(){
 function cfNumFromText(text,patterns){
   for(const p of patterns){
     const m=text.match(p);
-    if(m&&m[1]!=null){ const v=parseFloat(m[1].replace(/\s/g,'').replace(',','.')); if(!isNaN(v)) return v; }
+    if(m&&m[1]!=null){ const v=parseFloat(m[1].replace(/\s/g,'').replace(/[,\/٫]/,'.')); if(!isNaN(v)) return v; }
   }
   return null;
 }
 function parseNutritionText(raw){
-  const t=' '+faToEnDigits(String(raw||'')).replace(/[‌]/g,' ').replace(/\s+/g,' ').toLowerCase()+' ';
+  // ارقام فارسی→انگلیسی، و «/» یا «٫» بین دو رقم = ممیز (مثل ۱۷۰/۱)
+  let t=' '+faToEnDigits(String(raw||'')).replace(/[‌]/g,' ')
+          .replace(/(\d)\s*[\/٫]\s*(\d)/g,'$1.$2').replace(/\s+/g,' ').toLowerCase()+' ';
   // برای «چربی کل»، ابتدا چربی ترانس/اشباع را حذف کن تا مقدار اشتباه گرفته نشود
   const tFat=t.replace(/trans[^0-9]{0,20}\d+(?:[.,]\d+)?/ig,' ')
               .replace(/saturated[^0-9]{0,20}\d+(?:[.,]\d+)?/ig,' ')
@@ -4270,6 +4272,18 @@ function parseNutritionText(raw){
     fiber:   cfNumFromText(t,[R('fib(?:er|re)'+N),R('فیبر'+N)])
   };
 }
+// چرخش یک کانواس به اندازه‌ی deg (۰/۹۰/۱۸۰/۲۷۰) → کانواس جدید
+function rotateCanvas(cv,deg){
+  if(!deg) return cv;
+  const rad=deg*Math.PI/180, swap=(deg===90||deg===270);
+  const w=cv.width, h=cv.height;
+  const out=document.createElement('canvas');
+  out.width=swap?h:w; out.height=swap?w:h;
+  const ctx=out.getContext('2d');
+  ctx.translate(out.width/2,out.height/2); ctx.rotate(rad); ctx.drawImage(cv,-w/2,-h/2);
+  return out;
+}
+function cfCountFound(r){ return ['serving','energy','carb','sugar','protein','fat','fiber'].filter(k=>r[k]!=null).length; }
 async function handleCustomFoodPhoto(inp){
   const file=inp.files&&inp.files[0]; if(!file) return;
   const note=document.getElementById('cfPhotoNote');
@@ -4277,12 +4291,23 @@ async function handleCustomFoodPhoto(inp){
   try{
     if(!navigator.onLine && !window.Tesseract){ setNote('⚠️ خواندن از عکس به اینترنت نیاز دارد (بار اول). الان آفلاینی؛ مقادیر را دستی وارد کن.'); inp.value=''; return; }
     setNote('در حال آماده‌سازی موتور خواندن…');
-    window._lastOcrLines=[];
-    const cv=await preprocessImage(file);
-    const lines=await ocrToLines(cv,note,'خواندن برچسب…');
-    const text=(lines||[]).join('  ');
-    const r=parseNutritionText(text);
-    // پر کردن فرم
+    const base=await preprocessImage(file);
+    // عکس ممکن است کج یا وارونه باشد؛ چند جهت را امتحان کن و بهترین را بردار
+    const angles=[0,180,90,270];
+    let best={r:{},found:-1,angle:0};
+    for(let i=0;i<angles.length;i++){
+      const a=angles[i];
+      setNote(`خواندن برچسب… (جهت ${faDigits(i+1)} از ${faDigits(angles.length)})`);
+      window._lastOcrLines=[];
+      const cv=(a===0)?base:rotateCanvas(base,a);
+      let lines=[];
+      try{ lines=await ocrToLines(cv,null,''); }catch(e){ lines=[]; }
+      const r=parseNutritionText((lines||[]).join('  '));
+      const found=cfCountFound(r);
+      if(found>best.found){ best={r,found,angle:a}; }
+      if(found>=3) break;   // جهت درست پیدا شد
+    }
+    const r=best.r||{};
     const setV=(id,v)=>{ const e=document.getElementById(id); if(e&&v!=null) e.value=v; };
     if(r.serving!=null){ cfSetBasis('serving'); setV('cfServing',r.serving); }
     else cfSetBasis('100');
@@ -4292,9 +4317,8 @@ async function handleCustomFoodPhoto(inp){
     setV('cfProt',r.protein);
     setV('cfFat',r.fat);
     setV('cfFiber',r.fiber);
-    const found=['serving','energy','carb','sugar','protein','fat','fiber'].filter(k=>r[k]!=null).length;
-    if(found===0) setNote('چیزی خوانده نشد. عکس واضح‌تر (نور کافی، صاف، نزدیک به جدول) بده یا مقادیر را دستی وارد کن.');
-    else setNote('✓ '+faDigits(found)+' مقدار خوانده شد. حتماً همه را با برچسب چک کن و در صورت لزوم اصلاح کن؛ اگر کربوهیدرات نبود از انرژی تخمین زده می‌شود.');
+    if(best.found<=0) setNote('چیزی خوانده نشد. عکس واضح‌تر (نور کافی، صاف، نزدیک به جدول، صافِ افقی نه کج) بده یا مقادیر را دستی وارد کن.');
+    else setNote('✓ '+faDigits(best.found)+' مقدار خوانده شد. حتماً همه را با برچسب چک کن و در صورت لزوم اصلاح کن؛ اگر کربوهیدرات نبود از انرژی تخمین زده می‌شود.');
   }catch(e){
     setNote('خطا در خواندن عکس. مقادیر را دستی وارد کن.');
   }
