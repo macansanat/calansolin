@@ -1012,7 +1012,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 
     <input type="file" id="cfPhoto" accept="image/*" style="display:none" onchange="handleCustomFoodPhoto(this)">
     <button type="button" class="cf-photo-btn" onclick="document.getElementById('cfPhoto').click()">📷 خواندن خودکار از عکس برچسب تغذیه</button>
-    <div class="qins-note" id="cfPhotoNote">عکسِ جدول تغذیه را بده تا مقادیر (انرژی، کربوهیدرات، قند، پروتئین، چربی، وزن وعده) را خودم بخوانم و فرم را پر کنم؛ بعد اصلاحشان کن. همه‌ی پردازش داخل مرورگر خودت است. برچسب‌های انگلیسی دقیق‌تر خوانده می‌شوند.</div>
+    <div class="qins-note" id="cfPhotoNote">عکسِ جدول تغذیه را بده تا مقادیر را خودم بخوانم و فرم را پر کنم؛ <b>حتماً بعدش چک و اصلاح کن</b>. این یک کمکِ «بهترین‌تلاش» است و روی برچسب‌های <b>براق، منحنی یا کج</b> ممکن است ناقص یا اشتباه بخواند. برای بهترین نتیجه: صاف روبه‌رو، نور کافی و بدون انعکاس. همه‌ی پردازش داخل مرورگر خودت است.</div>
 
     <label class="qbg-lbl">نام خوراکی</label>
     <input type="text" id="cfName" class="qbg-in" placeholder="مثلاً کره‌بادام‌زمینی رژیمی" style="margin-bottom:14px">
@@ -4284,6 +4284,18 @@ function rotateCanvas(cv,deg){
   return out;
 }
 function cfCountFound(r){ return ['serving','energy','carb','sugar','protein','fat','fiber'].filter(k=>r[k]!=null).length; }
+// یک worker پایدار برای OCR (بین چند چرخش و چند عکس دوباره استفاده می‌شود → بسیار سریع‌تر از ساختن worker در هر بار)
+async function cfOcrLines(canvas){
+  try{
+    if(!window._cfWorker){
+      await ensureTesseract();
+      if(window.Tesseract && Tesseract.createWorker){ window._cfWorker=await Tesseract.createWorker('eng',1); }
+    }
+    if(window._cfWorker){ const {data}=await window._cfWorker.recognize(canvas); return (data.text||'').split(/\r?\n/).filter(l=>l.trim()); }
+  }catch(e){ window._cfWorker=null; }
+  // fallback: مسیر معمول (کندتر، هر بار worker می‌سازد)
+  return await ocrToLines(canvas,null,'');
+}
 async function handleCustomFoodPhoto(inp){
   const file=inp.files&&inp.files[0]; if(!file) return;
   const note=document.getElementById('cfPhotoNote');
@@ -4292,7 +4304,7 @@ async function handleCustomFoodPhoto(inp){
     if(!navigator.onLine && !window.Tesseract){ setNote('⚠️ خواندن از عکس به اینترنت نیاز دارد (بار اول). الان آفلاینی؛ مقادیر را دستی وارد کن.'); inp.value=''; return; }
     setNote('در حال آماده‌سازی موتور خواندن…');
     const base=await preprocessImage(file);
-    // عکس ممکن است کج یا وارونه باشد؛ چند جهت را امتحان کن و بهترین را بردار
+    // عکس ممکن است کج یا وارونه باشد؛ جهت‌ها را امتحان کن و بهترین را بردار (با worker پایدار و توقف زودهنگام)
     const angles=[0,180,90,270];
     let best={r:{},found:-1,angle:0};
     for(let i=0;i<angles.length;i++){
@@ -4301,11 +4313,11 @@ async function handleCustomFoodPhoto(inp){
       window._lastOcrLines=[];
       const cv=(a===0)?base:rotateCanvas(base,a);
       let lines=[];
-      try{ lines=await ocrToLines(cv,null,''); }catch(e){ lines=[]; }
+      try{ lines=await cfOcrLines(cv); }catch(e){ lines=[]; }
       const r=parseNutritionText((lines||[]).join('  '));
       const found=cfCountFound(r);
       if(found>best.found){ best={r,found,angle:a}; }
-      if(found>=3) break;   // جهت درست پیدا شد
+      if(found>=2) break;   // جهت درست پیدا شد (اکثر برچسب‌ها فقط انرژی/قند/چربی دارند)
     }
     const r=best.r||{};
     const setV=(id,v)=>{ const e=document.getElementById(id); if(e&&v!=null) e.value=v; };
