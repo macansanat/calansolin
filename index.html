@@ -340,6 +340,24 @@ select{cursor:pointer;text-overflow:ellipsis;padding-right:10px;padding-left:28p
 .del:hover{background:rgba(224,104,95,.1)}
 .add-btn{background:var(--teal-dim);border:none;color:#d6f5ee;border-radius:10px;padding:11px 16px;font-family:inherit;font-weight:700;font-size:13.5px;cursor:pointer;margin-top:4px}
 .add-btn:hover{filter:brightness(1.15)}
+.calc-row-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.calc-row-actions .add-btn{flex:1}
+.clear-btn{background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:11px 14px;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer;margin-top:4px}
+.clear-btn:active{background:var(--panel-2)}
+.cf-list{margin-top:6px;display:flex;flex-direction:column;gap:8px}
+.cf-empty{font-size:12px;color:var(--muted);line-height:1.8;background:var(--field);border:1px dashed var(--line);border-radius:12px;padding:14px}
+.cf-item{display:flex;align-items:center;gap:8px;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.cf-i-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.cf-i-name{font-weight:800;font-size:13.5px}
+.cf-i-sub{font-size:10.5px;color:var(--muted);direction:rtl}
+.cf-i-btns{display:flex;gap:6px;flex:0 0 auto}
+.cf-i-btns button{background:var(--panel-2);border:1px solid var(--line);border-radius:9px;width:36px;height:36px;font-size:15px;cursor:pointer}
+.cf-i-btns button:active{background:var(--field)}
+.cf-msg{display:none;background:rgba(63,185,163,.16);border:1px solid var(--teal);color:var(--teal);border-radius:11px;padding:10px 12px;font-size:12px;font-weight:700;margin-bottom:12px;line-height:1.7}
+.cf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.cf-grid label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:600}
+.cf-hr{border:none;border-top:1px solid var(--line);margin:16px 0 12px}
+.cf-sec{font-size:12.5px;font-weight:800;color:var(--teal);margin-bottom:8px}
 .mini-btn{background:transparent;border:1px solid var(--line);color:var(--teal);border-radius:8px;padding:6px 12px;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
 .mini-btn:hover{background:rgba(63,185,163,.08)}
 .carb-total{display:flex;justify-content:space-between;align-items:center;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:14px}
@@ -979,6 +997,49 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
 </div>
 
+<!-- فرم ثبت محصول شخصی از روی برچسب تغذیه -->
+<div class="qbg-modal" id="customFoodModal" onclick="if(event.target===this)closeCustomFood()">
+  <div class="qbg-box" style="max-width:440px">
+    <button class="qbg-x" onclick="closeCustomFood()" title="بستن">✕</button>
+    <div class="qbg-head"><span class="qbg-badge" style="background:rgba(63,185,163,.18)">🧾</span><div><div class="qbg-title">ثبت محصول جدید</div><div class="qbg-sub">اطلاعات جدول تغذیه‌ی روی بسته‌بندی را وارد کن تا در کتابخانه‌ی شخصی‌ات ذخیره و در جستجوی ماشین‌حساب ظاهر شود.</div></div></div>
+
+    <div class="cf-msg" id="cfMsg"></div>
+
+    <label class="qbg-lbl">نام محصول</label>
+    <input type="text" id="cfName" class="qbg-in" placeholder="مثلاً کره‌بادام‌زمینی رژیمی" style="margin-bottom:14px">
+
+    <label class="qbg-lbl">مقادیر بر چه مبنایی روی برچسب نوشته شده؟</label>
+    <div class="qseg" id="cfBasisSeg">
+      <button type="button" data-v="serving" class="on" onclick="cfSetBasis('serving')">هر وعده (Serving)</button>
+      <button type="button" data-v="100" onclick="cfSetBasis('100')">هر ۱۰۰ گرم</button>
+    </div>
+
+    <label class="qbg-lbl" id="cfServingLbl">وزن یک وعده (گرم) — الزامی</label>
+    <input type="number" id="cfServing" class="qbg-in" inputmode="decimal" placeholder="مثلاً ۳۰" style="margin-bottom:6px">
+    <div class="qins-note" id="cfBasisNote">مقادیر را همان‌طور که روی برچسب برای «هر وعده / Serving» نوشته وارد کن؛ خودم به ۱۰۰ گرم تبدیل می‌کنم.</div>
+
+    <hr class="cf-hr">
+    <div class="cf-sec">🍞 کربوهیدرات (مهم — مبنای دوز انسولین)</div>
+    <label class="qbg-lbl">کربوهیدرات کل (گرم)</label>
+    <input type="number" id="cfCarb" class="qbg-in" inputmode="decimal" placeholder="گرم" style="margin-bottom:14px">
+
+    <div class="cf-sec">ارزش تغذیه‌ای (اختیاری)</div>
+    <div class="cf-grid">
+      <div><label>قند (گرم)</label><input type="number" id="cfSugar" class="qbg-in" inputmode="decimal" placeholder="گرم"></div>
+      <div><label>پروتئین (گرم)</label><input type="number" id="cfProt" class="qbg-in" inputmode="decimal" placeholder="گرم"></div>
+      <div><label>چربی (گرم)</label><input type="number" id="cfFat" class="qbg-in" inputmode="decimal" placeholder="گرم"></div>
+      <div><label>فیبر (گرم)</label><input type="number" id="cfFiber" class="qbg-in" inputmode="decimal" placeholder="گرم"></div>
+      <div><label>انرژی (کالری)</label><input type="number" id="cfKcal" class="qbg-in" inputmode="decimal" placeholder="kcal"></div>
+    </div>
+
+    <div class="qbg-actions"><button class="qbg-cancel" onclick="closeCustomFood()">بستن</button><button class="qbg-save" id="cfSaveBtn" onclick="saveCustomFood()">💾 ذخیره در کتابخانه</button></div>
+
+    <hr class="cf-hr">
+    <div class="cf-sec">📚 محصولات ثبت‌شده‌ی من</div>
+    <div class="cf-list" id="cfList"></div>
+  </div>
+</div>
+
 <!-- لایه‌ی محتوای وسط — فقط این بخش با زوم دستی بزرگ می‌شود؛ هدر و نوارها ثابت می‌مانند -->
 <div id="zoomContent">
 <!-- ============ صفحه‌ی خانه (داشبورد) ============ -->
@@ -1002,10 +1063,14 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <h2 onclick="toggleCard('c-carb')"><span><span class="step-num">1</span>محاسبه‌ی کربوهیدرات وعده</span></h2>
   <div class="card-body">
   <div id="foodRows"></div>
-  <button class="add-btn" onclick="addFoodRow()">+ افزودن خوراکی</button>
+  <div class="calc-row-actions">
+    <button class="add-btn" onclick="addFoodRow()">+ افزودن خوراکی</button>
+    <button type="button" class="clear-btn" onclick="clearCalcRows()" title="پاک‌کردن همه">🗑️ پاک‌کردن همه</button>
+  </div>
   <div class="quick-actions" style="margin-top:12px">
     <button type="button" class="quick-btn" onclick="toggleFrequentPanelCalc()">⭐ وعده‌های پرمصرف</button>
     <button type="button" class="quick-btn" onclick="togglePastePanelCalc()">📋 پیست خوراکی‌ها</button>
+    <button type="button" class="quick-btn" onclick="openCustomFood()">🧾 ثبت محصول جدید</button>
   </div>
   <div id="frequentPanelCalc" style="display:none;margin-top:10px">
     <div id="frequentMealsBoxCalc" class="frequent-box"></div>
@@ -3734,7 +3799,7 @@ const CAT_EMOJI={
   "میوه‌ی خشک و چیپس میوه":"🍇","سبزیجات":"🥗","لبنیات":"🥛","پنیر و لبنیات ویژه":"🧀",
   "نوشیدنی":"🥤","فست‌فود":"🍔","تنقلات و چیپس":"🍿","صبحانه":"🍳","صبحانه‌ی فرنگی":"🥞",
   "غذای بین‌المللی":"🍱","کیک و دسر":"🍰","شیرینی و قند":"🍬","سس‌ها و چاشنی‌ها":"🥫",
-  "آبمیوه و اسموتی":"🧃","صبحانه‌ی کامل":"🍽️","دستی":"✏️"
+  "آبمیوه و اسموتی":"🧃","صبحانه‌ی کامل":"🍽️","دستی":"✏️","محصولات من":"🧾"
 };
 // ایموجی خاص بعضی آیتم‌ها بر اساس کلمه‌ی کلیدی
 const ITEM_EMOJI=[
@@ -3997,6 +4062,12 @@ function unitFactor(unit){
   return 1;
 }
 function pf(cat,item,unit,amt){
+  // اگر داده‌ی دقیق ۱۰۰گرمی برای این غذا هست (از جمله محصولات شخصی)، پروتئین/چربی را دقیق حساب کن
+  const nd=findNutr100(item);
+  if(nd && (nd.protein!=null || nd.fat!=null)){
+    const g=unitGrams(unit)*amt;
+    return { p:(nd.protein||0)*g/100, fat:(nd.fat||0)*g/100 };
+  }
   const base=MACRO_BY_CAT[cat]||[3,3];
   const f=unitFactor(unit)*amt;
   return { p: base[0]*f, fat: base[1]*f };
@@ -4014,6 +4085,147 @@ function renderFoodSummary(list){
   // دکمه‌ی کپی خوراکی‌ها (برای پیست در اپ CGM)
   const names=list.map(f=>`${f.name} (${f.amt} ${f.unit})`);
   c.innerHTML+=`<button class="copy-foods-btn" onclick='copyFoodsToClipboard(${JSON.stringify(names).replace(/'/g,"&#39;")},this)'>📋 کپی خوراکی‌ها برای اپ CGM</button>`;
+}
+
+/* ===== ماندگاری وضعیت ماشین‌حساب (بازیابی بعد از رفرش کروم) ===== */
+const CALC_STATE_KEY='calc_rows_v1';
+let _restoringCalc=false;
+function saveCalcState(){
+  if(_restoringCalc) return;
+  try{
+    const rows=[];
+    document.querySelectorAll('#foodRows .food-row').forEach(row=>{
+      rows.push({
+        cat:row.querySelector('.sel-cat').value,
+        item:row.querySelector('.sel-item').value,
+        unit:row.querySelector('.sel-unit').value,
+        amt:row.querySelector('.in-amt').value
+      });
+    });
+    const meaningful=rows.some(r=>parseFloat(r.amt)>0);
+    if(meaningful) localStorage.setItem(CALC_STATE_KEY, JSON.stringify(rows));
+    else localStorage.removeItem(CALC_STATE_KEY);
+  }catch(e){}
+}
+function restoreCalcState(){
+  let rows;
+  try{ rows=JSON.parse(localStorage.getItem(CALC_STATE_KEY)||'null'); }catch(e){ rows=null; }
+  if(!Array.isArray(rows)||!rows.length) return false;
+  _restoringCalc=true;
+  document.getElementById('foodRows').innerHTML=''; rowCount=0;
+  let added=0;
+  rows.forEach(r=>{
+    if(!DB[r.cat]||!DB[r.cat][r.item]) return;   // غذای حذف‌شده را رد کن
+    addFoodRow();
+    const all=document.querySelectorAll('#foodRows .food-row');
+    const row=all[all.length-1];
+    const catSel=row.querySelector('.sel-cat'); catSel.value=r.cat; onCatChange(catSel);
+    const itemSel=row.querySelector('.sel-item'); itemSel.value=r.item; onItemChange(itemSel);
+    const us=row.querySelector('.sel-unit'); if([...us.options].some(o=>o.value===r.unit)) us.value=r.unit;
+    row.querySelector('.in-amt').value=r.amt;
+    row.querySelector('.food-search').value=r.item;
+    added++;
+  });
+  _restoringCalc=false;
+  if(added===0){ addFoodRow(); return false; }
+  calcCarbs();
+  return true;
+}
+function clearCalcRows(){
+  if(!confirm('همه‌ی خوراکی‌های واردشده در ماشین‌حساب پاک شوند؟')) return;
+  try{ localStorage.removeItem(CALC_STATE_KEY); }catch(e){}
+  document.getElementById('foodRows').innerHTML=''; rowCount=0;
+  addFoodRow();
+  calcCarbs();
+}
+
+/* ===== مدیریت محصولات شخصی (فرم و لیست) ===== */
+function openCustomFood(){
+  const m=document.getElementById('customFoodModal'); if(!m) return;
+  resetCustomFoodForm();
+  renderCustomFoodList();
+  m.classList.add('show');
+}
+function closeCustomFood(){ const m=document.getElementById('customFoodModal'); if(m) m.classList.remove('show'); }
+function resetCustomFoodForm(){
+  ['cfName','cfCarb','cfSugar','cfProt','cfFat','cfFiber','cfKcal','cfServing'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value=''; });
+  window._cfEditId=null;
+  cfSetBasis('serving');
+  const sb=document.getElementById('cfSaveBtn'); if(sb) sb.textContent='💾 ذخیره در کتابخانه';
+  const msg=document.getElementById('cfMsg'); if(msg) msg.style.display='none';
+}
+function cfSetBasis(b){
+  window._cfBasis=b;
+  document.querySelectorAll('#cfBasisSeg button').forEach(btn=>btn.classList.toggle('on',btn.dataset.v===b));
+  const lbl=document.getElementById('cfServingLbl');
+  if(lbl) lbl.textContent = b==='serving' ? 'وزن یک وعده (گرم) — الزامی' : 'وزن یک وعده (گرم) — اختیاری';
+  const note=document.getElementById('cfBasisNote');
+  if(note) note.textContent = b==='serving'
+    ? 'مقادیر را همان‌طور که روی برچسب برای «هر وعده / Serving» نوشته وارد کن؛ خودم به ۱۰۰ گرم تبدیل می‌کنم.'
+    : 'مقادیر را به ازای ۱۰۰ گرم وارد کن.';
+}
+function saveCustomFood(){
+  const name=sanitizeFoodName(document.getElementById('cfName').value);
+  if(!name){ alert('نام محصول را وارد کن.'); return; }
+  const num=id=>{ const el=document.getElementById(id); const v=parseFloat(faToEnDigits(el?el.value:'')); return isNaN(v)?0:v; };
+  const carb=num('cfCarb'), sugar=num('cfSugar'), prot=num('cfProt'), fat=num('cfFat'), fiber=num('cfFiber'), kcal=num('cfKcal');
+  const serving=num('cfServing');
+  const basis=window._cfBasis||'serving';
+  let f;
+  if(basis==='serving'){
+    if(!(serving>0)){ alert('برای مبنای «وعده»، وزن وعده (گرم) را وارد کن.'); return; }
+    const k=100/serving;
+    f={ carb100:round4(carb*k), sugar100:round4(sugar*k), protein100:round4(prot*k),
+        fat100:round4(fat*k), fiber100:round4(fiber*k), kcal100:round4(kcal*k), serving };
+  } else {
+    f={ carb100:carb, sugar100:sugar, protein100:prot, fat100:fat, fiber100:fiber, kcal100:kcal, serving:serving>0?serving:0 };
+  }
+  f.name=name;
+  f.id=window._cfEditId||('cf'+Date.now());
+  const arr=loadCustomFoods();
+  const idx=window._cfEditId ? arr.findIndex(x=>x.id===f.id) : arr.findIndex(x=>(x.name||'').trim()===name);
+  if(idx>=0) arr[idx]=f; else arr.push(f);
+  saveCustomFoodsArr(arr);
+  applyCustomFoods();
+  const wasEdit=!!window._cfEditId;
+  resetCustomFoodForm();
+  renderCustomFoodList();
+  const msg=document.getElementById('cfMsg');
+  if(msg){ msg.textContent='✓ «'+name+'» '+(wasEdit?'به‌روزرسانی شد.':'ذخیره شد و در جستجوی ماشین‌حساب در دسترس است.'); msg.style.display='block'; setTimeout(()=>{ if(msg) msg.style.display='none'; },3000); }
+}
+function editCustomFood(id){
+  const f=loadCustomFoods().find(x=>x.id===id); if(!f) return;
+  window._cfEditId=id;
+  cfSetBasis('100');   // مقادیر ذخیره‌شده همیشه به ازای ۱۰۰ گرم‌اند
+  const set=(id2,v)=>{ const e=document.getElementById(id2); if(e) e.value=(v||v===0)?v:''; };
+  set('cfName',f.name); set('cfCarb',f.carb100); set('cfSugar',f.sugar100); set('cfProt',f.protein100);
+  set('cfFat',f.fat100); set('cfFiber',f.fiber100); set('cfKcal',f.kcal100); set('cfServing',f.serving||'');
+  const sb=document.getElementById('cfSaveBtn'); if(sb) sb.textContent='💾 به‌روزرسانی';
+  const box=document.querySelector('#customFoodModal .qbg-box'); if(box) box.scrollTop=0;
+}
+function delCustomFood(id){
+  if(!confirm('این محصول از کتابخانه‌ی شخصی حذف شود؟')) return;
+  const arr=loadCustomFoods().filter(x=>x.id!==id);
+  saveCustomFoodsArr(arr);
+  applyCustomFoods();
+  if(window._cfEditId===id) resetCustomFoodForm();
+  renderCustomFoodList();
+}
+function renderCustomFoodList(){
+  const box=document.getElementById('cfList'); if(!box) return;
+  const arr=loadCustomFoods();
+  if(!arr.length){ box.innerHTML='<div class="cf-empty">هنوز محصولی ثبت نکرده‌ای. با فرم بالا اولین محصول را از روی برچسب تغذیه اضافه کن.</div>'; return; }
+  box.innerHTML=arr.map(f=>{
+    const per=f.serving>0?`وعده ${faDigits(f.serving)}گ`:'۱۰۰گ';
+    const nm=sanitizeFoodName(f.name);
+    return `<div class="cf-item">
+      <div class="cf-i-main"><span class="cf-i-name">🧾 ${nm}</span>
+        <span class="cf-i-sub">کربو ${faDigits(round4(f.carb100))}گ در ۱۰۰گ · ${per}</span></div>
+      <div class="cf-i-btns">
+        <button type="button" onclick="editCustomFood('${f.id}')" title="ویرایش">✏️</button>
+        <button type="button" onclick="delCustomFood('${f.id}')" title="حذف">🗑️</button>
+      </div></div>`;
+  }).join('');
 }
 
 function calcCarbs(){
@@ -4066,6 +4278,7 @@ function calcCarbs(){
   window._macro={carb:total,p:totP,fat:totF,fiber,sugar,satFat,unsatFat,omega3,tags,netCarb:Math.max(0,total-fiber),micro,hasPreciseData};
   updateMacros(total,totP,totF);
   calcDose();
+  saveCalcState();
 }
 function updateMacros(carb,p,fat){
   const kcal=Math.round(carb*4 + p*4 + fat*9);
@@ -5947,9 +6160,11 @@ const NUTR_ALIAS={
   'پنیر لیقوان':'پنیر فتا','پنیر تبریزی':'پنیر فتا','پنیر بلغاری':'پنیر فتا','گوجه':'گوجه‌فرنگی',
 };
 function findNutr100(name){
+  // محصولات شخصی (نقشه‌ی جدا؛ تطبیق دقیقِ نام، اولویت با پایه ندارد اما NUTR100 را دست نمی‌زند)
+  if(window._customNutr && window._customNutr[name]) return window._customNutr[name];
   if(NUTR100[name]) return NUTR100[name];
   if(NUTR_ALIAS[name] && NUTR100[NUTR_ALIAS[name]]) return NUTR100[NUTR_ALIAS[name]];
-  // تطبیق جزئی: اگر نام غذا شامل کلید باشد
+  // تطبیق جزئی: اگر نام غذا شامل کلید باشد (فقط روی غذاهای پایه، نه محصولات شخصی)
   for(const k in NUTR100){ if(name.includes(k)||k.includes(name)) return NUTR100[k]; }
   return null;
 }
@@ -5962,9 +6177,51 @@ const UNIT_GRAMS={
   'مشت':30,'قاچ':120,'برش':30,'تکه':40,'قطعه':40,'مربع':20,'وعده':200,'پرس':250,
 };
 function unitGrams(unit){
+  // واحدهای وعده‌ای محصولات شخصی (تطبیق دقیق، بی‌اثر روی غذاهای پایه)
+  if(window._customUnitG && window._customUnitG[unit]!=null) return window._customUnitG[unit];
   const u=normalizeFa(unit);
   for(const k in UNIT_GRAMS){ if(u.includes(normalizeFa(k))) return UNIT_GRAMS[k]; }
   return 50; // پیش‌فرض متوسط
+}
+
+/* ===== کتابخانه‌ی شخصی: ثبت محصول از روی برچسب تغذیه ===== */
+const CUSTOM_FOOD_KEY='custom_foods_v1';
+const CUSTOM_CAT='محصولات من';
+window._customUnitG={};        // نگاشت برچسب واحد وعده → گرم (برای مقیاس ریزمغذی)
+window._customNutr={};          // تغذیه‌ی محصولات شخصی در نقشه‌ی جدا (NUTR100 پایه هرگز تغییر نمی‌کند)
+function loadCustomFoods(){
+  try{ const a=JSON.parse(localStorage.getItem(CUSTOM_FOOD_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; }
+}
+function saveCustomFoodsArr(arr){
+  try{ localStorage.setItem(CUSTOM_FOOD_KEY, JSON.stringify(arr)); }catch(e){}
+}
+function round4(n){ return Math.round((+n||0)*10000)/10000; }
+// حذف کاراکترهای خطرناک/شکننده از نام محصول (جلوگیری از تزریق در innerHTML و شکستن onclick)
+function sanitizeFoodName(s){ return String(s||'').replace(/[<>"'`\\]/g,'').replace(/\s+/g,' ').trim(); }
+// محصولات شخصی را درون DB و نقشه‌ی تغذیه‌ی جدا ادغام می‌کند تا در جستجو و محاسبه دیده شوند
+function applyCustomFoods(){
+  const arr=loadCustomFoods();
+  // پاک‌سازی کامل داده‌ی قبلی (NUTR100 پایه دست‌نخورده می‌ماند)
+  delete DB[CUSTOM_CAT];
+  window._customUnitG={};
+  window._customNutr={};
+  if(arr.length){
+    DB[CUSTOM_CAT]={};
+    arr.forEach(f=>{
+      const name=sanitizeFoodName(f.name); if(!name) return;
+      const c100=+f.carb100||0;
+      const units={ 'گرم': round4(c100/100) };   // مقدار = گرم
+      if(f.serving>0){
+        const lbl=`وعده (${faDigits(f.serving)} گرم)`;
+        units[lbl]=round4(c100*f.serving/100);
+        window._customUnitG[lbl]=+f.serving;
+      }
+      DB[CUSTOM_CAT][name]=units;
+      window._customNutr[name]={ kcal:+f.kcal100||0, carb:c100, protein:+f.protein100||0, fat:+f.fat100||0,
+                      fiber:+f.fiber100||0, sugar:+f.sugar100||0, min:{}, vit:{} };
+    });
+  }
+  if(typeof buildSearchIndex==='function') buildSearchIndex();
 }
 /* ===== تب ورزش: کتابخانه‌ی حرکت‌ها + برنامه + ثبت ===== */
 // آدمک SVG ساده برای هر حرکت (سبک و آفلاین)
@@ -6283,13 +6540,20 @@ let _wkPhase='work';  // 'work' یا 'rest'
 let _wkRunning=false;
 let _wkSound=true;    // صدا روشن/خاموش
 let _wkAudioCtx=null;
+// AudioContext را می‌سازد و از حالت suspended/interrupted (باگ iOS بعد از قفل صفحه) درمی‌آورد
+function wkEnsureAudio(){
+  try{
+    if(!_wkAudioCtx){ _wkAudioCtx=new (window.AudioContext||window.webkitAudioContext)(); }
+    const ctx=_wkAudioCtx;
+    if(ctx.state==='suspended'||ctx.state==='interrupted'){ ctx.resume().catch(()=>{}); }
+    return ctx;
+  }catch(e){ return null; }
+}
 // --- صداها با Web Audio (آفلاین) ---
 function wkBeep(freq,dur,type,vol){
   if(!_wkSound) return;
   try{
-    if(!_wkAudioCtx) _wkAudioCtx=new (window.AudioContext||window.webkitAudioContext)();
-    const ctx=_wkAudioCtx;
-    if(ctx.state==='suspended'){ ctx.resume(); }
+    const ctx=wkEnsureAudio(); if(!ctx) return;
     const o=ctx.createOscillator(), g=ctx.createGain();
     o.type=type||'sine'; o.frequency.value=freq;
     g.gain.setValueAtTime(vol||0.15, ctx.currentTime);
@@ -6302,9 +6566,7 @@ function wkTick(){ wkBeep(880,0.05,'square',0.06); }          // تیک ثانی
 // دینگ عمومی برای دکمه‌های UI (مستقل از تاگل صدای کرنومتر) — در هر دو تب ورزش و آزمایش
 function uiDing(){
   try{
-    if(!_wkAudioCtx) _wkAudioCtx=new (window.AudioContext||window.webkitAudioContext)();
-    const ctx=_wkAudioCtx;
-    if(ctx.state==='suspended'){ ctx.resume(); }
+    const ctx=wkEnsureAudio(); if(!ctx) return;
     const o=ctx.createOscillator(), g=ctx.createGain();
     o.type='sine'; o.frequency.setValueAtTime(660,ctx.currentTime);
     o.frequency.exponentialRampToValueAtTime(880,ctx.currentTime+0.08); // دینگِ کوتاهِ بالارونده
@@ -6349,7 +6611,7 @@ const WK_TRACKS=[
 function wkStartBeat(){
   if(!_wkMusic||!_wkSound) return;
   wkStopBeat();
-  try{ if(!_wkAudioCtx) _wkAudioCtx=new (window.AudioContext||window.webkitAudioContext)(); if(_wkAudioCtx.state==='suspended') _wkAudioCtx.resume(); }catch(e){ return; }
+  if(!wkEnsureAudio()){ return; }
   _curTrack=WK_TRACKS.find(x=>x.id===getWkTrack())||WK_TRACKS[0];
   _beatStep=0;
   const interval=60000/_curTrack.bpm/4; // شانزدهم
@@ -6365,10 +6627,30 @@ function renderWkTrackOpts(){
   const grp=(mood,title)=>{ let s=`<div class="wktr-grp">${title}</div><div class="wktr-grid">`; WK_TRACKS.filter(x=>x.mood===mood).forEach(x=>{ s+=`<button class="wktr-item${cur===x.id?' on':''}" onclick="setWkTrack('${x.id}')"><span class="wktr-emo">${x.emoji}</span>${x.name}</button>`; }); return s+`</div>`; };
   box.innerHTML=grp('e','🔥 پرانرژی (برای تمرین‌های تند)')+grp('c','🌿 آرامش‌بخش (برای کشش و تنفس)');
 }
-// رفع قطع صدا بعد از قفل/آنلاک/مکث: با هر لمس یا برگشت به صفحه، AudioContext را از suspended درمی‌آوریم
-function wkAudioResume(){ try{ if(_wkAudioCtx&&_wkAudioCtx.state==='suspended') _wkAudioCtx.resume(); }catch(e){} }
-document.addEventListener('pointerdown',()=>{ if(_wkRunning) wkAudioResume(); }, true);
-document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&_wkRunning){ wkAudioResume(); if(_wkMusic&&_wkSound&&_wkTimer&&_wkPhase==='work'&&!_wkBeatTimer) wkStartBeat(); } });
+// رفع قطع صدا بعد از قفل/آنلاک/مکث (به‌ویژه iOS): با هر لمس یا برگشت به صفحه AudioContext را زنده می‌کنیم.
+// روی iOS گاهی context به حالت interrupted گیر می‌کند و resume جواب نمی‌دهد → آن را بازسازی می‌کنیم.
+function wkAudioResume(){
+  try{
+    if(!_wkAudioCtx) return;
+    const ctx=_wkAudioCtx, st=ctx.state;
+    if(st==='running') return;
+    ctx.resume().catch(()=>{});
+    if(st==='interrupted'){
+      setTimeout(()=>{
+        if(_wkAudioCtx && _wkAudioCtx.state!=='running'){
+          try{ _wkAudioCtx.close(); }catch(e){}
+          _wkAudioCtx=null; _wkMusicGain=null;   // خروجی موزیک قدیمی بی‌اعتبار شد
+          wkEnsureAudio();
+          if(_wkRunning&&_wkMusic&&_wkSound&&_wkPhase==='work'){ wkStopBeat(); wkStartBeat(); }
+        }
+      },250);
+    }
+  }catch(e){}
+}
+// شنونده‌های سراسری (نه فقط هنگام ورزش) تا صدای کلیدها/ورزش بعد از آنلاک برگردد
+['pointerdown','touchend'].forEach(ev=>document.addEventListener(ev, wkAudioResume, {capture:true, passive:true}));
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ wkAudioResume(); if(_wkRunning&&_wkMusic&&_wkSound&&_wkTimer&&_wkPhase==='work'&&!_wkBeatTimer) wkStartBeat(); } });
+window.addEventListener('focus', wkAudioResume);
 // --- پارس تعداد ست و زمان از متن ---
 function faToEnDigits(s){
   return String(s).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
@@ -8630,8 +8912,8 @@ function restoreCollState(){
   }catch(e){}
 }
 
-buildSearchIndex();
-addFoodRow();
+applyCustomFoods();   // محصولات شخصی را ادغام و شاخص جستجو را می‌سازد
+if(!restoreCalcState()) addFoodRow();   // بازیابی خوراکی‌های واردشده بعد از رفرش
 applyNavMode();
 (async()=>{
   await loadProfile();
