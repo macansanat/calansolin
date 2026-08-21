@@ -1692,7 +1692,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۰.۷</b> · انتشار: ۱۴۰۵/۰۵/۳۰ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۰.۷.۱</b> · انتشار: ۱۴۰۵/۰۵/۳۰ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4245,31 +4245,34 @@ function renderCustomFoodList(){
   }).join('');
 }
 // ===== خواندن برچسب تغذیه از عکس (OCR داخل مرورگر، مثل تب آزمایش) =====
-function cfNumFromText(text,patterns){
-  for(const p of patterns){
-    const m=text.match(p);
-    if(m&&m[1]!=null){ const v=parseFloat(m[1].replace(/\s/g,'').replace(/[,\/٫]/,'.')); if(!isNaN(v)) return v; }
-  }
+function cfToNum(s){ const v=parseFloat(String(s).replace(/\s/g,'').replace(/[,\/٫]/,'.')); return isNaN(v)?null:v; }
+// عدد مربوط به یک ماده‌ی مغذی را می‌گیرد؛ اول عددی که واحدِ داده‌شده (گرم/کالری) بعدش هست
+// (تا عددِ عنوان/درصد مثل «Sugar-Free…۱۸٪» گرفته نشود)، بعد حالت آزادتر.
+function cfGrab(text, keys, unit){
+  for(const k of keys){ const m=text.match(new RegExp(k+'[^0-9]{0,10}(\\d+(?:[.,]\\d+)?)\\s*'+unit,'i')); if(m){ const v=cfToNum(m[1]); if(v!=null) return v; } }
+  for(const k of keys){ const m=text.match(new RegExp(k+'[^0-9]{0,8}(\\d+(?:[.,]\\d+)?)','i')); if(m){ const v=cfToNum(m[1]); if(v!=null) return v; } }
   return null;
 }
 function parseNutritionText(raw){
   // ارقام فارسی→انگلیسی، و «/» یا «٫» بین دو رقم = ممیز (مثل ۱۷۰/۱)
   let t=' '+faToEnDigits(String(raw||'')).replace(/[‌]/g,' ')
           .replace(/(\d)\s*[\/٫]\s*(\d)/g,'$1.$2').replace(/\s+/g,' ').toLowerCase()+' ';
+  // حذف نویزهایی که باعث خواندن عددِ اشتباه می‌شوند: «بدون قند / sugar-free» و درصدها
+  t=t.replace(/sugar[\s-]*free/g,' ').replace(/بدون\s*قند/g,' ').replace(/\d+(?:[.,]\d+)?\s*[%٪]/g,' ').replace(/[%٪]/g,' ').replace(/\s+/g,' ');
   // برای «چربی کل»، ابتدا چربی ترانس/اشباع را حذف کن تا مقدار اشتباه گرفته نشود
   const tFat=t.replace(/trans[^0-9]{0,20}\d+(?:[.,]\d+)?/ig,' ')
               .replace(/saturated[^0-9]{0,20}\d+(?:[.,]\d+)?/ig,' ')
               .replace(/(چربی\s*(?:ترانس|اشباع)|اسید\s*چرب)[^0-9]{0,20}\d+(?:[.,]\d+)?/g,' ');
-  const N='[^0-9]{0,15}(\\d+(?:[.,]\\d+)?)';
-  const R=s=>new RegExp(s,'i');
+  const GU='(?:گرم|گ\\b|grams?|gr\\b|g\\b)';           // واحد گرم
+  const EU='(?:کیلوکالری|کالری|k?cal)';                 // واحد انرژی
   return {
-    serving: cfNumFromText(t,[R('serving\\s*size'+N),R('وعده'+N),R('serving'+N)]),
-    energy:  cfNumFromText(t,[R('energy'+N),R('(\\d+(?:[.,]\\d+)?)\\s*k?cal'),R('انرژی'+N),R('کالری'+N)]),
-    carb:    cfNumFromText(t,[R('carbohydrate?s?'+N),R('carb'+N),R('کربوهیدرات'+N)]),
-    sugar:   cfNumFromText(t,[R('sugars?'+N),R('قند'+N),R('شکر'+N)]),
-    protein: cfNumFromText(t,[R('protein'+N),R('پروتئین'+N)]),
-    fat:     cfNumFromText(tFat,[R('fat\\b'+N),R('چربی'+N)]),
-    fiber:   cfNumFromText(t,[R('fib(?:er|re)'+N),R('فیبر'+N)])
+    serving: cfGrab(t,['serving\\s*size','serving','وعده','سهم'],GU),
+    energy:  cfGrab(t,['energy','انرژی','کالری'],EU),
+    carb:    cfGrab(t,['carbohydrate?s?','carb','کربوهیدرات'],GU),
+    sugar:   cfGrab(t,['sugars?','قند','شکر'],GU),
+    protein: cfGrab(t,['protein','پروتئین'],GU),
+    fat:     cfGrab(tFat,['fat\\b','چربی'],GU),
+    fiber:   cfGrab(t,['fib(?:er|re)','فیبر'],GU)
   };
 }
 // چرخش یک کانواس به اندازه‌ی deg (۰/۹۰/۱۸۰/۲۷۰) → کانواس جدید
