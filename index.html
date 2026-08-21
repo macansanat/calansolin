@@ -4165,7 +4165,7 @@ function cfSetBasis(b){
     : 'مقادیر را به ازای ۱۰۰ گرم وارد کن.';
 }
 function saveCustomFood(){
-  const name=(document.getElementById('cfName').value||'').trim();
+  const name=sanitizeFoodName(document.getElementById('cfName').value);
   if(!name){ alert('نام محصول را وارد کن.'); return; }
   const num=id=>{ const el=document.getElementById(id); const v=parseFloat(faToEnDigits(el?el.value:'')); return isNaN(v)?0:v; };
   const carb=num('cfCarb'), sugar=num('cfSugar'), prot=num('cfProt'), fat=num('cfFat'), fiber=num('cfFiber'), kcal=num('cfKcal');
@@ -4217,8 +4217,9 @@ function renderCustomFoodList(){
   if(!arr.length){ box.innerHTML='<div class="cf-empty">هنوز محصولی ثبت نکرده‌ای. با فرم بالا اولین محصول را از روی برچسب تغذیه اضافه کن.</div>'; return; }
   box.innerHTML=arr.map(f=>{
     const per=f.serving>0?`وعده ${faDigits(f.serving)}گ`:'۱۰۰گ';
+    const nm=sanitizeFoodName(f.name);
     return `<div class="cf-item">
-      <div class="cf-i-main"><span class="cf-i-name">🧾 ${f.name}</span>
+      <div class="cf-i-main"><span class="cf-i-name">🧾 ${nm}</span>
         <span class="cf-i-sub">کربو ${faDigits(round4(f.carb100))}گ در ۱۰۰گ · ${per}</span></div>
       <div class="cf-i-btns">
         <button type="button" onclick="editCustomFood('${f.id}')" title="ویرایش">✏️</button>
@@ -6159,9 +6160,11 @@ const NUTR_ALIAS={
   'پنیر لیقوان':'پنیر فتا','پنیر تبریزی':'پنیر فتا','پنیر بلغاری':'پنیر فتا','گوجه':'گوجه‌فرنگی',
 };
 function findNutr100(name){
+  // محصولات شخصی (نقشه‌ی جدا؛ تطبیق دقیقِ نام، اولویت با پایه ندارد اما NUTR100 را دست نمی‌زند)
+  if(window._customNutr && window._customNutr[name]) return window._customNutr[name];
   if(NUTR100[name]) return NUTR100[name];
   if(NUTR_ALIAS[name] && NUTR100[NUTR_ALIAS[name]]) return NUTR100[NUTR_ALIAS[name]];
-  // تطبیق جزئی: اگر نام غذا شامل کلید باشد
+  // تطبیق جزئی: اگر نام غذا شامل کلید باشد (فقط روی غذاهای پایه، نه محصولات شخصی)
   for(const k in NUTR100){ if(name.includes(k)||k.includes(name)) return NUTR100[k]; }
   return null;
 }
@@ -6185,7 +6188,7 @@ function unitGrams(unit){
 const CUSTOM_FOOD_KEY='custom_foods_v1';
 const CUSTOM_CAT='محصولات من';
 window._customUnitG={};        // نگاشت برچسب واحد وعده → گرم (برای مقیاس ریزمغذی)
-window._customNutrKeys=[];     // کلیدهای NUTR100 که ما اضافه کرده‌ایم (برای پاک‌سازی)
+window._customNutr={};          // تغذیه‌ی محصولات شخصی در نقشه‌ی جدا (NUTR100 پایه هرگز تغییر نمی‌کند)
 function loadCustomFoods(){
   try{ const a=JSON.parse(localStorage.getItem(CUSTOM_FOOD_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; }
 }
@@ -6193,18 +6196,19 @@ function saveCustomFoodsArr(arr){
   try{ localStorage.setItem(CUSTOM_FOOD_KEY, JSON.stringify(arr)); }catch(e){}
 }
 function round4(n){ return Math.round((+n||0)*10000)/10000; }
-// محصولات شخصی را درون DB و NUTR100 ادغام می‌کند تا در جستجو و محاسبه دیده شوند
+// حذف کاراکترهای خطرناک/شکننده از نام محصول (جلوگیری از تزریق در innerHTML و شکستن onclick)
+function sanitizeFoodName(s){ return String(s||'').replace(/[<>"'`\\]/g,'').replace(/\s+/g,' ').trim(); }
+// محصولات شخصی را درون DB و نقشه‌ی تغذیه‌ی جدا ادغام می‌کند تا در جستجو و محاسبه دیده شوند
 function applyCustomFoods(){
   const arr=loadCustomFoods();
-  // پاک‌سازی داده‌ی قبلی
+  // پاک‌سازی کامل داده‌ی قبلی (NUTR100 پایه دست‌نخورده می‌ماند)
   delete DB[CUSTOM_CAT];
   window._customUnitG={};
-  (window._customNutrKeys||[]).forEach(k=>{ try{ delete NUTR100[k]; }catch(e){} });
-  window._customNutrKeys=[];
+  window._customNutr={};
   if(arr.length){
     DB[CUSTOM_CAT]={};
     arr.forEach(f=>{
-      const name=(f.name||'').trim(); if(!name) return;
+      const name=sanitizeFoodName(f.name); if(!name) return;
       const c100=+f.carb100||0;
       const units={ 'گرم': round4(c100/100) };   // مقدار = گرم
       if(f.serving>0){
@@ -6213,9 +6217,8 @@ function applyCustomFoods(){
         window._customUnitG[lbl]=+f.serving;
       }
       DB[CUSTOM_CAT][name]=units;
-      NUTR100[name]={ kcal:+f.kcal100||0, carb:c100, protein:+f.protein100||0, fat:+f.fat100||0,
+      window._customNutr[name]={ kcal:+f.kcal100||0, carb:c100, protein:+f.protein100||0, fat:+f.fat100||0,
                       fiber:+f.fiber100||0, sugar:+f.sugar100||0, min:{}, vit:{} };
-      window._customNutrKeys.push(name);
     });
   }
   if(typeof buildSearchIndex==='function') buildSearchIndex();
