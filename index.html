@@ -1087,7 +1087,10 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <button type="button" class="quick-btn" onclick="toggleFrequentPanelCalc()">⭐ وعده‌های پرمصرف</button>
     <button type="button" class="quick-btn" onclick="togglePastePanelCalc()">📋 پیست خوراکی‌ها</button>
     <button type="button" class="quick-btn" onclick="openCustomFood()">🧾 ثبت خوراکی جدید</button>
+    <button type="button" class="quick-btn" style="background:rgba(63,185,163,.14);border-color:var(--teal-dim)" onclick="startPlatePhoto()">📷 تشخیص غذا از عکس بشقاب</button>
   </div>
+  <input type="file" id="platePhoto" accept="image/*" style="display:none" onchange="handlePlatePhoto(this)">
+  <div id="visionStatus" style="display:none;margin-top:10px;font-size:12.5px;line-height:1.8;padding:11px 13px;border-radius:12px;background:linear-gradient(135deg,#16212e,#1b2938);border:1px solid var(--teal-dim);color:var(--fg)"></div>
   <div id="frequentPanelCalc" style="display:none;margin-top:10px">
     <div id="frequentMealsBoxCalc" class="frequent-box"></div>
   </div>
@@ -1538,6 +1541,16 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <div id="zoomSetting"></div>
   </div>
 </div>
+<div class="card" id="c-profile-vision">
+  <h2><span>📷 تشخیص غذا از عکس (هوش مصنوعی)</span></h2>
+  <div class="card-body">
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:12px">
+      می‌توانی در ماشین‌حساب از بشقاب غذایت عکس بگیری تا خوراکی‌ها و گرم و کربوهیدرات و کالریِ تقریبی‌شان خودکار وارد شوند. این کار به یک <b style="color:var(--teal)">مدل بینایی ابری</b> و <b>کلید شخصی خودت</b> نیاز دارد (فقط لحظه‌ی تشخیص، اینترنت لازم است؛ بقیه‌ی برنامه آفلاین کار می‌کند). کلیدت فقط در همین مرورگر ذخیره می‌شود و جایی فرستاده نمی‌شود جز سرور همان سرویس.
+      <br><b style="color:var(--red)">توجه:</b> برآوردِ گرم و ماکرو از روی عکس فقط تخمینِ آموزشی است و می‌تواند خطا داشته باشد؛ برای دوز انسولین حتماً با پزشک هماهنگ کن.
+    </div>
+    <div id="visionSetting"></div>
+  </div>
+</div>
 <div class="card coll" id="c-profile">
   <h2 onclick="toggleCard('c-profile')">
     <span><span class="step-num">1</span>پروفایل و انسولین روزانه</span>
@@ -1698,7 +1711,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۰.۱۱</b> · انتشار: ۱۴۰۵/۰۵/۳۱ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۱.۰</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -1758,7 +1771,24 @@ const DB = {
     "استانبولی/دمی گوجه":{ "قاشق غذاخوری":8,"لیوان":46,"بشقاب متوسط":58 },
     "کته":{ "قاشق غذاخوری":8,"کف دست":30,"لیوان":45 },
     "تهدیگ برنج":{ "کف دست":18,"قطعه":22 },
-    "تهدیگ نان/سیب‌زمینی":{ "قطعه":15 }
+    "تهدیگ نان/سیب‌زمینی":{ "قطعه":15 },
+    "لوبیا‌پلو":{ "قاشق غذاخوری":9,"لیوان":48,"بشقاب متوسط":62 },
+    "ماش‌پلو":{ "قاشق غذاخوری":9,"بشقاب متوسط":60 },
+    "قنبرپلو (کشمش‌پلو)":{ "قاشق غذاخوری":11,"بشقاب متوسط":72 },
+    "کلم‌پلو شیرازی":{ "قاشق غذاخوری":8,"بشقاب متوسط":58 },
+    "دمپختک لوبیا":{ "قاشق غذاخوری":9,"بشقاب متوسط":62 },
+    "عدس‌پلو با کشمش":{ "قاشق غذاخوری":10,"بشقاب متوسط":66 },
+    "رشته‌پلو":{ "قاشق غذاخوری":9,"بشقاب متوسط":60 },
+    "کدوپلو":{ "قاشق غذاخوری":9,"بشقاب متوسط":62 },
+    "دمی عدس":{ "قاشق غذاخوری":9,"بشقاب متوسط":60 },
+    "ته‌چین مرغ":{ "برش":42,"قاشق غذاخوری":10 },
+    "میگوپلو (جنوبی)":{ "قاشق غذاخوری":9,"بشقاب متوسط":62 },
+    "سبزی‌پلو با ماهی (فقط پلو)":{ "قاشق غذاخوری":8,"بشقاب متوسط":58 },
+    "پلو ساده با تهدیگ":{ "قاشق غذاخوری":8,"بشقاب متوسط":60 },
+    "شله‌زرد":{ "قاشق غذاخوری":6,"کاسه":38 },
+    "شیربرنج":{ "قاشق غذاخوری":5,"کاسه":34 },
+    "فرنی":{ "قاشق غذاخوری":4,"کاسه":28 },
+    "حلوای آرد":{ "قاشق غذاخوری":9 }
   },
   "خورش و غذای اصلی":{
     "خورش قورمه‌سبزی (قرمه‌سبزی)":{ "قاشق غذاخوری":2,"کفگیر":6,"بشقاب":12 },
@@ -1815,7 +1845,32 @@ const DB = {
     "خوراک سبزیجات":{ "قاشق غذاخوری":2,"بشقاب":15 },
     "تاس‌کباب":{ "قاشق غذاخوری":2,"پرس":18 },
     "باقالی‌قاتق":{ "قاشق غذاخوری":2,"کاسه":20 },
-    "قلیه‌ماهی":{ "قاشق غذاخوری":2,"پرس":12 }
+    "قلیه‌ماهی":{ "قاشق غذاخوری":2,"پرس":12 },
+    "خورش لپه و سیب‌زمینی":{ "قاشق غذاخوری":2,"کفگیر":9,"بشقاب":16 },
+    "خورش ماست (اصفهانی)":{ "قاشق غذاخوری":3,"کفگیر":11,"بشقاب":20 },
+    "کاری مرغ":{ "قاشق غذاخوری":2,"کفگیر":7,"بشقاب":13 },
+    "خوراک مرغ ترش (شمالی)":{ "قاشق غذاخوری":1,"پرس":7 },
+    "یتیمچه بادمجان":{ "قاشق غذاخوری":2,"پرس":11 },
+    "بادمجان شکم‌پر":{ "عدد":10 },
+    "کدو شکم‌پر":{ "عدد":12 },
+    "دلمه کدو":{ "عدد":9 },
+    "دلمه سیب‌زمینی":{ "عدد":13 },
+    "کوفته سبزی":{ "عدد":10 },
+    "کوفته هلو":{ "عدد":13 },
+    "کوکو مرغ":{ "قطعه":5 },
+    "کوکو بادمجان":{ "قطعه":6 },
+    "شامی کباب":{ "عدد":11 },
+    "کباب تابه‌ای":{ "پرس":9 },
+    "جوجه تابه‌ای":{ "پرس":6 },
+    "سالاد الویه":{ "قاشق غذاخوری":3,"وعده (با نان)":30 },
+    "ماکارونی با گوشت (ته‌دیگ‌دار)":{ "قاشق غذاخوری":7,"بشقاب":58 },
+    "اسپاگتی بلونز":{ "قاشق غذاخوری":6,"بشقاب":52 },
+    "ماهیچه گوسفندی (با پلو جدا)":{ "پرس":4 },
+    "خوراک بندری (میگو و سبزیجات)":{ "قاشق غذاخوری":2,"پرس":12 },
+    "میگو سرخ‌شده":{ "کف دست (۱۰۰گ)":4 },
+    "خوراک جوجه با قارچ و پنیر":{ "پرس":8 },
+    "کباب حسینی":{ "سیخ":4 },
+    "کوفته قلقلی با سس":{ "عدد":4,"بشقاب":16 }
   },
   "غلات و نان":{
     "نان سنگک":{ "کف دست":15,"نصف کف دست":8,"یک برش":20 },
@@ -1833,7 +1888,19 @@ const DB = {
     "سیب‌زمینی آب‌پز":{ "قاشق غذاخوری":5,"عدد کوچک":15,"عدد متوسط":30,"عدد بزرگ":45 },
     "سیب‌زمینی تنوری":{ "عدد متوسط":33 },
     "سیب‌زمینی سرخ‌کرده":{ "کف دست":20,"بشقاب کوچک":35,"بشقاب متوسط":50 },
-    "پوره سیب‌زمینی":{ "قاشق غذاخوری":4,"بشقاب":30 }
+    "پوره سیب‌زمینی":{ "قاشق غذاخوری":4,"بشقاب":30 },
+    "نان سنگک کنجدی":{ "کف دست":16,"یک برش":21 },
+    "نان محلی (فتیر/تیری)":{ "کف دست":17,"یک برش":24 },
+    "نان تنوری روستایی":{ "کف دست":15,"یک برش":20 },
+    "نان خشک/بیات":{ "کف دست":18 },
+    "نان ذرت":{ "یک برش":15 },
+    "نان چاودار":{ "یک برش":12 },
+    "نان سوخاری (آردی)":{ "قاشق غذاخوری":7,"کف دست":18 },
+    "بلغور گندم پخته":{ "قاشق غذاخوری":6,"لیوان":38 },
+    "جو پرک (خشک)":{ "قاشق غذاخوری":8,"لیوان":50 },
+    "کینوا پخته":{ "قاشق غذاخوری":4,"لیوان":39 },
+    "ذرت آب‌پز":{ "عدد متوسط":29,"لیوان":30 },
+    "سیب‌زمینی تابه‌ای (با تخم‌مرغ)":{ "بشقاب":32 }
   },
   "حبوبات":{
     "عدس پخته":{ "قاشق غذاخوری":4,"لیوان":40 },
@@ -1858,7 +1925,20 @@ const DB = {
     "سوپ قارچ":{ "کاسه":15 },
     "حلیم":{ "کاسه":45 },
     "کله‌جوش":{ "کاسه":15 },
-    "اشکنه":{ "کاسه":18 }
+    "اشکنه":{ "کاسه":18 },
+    "آش ماست":{ "کاسه":22 },
+    "آش شلغم":{ "کاسه":24 },
+    "آش کشک":{ "کاسه":26 },
+    "آش عدس":{ "کاسه":28 },
+    "آش لوبیا":{ "کاسه":30 },
+    "آش امام‌زمان (آش رشته مفصل)":{ "کاسه":42 },
+    "آش گندم":{ "کاسه":35 },
+    "آش سماق":{ "کاسه":24 },
+    "سوپ شیر و جو":{ "کاسه":24 },
+    "سوپ عدس":{ "کاسه":22 },
+    "سوپ ماهی":{ "کاسه":14 },
+    "سوپ رشته":{ "کاسه":26 },
+    "سوپ کدو حلوایی":{ "کاسه":18 }
   },
   "میوه":{
     "سیب قرمز/زرد":{ "عدد کوچک":15,"عدد متوسط":20,"عدد بزرگ":28 },
@@ -2097,6 +2177,21 @@ const DB = {
     "دونات":{ "عدد":30 },
     "شکلات صبحانه":{ "قاشق غذاخوری":11 },
     "رولت":{ "برش":28 },
+    "باسلوق":{ "قطعه":11 },
+    "راحت‌الحلقوم":{ "قطعه":10 },
+    "نان بادامی":{ "عدد":7 },
+    "شیرینی توت":{ "عدد":9 },
+    "شیرینی نخودچی (قزوینی)":{ "عدد":6 },
+    "کیک زبان (زعفرانی)":{ "عدد":18 },
+    "پیراشکی خامه‌ای":{ "عدد":22 },
+    "شیرینی کشمشی خانگی":{ "عدد":9 },
+    "حلوای زعفرانی":{ "قاشق غذاخوری":10 },
+    "کاچی":{ "قاشق غذاخوری":9,"کاسه":40 },
+    "ماستِ چکیده با عسل":{ "کاسه":16 },
+    "بستنی سنتی (زعفرانی)":{ "اسکوپ":12 },
+    "فالوده":{ "کاسه":30 },
+    "معجون (بستنی و شیر)":{ "لیوان":34 },
+    "شیرینی عید (مخلوط)":{ "عدد":13 },
     "پفک/چیپس":{ "بسته کوچک":15,"بسته متوسط":30 },
     "بستنی قیفی":{ "عدد":25 }
   },
@@ -2115,7 +2210,23 @@ const DB = {
     "کورن‌فلکس":{ "لیوان":25,"با شیر":37 },
     "جو پرک با شیر":{ "کاسه":35 },
     "پن‌کیک":{ "عدد":15 },
-    "نان و پنیر و چای":{ "وعده":20 }
+    "نان و پنیر و چای":{ "وعده":20 },
+    "نان و پنیر و سبزی":{ "وعده":16 },
+    "نان و کره و عسل":{ "وعده":22 },
+    "نان و خامه و مربا":{ "وعده":24 },
+    "تخم‌مرغ عسلی":{ "عدد":0.5 },
+    "املت گوجه (صبحانه)":{ "پرس":8 },
+    "خاگینه":{ "پرس":10 },
+    "آبگوشت صبحانه":{ "کاسه":20 },
+    "شیر و عسل":{ "لیوان":22 },
+    "شیر و خرما":{ "لیوان":28 },
+    "شیر و موز":{ "لیوان":30 },
+    "کره بادام‌زمینی روی نان":{ "وعده":20 },
+    "پنیر تبریزی و گردو":{ "وعده":3 },
+    "حلوا ارده و نان":{ "وعده":26 },
+    "سرشیر و عسل":{ "وعده":18 },
+    "گرانولا با شیر":{ "کاسه":40 },
+    "کوکوی سیب‌زمینی صبحانه":{ "قطعه":12 }
   },
   "غذای دریایی":{
     "ماهی تن سالاد":{ "بشقاب":8 },
@@ -2372,7 +2483,26 @@ const DB = {
     "کتلت گوشت":{ "عدد":14 },
     "کباب دیگی":{ "پرس":10 },
     "اسفناج و ماست (بورانی)":{ "پرس":6 },
-    "کشک و بادمجان کبابی":{ "پرس":12 }
+    "کشک و بادمجان کبابی":{ "پرس":12 },
+    "قنبرپلو محلی":{ "بشقاب":66 },
+    "قتوق (ماهی و سیر)":{ "پرس":6 },
+    "میرزاقاسمی (سنتی)":{ "پرس":10 },
+    "باقلا قتوق گیلانی":{ "کاسه":20 },
+    "ترشی‌تره گیلانی":{ "کاسه":10 },
+    "واویشکای مرغ":{ "پرس":7 },
+    "کباب ترش (شمالی)":{ "سیخ":3 },
+    "فسنجان مرغ (سنتی)":{ "پرس":16 },
+    "آش دوغ اردبیلی":{ "کاسه":22 },
+    "دیزی گوشت (سنتی)":{ "کاسه":24 },
+    "آبگوشت لپه و سیب‌زمینی":{ "کاسه":24 },
+    "کوفته شوید باقلا":{ "عدد":14 },
+    "کال کباب (باقلا)":{ "پرس":10 },
+    "خوراک لوبیا چیتی":{ "کاسه":34 },
+    "حلیم گندم و گوشت":{ "کاسه":46 },
+    "سمنو":{ "قاشق غذاخوری":9 },
+    "آجیل مشکل‌گشا (مخلوط)":{ "کف دست":16 },
+    "نان و پنیر و سبزی":{ "وعده":8 },
+    "کله‌پاچه کامل (بدون نان)":{ "پرس":3 }
   },
   "میوه‌های بیشتر":{
     "قیسی":{ "عدد":5,"کف دست":18 },
@@ -3809,6 +3939,7 @@ async function renderProfileTab(){
   // اینجا فقط شمارش داده‌ها و تنظیم حالت منو را تازه می‌کنیم.
   renderNavSetting();
   renderZoomSetting();
+  renderVisionSetting();
   renderDataStats();
 }
 
@@ -3907,7 +4038,7 @@ const CAT_EMOJI={
   "نوشیدنی":"🥤","فست‌فود":"🍔","تنقلات و چیپس":"🍿","صبحانه":"🍳","صبحانه‌ی فرنگی":"🥞",
   "غذای بین‌المللی":"🍱","کیک و دسر":"🍰","شیرینی و قند":"🍬","سس‌ها و چاشنی‌ها":"🥫",
   "آبمیوه و اسموتی":"🧃","صبحانه‌ی کامل":"🍽️","دستی":"✏️","محصولات من":"🧾",
-  "خوراکی بسته‌بندی (سوپرمارکتی)":"🛒"
+  "خوراکی بسته‌بندی (سوپرمارکتی)":"🛒","📷 از روی عکس":"📷"
 };
 // ایموجی خاص بعضی آیتم‌ها بر اساس کلمه‌ی کلیدی
 const ITEM_EMOJI=[
@@ -4104,7 +4235,8 @@ const MACRO_BY_CAT={
   "سس‌ها و چاشنی‌ها":[1,9],
   "آبمیوه و اسموتی":[1,1],
   "صبحانه‌ی کامل":[8,9],
-  "دستی":[0,0]
+  "دستی":[0,0],
+  "📷 از روی عکس":[4,4]
 };
 /* داده‌ی تغذیه‌ای تفصیلی بر اساس دسته (تقریبی، در همان سطح دقت پروتئین/چربی).
    fiberG = گرم فیبر به ازای «واحد پایه»‌ی دسته (مثل پروتئین/چربی، مستقل از کربوهیدرات).
@@ -4139,7 +4271,8 @@ const NUTR_BY_CAT={
   "سس‌ها و چاشنی‌ها":{fiberG:0.5,satR:0.3,unsatR:0.7,omega3:0,sugarR:0.4,tags:[]},
   "آبمیوه و اسموتی":{fiberG:0.5,satR:0.2,unsatR:0.8,omega3:0,sugarR:0.85,tags:['قند بالا','ویتامین C']},
   "صبحانه‌ی کامل":{fiberG:1.5,satR:0.4,unsatR:0.6,omega3:0,sugarR:0.15,tags:[]},
-  "دستی":{fiberG:1,satR:0.35,unsatR:0.65,omega3:0,sugarR:0.2,tags:[]}
+  "دستی":{fiberG:1,satR:0.35,unsatR:0.65,omega3:0,sugarR:0.2,tags:[]},
+  "📷 از روی عکس":{fiberG:1,satR:0.4,unsatR:0.6,omega3:0,sugarR:0.3,tags:[]}
 };
 function unitFactor(unit){
   const u=normalizeFa(unit);
@@ -6520,6 +6653,7 @@ function applyCustomFoods(){
     });
   }
   applyFoodOverrides();   // اصلاحِ خوراکی‌های آماده از روی برچسبِ کاربر
+  if(typeof applyVisionFoods==='function') applyVisionFoods();   // خوراکی‌های تشخیص‌داده‌شده از عکس بشقاب
   if(typeof buildSearchIndex==='function') buildSearchIndex();
 }
 
@@ -6553,6 +6687,221 @@ function applyFoodOverrides(){
   }
 }
 function hasFoodOverride(cat,item){ return !!loadFoodOverrides()[ovKey(cat,item)]; }
+
+/* ===== تشخیص هوشمند غذا از عکس بشقاب (مدل بینایی ابری، کلید شخصی کاربر) ===== */
+const VISION_CAT='📷 از روی عکس';
+const VISION_PROVIDER_KEY='vision_provider_v1';
+const VISION_KEY_PREFIX='vision_key_';        // + provider  → کلید API (فقط در همین مرورگر)
+const VISION_FOOD_KEY='vision_foods_v1';
+// شناسه‌ی مدل هر سرویس (قابل تغییر): بینایی برای تشخیص غذا و برآورد گرم/ماکرو
+const VISION_MODELS={ claude:'claude-opus-5', openai:'gpt-4o' };
+function getVisionProvider(){ try{ const p=localStorage.getItem(VISION_PROVIDER_KEY); return (p==='openai'||p==='claude')?p:'claude'; }catch(e){ return 'claude'; } }
+function setVisionProvider(p){ try{ localStorage.setItem(VISION_PROVIDER_KEY, (p==='openai'?'openai':'claude')); }catch(e){} renderVisionSetting(); }
+function getVisionKey(prov){ try{ return (localStorage.getItem(VISION_KEY_PREFIX+(prov||getVisionProvider()))||'').trim(); }catch(e){ return ''; } }
+function setVisionKey(prov,key){ try{ if(key){ localStorage.setItem(VISION_KEY_PREFIX+prov, String(key).trim()); } else { localStorage.removeItem(VISION_KEY_PREFIX+prov); } }catch(e){} }
+function escVision(s){ return String(s==null?'':s).replace(/[<>"'&]/g,c=>({'<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','&':'&amp;'}[c])); }
+
+function loadVisionFoods(){ try{ const a=JSON.parse(localStorage.getItem(VISION_FOOD_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function saveVisionFoodsArr(arr){ try{ localStorage.setItem(VISION_FOOD_KEY, JSON.stringify(arr)); }catch(e){} }
+// خوراکی‌های عکس را در DB و نقشه‌ی تغذیه‌ی جدا اضافه می‌کند (NUTR100 پایه دست‌نخورده).
+// توجه: این تابع فقط «اضافه» می‌کند؛ ریست _customNutr/_customUnitG را applyCustomFoods انجام می‌دهد و این بعد از آن صدا زده می‌شود.
+function applyVisionFoods(){
+  const arr=loadVisionFoods();
+  delete DB[VISION_CAT];
+  if(arr.length){
+    DB[VISION_CAT]={};
+    arr.forEach(f=>{
+      const name=sanitizeFoodName(f.name); if(!name) return;
+      const c100=+f.carb100||0, g=+f.grams||0;
+      const units={ 'گرم': round4(c100/100) };
+      if(g>0){ const lbl=`وعده (${faDigits(g)} گرم)`; units[lbl]=round4(c100*g/100); window._customUnitG[lbl]=g; }
+      DB[VISION_CAT][name]=units;
+      window._customNutr[name]={ kcal:+f.kcal100||0, carb:c100, protein:+f.protein100||0, fat:+f.fat100||0, fiber:+f.fiber100||0, sugar:+f.sugar100||0, min:{}, vit:{} };
+    });
+  }
+}
+// عکس را به JPEG کوچک (base64) تبدیل می‌کند؛ به جهت EXIF احترام می‌گذارد.
+async function imageToJpeg(file, maxDim, q){
+  maxDim=maxDim||1024; q=q||0.82;
+  let bmp; try{ bmp=await createImageBitmap(file,{imageOrientation:'from-image'}); }catch(e){ bmp=await createImageBitmap(file); }
+  const scale=Math.min(1, maxDim/Math.max(bmp.width,bmp.height));
+  const w=Math.max(1,Math.round(bmp.width*scale)), h=Math.max(1,Math.round(bmp.height*scale));
+  const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+  cv.getContext('2d').drawImage(bmp,0,0,w,h);
+  if(bmp.close) bmp.close();
+  const dataURL=cv.toDataURL('image/jpeg',q);
+  return { b64:dataURL.split(',')[1], mediaType:'image/jpeg', dataURL };
+}
+const VISION_PROMPT=
+"You are a nutrition-estimation assistant for an educational diabetes app. Look at this photo of a meal/plate and identify each distinct food or drink you can see. For EACH item, estimate the visible edible portion and its nutrition.\n"+
+"Return ONLY a compact JSON array (no markdown fences, no commentary). Each element must be exactly:\n"+
+'{"name":"<food name in Persian>","grams":<integer edible grams>,"carb_g":<number>,"protein_g":<number>,"fat_g":<number>,"kcal":<number>,"confidence":"high"|"med"|"low"}\n'+
+"Rules: (1) name MUST be in Persian/Farsi. (2) all nutrition fields are plain numbers for THAT portion, no units, no strings. (3) estimate realistic Iranian home portions from the plate. (4) if you truly cannot recognize any food, return []. Output the JSON array only.";
+
+async function callVision(prov, key, img){
+  if(prov==='openai'){
+    const res=await fetch('https://api.openai.com/v1/chat/completions',{
+      method:'POST',
+      headers:{'content-type':'application/json','authorization':'Bearer '+key},
+      body:JSON.stringify({ model:VISION_MODELS.openai, max_tokens:1500,
+        messages:[{role:'user',content:[{type:'text',text:VISION_PROMPT},{type:'image_url',image_url:{url:img.dataURL}}]}] })
+    });
+    if(!res.ok){ throw new Error('OpenAI ('+res.status+'): '+(await res.text()).slice(0,180)); }
+    const data=await res.json();
+    return (data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'';
+  }
+  // پیش‌فرض: Claude (Anthropic)
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({ model:VISION_MODELS.claude, max_tokens:1500,
+      messages:[{role:'user',content:[{type:'text',text:VISION_PROMPT},{type:'image',source:{type:'base64',media_type:img.mediaType,data:img.b64}}]}] })
+  });
+  if(!res.ok){ throw new Error('Claude ('+res.status+'): '+(await res.text()).slice(0,180)); }
+  const data=await res.json();
+  return (data.content||[]).filter(b=>b&&b.type==='text').map(b=>b.text).join('\n');
+}
+function parseVisionJSON(text){
+  if(!text) return [];
+  let t=String(text).replace(/```json/gi,'').replace(/```/g,'').trim();
+  let arr=null;
+  const i=t.indexOf('['), j=t.lastIndexOf(']');
+  if(i>=0&&j>i){ try{ arr=JSON.parse(t.slice(i,j+1)); }catch(e){} }
+  if(!Array.isArray(arr)){
+    const a=t.indexOf('{'), b=t.lastIndexOf('}');
+    if(a>=0&&b>a){ try{ const o=JSON.parse(t.slice(a,b+1)); arr=o.items||o.foods||o.data||null; }catch(e){} }
+  }
+  return Array.isArray(arr)?arr:[];
+}
+// خوراکی‌های تشخیص‌داده‌شده را ذخیره و در DB ادغام می‌کند؛ لیست موارد افزوده را برمی‌گرداند.
+function registerVisionFoods(items){
+  const arr=loadVisionFoods();
+  const existing=new Set(arr.map(x=>x.name));
+  const added=[];
+  items.forEach(it=>{
+    let name=sanitizeFoodName(it&&it.name||'');
+    const g=Math.max(1, Math.round(+((it&&it.grams))||0));
+    if(!name || !(g>0)) return;
+    const carb=Math.max(0,+((it&&it.carb_g))||0), prot=Math.max(0,+((it&&it.protein_g))||0), fat=Math.max(0,+((it&&it.fat_g))||0);
+    let kcal=Math.max(0,+((it&&it.kcal))||0); if(!kcal) kcal=Math.round(carb*4+prot*4+fat*9);
+    let uniq=name, n=2;
+    while(existing.has(uniq)){ uniq=name+' '+faDigits(String(n)); n++; }
+    existing.add(uniq);
+    added.push({ id:'v'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), name:uniq, grams:g,
+      carb100:round4(carb*100/g), protein100:round4(prot*100/g), fat100:round4(fat*100/g),
+      sugar100:0, fiber100:0, kcal100:round4(kcal*100/g), conf:(it&&it.confidence)||'' });
+  });
+  if(added.length){
+    const merged=arr.concat(added);
+    saveVisionFoodsArr(merged.slice(Math.max(0,merged.length-80)));   // سقف ۸۰ مورد
+    applyVisionFoods();
+    if(typeof buildSearchIndex==='function') buildSearchIndex();
+  }
+  return added;
+}
+// ردیف‌های خالیِ دست‌نخورده‌ی ماشین‌حساب را حذف می‌کند (تا خوراکی‌های عکس تمیز اضافه شوند)
+function clearEmptyCalcRows(){
+  document.querySelectorAll('#foodRows .food-row').forEach(row=>{
+    const s=row.querySelector('.food-search');
+    if(s && !s.value.trim()) row.remove();
+  });
+}
+function addVisionFoodRow(name, g){
+  addFoodRow();
+  const all=document.querySelectorAll('#foodRows .food-row');
+  const row=all[all.length-1];
+  const catSel=row.querySelector('.sel-cat'); catSel.value=VISION_CAT; onCatChange(catSel);
+  const itemSel=row.querySelector('.sel-item'); itemSel.value=name; onItemChange(itemSel);
+  const unitLbl=`وعده (${faDigits(g)} گرم)`;
+  const us=row.querySelector('.sel-unit'); if([...us.options].some(o=>o.value===unitLbl)) us.value=unitLbl;
+  row.querySelector('.in-amt').value=1;
+  row.querySelector('.food-search').value=name;
+}
+function gotoVisionSettings(){
+  switchTab('profile');
+  setTimeout(()=>{ const c=document.getElementById('c-profile-vision'); if(c) c.scrollIntoView({behavior:'smooth',block:'start'}); },220);
+}
+function startPlatePhoto(){
+  const prov=getVisionProvider();
+  const s=document.getElementById('visionStatus');
+  if(!getVisionKey(prov)){
+    if(s){ s.style.display='block'; s.innerHTML='برای تشخیص از عکس، اول باید کلید API را در پروفایل وارد کنی. '
+      +'<button type="button" class="mini-btn" style="margin-right:6px" onclick="gotoVisionSettings()">رفتن به تنظیمات</button>'; }
+    return;
+  }
+  const inp=document.getElementById('platePhoto'); if(inp) inp.click();
+}
+async function handlePlatePhoto(inp){
+  const file=inp&&inp.files&&inp.files[0]; if(inp) inp.value='';
+  if(!file) return;
+  const prov=getVisionProvider(), key=getVisionKey(prov);
+  const s=document.getElementById('visionStatus'); if(s) s.style.display='block';
+  const set=(html)=>{ if(s) s.innerHTML=html; };
+  if(!key){ set('اول کلید API را در پروفایل وارد کن.'); return; }
+  if(!navigator.onLine){ set('⚠️ برای تشخیص از عکس به اینترنت نیاز است؛ الان آفلاینی. خوراکی‌ها را دستی وارد کن.'); return; }
+  set('⏳ در حال آماده‌سازی عکس…');
+  try{
+    const img=await imageToJpeg(file,1024,0.82);
+    set('🔎 در حال تحلیل عکس با هوش مصنوعی… (چند ثانیه صبر کن)');
+    const text=await callVision(prov,key,img);
+    const items=parseVisionJSON(text);
+    if(!items.length){ set('🤔 غذایی در عکس تشخیص داده نشد. عکس واضح‌تر و از بالای بشقاب بگیر، یا خوراکی‌ها را دستی وارد کن.'); return; }
+    const added=registerVisionFoods(items);
+    if(!added.length){ set('🤔 نتیجه‌ی معتبری برنگشت. دوباره امتحان کن.'); return; }
+    clearEmptyCalcRows();
+    added.forEach(f=>addVisionFoodRow(f.name,f.grams));
+    calcCarbs();
+    const names=added.map(f=>`${escVision(f.name)} (~${faDigits(f.grams)}گ)`).join('، ');
+    set(`✅ ${faDigits(String(added.length))} خوراکی از عکس اضافه شد: <b>${names}</b>`
+      +`<div style="color:var(--muted);font-size:11.5px;margin-top:7px;line-height:1.9">این اعداد تخمینِ هوش مصنوعی از روی عکس‌اند و ممکن است خطا داشته باشند؛ مقدار/واحد هر ردیف را می‌توانی دستی اصلاح کنی. برای دوز انسولین حتماً با پزشک هماهنگ کن.</div>`);
+    const card=document.getElementById('c-carb'); if(card) card.scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){
+    set('⚠️ خطا در تشخیص: '+escVision(String((e&&e.message)||e)).slice(0,300)
+      +'<div style="color:var(--muted);font-size:11.5px;margin-top:6px">کلید API را در پروفایل بررسی کن، اینترنت را چک کن، یا دوباره امتحان کن.</div>');
+  }
+}
+function toggleVisionKeyView(){
+  const inp=document.getElementById('visionKeyInput'); if(!inp) return;
+  inp.type=(inp.type==='password')?'text':'password';
+}
+function saveVisionKey(){
+  const prov=getVisionProvider();
+  const inp=document.getElementById('visionKeyInput'); if(!inp) return;
+  const v=(inp.value||'').trim();
+  if(!v){ if(typeof uiToast==='function') uiToast('کلید خالی است'); return; }
+  setVisionKey(prov,v);
+  renderVisionSetting();
+  if(typeof uiToast==='function') uiToast('کلید ذخیره شد');
+}
+function clearVisionKey(){
+  const prov=getVisionProvider();
+  setVisionKey(prov,'');
+  renderVisionSetting();
+  if(typeof uiToast==='function') uiToast('کلید حذف شد');
+}
+function renderVisionSetting(){
+  const box=document.getElementById('visionSetting'); if(!box) return;
+  const prov=getVisionProvider();
+  const hasKey=!!getVisionKey(prov);
+  const seg=(id,label)=>`<button type="button" onclick="setVisionProvider('${id}')" style="flex:1;padding:9px 6px;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;border:1px solid ${prov===id?'var(--teal)':'var(--line)'};background:${prov===id?'rgba(63,185,163,.18)':'transparent'};color:${prov===id?'var(--teal)':'var(--fg)'}">${label}</button>`;
+  const keyHint=prov==='claude'?'کلید Claude (از console.anthropic.com)':'کلید OpenAI (از platform.openai.com)';
+  box.innerHTML=
+    `<div style="display:flex;gap:8px;margin-bottom:12px">${seg('claude','Claude')}${seg('openai','OpenAI')}</div>`+
+    `<label style="font-size:12px;color:var(--muted)">${keyHint}</label>`+
+    `<div style="display:flex;gap:6px;margin-top:6px">`+
+      `<input type="password" id="visionKeyInput" placeholder="${hasKey?'●●●●●●●●●●  (ذخیره‌شده)':'کلید API را اینجا بچسبان'}" autocomplete="off" style="flex:1;min-width:0">`+
+      `<button type="button" class="mini-btn" onclick="toggleVisionKeyView()" title="نمایش/مخفی">👁</button>`+
+    `</div>`+
+    `<div style="display:flex;gap:6px;margin-top:8px">`+
+      `<button type="button" class="quick-btn" style="flex:1" onclick="saveVisionKey()">💾 ذخیره‌ی کلید</button>`+
+      (hasKey?`<button type="button" class="clear-btn" onclick="clearVisionKey()">حذف کلید</button>`:'')+
+    `</div>`+
+    `<div style="font-size:12px;margin-top:10px;line-height:1.8;color:${hasKey?'var(--teal)':'var(--muted)'}">`+
+      (hasKey?('✓ کلید برای '+(prov==='claude'?'Claude':'OpenAI')+' ذخیره است. حالا در تب ماشین‌حساب دکمه‌ی «📷 تشخیص غذا از عکس بشقاب» را بزن.')
+             :'هنوز کلیدی برای این سرویس ذخیره نشده. کلید را وارد و ذخیره کن.')+
+    `</div>`;
+}
+
 /* ===== تب ورزش: کتابخانه‌ی حرکت‌ها + برنامه + ثبت ===== */
 // آدمک SVG ساده برای هر حرکت (سبک و آفلاین)
 function stickFigure(pose, animate){
