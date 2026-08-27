@@ -1712,7 +1712,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۱.۱</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۱.۱.۱</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -6695,7 +6695,7 @@ const VISION_PROVIDER_KEY='vision_provider_v1';
 const VISION_KEY_PREFIX='vision_key_';        // + provider  → کلید API (فقط در همین مرورگر)
 const VISION_FOOD_KEY='vision_foods_v1';
 // شناسه‌ی مدل هر سرویس (قابل تغییر): بینایی برای تشخیص غذا و برآورد گرم/ماکرو
-const VISION_MODELS={ claude:'claude-opus-5', openai:'gpt-4o', gemini:'gemini-2.0-flash' };
+const VISION_MODELS={ claude:'claude-opus-5', openai:'gpt-4o', gemini:'gemini-3.6-flash' };
 const VISION_PROVIDERS=['claude','openai','gemini'];
 function getVisionProvider(){ try{ const p=localStorage.getItem(VISION_PROVIDER_KEY); return VISION_PROVIDERS.includes(p)?p:'claude'; }catch(e){ return 'claude'; } }
 function setVisionProvider(p){ try{ localStorage.setItem(VISION_PROVIDER_KEY, VISION_PROVIDERS.includes(p)?p:'claude'); }catch(e){} renderVisionSetting(); }
