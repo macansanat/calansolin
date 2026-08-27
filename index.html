@@ -1712,7 +1712,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۱.۱.۱</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۱.۲</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4378,6 +4378,8 @@ function restoreCalcState(){
 function clearCalcRows(){
   if(!confirm('همه‌ی خوراکی‌های واردشده در ماشین‌حساب پاک شوند؟')) return;
   try{ localStorage.removeItem(CALC_STATE_KEY); }catch(e){}
+  if(typeof clearVisionFoods==='function') clearVisionFoods();   // خوراکی‌های موقتِ عکس هم پاک شوند
+  const vs=document.getElementById('visionStatus'); if(vs){ vs.style.display='none'; vs.innerHTML=''; }
   document.getElementById('foodRows').innerHTML=''; rowCount=0;
   addFoodRow();
   calcCarbs();
@@ -6735,10 +6737,15 @@ async function imageToJpeg(file, maxDim, q){
   return { b64:dataURL.split(',')[1], mediaType:'image/jpeg', dataURL };
 }
 const VISION_PROMPT=
-"You are a nutrition-estimation assistant for an educational diabetes app. Look at this photo of a meal/plate and identify each distinct food or drink you can see. For EACH item, estimate the visible edible portion and its nutrition.\n"+
+"You are a nutrition-estimation assistant for an educational diabetes app used in Iran. Look at the photo of a meal/plate and identify each distinct food or drink.\n"+
 "Return ONLY a compact JSON array (no markdown fences, no commentary). Each element must be exactly:\n"+
-'{"name":"<food name in Persian>","grams":<integer edible grams>,"carb_g":<number>,"protein_g":<number>,"fat_g":<number>,"kcal":<number>,"confidence":"high"|"med"|"low"}\n'+
-"Rules: (1) name MUST be in Persian/Farsi. (2) all nutrition fields are plain numbers for THAT portion, no units, no strings. (3) estimate realistic Iranian home portions from the plate. (4) if you truly cannot recognize any food, return []. Output the JSON array only.";
+'{"name":"<canonical Persian food name>","unit":"<Persian household unit>","count":<number of that unit>,"grams":<integer edible grams>,"carb_g":<number>,"protein_g":<number>,"fat_g":<number>,"kcal":<number>,"confidence":"high"|"med"|"low"}\n'+
+"Guidelines:\n"+
+"- Use the COMMON canonical Iranian name so it matches a food database. Distinguish breads carefully by look: نان سنگک (large, thick, uneven surface, often sesame), نان بربری (long, thick, ridged), نان تافتون و نان لواش (thin flatbread), نان محلی/تنوری. Rice → برنج سفید پخته / عدس‌پلو / باقالی‌پلو … . Egg dishes → املت گوجه / نیمرو / خاگینه.\n"+
+"- unit MUST be a Persian household measure normally used for that item: کف دست، نصف کف دست، برش، عدد، قاشق غذاخوری، قاشق چای‌خوری، بشقاب، بشقاب کوچک، بشقاب متوسط، کاسه، لیوان، پرس، سیخ، قطعه، تکه، گرم.\n"+
+"- count = how many of that unit are visible on the plate (e.g. three palm-size pieces of bread → unit:\"کف دست\", count:3).\n"+
+"- carb_g/protein_g/fat_g/kcal are plain numbers for the WHOLE visible portion (unit × count). grams is the total edible grams.\n"+
+"- Names in Persian, numbers numeric. If nothing recognizable, return []. Output the JSON array only.";
 
 async function callVision(prov, key, img){
   if(prov==='gemini'){
@@ -6823,16 +6830,96 @@ function clearEmptyCalcRows(){
     if(s && !s.value.trim()) row.remove();
   });
 }
-function addVisionFoodRow(name, g){
+// پاک‌کردن همه‌ی خوراکی‌های موقتِ ساخته‌شده از عکس
+function clearVisionFoods(){
+  saveVisionFoodsArr([]);
+  applyVisionFoods();
+  if(typeof buildSearchIndex==='function') buildSearchIndex();
+}
+// یک ردیف ماشین‌حساب با دسته/آیتم/واحد/تعداد مشخص می‌سازد (هم برای غذای موجود، هم خوراکی عکس)
+function addCalcRowFor(cat,item,unit,count){
+  if(!DB[cat]||!DB[cat][item]) return;
   addFoodRow();
   const all=document.querySelectorAll('#foodRows .food-row');
   const row=all[all.length-1];
-  const catSel=row.querySelector('.sel-cat'); catSel.value=VISION_CAT; onCatChange(catSel);
-  const itemSel=row.querySelector('.sel-item'); itemSel.value=name; onItemChange(itemSel);
-  const unitLbl=`وعده (${faDigits(g)} گرم)`;
-  const us=row.querySelector('.sel-unit'); if([...us.options].some(o=>o.value===unitLbl)) us.value=unitLbl;
-  row.querySelector('.in-amt').value=1;
-  row.querySelector('.food-search').value=name;
+  const catSel=row.querySelector('.sel-cat'); catSel.value=cat; onCatChange(catSel);
+  const itemSel=row.querySelector('.sel-item'); itemSel.value=item; onItemChange(itemSel);
+  const us=row.querySelector('.sel-unit');
+  if(unit && [...us.options].some(o=>o.value===unit)) us.value=unit;
+  row.querySelector('.in-amt').value=count;
+  row.querySelector('.food-search').value=item;
+}
+// نامِ تشخیص‌داده‌شده را با نزدیک‌ترین غذای موجودِ دیتابیس تطبیق می‌دهد (کلمه‌محور، به‌جز دسته‌ی عکس)
+const _MATCH_STOP=new Set(['با','از','به','در','تا','رو','را','هم','ای','یه','یک','و','یا','که']);
+function _matchToks(s){ return s.split(' ').filter(w=>w.length>1 && !_MATCH_STOP.has(w)); }
+function matchDbFood(name){
+  const q=normalizeFa(name||''); if(q.length<2) return null;
+  const qt=_matchToks(q); if(!qt.length) return null;
+  const qFirst=qt[0], qLast=qt[qt.length-1];
+  let best=null, bestScore=0;
+  for(const x of SEARCH_INDEX){
+    if(x.cat===VISION_CAT) continue;
+    const n=x.norm; let s=0;
+    if(n===q){ s=1000; }
+    else{
+      const nt=_matchToks(n);
+      if(!nt.length){ if(n.includes(q)||q.includes(n)) s=25; }
+      else{
+        const nset=new Set(nt); let shared=0; qt.forEach(w=>{ if(nset.has(w)) shared++; });
+        if(shared===0){
+          if(n.includes(q)||q.includes(n)) s=26-Math.abs(n.length-q.length);   // واژه‌های چسبیده
+        }else{
+          s = shared*100 - Math.abs(nt.length-qt.length)*8 + (shared/qt.length)*20;
+          if(nt[0]===qFirst) s+=40;                      // تطبیقِ کلمه‌ی اول (هم‌ریشه بودن)
+          if(nt[nt.length-1]===qLast) s+=6;
+        }
+      }
+    }
+    if(s>bestScore){ bestScore=s; best=x; }
+  }
+  return bestScore>=60 ? best : null;
+}
+// واحدِ دیتابیسِ آیتم را با واحدِ خانگیِ برگردانده‌ی مدل تطبیق می‌دهد
+function pickItemUnit(cat,item,modelUnit){
+  const units=Object.keys(DB[cat][item]);
+  const u=normalizeFa(String(modelUnit||''));
+  if(u){
+    for(const k of units){ if(normalizeFa(k)===u) return k; }
+    for(const k of units){ const nk=normalizeFa(k); if(nk.includes(u)||u.includes(nk)) return k; }
+  }
+  return null;
+}
+// از نتیجه‌ی مدل یک «برنامه‌ی ردیف‌ها» می‌سازد: تطبیق با غذای موجود، وگرنه خوراکی عکس جدید.
+function planVisionRows(items){
+  const plan=[], newFoods=[];
+  items.forEach(it=>{
+    const name=sanitizeFoodName(it&&it.name||''); if(!name) return;
+    const grams=Math.max(0, Math.round(+((it&&it.grams))||0));
+    const count0=+((it&&it.count))||0;
+    const m=matchDbFood(name);
+    if(m){
+      let unit=pickItemUnit(m.cat,m.item,it&&it.unit), count;
+      const units=Object.keys(DB[m.cat][m.item]);
+      if(unit){
+        count = count0>0 ? count0 : (grams>0 ? grams/unitGrams(unit) : 1);
+      }else{
+        // واحدِ مدل روی این آیتم نبود: نزدیک‌ترین واحد بر اساس وزنِ تقریبی
+        if(grams>0){
+          unit=units.reduce((a,b)=> Math.abs(unitGrams(b)-grams)<Math.abs(unitGrams(a)-grams)?b:a, units[0]);
+          count=grams/unitGrams(unit);
+        }else{ unit=units[0]; count=count0>0?count0:1; }
+      }
+      if(!/گرم/.test(unit)) count=Math.max(0.5, Math.round(count*2)/2); else count=Math.max(1,Math.round(count));
+      plan.push({cat:m.cat,item:m.item,unit,count,matched:true});
+    }else{
+      newFoods.push(it);
+    }
+  });
+  if(newFoods.length){
+    const added=registerVisionFoods(newFoods);
+    added.forEach(f=>plan.push({cat:VISION_CAT,item:f.name,unit:`وعده (${faDigits(f.grams)} گرم)`,count:1,matched:false}));
+  }
+  return plan;
 }
 function gotoVisionSettings(){
   switchTab('profile');
@@ -6863,14 +6950,16 @@ async function handlePlatePhoto(inp){
     const text=await callVision(prov,key,img);
     const items=parseVisionJSON(text);
     if(!items.length){ set('🤔 غذایی در عکس تشخیص داده نشد. عکس واضح‌تر و از بالای بشقاب بگیر، یا خوراکی‌ها را دستی وارد کن.'); return; }
-    const added=registerVisionFoods(items);
-    if(!added.length){ set('🤔 نتیجه‌ی معتبری برنگشت. دوباره امتحان کن.'); return; }
+    const plan=planVisionRows(items);
+    if(!plan.length){ set('🤔 نتیجه‌ی معتبری برنگشت. دوباره امتحان کن.'); return; }
     clearEmptyCalcRows();
-    added.forEach(f=>addVisionFoodRow(f.name,f.grams));
+    plan.forEach(p=>addCalcRowFor(p.cat,p.item,p.unit,p.count));
     calcCarbs();
-    const names=added.map(f=>`${escVision(f.name)} (~${faDigits(f.grams)}گ)`).join('، ');
-    set(`✅ ${faDigits(String(added.length))} خوراکی از عکس اضافه شد: <b>${names}</b>`
-      +`<div style="color:var(--muted);font-size:11.5px;margin-top:7px;line-height:1.9">این اعداد تخمینِ هوش مصنوعی از روی عکس‌اند و ممکن است خطا داشته باشند؛ مقدار/واحد هر ردیف را می‌توانی دستی اصلاح کنی. برای دوز انسولین حتماً با پزشک هماهنگ کن.</div>`);
+    const names=plan.map(p=>`${escVision(p.item)} (${faDigits(String(p.count))} ${escVision(p.unit)})${p.matched?'':' 🆕'}`).join('، ');
+    const nNew=plan.filter(p=>!p.matched).length;
+    set(`✅ ${faDigits(String(plan.length))} خوراکی اضافه شد: <b>${names}</b>`
+      +(nNew?`<div style="color:var(--muted);font-size:11px;margin-top:5px">🆕 = در دیتابیس نبود و به‌صورت موقت از عکس ساخته شد.</div>`:'')
+      +`<div style="color:var(--muted);font-size:11.5px;margin-top:7px;line-height:1.9">تشخیص و تعداد تخمینِ هوش مصنوعی‌اند و ممکن است خطا داشته باشند (مثلاً نوع نان)؛ دسته/خوراکی/واحد/تعداد هر ردیف را می‌توانی دستی اصلاح کنی. برای دوز انسولین حتماً با پزشک هماهنگ کن.</div>`);
     const card=document.getElementById('c-carb'); if(card) card.scrollIntoView({behavior:'smooth',block:'start'});
   }catch(e){
     set('⚠️ خطا در تشخیص: '+escVision(String((e&&e.message)||e)).slice(0,300)
