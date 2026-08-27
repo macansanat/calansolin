@@ -1546,6 +1546,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <div class="card-body">
     <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:12px">
       می‌توانی در ماشین‌حساب از بشقاب غذایت عکس بگیری تا خوراکی‌ها و گرم و کربوهیدرات و کالریِ تقریبی‌شان خودکار وارد شوند. این کار به یک <b style="color:var(--teal)">مدل بینایی ابری</b> و <b>کلید شخصی خودت</b> نیاز دارد (فقط لحظه‌ی تشخیص، اینترنت لازم است؛ بقیه‌ی برنامه آفلاین کار می‌کند). کلیدت فقط در همین مرورگر ذخیره می‌شود و جایی فرستاده نمی‌شود جز سرور همان سرویس.
+      <br>💡 گزینه‌ی <b style="color:var(--teal)">Gemini 🆓</b> سطح رایگان دارد؛ کلیدش را بدون کارت اعتباری از <b>aistudio.google.com</b> بگیر (کیفیتش کمی از Claude/GPT پایین‌تر است ولی برای شروعِ رایگان خوب است).
       <br><b style="color:var(--red)">توجه:</b> برآوردِ گرم و ماکرو از روی عکس فقط تخمینِ آموزشی است و می‌تواند خطا داشته باشد؛ برای دوز انسولین حتماً با پزشک هماهنگ کن.
     </div>
     <div id="visionSetting"></div>
@@ -1711,7 +1712,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۱.۰</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۱.۱</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -6694,9 +6695,10 @@ const VISION_PROVIDER_KEY='vision_provider_v1';
 const VISION_KEY_PREFIX='vision_key_';        // + provider  → کلید API (فقط در همین مرورگر)
 const VISION_FOOD_KEY='vision_foods_v1';
 // شناسه‌ی مدل هر سرویس (قابل تغییر): بینایی برای تشخیص غذا و برآورد گرم/ماکرو
-const VISION_MODELS={ claude:'claude-opus-5', openai:'gpt-4o' };
-function getVisionProvider(){ try{ const p=localStorage.getItem(VISION_PROVIDER_KEY); return (p==='openai'||p==='claude')?p:'claude'; }catch(e){ return 'claude'; } }
-function setVisionProvider(p){ try{ localStorage.setItem(VISION_PROVIDER_KEY, (p==='openai'?'openai':'claude')); }catch(e){} renderVisionSetting(); }
+const VISION_MODELS={ claude:'claude-opus-5', openai:'gpt-4o', gemini:'gemini-2.0-flash' };
+const VISION_PROVIDERS=['claude','openai','gemini'];
+function getVisionProvider(){ try{ const p=localStorage.getItem(VISION_PROVIDER_KEY); return VISION_PROVIDERS.includes(p)?p:'claude'; }catch(e){ return 'claude'; } }
+function setVisionProvider(p){ try{ localStorage.setItem(VISION_PROVIDER_KEY, VISION_PROVIDERS.includes(p)?p:'claude'); }catch(e){} renderVisionSetting(); }
 function getVisionKey(prov){ try{ return (localStorage.getItem(VISION_KEY_PREFIX+(prov||getVisionProvider()))||'').trim(); }catch(e){ return ''; } }
 function setVisionKey(prov,key){ try{ if(key){ localStorage.setItem(VISION_KEY_PREFIX+prov, String(key).trim()); } else { localStorage.removeItem(VISION_KEY_PREFIX+prov); } }catch(e){} }
 function escVision(s){ return String(s==null?'':s).replace(/[<>"'&]/g,c=>({'<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','&':'&amp;'}[c])); }
@@ -6739,6 +6741,21 @@ const VISION_PROMPT=
 "Rules: (1) name MUST be in Persian/Farsi. (2) all nutrition fields are plain numbers for THAT portion, no units, no strings. (3) estimate realistic Iranian home portions from the plate. (4) if you truly cannot recognize any food, return []. Output the JSON array only.";
 
 async function callVision(prov, key, img){
+  if(prov==='gemini'){
+    const url='https://generativelanguage.googleapis.com/v1beta/models/'+VISION_MODELS.gemini+':generateContent?key='+encodeURIComponent(key);
+    const res=await fetch(url,{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({
+        contents:[{ parts:[ {text:VISION_PROMPT}, {inline_data:{mime_type:img.mediaType, data:img.b64}} ] }],
+        generationConfig:{ maxOutputTokens:1500, temperature:0.2 }
+      })
+    });
+    if(!res.ok){ throw new Error('Gemini ('+res.status+'): '+(await res.text()).slice(0,180)); }
+    const data=await res.json();
+    const cand=data.candidates&&data.candidates[0];
+    return (cand&&cand.content&&cand.content.parts||[]).map(p=>p.text||'').join('\n');
+  }
   if(prov==='openai'){
     const res=await fetch('https://api.openai.com/v1/chat/completions',{
       method:'POST',
@@ -6883,10 +6900,12 @@ function renderVisionSetting(){
   const box=document.getElementById('visionSetting'); if(!box) return;
   const prov=getVisionProvider();
   const hasKey=!!getVisionKey(prov);
-  const seg=(id,label)=>`<button type="button" onclick="setVisionProvider('${id}')" style="flex:1;padding:9px 6px;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;border:1px solid ${prov===id?'var(--teal)':'var(--line)'};background:${prov===id?'rgba(63,185,163,.18)':'transparent'};color:${prov===id?'var(--teal)':'var(--fg)'}">${label}</button>`;
-  const keyHint=prov==='claude'?'کلید Claude (از console.anthropic.com)':'کلید OpenAI (از platform.openai.com)';
+  const NAMES={claude:'Claude',openai:'OpenAI',gemini:'Gemini'};
+  const HINTS={claude:'کلید Claude (از console.anthropic.com)',openai:'کلید OpenAI (از platform.openai.com)',gemini:'کلید Gemini (رایگان از aistudio.google.com)'};
+  const seg=(id,label)=>`<button type="button" onclick="setVisionProvider('${id}')" style="flex:1;padding:9px 4px;border-radius:10px;cursor:pointer;font-weight:700;font-size:12.5px;border:1px solid ${prov===id?'var(--teal)':'var(--line)'};background:${prov===id?'rgba(63,185,163,.18)':'transparent'};color:${prov===id?'var(--teal)':'var(--fg)'}">${label}</button>`;
+  const keyHint=HINTS[prov];
   box.innerHTML=
-    `<div style="display:flex;gap:8px;margin-bottom:12px">${seg('claude','Claude')}${seg('openai','OpenAI')}</div>`+
+    `<div style="display:flex;gap:6px;margin-bottom:12px">${seg('claude','Claude')}${seg('openai','OpenAI')}${seg('gemini','Gemini 🆓')}</div>`+
     `<label style="font-size:12px;color:var(--muted)">${keyHint}</label>`+
     `<div style="display:flex;gap:6px;margin-top:6px">`+
       `<input type="password" id="visionKeyInput" placeholder="${hasKey?'●●●●●●●●●●  (ذخیره‌شده)':'کلید API را اینجا بچسبان'}" autocomplete="off" style="flex:1;min-width:0">`+
@@ -6897,7 +6916,7 @@ function renderVisionSetting(){
       (hasKey?`<button type="button" class="clear-btn" onclick="clearVisionKey()">حذف کلید</button>`:'')+
     `</div>`+
     `<div style="font-size:12px;margin-top:10px;line-height:1.8;color:${hasKey?'var(--teal)':'var(--muted)'}">`+
-      (hasKey?('✓ کلید برای '+(prov==='claude'?'Claude':'OpenAI')+' ذخیره است. حالا در تب ماشین‌حساب دکمه‌ی «📷 تشخیص غذا از عکس بشقاب» را بزن.')
+      (hasKey?('✓ کلید برای '+NAMES[prov]+' ذخیره است. حالا در تب ماشین‌حساب دکمه‌ی «📷 تشخیص غذا از عکس بشقاب» را بزن.')
              :'هنوز کلیدی برای این سرویس ذخیره نشده. کلید را وارد و ذخیره کن.')+
     `</div>`;
 }
