@@ -1466,7 +1466,8 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       </label>
       <div class="formula-note" style="margin-top:8px">📄 فرمت‌های پشتیبانی‌شده: عکس (JPG، PNG)، PDF و اکسل (XLSX، CSV).</div>
       <div class="formula-note" style="margin-top:4px">💡 برگه‌ها معمولاً انگلیسی‌اند و همین دقت را بالا می‌برد. برای عکس: نور کافی، صاف و بدون کجی، و بهتر است هر بخش را جدا عکس بگیری.</div>
-      <div class="formula-note" style="color:var(--teal);margin-top:4px">✓ همه‌ی پردازش داخل مرورگر خودت انجام می‌شود و هیچ عکس یا فایلی جایی فرستاده نمی‌شود.</div>
+      <div class="formula-note" style="color:var(--teal);margin-top:4px">✓ حالت آفلاین: همه‌ی پردازش داخل مرورگر خودت انجام می‌شود و هیچ عکس یا فایلی جایی فرستاده نمی‌شود.</div>
+      <div id="labAiReadBox" style="margin-top:10px"></div>
       <div id="labImportProgress" style="font-size:12.5px;margin-top:10px;line-height:1.8"></div>
       <div id="labImportPreview"></div>
     </div>
@@ -1712,7 +1713,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۱.۲</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۱.۳</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -6747,15 +6748,17 @@ const VISION_PROMPT=
 "- carb_g/protein_g/fat_g/kcal are plain numbers for the WHOLE visible portion (unit × count). grams is the total edible grams.\n"+
 "- Names in Persian, numbers numeric. If nothing recognizable, return []. Output the JSON array only.";
 
-async function callVision(prov, key, img){
+// تماس بینایی (با عکس). promptText اختیاری؛ پیش‌فرض تشخیص غذا. maxTok برای مدیریت توکن.
+async function callVision(prov, key, img, promptText, maxTok){
+  const prompt=promptText||VISION_PROMPT; const mt=maxTok||1500;
   if(prov==='gemini'){
     const url='https://generativelanguage.googleapis.com/v1beta/models/'+VISION_MODELS.gemini+':generateContent?key='+encodeURIComponent(key);
     const res=await fetch(url,{
       method:'POST',
       headers:{'content-type':'application/json'},
       body:JSON.stringify({
-        contents:[{ parts:[ {text:VISION_PROMPT}, {inline_data:{mime_type:img.mediaType, data:img.b64}} ] }],
-        generationConfig:{ maxOutputTokens:1500, temperature:0.2 }
+        contents:[{ parts:[ {text:prompt}, {inline_data:{mime_type:img.mediaType, data:img.b64}} ] }],
+        generationConfig:{ maxOutputTokens:mt, temperature:0.2 }
       })
     });
     if(!res.ok){ throw new Error('Gemini ('+res.status+'): '+(await res.text()).slice(0,180)); }
@@ -6767,8 +6770,8 @@ async function callVision(prov, key, img){
     const res=await fetch('https://api.openai.com/v1/chat/completions',{
       method:'POST',
       headers:{'content-type':'application/json','authorization':'Bearer '+key},
-      body:JSON.stringify({ model:VISION_MODELS.openai, max_tokens:1500,
-        messages:[{role:'user',content:[{type:'text',text:VISION_PROMPT},{type:'image_url',image_url:{url:img.dataURL}}]}] })
+      body:JSON.stringify({ model:VISION_MODELS.openai, max_tokens:mt,
+        messages:[{role:'user',content:[{type:'text',text:prompt},{type:'image_url',image_url:{url:img.dataURL}}]}] })
     });
     if(!res.ok){ throw new Error('OpenAI ('+res.status+'): '+(await res.text()).slice(0,180)); }
     const data=await res.json();
@@ -6778,9 +6781,35 @@ async function callVision(prov, key, img){
   const res=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
     headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({ model:VISION_MODELS.claude, max_tokens:1500,
-      messages:[{role:'user',content:[{type:'text',text:VISION_PROMPT},{type:'image',source:{type:'base64',media_type:img.mediaType,data:img.b64}}]}] })
+    body:JSON.stringify({ model:VISION_MODELS.claude, max_tokens:mt,
+      messages:[{role:'user',content:[{type:'text',text:prompt},{type:'image',source:{type:'base64',media_type:img.mediaType,data:img.b64}}]}] })
   });
+  if(!res.ok){ throw new Error('Claude ('+res.status+'): '+(await res.text()).slice(0,180)); }
+  const data=await res.json();
+  return (data.content||[]).filter(b=>b&&b.type==='text').map(b=>b.text).join('\n');
+}
+// تماس فقط‌متنی (بدون عکس) — سبک و کم‌توکن؛ برای تحلیل مقادیر آزمایش.
+async function callAIText(prov, key, promptText, maxTok){
+  const mt=maxTok||700;
+  if(prov==='gemini'){
+    const url='https://generativelanguage.googleapis.com/v1beta/models/'+VISION_MODELS.gemini+':generateContent?key='+encodeURIComponent(key);
+    const res=await fetch(url,{ method:'POST', headers:{'content-type':'application/json'},
+      body:JSON.stringify({ contents:[{parts:[{text:promptText}]}], generationConfig:{maxOutputTokens:mt,temperature:0.3} }) });
+    if(!res.ok){ throw new Error('Gemini ('+res.status+'): '+(await res.text()).slice(0,180)); }
+    const data=await res.json(); const c=data.candidates&&data.candidates[0];
+    return (c&&c.content&&c.content.parts||[]).map(p=>p.text||'').join('\n');
+  }
+  if(prov==='openai'){
+    const res=await fetch('https://api.openai.com/v1/chat/completions',{ method:'POST',
+      headers:{'content-type':'application/json','authorization':'Bearer '+key},
+      body:JSON.stringify({ model:VISION_MODELS.openai, max_tokens:mt, messages:[{role:'user',content:promptText}] }) });
+    if(!res.ok){ throw new Error('OpenAI ('+res.status+'): '+(await res.text()).slice(0,180)); }
+    const data=await res.json();
+    return (data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'';
+  }
+  const res=await fetch('https://api.anthropic.com/v1/messages',{ method:'POST',
+    headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({ model:VISION_MODELS.claude, max_tokens:mt, messages:[{role:'user',content:[{type:'text',text:promptText}]}] }) });
   if(!res.ok){ throw new Error('Claude ('+res.status+'): '+(await res.text()).slice(0,180)); }
   const data=await res.json();
   return (data.content||[]).filter(b=>b&&b.type==='text').map(b=>b.text).join('\n');
@@ -8738,6 +8767,141 @@ async function extractFromImage(file,prog){
   const lines=await ocrToLines(img,prog,'خواندن عکس…');
   return parseLabLines(lines);
 }
+/* ===== هوش مصنوعی برای آزمایش: خواندن عکس + تحلیل (با مدیریت توکن) ===== */
+const LAB_AI_READ_KEY='lab_ai_read_v1';
+const LAB_AI_ANALYSIS_KEY='lab_ai_analysis_v1';
+const LAB_AI_CACHE_KEY='lab_ai_cache_v1';
+function labAiReadOn(){ try{ return localStorage.getItem(LAB_AI_READ_KEY)==='1'; }catch(e){ return false; } }
+function setLabAiRead(on){ try{ localStorage.setItem(LAB_AI_READ_KEY, on?'1':'0'); }catch(e){} }
+function labAiAnalysisOn(){ try{ return localStorage.getItem(LAB_AI_ANALYSIS_KEY)==='1'; }catch(e){ return false; } }
+function setLabAiAnalysis(on){ try{ localStorage.setItem(LAB_AI_ANALYSIS_KEY, on?'1':'0'); }catch(e){} }
+function _hashStr(s){ let h=5381; for(let i=0;i<s.length;i++){ h=(((h<<5)+h)^s.charCodeAt(i))>>>0; } return h.toString(36); }
+function labAiCacheGet(hash){ try{ const o=JSON.parse(localStorage.getItem(LAB_AI_CACHE_KEY)||'{}'); return o[hash]||null; }catch(e){ return null; } }
+function labAiCacheSet(hash,text){ try{ const o=JSON.parse(localStorage.getItem(LAB_AI_CACHE_KEY)||'{}'); o[hash]={text,ts:Date.now()};
+  const keys=Object.keys(o); if(keys.length>12){ keys.sort((a,b)=>o[a].ts-o[b].ts); delete o[keys[0]]; }
+  localStorage.setItem(LAB_AI_CACHE_KEY, JSON.stringify(o)); }catch(e){} }
+
+// خواندن عکس آزمایش با هوش مصنوعی → خطوط متنی → همان pipeline موجود (parseLabLines)
+const LAB_OCR_PROMPT=
+"You are reading a medical LABORATORY REPORT from a photo (text may be Persian/Farsi or English). Extract EVERY lab test result you can read.\n"+
+"Output PLAIN TEXT, one test per line, exactly: <English test name/abbreviation> <value> <unit>\n"+
+"Rules: use standard English names/abbreviations (FBS, HbA1c, Triglyceride, Cholesterol, LDL, HDL, Creatinine, Urea, BUN, Uric Acid, AST, ALT, ALP, TSH, T4, T3, Vitamin D, B12, Ferritin, Iron, Calcium, Hb, HCT, WBC, RBC, Platelet, ...). Keep the numeric value exactly as printed (use a decimal point, not comma). Include the unit if shown. One test per line. NO bullets, NO commentary, NO reference ranges. Skip anything you cannot read.";
+async function extractFromImageAI(file,prog){
+  const prov=getVisionProvider(), key=getVisionKey(prov);
+  if(prog) prog.textContent='آماده‌سازی عکس برای هوش مصنوعی…';
+  const img=await imageToJpeg(file,1600,0.85);           // وضوح بیشتر برای متن ریز
+  if(prog) prog.textContent='خواندن عکس با هوش مصنوعی…';
+  const text=await callVision(prov,key,img,LAB_OCR_PROMPT,1500);
+  const lines=String(text||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  window._lastOcrLines=(window._lastOcrLines||[]).concat(lines);
+  return parseLabLines(lines);
+}
+
+// toggle حالت خواندن عکس (آفلاین/هوش مصنوعی)
+function toggleLabAiRead(){ setLabAiRead(!labAiReadOn()); renderLabAiReadToggle(); }
+function renderLabAiReadToggle(){
+  const box=document.getElementById('labAiReadBox'); if(!box) return;
+  const on=labAiReadOn();
+  const hasKey=!!getVisionKey(getVisionProvider());
+  const knob=`<span style="position:absolute;top:3px;${on?'right:3px':'left:3px'};width:20px;height:20px;border-radius:50%;background:#fff"></span>`;
+  box.innerHTML=
+   `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:12px;border:1px solid ${on?'var(--teal-dim)':'var(--line)'};background:${on?'rgba(63,185,163,.10)':'transparent'}">
+      <button type="button" onclick="toggleLabAiRead()" aria-pressed="${on}" style="flex:0 0 auto;width:46px;height:26px;border-radius:13px;border:none;cursor:pointer;position:relative;background:${on?'var(--teal)':'var(--line)'}">${knob}</button>
+      <div style="flex:1;min-width:0;font-size:12.5px;line-height:1.7">
+        <b>🤖 خواندن با هوش مصنوعی</b> <span style="color:var(--muted)">(آنلاین، دقیق‌تر)</span>
+        <div style="color:var(--muted);font-size:11.5px">${on?'وقتی آنلاین باشی و کلید داشته باشی، عکس آزمایش با هوش مصنوعی خوانده می‌شود؛ در غیر این‌صورت خودکار به حالت آفلاین برمی‌گردد.':'خاموش: عکس فقط آفلاین و داخل مرورگر خوانده می‌شود (چیزی فرستاده نمی‌شود).'}</div>`+
+        (on&&!hasKey?`<div style="color:var(--amber);font-size:11.5px;margin-top:3px">⚠️ هنوز کلید API نداری — <b onclick="gotoVisionSettings()" style="cursor:pointer;text-decoration:underline">رفتن به تنظیمات</b>.</div>`:'')+
+        (on?`<div style="color:var(--amber);font-size:11px;margin-top:3px">توجه: در این حالت عکس آزمایش به سرویس هوش مصنوعی فرستاده می‌شود (آفلاین نیست).</div>`:'')+
+      `</div>
+    </div>`;
+}
+
+// ساخت خلاصه‌ی متنیِ کم‌حجم از آخرین برگه برای تحلیل (مدیریت توکن: فقط مقادیر، نه عکس)
+function buildLabAIContext(){
+  const d=loadLabs(); const ranges=d.ranges||{};
+  const entries=[...(d.entries||[])].sort((a,b)=>a.ts-b.ts);
+  if(!entries.length) return null;
+  const last=entries[entries.length-1];
+  const prev=entries.length>1?entries[entries.length-2]:null;
+  const lines=[];
+  for(const k in last.vals){
+    const t=findLabTest(k); if(!t) continue;
+    const er=getLabRange(k,ranges);
+    const st=labStatus(k,last.vals[k],ranges);
+    let line=`${t.en||t.fa}: ${last.vals[k]}${t.unit?(' '+t.unit):''}`;
+    if(er && er.lo!=null && er.hi!=null) line+=` (ref ${er.lo}-${er.hi})`;
+    if(st==='high') line+=' [HIGH]'; else if(st==='low') line+=' [LOW]';
+    if(prev && prev.vals[k]!=null && prev.vals[k]!==last.vals[k]) line+=` (prev ${prev.vals[k]})`;
+    lines.push(line);
+  }
+  if(!lines.length) return null;
+  return { date:last.date, lines };
+}
+function LAB_AI_ANALYSIS_PROMPT(ctx){
+  return "You are an educational assistant for a person with diabetes reviewing their OWN lab results. Give a SHORT plain-language interpretation IN PERSIAN (Farsi).\n"+
+  "Strict rules:\n"+
+  "- Educational only. NEVER give a diagnosis. NEVER give specific medication or insulin doses or timing.\n"+
+  "- For anything important or abnormal, advise consulting their doctor.\n"+
+  "- Be concise: at most 6 short bullet lines, each starting with «•». Focus on out-of-range values and diabetes-relevant markers (HbA1c, FBS, lipids, kidney, liver, thyroid, anemia).\n"+
+  "- Calm tone, no alarming. Persian only, no English, no preamble.\n\n"+
+  "Lab results (date "+(ctx.date||'')+"):\n"+ctx.lines.join('\n');
+}
+function labAiFmt(text){
+  const esc=s=>String(s).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+  return esc(text).replace(/\n{2,}/g,'\n').replace(/\n/g,'<br>');
+}
+function renderLabAiPanel(){
+  const box=document.getElementById('labAiPanel'); if(!box) return;
+  if(!labAiAnalysisOn()){
+    box.innerHTML=`<div style="margin-top:16px;padding:12px 13px;border:1px dashed var(--line);border-radius:12px">
+      <div style="font-size:12.5px;line-height:1.8"><b>🤖 تحلیل هوش مصنوعی (اختیاری)</b>
+      <div style="color:var(--muted);font-size:11.5px">اگر روشن کنی، علاوه بر تحلیل فعلیِ بالا، یک تفسیر کوتاهِ هوش مصنوعی از نتایجت هم اینجا می‌آید. برای صرفه‌جویی توکن، فقط وقتی خودت دکمه را بزنی و فقط اگر نتایج تغییر کرده باشد محاسبه می‌شود.</div></div>
+      <button type="button" class="quick-btn" style="margin-top:8px" onclick="setLabAiAnalysis(true);renderLabAiPanel()">فعال‌کردن</button>
+    </div>`;
+    return;
+  }
+  const ctx=buildLabAIContext();
+  if(!ctx){ box.innerHTML=''; return; }
+  const hash=_hashStr((ctx.date||'')+'|'+ctx.lines.join('|'));
+  const cached=labAiCacheGet(hash);
+  const hasKey=!!getVisionKey(getVisionProvider());
+  let h=`<div style="margin-top:16px;padding:13px;border:1px solid var(--teal-dim);border-radius:12px;background:linear-gradient(135deg,#16212e,#1b2938)">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+      <div style="font-weight:800;color:var(--teal);font-size:13.5px">🤖 تحلیل هوش مصنوعی</div>
+      <div style="display:flex;gap:6px">
+        <button type="button" class="mini-btn" onclick="runLabAiAnalysis(true)">${cached?'↻ به‌روزرسانی':'▶ اجرا'}</button>
+        <button type="button" class="mini-btn" onclick="setLabAiAnalysis(false);renderLabAiPanel()">خاموش</button>
+      </div>
+    </div>`;
+  if(!hasKey) h+=`<div style="color:var(--amber);font-size:12px;margin-top:8px">⚠️ برای این کار کلید API لازم است — <b onclick="gotoVisionSettings()" style="cursor:pointer;text-decoration:underline">رفتن به تنظیمات</b>.</div>`;
+  h+=`<div id="labAiResult" style="font-size:12.5px;line-height:2.1;margin-top:10px">`;
+  h+= cached ? labAiFmt(cached.text) : `<span style="color:var(--muted)">هنوز اجرا نشده. «اجرا» را بزن تا نتایج آخرین برگه (${faDigits(ctx.date||'')}) با هوش مصنوعی تفسیر شود.</span>`;
+  h+=`</div>`;
+  h+=`<div style="color:var(--amber);font-size:11px;margin-top:9px;line-height:1.8">⚕️ این تفسیر آموزشی است و جایگزین پزشک نیست؛ برای هر تصمیم درمانی و دوز دارو حتماً با پزشک مشورت کن. در این حالت مقادیر آزمایشت (نه عکس) به سرویس هوش مصنوعی فرستاده می‌شود.</div>`;
+  h+=`</div>`;
+  box.innerHTML=h;
+}
+async function runLabAiAnalysis(force){
+  const box=document.getElementById('labAiResult'); if(!box) return;
+  const prov=getVisionProvider(), key=getVisionKey(prov);
+  if(!key){ box.innerHTML='<span style="color:var(--amber)">اول کلید API را در پروفایل وارد کن.</span>'; return; }
+  if(!navigator.onLine){ box.innerHTML='<span style="color:var(--amber)">برای تحلیل هوش مصنوعی به اینترنت نیاز است.</span>'; return; }
+  const ctx=buildLabAIContext(); if(!ctx){ box.innerHTML='نتیجه‌ای برای تحلیل نیست.'; return; }
+  const hash=_hashStr((ctx.date||'')+'|'+ctx.lines.join('|'));
+  const cached=labAiCacheGet(hash);
+  if(cached && !force){ box.innerHTML=labAiFmt(cached.text); return; }
+  box.innerHTML='<span style="color:var(--muted)">⏳ در حال تحلیل… (چند ثانیه)</span>';
+  try{
+    const text=await callAIText(prov,key,LAB_AI_ANALYSIS_PROMPT(ctx),700);
+    const clean=String(text||'').trim();
+    if(!clean){ box.innerHTML='<span style="color:var(--amber)">پاسخی دریافت نشد. دوباره امتحان کن.</span>'; return; }
+    labAiCacheSet(hash,clean);
+    box.innerHTML=labAiFmt(clean);
+  }catch(e){
+    box.innerHTML='<span style="color:var(--amber)">خطا: '+String((e&&e.message)||e).replace(/[<>&]/g,'')+'</span>';
+  }
+}
+
 // ---- هندلر آپلود ----
 async function handleLabReportFile(input){
   const f=input.files&&input.files[0]; if(!f) return;
@@ -8749,7 +8913,16 @@ async function handleLabReportFile(input){
     let rows=[];
     if(/\.(xlsx|xls|csv)$/.test(name)){ prog.textContent='در حال خواندن اکسل…'; rows=await extractFromExcel(f); }
     else if(/\.pdf$/.test(name)||f.type==='application/pdf'){ prog.textContent='در حال خواندن PDF…'; rows=await extractFromPDF(f,prog); }
-    else if((f.type&&f.type.startsWith('image/'))||/\.(jpe?g|png|webp|bmp|gif|heic)$/.test(name)){ prog.textContent='در حال خواندن عکس… (بار اول کمی طول می‌کشد)'; rows=await extractFromImage(f,prog); }
+    else if((f.type&&f.type.startsWith('image/'))||/\.(jpe?g|png|webp|bmp|gif|heic)$/.test(name)){
+      if(labAiReadOn() && navigator.onLine && getVisionKey(getVisionProvider())){
+        prog.textContent='در حال خواندن عکس با هوش مصنوعی…';
+        try{ rows=await extractFromImageAI(f,prog); }
+        catch(e){ prog.style.color='var(--amber)'; prog.textContent='هوش مصنوعی خطا داد؛ برگشت به حالت آفلاین… ('+((e&&e.message)||e)+')'; prog.style.color='var(--muted)'; rows=await extractFromImage(f,prog); }
+      } else {
+        prog.textContent='در حال خواندن عکس… (آفلاین، بار اول کمی طول می‌کشد)';
+        rows=await extractFromImage(f,prog);
+      }
+    }
     else { prog.style.color='var(--red)'; prog.textContent='این فرمت پشتیبانی نمی‌شود. عکس، PDF یا اکسل بده.'; input.value=''; return; }
     prog.textContent='';
     renderLabImportPreview(rows);
@@ -9008,6 +9181,8 @@ function renderLabHistory(){
     <span><span class="lg-dot" style="background:#6fd39a"></span>طبیعی</span>
     <span>محدوده‌ها تقریبی‌اند؛ معیار، برگه‌ی آزمایشگاه خودت است.</span>
   </div>`;
+  // پنل تحلیل هوش مصنوعی (اختیاری، علاوه بر تحلیل بالا)
+  h+=`<div id="labAiPanel"></div>`;
   // ویرایش / حذف هر نتیجه‌ی ثبت‌شده
   h+=`<div class="lab-hist-manage"><div class="lhm-head">✏️ ویرایش یا حذف نتیجه‌ی ثبت‌شده:</div>`;
   [...entries].reverse().forEach(e=>{
@@ -9020,11 +9195,13 @@ function renderLabHistory(){
   });
   h+=`</div>`;
   box.innerHTML=h;
+  renderLabAiPanel();
 }
 function renderLabsTab(){
   renderLabPackages();
   renderLabTemplates();
   renderLabEntry();
+  renderLabAiReadToggle();
   renderLabHistory();
 }
 /* ===== باکس آزمایشی: کشف رابطه‌ی CGM و گلوکومتر با مدل‌های مختلف ===== */
