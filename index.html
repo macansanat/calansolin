@@ -320,6 +320,10 @@ select{cursor:pointer;text-overflow:ellipsis;padding-right:10px;padding-left:28p
 .food-row{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
 .food-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
 .food-head .idx{font-size:12.5px;color:var(--muted);font-weight:700}
+.row-edit-btn{background:var(--field);border:1px solid var(--line);color:var(--teal);border-radius:9px;padding:5px 9px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer}
+.row-edit-btn:active{background:var(--panel-2)}
+.cf-reset-btn{width:100%;margin-top:8px;background:var(--field);border:1px solid var(--amber);color:var(--amber);border-radius:11px;padding:11px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer}
+.cf-reset-btn:active{filter:brightness(1.1)}
 .food-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.food-grid-2{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;margin-top:10px}
 .stepper{display:flex;align-items:stretch;gap:0;background:var(--field);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .stepper button{background:var(--panel-2);border:none;color:var(--teal);width:38px;font-size:20px;font-weight:800;cursor:pointer;font-family:inherit;flex:0 0 auto;-webkit-tap-highlight-color:transparent;user-select:none}
@@ -1006,7 +1010,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 <div class="qbg-modal" id="customFoodModal" onclick="if(event.target===this)closeCustomFood()">
   <div class="qbg-box" style="max-width:440px">
     <button class="qbg-x" onclick="closeCustomFood()" title="بستن">✕</button>
-    <div class="qbg-head"><span class="qbg-badge" style="background:rgba(63,185,163,.18)">🧾</span><div><div class="qbg-title">ثبت خوراکی جدید</div><div class="qbg-sub">اطلاعات جدول تغذیه‌ی روی بسته‌بندی را وارد کن تا در کتابخانه‌ی شخصی‌ات ذخیره و در جستجوی ماشین‌حساب ظاهر شود.</div></div></div>
+    <div class="qbg-head"><span class="qbg-badge" style="background:rgba(63,185,163,.18)">🧾</span><div><div class="qbg-title" id="cfTitle">ثبت خوراکی جدید</div><div class="qbg-sub">اطلاعات جدول تغذیه‌ی روی بسته‌بندی را وارد کن تا ذخیره و در جستجوی ماشین‌حساب ظاهر شود. برای اصلاحِ یک خوراکیِ آماده، روی ✏️ کنارِ همان ردیف در ماشین‌حساب بزن.</div></div></div>
 
     <div class="cf-msg" id="cfMsg"></div>
 
@@ -1044,6 +1048,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     </div>
 
     <div class="qbg-actions"><button class="qbg-cancel" onclick="closeCustomFood()">بستن</button><button class="qbg-save" id="cfSaveBtn" onclick="saveCustomFood()">💾 ذخیره در کتابخانه</button></div>
+    <button type="button" id="cfResetBtn" class="cf-reset-btn" style="display:none" onclick="resetFoodOverride()">↩️ بازگردانی این خوراکی به مقدار پیش‌فرض برنامه</button>
 
     <hr class="cf-hr">
     <div class="cf-sec">📚 خوراکی‌های ثبت‌شده‌ی من</div>
@@ -1693,7 +1698,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۰.۱۰.۱</b> · انتشار: ۱۴۰۵/۰۵/۳۱ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۰.۱۱</b> · انتشار: ۱۴۰۵/۰۵/۳۱ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3989,7 +3994,7 @@ function addFoodRow(){
   const cat0=Object.keys(DB)[0], item0=Object.keys(DB[cat0])[0];
   const div=document.createElement('div'); div.className='food-row';
   div.innerHTML=`
-    <div class="food-head"><span class="idx">خوراکی ${rowCount}</span></div>
+    <div class="food-head"><span class="idx">خوراکی ${rowCount}</span><button type="button" class="row-edit-btn" title="اصلاح این خوراکی از روی برچسب" onclick="editFoodFromRow(this)">✏️ اصلاح از برچسب</button></div>
     <div class="food-search-wrap">
       <input type="text" class="food-search" placeholder="🔍 جستجوی خوراکی (مثلاً: عدس‌پلو، موز، ماست)..." oninput="doSearch(this)" onfocus="doSearch(this)">
       <div class="search-results"></div>
@@ -4259,6 +4264,10 @@ function closeCustomFood(){ const m=document.getElementById('customFoodModal'); 
 function resetCustomFoodForm(){
   ['cfName','cfCarb','cfSugar','cfProt','cfFat','cfFiber','cfTrans','cfKcal','cfServing'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value=''; });
   window._cfEditId=null;
+  window._cfOvKey=null; window._cfOvCat=null; window._cfOvItem=null;
+  const nm=document.getElementById('cfName'); if(nm) nm.disabled=false;
+  const rb=document.getElementById('cfResetBtn'); if(rb) rb.style.display='none';
+  const ttl=document.getElementById('cfTitle'); if(ttl) ttl.textContent='ثبت خوراکی جدید';
   cfSetBasis('serving');
   const sb=document.getElementById('cfSaveBtn'); if(sb) sb.textContent='💾 ذخیره در کتابخانه';
   const msg=document.getElementById('cfMsg'); if(msg) msg.style.display='none';
@@ -4297,6 +4306,18 @@ function saveCustomFood(){
     f={ carb100:carb, sugar100:sugar, protein100:prot, fat100:fat, fiber100:fiber, trans100:trans, kcal100:kcal, serving:serving>0?serving:0 };
   }
   f.name=name;
+  // حالت «اصلاح خوراکی آماده از برچسب»: به‌جای کتابخانه‌ی شخصی، به‌عنوان override ذخیره کن
+  if(window._cfOvKey){
+    f.cat=window._cfOvCat; f.item=window._cfOvItem;
+    const ov=loadFoodOverrides(); ov[window._cfOvKey]=f; saveFoodOverrides(ov);
+    applyCustomFoods();            // خودش applyFoodOverrides + buildSearchIndex را صدا می‌زند
+    refreshCalcAfterFoodChange();
+    const itm=window._cfOvItem;
+    resetCustomFoodForm();
+    const msg=document.getElementById('cfMsg');
+    if(msg){ msg.textContent='✓ «'+itm+'» از روی برچسب اصلاح شد.'+(estimated?' (کربوهیدرات از انرژی تخمین زده شد.)':''); msg.style.display='block'; setTimeout(()=>{ if(msg) msg.style.display='none'; },4500); }
+    return;
+  }
   f.id=window._cfEditId||('cf'+Date.now());
   const arr=loadCustomFoods();
   const idx=window._cfEditId ? arr.findIndex(x=>x.id===f.id) : arr.findIndex(x=>(x.name||'').trim()===name);
@@ -4326,6 +4347,68 @@ function delCustomFood(id){
   applyCustomFoods();
   if(window._cfEditId===id) resetCustomFoodForm();
   renderCustomFoodList();
+}
+// بعد از اصلاح/بازگردانیِ یک خوراکی آماده، واحدهای ردیف‌های باز و محاسبه را تازه کن
+function refreshCalcAfterFoodChange(){
+  document.querySelectorAll('#foodRows .food-row').forEach(row=>{
+    const cat=row.querySelector('.sel-cat').value, itemSel=row.querySelector('.sel-item'), unitSel=row.querySelector('.sel-unit');
+    if(DB[cat]&&DB[cat][itemSel.value]){
+      const cur=unitSel.value;
+      unitSel.innerHTML=unitOptions(cat,itemSel.value);
+      if([...unitSel.options].some(o=>o.value===cur)) unitSel.value=cur;
+      else { const serv=[...unitSel.options].find(o=>o.value.indexOf('وعده')>=0); if(serv) unitSel.value=serv.value; } // واحد قبلی حذف شد → «وعده»
+    }
+  });
+  if(typeof calcCarbs==='function') calcCarbs();
+}
+// باز کردن مودال در حالت «اصلاح خوراکی آماده از برچسب»
+function openFoodOverride(cat,item){
+  const m=document.getElementById('customFoodModal'); if(!m) return;
+  resetCustomFoodForm();
+  window._cfOvKey=ovKey(cat,item); window._cfOvCat=cat; window._cfOvItem=item;
+  const nm=document.getElementById('cfName'); if(nm){ nm.value=item; nm.disabled=true; }
+  const ttl=document.getElementById('cfTitle'); if(ttl) ttl.textContent='اصلاح خوراکی از برچسب';
+  const sb=document.getElementById('cfSaveBtn'); if(sb) sb.textContent='💾 ذخیره‌ی اصلاح';
+  const rb=document.getElementById('cfResetBtn');
+  const ov=loadFoodOverrides()[window._cfOvKey];
+  if(ov){
+    cfSetBasis('100');
+    const set=(id,v)=>{ const e=document.getElementById(id); if(e) e.value=(v||v===0)?v:''; };
+    set('cfCarb',ov.carb100); set('cfSugar',ov.sugar100); set('cfProt',ov.protein100); set('cfFat',ov.fat100);
+    set('cfFiber',ov.fiber100); set('cfTrans',ov.trans100); set('cfKcal',ov.kcal100); set('cfServing',ov.serving||'');
+    if(rb) rb.style.display='';
+  } else {
+    cfSetBasis('serving');
+    if(rb) rb.style.display='none';
+  }
+  renderCustomFoodList();
+  m.classList.add('show');
+  const box=document.querySelector('#customFoodModal .qbg-box'); if(box) box.scrollTop=0;
+}
+// بازگردانی یک خوراکی آماده به مقدار پیش‌فرض برنامه
+function resetFoodOverride(){
+  if(!window._cfOvKey) return;
+  if(!confirm('این خوراکی به مقدار پیش‌فرض برنامه برگردد؟')) return;
+  const itm=window._cfOvItem;
+  const ov=loadFoodOverrides(); delete ov[window._cfOvKey]; saveFoodOverrides(ov);
+  applyCustomFoods();
+  refreshCalcAfterFoodChange();
+  resetCustomFoodForm();
+  const msg=document.getElementById('cfMsg');
+  if(msg){ msg.textContent='✓ «'+itm+'» به حالت پیش‌فرض برگشت.'; msg.style.display='block'; setTimeout(()=>{ if(msg) msg.style.display='none'; },4000); }
+}
+// از روی ردیف ماشین‌حساب: خوراکی انتخاب‌شده را اصلاح کن (شخصی→ویرایش، آماده→override)
+function editFoodFromRow(btn){
+  const row=btn.closest('.food-row'); if(!row) return;
+  const cat=row.querySelector('.sel-cat').value, item=row.querySelector('.sel-item').value;
+  if(!cat||!item){ openCustomFood(); return; }
+  if(cat===CUSTOM_CAT){
+    const cf=loadCustomFoods().find(x=>sanitizeFoodName(x.name)===item);
+    openCustomFood();
+    if(cf) editCustomFood(cf.id);
+    return;
+  }
+  openFoodOverride(cat,item);
 }
 function renderCustomFoodList(){
   const box=document.getElementById('cfList'); if(!box) return;
@@ -6436,8 +6519,40 @@ function applyCustomFoods(){
                       fiber:+f.fiber100||0, sugar:+f.sugar100||0, min:{}, vit:{} };
     });
   }
+  applyFoodOverrides();   // اصلاحِ خوراکی‌های آماده از روی برچسبِ کاربر
   if(typeof buildSearchIndex==='function') buildSearchIndex();
 }
+
+/* ===== اصلاح خوراکی‌های آماده از روی برچسب + بازگردانی به پیش‌فرض ===== */
+const FOOD_OVERRIDE_KEY='food_overrides_v1';
+window._origUnits=window._origUnits||{};   // نسخه‌ی اصلِ واحدهای DB برای بازگردانی
+function ovKey(cat,item){ return cat+' '+item; }
+function loadFoodOverrides(){ try{ const o=JSON.parse(localStorage.getItem(FOOD_OVERRIDE_KEY)||'{}'); return (o&&typeof o==='object')?o:{}; }catch(e){ return {}; } }
+function saveFoodOverrides(o){ try{ localStorage.setItem(FOOD_OVERRIDE_KEY, JSON.stringify(o)); }catch(e){} }
+// اصلاح‌ها را روی DB اعمال می‌کند و آیتم‌هایی که دیگر اصلاح ندارند را به پیش‌فرض برمی‌گرداند
+function applyFoodOverrides(){
+  const ov=loadFoodOverrides();
+  // بازگردانی آیتم‌هایی که اصلاحشان حذف شده
+  for(const key in window._origUnits){
+    if(!ov[key]){
+      const i=key.indexOf(' '); const cat=key.slice(0,i), item=key.slice(i+1);
+      if(DB[cat]) DB[cat][item]=window._origUnits[key];
+      if(window._customNutr) delete window._customNutr[item];
+      delete window._origUnits[key];
+    }
+  }
+  for(const key in ov){
+    const i=key.indexOf(' '); const cat=key.slice(0,i), item=key.slice(i+1);
+    if(!DB[cat]||DB[cat][item]==null && !window._origUnits[key]) continue;
+    if(!window._origUnits[key]) window._origUnits[key]=DB[cat][item]; // یک‌بار اصل را نگه دار
+    const f=ov[key], c100=+f.carb100||0;
+    const units={ 'گرم': round4(c100/100) };
+    if(f.serving>0){ const lbl=`وعده (${faDigits(f.serving)} گرم)`; units[lbl]=round4(c100*f.serving/100); window._customUnitG[lbl]=+f.serving; }
+    DB[cat][item]=units;
+    window._customNutr[item]={ kcal:+f.kcal100||0, carb:c100, protein:+f.protein100||0, fat:+f.fat100||0, fiber:+f.fiber100||0, sugar:+f.sugar100||0, min:{}, vit:{} };
+  }
+}
+function hasFoodOverride(cat,item){ return !!loadFoodOverrides()[ovKey(cat,item)]; }
 /* ===== تب ورزش: کتابخانه‌ی حرکت‌ها + برنامه + ثبت ===== */
 // آدمک SVG ساده برای هر حرکت (سبک و آفلاین)
 function stickFigure(pose, animate){
