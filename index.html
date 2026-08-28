@@ -1741,7 +1741,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۲.۶</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۲.۷</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -7033,8 +7033,10 @@ async function _geminiGenerate(key, parts, mt, thinkBudget){
   let res=await post(mkBody(true));
   if(!res.ok){
     const t=(await res.text()).slice(0,800);
-    if(res.status===400 && thinkBudget!=null && /thinking/i.test(t)){
-      res=await post(mkBody(false));   // مدل thinkingConfig را نمی‌شناسد → بدون آن
+    // هر ۴۰۰ ممکن است از thinkingConfig باشد (بعضی مدل‌ها thinkingBudget:0 را نمی‌پذیرند و فقط INVALID_ARGUMENT می‌دهند)
+    // پس روی هر ۴۰۰ یک‌بار بدون thinkingConfig دوباره می‌فرستیم.
+    if(res.status===400 && thinkBudget!=null){
+      res=await post(mkBody(false));
       if(!res.ok){ throw new Error('Gemini ('+res.status+'): '+(await res.text()).slice(0,800)); }
     }else{ throw new Error('Gemini ('+res.status+'): '+t); }
   }
