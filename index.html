@@ -1713,7 +1713,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۱.۴</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۱.۵</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -2919,8 +2919,10 @@ function renderDashboard(){
     <button class="dash-scard" onclick="switchTab('labs')"><span class="ds-ic" style="background:rgba(154,134,224,.16)">🧪</span>آزمایش</button>
     <button class="dash-scard" onclick="switchTab('calc')"><span class="ds-ic" style="background:rgba(63,185,163,.16)">🧮</span>حساب دوز</button>
   </div>`;
+  h+=`<div id="homeAiPanel"></div>`;
   h+=`<div class="dash-note">⚕️ این داشبورد فقط آینه‌ی گذشته است تا آگاه‌تر باشی و بهتر با پزشکت صحبت کنی — تشخیص و هر تصمیم درمانی فقط با پزشک است.</div>`;
   box.innerHTML=h;
+  renderHealthAiPanel('home');
 }
 /* ====== گزارش روزانه ====== */
 let _dailyDate=new Date(); _dailyDate.setHours(0,0,0,0);
@@ -3090,7 +3092,9 @@ function renderDailyReport(){
     </div>`; });
     h+=`</div>`;
   }
+  h+=`<div id="dailyAiPanel"></div>`;
   box.innerHTML=h;
+  renderHealthAiPanel('daily');
 }
 // نمودار کوچک قند شبانه‌روز
 function daySparkSVG(pts){
@@ -3631,8 +3635,10 @@ function renderOverview(){
     <div class="dash-tile"><div class="dt-v" style="color:#c3b4f0">${faDigits(cntSince('med_log_v1','iso'))}</div><div class="dt-l">💊 ثبت دارو</div></div>
     <div class="dash-tile"><div class="dt-v" style="color:#e9b877">${faDigits(cntSince('mood_log_v1','iso'))}</div><div class="dt-l">🙂 حالت روحی</div></div>
   </div>`;
+  h+=`<div id="overviewAiPanel"></div>`;
   h+=`<div class="dash-note">⚕️ این گزارش فقط خلاصه‌ای برای مرور و گفتگو با پزشک است — تشخیص و تصمیم درمانی فقط با پزشک.</div>`;
   box.innerHTML=h;
+  renderHealthAiPanel('overview');
 }
 /* ====== تب‌ها (نوار پایین) ====== */
 function switchTab(name,btn){
@@ -8932,8 +8938,10 @@ function LAB_AI_ANALYSIS_PROMPT(ctx){
   "• دو تا سه جمله درباره‌ی وضعیت کلی، به‌ویژه کنترل قند (HbA1c و قند ناشتا) و اگر مقدار قبلی هست، روند (بهتر/بدتر شده).\n"+
   "⚠️ نکته‌های مهم\n"+
   "• برای هر مقدارِ خارج از محدوده یک خط: نام آزمایش + عددش + به زبان ساده یعنی چه + یکی دو علتِ محتملِ عمومی.\n"+
-  "✅ کارهای عملی\n"+
-  "• سه تا پنج توصیه‌ی کاربردیِ سبک‌زندگی مرتبط با همین نتایج (تغذیه، فعالیت بدنی، آب، پیگیری).\n"+
+  "🍽️ رژیم غذایی\n"+
+  "• سه تا پنج توصیه‌ی مشخص و عملیِ تغذیه بر اساس همین نتایج (مثلاً برای قند/چربی خون: چه چیزی کم/جایگزین شود، فیبر، وعده‌ها). دقیق و قابل‌اجرا، نه کلی.\n"+
+  "🏃 ورزش و فعالیت\n"+
+  "• دو تا چهار توصیه‌ی ورزشیِ مشخص (نوع، مدت، تعداد در هفته) متناسب با این نتایج.\n"+
   "🩺 با پزشک درباره‌ی این‌ها صحبت کن\n"+
   "• فهرست کوتاهِ مهم‌ترین موارد برای بررسی با پزشک.\n\n"+
   "Rules: Persian only, no English words except the test names in the data. Be SPECIFIC to the numbers given (mention the actual values). Educational only — NEVER give a diagnosis, and NEVER give specific medication or insulin doses/timing. Calm, encouraging, practical tone. Keep total length focused (about 12–18 short lines). Do NOT repeat the heading list; just fill it in.\n\n"+
@@ -8943,7 +8951,7 @@ function labAiFmt(text){
   const esc=s=>String(s).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
   const lines=String(text||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
   return lines.map(l=>{
-    if(/^(🔎|⚠️|✅|🩺|📊|🧪)/.test(l))
+    if(/^(🔎|⚠️|✅|🩺|📊|🧪|🍽️|🏃|📌|💡)/.test(l))
       return `<div style="font-weight:800;color:var(--teal);font-size:12.8px;margin:11px 0 3px">${esc(l)}</div>`;
     if(/^[•\-]/.test(l))
       return `<div style="margin:3px 0;padding-right:2px">${esc(l)}</div>`;
@@ -9000,6 +9008,149 @@ async function runLabAiAnalysis(force){
   }catch(e){
     const ei=aiErrorInfo(e); box.innerHTML=aiMsgBox(ei.emoji,ei.title,ei.text,'err',String((e&&e.message)||e));
   }
+}
+
+/* ===== مشاور سلامتِ هوشمند (خانه/روزانه/کلی) — همه‌ی داده‌ها را با هم تحلیل می‌کند ===== */
+const AI_ADV_CACHE='ai_adv_cache_v1';
+const AI_ADV_META={
+  home:{mount:'homeAiPanel', title:'توصیه‌ی هوشمند'},
+  daily:{mount:'dailyAiPanel', title:'تحلیل هوشمند این روز'},
+  overview:{mount:'overviewAiPanel', title:'تحلیل هوشمند بلندمدت'}
+};
+function aiAdvOn(scope){ try{ return localStorage.getItem('ai_adv_'+scope+'_v1')==='1'; }catch(e){ return false; } }
+function setAiAdv(scope,on){ try{ localStorage.setItem('ai_adv_'+scope+'_v1', on?'1':'0'); }catch(e){} }
+function aiAdvCacheGet(scope,hash){ try{ const o=JSON.parse(localStorage.getItem(AI_ADV_CACHE)||'{}'); return o[scope+':'+hash]||null; }catch(e){ return null; } }
+function aiAdvCacheSet(scope,hash,text){ try{ const o=JSON.parse(localStorage.getItem(AI_ADV_CACHE)||'{}'); o[scope+':'+hash]={text,ts:Date.now()};
+  const keys=Object.keys(o); if(keys.length>15){ keys.sort((a,b)=>o[a].ts-o[b].ts); delete o[keys[0]]; }
+  localStorage.setItem(AI_ADV_CACHE, JSON.stringify(o)); }catch(e){} }
+function _dayFromKey(k){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(k)); return m?new Date(+m[1],+m[2]-1,+m[3]):null; }
+function _scopeWindow(scope){
+  if(scope==='daily'){ const s=new Date(_dailyDate); s.setHours(0,0,0,0); const e=new Date(s); e.setHours(23,59,59,999);
+    const j=g2j(s.getFullYear(),s.getMonth()+1,s.getDate()); return {start:s,end:e,label:jDateStr(j[0],j[1],j[2]),days:1}; }
+  if(scope==='overview'){ const days=(_ovRange==='all')?3650:_ovRange; const e=new Date(); e.setHours(23,59,59,999); const s=new Date(); s.setHours(0,0,0,0); s.setDate(s.getDate()-(days-1));
+    return {start:s,end:e,label:(_ovRange==='all'?'کل داده':faDigits(_ovRange)+' روز اخیر'),days}; }
+  const e=new Date(); e.setHours(23,59,59,999); const s=new Date(); s.setHours(0,0,0,0); s.setDate(s.getDate()-6);
+  return {start:s,end:e,label:'۷ روز اخیر',days:7};
+}
+// خلاصه‌ی کم‌حجمِ همه‌ی داده‌های سلامت در بازه (مدیریت توکن: متن فشرده، نه خام)
+function buildHealthSnapshot(scope){
+  const w=_scopeWindow(scope); const inWin=d=>d&&!isNaN(d)&&d>=w.start&&d<=w.end;
+  const jl=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'[]'); }catch(e){ return []; } };
+  const L=[];
+  try{ const p=JSON.parse(localStorage.getItem(PKEY)||'{}'); const pp=[];
+    if(p.diabetesType) pp.push('دیابت '+(DTYPE_FA[p.diabetesType]||p.diabetesType));
+    if(p.age) pp.push('سن '+p.age); if(p.weight) pp.push('وزن '+p.weight+'kg');
+    if(p.tdd) pp.push('TDD '+p.tdd); if(p.ic) pp.push('I:C 1:'+p.ic); if(p.isf) pp.push('ISF '+p.isf);
+    if(pp.length) L.push('پروفایل: '+pp.join('، '));
+  }catch(e){}
+  // قند خون
+  try{
+    const cg=(window._cgmReadings||[]).filter(r=>r&&r.t&&r.t.dateObj&&inWin(r.t.dateObj));
+    if(cg.length>=5){ const v=cg.map(r=>r.glu); const avg=v.reduce((a,b)=>a+b,0)/v.length;
+      const tir=Math.round(v.filter(g=>g>=70&&g<=180).length/v.length*100);
+      const lo=Math.round(v.filter(g=>g<70).length/v.length*100);
+      const hi=Math.round(v.filter(g=>g>180).length/v.length*100);
+      L.push(`قند (CGM): میانگین ${Math.round(avg)}، TIR ${tir}%، بالای۱۸۰ ${hi}%، زیر۷۰ ${lo}%، کمترین ${Math.round(Math.min.apply(0,v))}، بیشترین ${Math.round(Math.max.apply(0,v))} (${v.length} خوانش)`);
+    } else {
+      const bg=loadBG().filter(x=>inWin(new Date(x.iso)));
+      if(bg.length){ const v=bg.map(x=>x.glu); const avg=v.reduce((a,b)=>a+b,0)/v.length;
+        L.push(`قند (گلوکومتر): میانگین ${Math.round(avg)}، در محدوده ${v.filter(g=>g>=70&&g<=180).length} از ${v.length}، کمترین ${Math.round(Math.min.apply(0,v))}، بیشترین ${Math.round(Math.max.apply(0,v))}`); }
+      else L.push('قند خون: داده‌ی کافی در این بازه ثبت نشده');
+    }
+  }catch(e){}
+  // تغذیه + انسولین
+  try{ let meals=0,carb=0,bolus=0,basal=0; const foodFreq={};
+    for(const k in planData){ if(k==='_basal'||!Array.isArray(planData[k])) continue; const d=_dayFromKey(k); if(!inWin(d)) continue;
+      planData[k].forEach(m=>{ meals++; carb+=(+m.carb||0); if(m.insDose) bolus+=(+m.insDose||0); (m.foods||[]).forEach(f=>{ foodFreq[f]=(foodFreq[f]||0)+1; }); }); }
+    const bz=planData._basal||{}; for(const k in bz){ if(inWin(_dayFromKey(k))) basal+=(+bz[k].dose||0); }
+    if(meals){ L.push(`تغذیه: ${meals} وعده، کربوهیدرات مجموع ~${Math.round(carb)}g`+(w.days>1?`، میانگین روزانه ~${Math.round(carb/w.days)}g`:'')); }
+    const top=Object.keys(foodFreq).sort((a,b)=>foodFreq[b]-foodFreq[a]).slice(0,8);
+    if(top.length) L.push('خوراکی‌های پرتکرار: '+top.join('، '));
+    if(bolus||basal) L.push(`انسولین ثبت‌شده: بولوس ~${Math.round(bolus)} واحد، پایه ~${Math.round(basal)} واحد`);
+  }catch(e){}
+  // دارو
+  try{ const meds=jl('med_log_v1').filter(x=>inWin(new Date(x.iso)));
+    if(meds.length){ const names=[...new Set(meds.map(x=>x.name).filter(Boolean))].slice(0,8); L.push(`داروها: ${names.join('، ')}`); } }catch(e){}
+  // ورزش
+  try{ let sess=0; const types={};
+    (loadExLog().entries||[]).forEach(e=>{ if(inWin(new Date(e.ts))){ sess++; (e.items||[]).forEach(it=>{ if(it.name) types[it.name]=1; }); } });
+    loadExercise().forEach(x=>{ if(inWin(new Date(x.iso||x.start))) sess++; });
+    L.push(sess?`ورزش: ${sess} جلسه`+(Object.keys(types).length?' ('+Object.keys(types).slice(0,5).join('، ')+')':''):'ورزش: ثبتی در این بازه نیست');
+  }catch(e){}
+  // خواب
+  try{ const sl=jl('sleep_log_v1').filter(x=>{ const pj=parseJDate(x.date); if(!pj) return false; const g=j2g(pj[0],pj[1],pj[2]); return inWin(new Date(g[0],g[1]-1,g[2])); });
+    if(sl.length){ const h=sl.reduce((a,b)=>a+(+b.hours||0),0)/sl.length; L.push('خواب: میانگین ~'+(Math.round(h*10)/10)+' ساعت'); } }catch(e){}
+  // آزمایش (آخرین، موارد غیرطبیعی)
+  try{ const lc=buildLabAIContext(); if(lc){ const abn=lc.lines.filter(l=>/\[HIGH\]|\[LOW\]/.test(l));
+    L.push('آخرین آزمایش ('+lc.date+'): '+(abn.length?abn.join(' ؛ '):lc.lines.slice(0,6).join(' ؛ '))); } }catch(e){}
+  return { label:w.label, text:L.join('\n') };
+}
+function HEALTH_AI_PROMPT(scope, snap){
+  const intro = scope==='daily'
+    ? "این گزارشِ یک روزِ مشخص است. الگوی همان روز را تحلیل کن (قند در برابر وعده‌ها/انسولین/ورزش) و بگو دفعه‌ی بعد چه چیز کوچکی را بهتر کند."
+    : scope==='overview'
+    ? "این گزارشِ بلندمدت (روند چند روز/هفته) است. روندها و الگوهای تکرارشونده را پیدا کن و یک راهبردِ عملی برای بهترشدن کنترل قند بده."
+    : "این یک نمای کلیِ اخیر است؛ یک تحلیل و توصیه‌ی عملی برای همین روزها بده.";
+  return "You are a careful, practical health coach for a person with diabetes, writing IN PERSIAN (Farsi). Use ALL the data below TOGETHER (glucose, meals/carbs, insulin, meds, exercise, sleep, labs) to give a CONNECTED, genuinely useful analysis with concrete actions — not vague advice and not just «see a doctor».\n"+
+  intro+"\n"+
+  "Write these sections, each with its EXACT heading and short bullet lines starting with «•»:\n"+
+  "🔎 خلاصه\n• دو تا سه جمله درباره‌ی وضعیت کلی و مهم‌ترین نکته.\n"+
+  "🍽️ رژیم غذایی\n• توصیه‌های مشخص و عملیِ تغذیه بر اساس همین خوراکی‌ها/کربوهیدرات و قندها (چه چیزی کم/جایگزین شود، فیبر، ترتیب و اندازه‌ی وعده‌ها، وعده‌های پرخطر).\n"+
+  "🏃 ورزش\n• توصیه‌ی ورزشیِ مشخص (نوع، مدت، دفعات، و زمانِ مناسب نسبت به غذا) متناسب با داده‌ها.\n"+
+  "📌 الگوها و راهکارها\n• الگوهای دیده‌شده (مثلاً قند بالا بعد از فلان وعده یا کمبود تحرک) + راهکار عملی برای هرکدام.\n"+
+  "🩺 با پزشک صحبت کن\n• مهم‌ترین موارد برای بررسی با پزشک.\n"+
+  "Rules: Persian only. Be SPECIFIC to the numbers/foods given (به عددها و خوراکی‌ها اشاره کن). Educational only — NEVER give a diagnosis, and NEVER give specific insulin or medication doses/timing to act on. Calm, motivating, practical. About 14–20 short lines total. Do not repeat the heading list; fill it in. If data is sparse, بگو چه چیزی را باید بیشتر ثبت کند.\n\n"+
+  "داده‌ها ("+snap.label+"):\n"+snap.text;
+}
+function renderHealthAiPanel(scope){
+  const meta=AI_ADV_META[scope]; if(!meta) return;
+  const box=document.getElementById(meta.mount); if(!box) return;
+  if(!aiAdvOn(scope)){
+    box.innerHTML=`<div style="margin-top:14px;padding:12px 13px;border:1px dashed var(--line);border-radius:12px">
+      <div style="font-size:12.5px;line-height:1.8"><b>🤖 ${escVision(meta.title)}</b>
+      <div style="color:var(--muted);font-size:11.5px">تحلیل هوش مصنوعی از روی همه‌ی داده‌هایت (قند، تغذیه، انسولین، دارو، ورزش، آزمایش) با توصیه‌های عملیِ رژیم و ورزش. اختیاری؛ فقط با دکمه اجرا و کش می‌شود تا توکن هدر نرود.</div></div>
+      <button type="button" class="quick-btn" style="margin-top:8px" onclick="setAiAdv('${scope}',true);renderHealthAiPanel('${scope}')">فعال‌کردن</button>
+    </div>`;
+    return;
+  }
+  const snap=buildHealthSnapshot(scope);
+  const hash=snap.text.trim()?_hashStr(scope+'|'+snap.text):'';
+  const cached=hash?aiAdvCacheGet(scope,hash):null;
+  const hasKey=!!getVisionKey(getVisionProvider());
+  let h=`<div style="margin-top:14px;padding:13px;border:1px solid var(--teal-dim);border-radius:12px;background:linear-gradient(135deg,#16212e,#1b2938)">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+      <div style="font-weight:800;color:var(--teal);font-size:13.5px">🤖 ${escVision(meta.title)}</div>
+      <div style="display:flex;gap:6px">
+        <button type="button" class="mini-btn" onclick="runHealthAi('${scope}',true)">${cached?'↻ به‌روزرسانی':'▶ اجرا'}</button>
+        <button type="button" class="mini-btn" onclick="setAiAdv('${scope}',false);renderHealthAiPanel('${scope}')">خاموش</button>
+      </div>
+    </div>`;
+  if(!hasKey) h+=`<div style="color:var(--amber);font-size:12px;margin-top:8px">⚠️ برای این کار کلید API لازم است — <b onclick="gotoVisionSettings()" style="cursor:pointer;text-decoration:underline">رفتن به تنظیمات</b>.</div>`;
+  h+=`<div id="${scope}AiResult" style="font-size:12.5px;line-height:2.05;margin-top:10px">`;
+  h+= cached ? labAiFmt(cached.text) : `<span style="color:var(--muted)">«اجرا» را بزن تا از روی داده‌های «${escVision(snap.label)}» یک تحلیل و توصیه‌ی عملی بگیری.</span>`;
+  h+=`</div>
+    <div style="color:var(--amber);font-size:11px;margin-top:9px;line-height:1.8">⚕️ آموزشی و کمکی است، نه تشخیص/تجویز؛ برای دوز دارو و هر تصمیم درمانی با پزشک. در این حالت خلاصه‌ی داده‌هایت (نه عکس) به سرویس هوش مصنوعی فرستاده می‌شود.</div>
+  </div>`;
+  box.innerHTML=h;
+}
+async function runHealthAi(scope, force){
+  const box=document.getElementById(scope+'AiResult'); if(!box) return;
+  const prov=getVisionProvider(), key=getVisionKey(prov);
+  if(!key){ box.innerHTML=aiMsgBox('🔑','کلید API لازم است','در پروفایل → «تشخیص غذا از عکس» کلید را وارد کن.','err'); return; }
+  if(!navigator.onLine){ box.innerHTML=aiMsgBox('📡','آفلاین هستی','برای تحلیل هوش مصنوعی به اینترنت نیاز است.','err'); return; }
+  const snap=buildHealthSnapshot(scope);
+  if(!snap.text.trim()){ box.innerHTML=aiMsgBox('🤔','داده‌ی کافی نیست','هنوز داده‌ی کافی برای تحلیل ثبت نشده؛ چند وعده/قند/ورزش ثبت کن.','err'); return; }
+  const hash=_hashStr(scope+'|'+snap.text);
+  const cached=aiAdvCacheGet(scope,hash);
+  if(cached && !force){ box.innerHTML=labAiFmt(cached.text); return; }
+  box.innerHTML='<span style="color:var(--muted)">⏳ در حال تحلیل جامع… (چند ثانیه صبر کن)</span>';
+  try{
+    const text=await aiRetry(()=>callAIText(prov,key,HEALTH_AI_PROMPT(scope,snap),2560,1024), n=>{ box.innerHTML='<span style="color:var(--muted)">⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…</span>'; });
+    const clean=String(text||'').trim();
+    if(!clean){ box.innerHTML=aiMsgBox('⚠️','پاسخی نیامد','دوباره امتحان کن.','err'); return; }
+    aiAdvCacheSet(scope,hash,clean);
+    box.innerHTML=labAiFmt(clean);
+  }catch(e){ const ei=aiErrorInfo(e); box.innerHTML=aiMsgBox(ei.emoji,ei.title,ei.text,'err',String((e&&e.message)||e)); }
 }
 
 // ---- هندلر آپلود ----
