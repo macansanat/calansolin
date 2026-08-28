@@ -1713,7 +1713,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۱.۳.۳</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۱.۳.۴</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -6728,6 +6728,27 @@ function aiErrorInfo(e){
     return {emoji:'🛠️', title:'سرویس موقتاً قطع است', text:'سرویس هوش مصنوعی الان پاسخ نمی‌دهد. کمی بعد دوباره امتحان کن.'};
   return {emoji:'⚠️', title:'خطای غیرمنتظره', text:'ارتباط با هوش مصنوعی به مشکل خورد. دوباره امتحان کن؛ اگر ادامه داشت، کلید یا سرویس را عوض کن.'};
 }
+// تلاش خودکار مجدد فقط روی خطاهای موقتی (۵xx/شلوغی/شبکه) — نه روی سهمیه/۴۲۹/کلید
+async function aiRetry(fn, onRetry){
+  let lastErr;
+  for(let attempt=0; attempt<3; attempt++){
+    try{ return await fn(); }
+    catch(e){
+      lastErr=e;
+      const msg=String((e&&e.message)||e);
+      const cm=msg.match(/\((\d{3})\)/); const code=cm?+cm[1]:0;
+      const transient = code>=500 || /high demand|overload|unavailable|temporarily|try again/i.test(msg)
+        || /failed to fetch|networkerror|load failed/i.test(msg);
+      if(transient && attempt<2){
+        if(onRetry){ try{ onRetry(attempt+1); }catch(_){} }
+        await new Promise(r=>setTimeout(r, 1200*(attempt+1)));
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw lastErr;
+}
 // جعبه‌ی پیام شیک و یکدست برای وضعیت/خطای هوش مصنوعی
 // raw (اختیاری): پیام خامِ اصلیِ سرویس؛ اگر باشد، دکمه‌ی i برای نمایش + کپی می‌آید.
 function aiMsgBox(emoji,title,text,tone,raw){
@@ -7039,7 +7060,7 @@ async function handlePlatePhoto(inp){
   try{
     const img=await imageToJpeg(file,1024,0.82);
     set(aiMsgBox('🔎','در حال تحلیل با هوش مصنوعی…','چند ثانیه طول می‌کشد.'));
-    const text=await callVision(prov,key,img);
+    const text=await aiRetry(()=>callVision(prov,key,img), n=>set(aiMsgBox('⏳','سرویس شلوغ است','تلاش دوباره ('+faDigits(String(n))+')… کمی صبر کن.')));
     const items=parseVisionJSON(text);
     if(!items.length){ set(aiMsgBox('🤔','غذایی تشخیص داده نشد','عکس واضح‌تر و از بالای بشقاب بگیر، یا خوراکی‌ها را دستی وارد کن.','err')); return; }
     const plan=planVisionRows(items);
@@ -8858,7 +8879,7 @@ async function extractFromImageAI(file,prog){
   if(prog) prog.textContent='آماده‌سازی عکس برای هوش مصنوعی…';
   const img=await imageToJpeg(file,1600,0.85);           // وضوح بیشتر برای متن ریز
   if(prog) prog.textContent='خواندن عکس با هوش مصنوعی…';
-  const text=await callVision(prov,key,img,LAB_OCR_PROMPT,1500);
+  const text=await aiRetry(()=>callVision(prov,key,img,LAB_OCR_PROMPT,1500), n=>{ if(prog) prog.textContent='سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'; });
   const lines=String(text||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
   window._lastOcrLines=(window._lastOcrLines||[]).concat(lines);
   return parseLabLines(lines);
@@ -8971,7 +8992,7 @@ async function runLabAiAnalysis(force){
   if(cached && !force){ box.innerHTML=labAiFmt(cached.text); return; }
   box.innerHTML='<span style="color:var(--muted)">⏳ در حال تحلیل… (چند ثانیه)</span>';
   try{
-    const text=await callAIText(prov,key,LAB_AI_ANALYSIS_PROMPT(ctx),2048);
+    const text=await aiRetry(()=>callAIText(prov,key,LAB_AI_ANALYSIS_PROMPT(ctx),2048), n=>{ box.innerHTML='<span style="color:var(--muted)">⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…</span>'; });
     const clean=String(text||'').trim();
     if(!clean){ box.innerHTML='<span style="color:var(--amber)">پاسخی دریافت نشد. دوباره امتحان کن.</span>'; return; }
     labAiCacheSet(hash,clean);
