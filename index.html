@@ -1713,7 +1713,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۱.۵</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۱.۶</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -8982,12 +8982,13 @@ function renderLabAiPanel(){
       </div>
     </div>`;
   if(!hasKey) h+=`<div style="color:var(--amber);font-size:12px;margin-top:8px">⚠️ برای این کار کلید API لازم است — <b onclick="gotoVisionSettings()" style="cursor:pointer;text-decoration:underline">رفتن به تنظیمات</b>.</div>`;
-  h+=`<div id="labAiResult" style="font-size:12.5px;line-height:2.1;margin-top:10px">`;
-  h+= cached ? labAiFmt(cached.text) : `<span style="color:var(--muted)">هنوز اجرا نشده. «اجرا» را بزن تا نتایج آخرین برگه (${faDigits(ctx.date||'')}) با هوش مصنوعی تفسیر شود.</span>`;
+  h+=`<div id="labAiResult" style="margin-top:8px">`;
+  h+= cached ? '' : aiEmptyState('«▶ اجرا» را بزن تا نتایج آخرین برگه ('+faDigits(ctx.date||'')+') کارت‌بندی و تفسیر شود.');
   h+=`</div>`;
-  h+=`<div style="color:var(--amber);font-size:11px;margin-top:9px;line-height:1.8">⚕️ این تفسیر آموزشی است و جایگزین پزشک نیست؛ برای هر تصمیم درمانی و دوز دارو حتماً با پزشک مشورت کن. در این حالت مقادیر آزمایشت (نه عکس) به سرویس هوش مصنوعی فرستاده می‌شود.</div>`;
+  h+=`<div style="color:var(--muted);font-size:10.5px;margin-top:9px;line-height:1.8;opacity:.85">⚕️ آموزشی است، نه جایگزین پزشک؛ برای دوز دارو با پزشک. مقادیر آزمایشت (نه عکس) به سرویس هوش مصنوعی فرستاده می‌شود.</div>`;
   h+=`</div>`;
   box.innerHTML=h;
+  if(cached) renderAiResult(document.getElementById('labAiResult'), cached.text);
 }
 async function runLabAiAnalysis(force){
   const box=document.getElementById('labAiResult'); if(!box) return;
@@ -8997,14 +8998,14 @@ async function runLabAiAnalysis(force){
   const ctx=buildLabAIContext(); if(!ctx){ box.innerHTML='نتیجه‌ای برای تحلیل نیست.'; return; }
   const hash=_hashStr((ctx.date||'')+'|'+ctx.lines.join('|'));
   const cached=labAiCacheGet(hash);
-  if(cached && !force){ box.innerHTML=labAiFmt(cached.text); return; }
-  box.innerHTML='<span style="color:var(--muted)">⏳ در حال تحلیل… (چند ثانیه)</span>';
+  if(cached && !force){ renderAiResult(box,cached.text); return; }
+  box.innerHTML=aiEmptyState('⏳ در حال تحلیل… (چند ثانیه)');
   try{
-    const text=await aiRetry(()=>callAIText(prov,key,LAB_AI_ANALYSIS_PROMPT(ctx),2560,1024), n=>{ box.innerHTML='<span style="color:var(--muted)">⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…</span>'; });
+    const text=await aiRetry(()=>callAIText(prov,key,LAB_JSON_PROMPT(ctx),2560,1024), n=>{ box.innerHTML=aiEmptyState('⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'); });
     const clean=String(text||'').trim();
-    if(!clean){ box.innerHTML='<span style="color:var(--amber)">پاسخی دریافت نشد. دوباره امتحان کن.</span>'; return; }
+    if(!clean){ box.innerHTML=aiMsgBox('⚠️','پاسخی نیامد','دوباره امتحان کن.','err'); return; }
     labAiCacheSet(hash,clean);
-    box.innerHTML=labAiFmt(clean);
+    renderAiResult(box,clean);
   }catch(e){
     const ei=aiErrorInfo(e); box.innerHTML=aiMsgBox(ei.emoji,ei.title,ei.text,'err',String((e&&e.message)||e));
   }
@@ -9058,15 +9059,26 @@ function buildHealthSnapshot(scope){
       else L.push('قند خون: داده‌ی کافی در این بازه ثبت نشده');
     }
   }catch(e){}
-  // تغذیه + انسولین
+  // تغذیه + انسولین + پایبندی
   try{ let meals=0,carb=0,bolus=0,basal=0; const foodFreq={};
-    for(const k in planData){ if(k==='_basal'||!Array.isArray(planData[k])) continue; const d=_dayFromKey(k); if(!inWin(d)) continue;
-      planData[k].forEach(m=>{ meals++; carb+=(+m.carb||0); if(m.insDose) bolus+=(+m.insDose||0); (m.foods||[]).forEach(f=>{ foodFreq[f]=(foodFreq[f]||0)+1; }); }); }
-    const bz=planData._basal||{}; for(const k in bz){ if(inWin(_dayFromKey(k))) basal+=(+bz[k].dose||0); }
+    const mealDays=new Set(), mealNoInsDays=new Set(), basalDays=new Set();
+    for(const k in planData){ if(k==='_basal'||!Array.isArray(planData[k])) continue; const d=_dayFromKey(k); if(!inWin(d)||!planData[k].length) continue;
+      mealDays.add(k); let dayHasIns=false;
+      planData[k].forEach(m=>{ meals++; carb+=(+m.carb||0); if(m.insDose){ bolus+=(+m.insDose||0); dayHasIns=true; } (m.foods||[]).forEach(f=>{ foodFreq[f]=(foodFreq[f]||0)+1; }); });
+      if(!dayHasIns) mealNoInsDays.add(k);
+    }
+    const bz=planData._basal||{}; for(const k in bz){ if(inWin(_dayFromKey(k))){ basal+=(+bz[k].dose||0); basalDays.add(k); } }
     if(meals){ L.push(`تغذیه: ${meals} وعده، کربوهیدرات مجموع ~${Math.round(carb)}g`+(w.days>1?`، میانگین روزانه ~${Math.round(carb/w.days)}g`:'')); }
     const top=Object.keys(foodFreq).sort((a,b)=>foodFreq[b]-foodFreq[a]).slice(0,8);
     if(top.length) L.push('خوراکی‌های پرتکرار: '+top.join('، '));
     if(bolus||basal) L.push(`انسولین ثبت‌شده: بولوس ~${Math.round(bolus)} واحد، پایه ~${Math.round(basal)} واحد`);
+    // سیگنال‌های پایبندی (برای اینکه هوش مصنوعی بگوید کاربر جایی جا انداخته یا نه)
+    if(w.days>1 && mealDays.size){
+      const adh=[];
+      if(mealNoInsDays.size) adh.push(`${mealNoInsDays.size} روز وعده ثبت شده ولی انسولین بولوس ثبت نشده`);
+      if(basalDays.size<mealDays.size) adh.push(`انسولین پایه فقط در ${basalDays.size} روز از ${mealDays.size} روزِ دارای وعده ثبت شده`);
+      if(adh.length) L.push('پایبندی (ثبت): '+adh.join('؛ '));
+    }
   }catch(e){}
   // دارو
   try{ const meds=jl('med_log_v1').filter(x=>inWin(new Date(x.iso)));
@@ -9087,29 +9099,144 @@ function buildHealthSnapshot(scope){
 }
 function HEALTH_AI_PROMPT(scope, snap){
   const intro = scope==='daily'
-    ? "این گزارشِ یک روزِ مشخص است. الگوی همان روز را تحلیل کن (قند در برابر وعده‌ها/انسولین/ورزش) و بگو دفعه‌ی بعد چه چیز کوچکی را بهتر کند."
+    ? "این گزارشِ یک روزِ مشخص است؛ الگوی همان روز را تحلیل کن (قند در برابر وعده/انسولین/ورزش) و بگو دفعه‌ی بعد چه چیز کوچکی بهتر شود."
     : scope==='overview'
-    ? "این گزارشِ بلندمدت (روند چند روز/هفته) است. روندها و الگوهای تکرارشونده را پیدا کن و یک راهبردِ عملی برای بهترشدن کنترل قند بده."
-    : "این یک نمای کلیِ اخیر است؛ یک تحلیل و توصیه‌ی عملی برای همین روزها بده.";
-  return "You are a careful, practical health coach for a person with diabetes, writing IN PERSIAN (Farsi). Use ALL the data below TOGETHER (glucose, meals/carbs, insulin, meds, exercise, sleep, labs) to give a CONNECTED, genuinely useful analysis with concrete actions — not vague advice and not just «see a doctor».\n"+
-  intro+"\n"+
-  "Write these sections, each with its EXACT heading and short bullet lines starting with «•»:\n"+
-  "🔎 خلاصه\n• دو تا سه جمله درباره‌ی وضعیت کلی و مهم‌ترین نکته.\n"+
-  "🍽️ رژیم غذایی\n• توصیه‌های مشخص و عملیِ تغذیه بر اساس همین خوراکی‌ها/کربوهیدرات و قندها (چه چیزی کم/جایگزین شود، فیبر، ترتیب و اندازه‌ی وعده‌ها، وعده‌های پرخطر).\n"+
-  "🏃 ورزش\n• توصیه‌ی ورزشیِ مشخص (نوع، مدت، دفعات، و زمانِ مناسب نسبت به غذا) متناسب با داده‌ها.\n"+
-  "📌 الگوها و راهکارها\n• الگوهای دیده‌شده (مثلاً قند بالا بعد از فلان وعده یا کمبود تحرک) + راهکار عملی برای هرکدام.\n"+
-  "🩺 با پزشک صحبت کن\n• مهم‌ترین موارد برای بررسی با پزشک.\n"+
-  "Rules: Persian only. Be SPECIFIC to the numbers/foods given (به عددها و خوراکی‌ها اشاره کن). Educational only — NEVER give a diagnosis, and NEVER give specific insulin or medication doses/timing to act on. Calm, motivating, practical. About 14–20 short lines total. Do not repeat the heading list; fill it in. If data is sparse, بگو چه چیزی را باید بیشتر ثبت کند.\n\n"+
+    ? "این گزارشِ بلندمدت (روند چند روز/هفته) است؛ روندها و الگوهای تکرارشونده را پیدا کن و یک راهبرد عملی بده."
+    : "این نمای کلیِ اخیر است؛ تحلیل و توصیه‌ی عملی برای همین روزها بده.";
+  return "You are «دیابوت», a powerful, motivating AI health coach for a person with diabetes. Write EVERYTHING IN PERSIAN (Farsi). Use ALL the data below TOGETHER (glucose, meals/carbs, insulin, meds, exercise, sleep, labs, adherence) to give a CONNECTED, punchy, genuinely useful analysis focused on improving metabolic control.\n"+
+  intro+"\n\n"+
+  "Return ONLY a JSON object (no markdown fences, no text before/after) with EXACTLY this shape:\n"+
+  '{"score": <integer 0-100 overall diabetes/metabolic control based on the data>,'+
+  '"scoreLabel":"<2-3 word Persian label e.g. عالی/خوب/نیاز به توجه/بحرانی>",'+
+  '"headline":"<one strong, motivating Persian sentence, max 14 words>",'+
+  '"cards":['+
+  '{"k":"diet","items":["<short actionable Persian line>", "..."]},'+
+  '{"k":"redline","items":["<a food or habit to AVOID given their glucose/labs>", "..."]},'+
+  '{"k":"exercise","items":["..."]},'+
+  '{"k":"adherence","items":["<comment on insulin/med logging: did they seem to miss/forget, or praise consistency>", "..."]},'+
+  '{"k":"pattern","items":["<a pattern seen + the fix>", "..."]},'+
+  '{"k":"doctor","items":["<key things to check with the doctor>", "..."]}'+
+  ']}\n\n'+
+  "Rules: Persian only. Each item = ONE short punchy line (max ~12 words), 2-4 items per card. Be SPECIFIC to the actual numbers/foods (به عددها و خوراکی‌ها اشاره کن). The \"redline\" card MUST list concrete foods/habits to avoid based on their glucose and labs. The \"adherence\" card MUST use the logged insulin/med data to note missed logging or consistency. Educational only — NEVER give a diagnosis and NEVER give specific insulin/medication doses or timing. Keep every card; if a card has little to say, give 1-2 useful lines. Output compact JSON only.\n\n"+
   "داده‌ها ("+snap.label+"):\n"+snap.text;
+}
+// دستور JSON مشترک برای تحلیل آزمایش (همان کارت‌بندی)
+function LAB_JSON_PROMPT(ctx){
+  return "You are «دیابوت», an AI health coach. Interpret these OWN lab results of a person with diabetes, IN PERSIAN (Farsi), as a punchy card-based summary.\n"+
+  "Return ONLY a JSON object (no markdown fences) with this shape:\n"+
+  '{"score":<0-100 integer overall lab picture>,"scoreLabel":"<2-3 word Persian>","headline":"<one strong Persian sentence>",'+
+  '"cards":[{"k":"abnormal","items":["<test + value + plain meaning + likely cause>","..."]},'+
+  '{"k":"diet","items":["..."]},{"k":"redline","items":["<food/habit to avoid given these labs>","..."]},'+
+  '{"k":"exercise","items":["..."]},{"k":"doctor","items":["..."]}]}\n\n'+
+  "Rules: Persian only. Each item = ONE short line (max ~12 words), 2-4 per card. Be specific to the actual values. Educational only — no diagnosis, no medication/insulin doses. Output compact JSON only.\n\n"+
+  "Lab results (date "+(ctx.date||'')+"):\n"+ctx.lines.join('\n');
+}
+/* ===== موتور رندرِ کارتیِ خروجی هوش مصنوعی (شیک، طبقه‌بندی‌شده) ===== */
+const CARD_META={
+  summary:  {t:'خلاصه', icon:'🔎', c:'#5fd3bd'},
+  diet:     {t:'رژیم غذایی', icon:'🍽️', c:'#7bc86c'},
+  redline:  {t:'خط قرمزهای غذایی', icon:'⛔', c:'#e0685f'},
+  exercise: {t:'ورزش و تحرک', icon:'🏃', c:'#5b8fd6'},
+  adherence:{t:'مصرف دارو و انسولین', icon:'💉', c:'#c3b4f0'},
+  pattern:  {t:'الگوها و راهکار', icon:'📌', c:'#e0a355'},
+  abnormal: {t:'موارد مهم آزمایش', icon:'⚠️', c:'#e0a355'},
+  doctor:   {t:'با پزشک صحبت کن', icon:'🩺', c:'#5fd3bd'}
+};
+function parseAiJSON(text){
+  if(!text) return null;
+  let t=String(text).replace(/```json/gi,'').replace(/```/g,'').trim();
+  const a=t.indexOf('{'), b=t.lastIndexOf('}');
+  if(a<0||b<=a) return null;
+  try{ return JSON.parse(t.slice(a,b+1)); }catch(e){ return null; }
+}
+function aiRobotSVG(){
+  return `<svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <linearGradient id="rbB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#43c6ae"/><stop offset="1" stop-color="#268374"/></linearGradient>
+      <radialGradient id="rbE" cx="50%" cy="45%" r="55%"><stop offset="0" stop-color="#eafffb"/><stop offset=".45" stop-color="#4be3c9"/><stop offset="1" stop-color="#1c7d6d"/></radialGradient>
+    </defs>
+    <line x1="32" y1="5" x2="32" y2="14" stroke="#43c6ae" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="32" cy="4.5" r="3.2" fill="#8affe9"><animate attributeName="opacity" values="1;.35;1" dur="1.6s" repeatCount="indefinite"/></circle>
+    <rect x="11" y="14" width="42" height="35" rx="13" fill="url(#rbB)" stroke="#67e6d1" stroke-width="1.4"/>
+    <rect x="16.5" y="20" width="31" height="20.5" rx="8.5" fill="#0d2420"/>
+    <circle cx="25" cy="30.5" r="4.3" fill="url(#rbE)"><animate attributeName="r" values="4.3;3.3;4.3" dur="3s" repeatCount="indefinite"/></circle>
+    <circle cx="39" cy="30.5" r="4.3" fill="url(#rbE)"><animate attributeName="r" values="4.3;3.3;4.3" dur="3s" repeatCount="indefinite"/></circle>
+    <path d="M25 37 Q32 41 39 37" stroke="#4be3c9" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <rect x="7.5" y="26" width="4" height="11" rx="2" fill="#268374"/>
+    <rect x="52.5" y="26" width="4" height="11" rx="2" fill="#268374"/>
+    <circle cx="47" cy="47" r="8.4" fill="#e0685f" stroke="#12202b" stroke-width="2"/>
+    <path d="M47 41.5 c2.7 3.1 3.8 4.6 3.8 6.3 a3.8 3.8 0 0 1 -7.6 0 c0 -1.7 1.1 -3.2 3.8 -6.3 z" fill="#fff"/>
+  </svg>`;
+}
+let _aiAdvCssDone=false;
+function ensureAiAdvCss(){
+  if(_aiAdvCssDone) return; _aiAdvCssDone=true;
+  const s=document.createElement('style'); s.textContent=`
+  .aiadv-hero{display:flex;align-items:center;gap:12px;padding:4px 2px 12px;border-bottom:1px solid var(--line);margin-bottom:12px}
+  .aiadv-robot{width:56px;height:56px;flex:0 0 auto;filter:drop-shadow(0 5px 14px rgba(63,185,163,.5))}
+  .aiadv-htext{flex:1;min-width:0}
+  .aiadv-headline{font-weight:800;font-size:14.5px;line-height:1.55;color:#eafffb;letter-spacing:-.2px}
+  .aiadv-sub{font-size:10.5px;color:var(--muted);margin-top:3px;font-weight:700;letter-spacing:.2px}
+  .aiadv-score{flex:0 0 auto;width:62px;height:62px;position:relative}
+  .aiadv-ring{width:100%;height:100%;border-radius:50%}
+  .aiadv-ring::after{content:'';position:absolute;inset:6px;border-radius:50%;background:#16212e}
+  .aiadv-scnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1;font-weight:800;font-size:19px;line-height:1}
+  .aiadv-sclbl{font-size:8px;color:var(--muted);font-weight:700;margin-top:2px}
+  .aiadv-cards{display:flex;flex-direction:column;gap:9px}
+  .aiadv-card{border-radius:13px;padding:11px 13px;background:rgba(255,255,255,.035);border:1px solid var(--line);border-right:3px solid var(--cc)}
+  .aiadv-card h4{margin:0 0 8px;font-size:13.5px;font-weight:800;display:flex;align-items:center;gap:6px;color:var(--cc);letter-spacing:-.2px}
+  .aiadv-item{display:flex;gap:8px;font-size:12.4px;line-height:1.8;margin:5px 0;color:var(--ink)}
+  .aiadv-dot{width:6px;height:6px;border-radius:50%;margin-top:7px;flex:0 0 auto}
+  .aiadv-empty{display:flex;align-items:center;gap:12px;padding:6px 2px}
+  .aiadv-empty .aiadv-robot{width:46px;height:46px}
+  `;
+  document.head.appendChild(s);
+}
+function aiScoreColor(s){ return s>=70?'#6fd39a':s>=40?'#e0a355':'#e0685f'; }
+function renderAiCards(data){
+  ensureAiAdvCss();
+  const esc=escVision;
+  const hasScore=(data.score!=null && !isNaN(+data.score));
+  const score=Math.max(0,Math.min(100,Math.round(+data.score||0)));
+  const col=aiScoreColor(score);
+  let h=`<div class="aiadv"><div class="aiadv-hero">
+      <div class="aiadv-robot">${aiRobotSVG()}</div>
+      <div class="aiadv-htext"><div class="aiadv-headline">${esc(data.headline||'تحلیل هوشمند آماده است')}</div><div class="aiadv-sub">🤖 دیابوت · دستیار هوشمند دیابت</div></div>`;
+  if(hasScore) h+=`<div class="aiadv-score"><div class="aiadv-ring" style="background:conic-gradient(${col} ${score*3.6}deg, rgba(255,255,255,.08) 0)"></div><div class="aiadv-scnum"><span style="color:${col}">${faDigits(score)}</span><span class="aiadv-sclbl">${esc(data.scoreLabel||'امتیاز')}</span></div></div>`;
+  h+=`</div><div class="aiadv-cards">`;
+  (data.cards||[]).forEach(cd=>{
+    if(!cd) return; const meta=CARD_META[cd.k]||{t:cd.t||cd.k||'نکته',icon:'•',c:'#3fb9a3'};
+    const items=(cd.items||[]).filter(x=>x&&String(x).trim());
+    if(!items.length) return;
+    h+=`<div class="aiadv-card" style="--cc:${meta.c}"><h4>${meta.icon} ${esc(meta.t)}</h4>`;
+    items.forEach(it=>{ h+=`<div class="aiadv-item"><span class="aiadv-dot" style="background:${meta.c}"></span><span>${esc(it)}</span></div>`; });
+    h+=`</div>`;
+  });
+  h+=`</div></div>`;
+  return h;
+}
+// خروجی را کارتی رندر می‌کند؛ اگر JSON نبود، به متن مرتب برمی‌گردد.
+function renderAiResult(box, text){
+  if(!box) return;
+  const data=parseAiJSON(text);
+  if(data && (Array.isArray(data.cards) || data.headline)) box.innerHTML=renderAiCards(data);
+  else box.innerHTML=labAiFmt(text);
+}
+function aiEmptyState(msg){
+  ensureAiAdvCss();
+  return `<div class="aiadv-empty"><div class="aiadv-robot">${aiRobotSVG()}</div><div style="flex:1;font-size:12px;color:var(--muted);line-height:1.8">${escVision(msg)}</div></div>`;
 }
 function renderHealthAiPanel(scope){
   const meta=AI_ADV_META[scope]; if(!meta) return;
   const box=document.getElementById(meta.mount); if(!box) return;
+  ensureAiAdvCss();
   if(!aiAdvOn(scope)){
-    box.innerHTML=`<div style="margin-top:14px;padding:12px 13px;border:1px dashed var(--line);border-radius:12px">
-      <div style="font-size:12.5px;line-height:1.8"><b>🤖 ${escVision(meta.title)}</b>
-      <div style="color:var(--muted);font-size:11.5px">تحلیل هوش مصنوعی از روی همه‌ی داده‌هایت (قند، تغذیه، انسولین، دارو، ورزش، آزمایش) با توصیه‌های عملیِ رژیم و ورزش. اختیاری؛ فقط با دکمه اجرا و کش می‌شود تا توکن هدر نرود.</div></div>
-      <button type="button" class="quick-btn" style="margin-top:8px" onclick="setAiAdv('${scope}',true);renderHealthAiPanel('${scope}')">فعال‌کردن</button>
+    box.innerHTML=`<div style="margin-top:14px;padding:13px;border:1px solid var(--teal-dim);border-radius:14px;background:linear-gradient(135deg,#16212e,#1b2938)">
+      <div class="aiadv-empty"><div class="aiadv-robot">${aiRobotSVG()}</div>
+        <div style="flex:1"><div style="font-weight:800;font-size:13.5px;color:#eafffb">${escVision(meta.title)}</div>
+        <div style="color:var(--muted);font-size:11.3px;line-height:1.75;margin-top:3px">تحلیلِ همه‌ی داده‌هایت (قند، تغذیه، انسولین، دارو، ورزش، آزمایش) با امتیاز کنترل و توصیه‌های عملی. اختیاری، دستی و کش‌شده تا توکن هدر نرود.</div></div>
+      </div>
+      <button type="button" class="quick-btn" style="margin-top:10px;width:100%" onclick="setAiAdv('${scope}',true);renderHealthAiPanel('${scope}')">✨ فعال‌کردن دستیار</button>
     </div>`;
     return;
   }
@@ -9117,21 +9244,22 @@ function renderHealthAiPanel(scope){
   const hash=snap.text.trim()?_hashStr(scope+'|'+snap.text):'';
   const cached=hash?aiAdvCacheGet(scope,hash):null;
   const hasKey=!!getVisionKey(getVisionProvider());
-  let h=`<div style="margin-top:14px;padding:13px;border:1px solid var(--teal-dim);border-radius:12px;background:linear-gradient(135deg,#16212e,#1b2938)">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
-      <div style="font-weight:800;color:var(--teal);font-size:13.5px">🤖 ${escVision(meta.title)}</div>
+  let h=`<div style="margin-top:14px;padding:13px;border:1px solid var(--teal-dim);border-radius:14px;background:linear-gradient(135deg,#16212e,#1b2938)">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+      <div style="font-weight:800;color:var(--teal);font-size:13px">🤖 ${escVision(meta.title)} <span style="color:var(--muted);font-weight:600;font-size:10.5px">· ${escVision(snap.label)}</span></div>
       <div style="display:flex;gap:6px">
         <button type="button" class="mini-btn" onclick="runHealthAi('${scope}',true)">${cached?'↻ به‌روزرسانی':'▶ اجرا'}</button>
         <button type="button" class="mini-btn" onclick="setAiAdv('${scope}',false);renderHealthAiPanel('${scope}')">خاموش</button>
       </div>
     </div>`;
-  if(!hasKey) h+=`<div style="color:var(--amber);font-size:12px;margin-top:8px">⚠️ برای این کار کلید API لازم است — <b onclick="gotoVisionSettings()" style="cursor:pointer;text-decoration:underline">رفتن به تنظیمات</b>.</div>`;
-  h+=`<div id="${scope}AiResult" style="font-size:12.5px;line-height:2.05;margin-top:10px">`;
-  h+= cached ? labAiFmt(cached.text) : `<span style="color:var(--muted)">«اجرا» را بزن تا از روی داده‌های «${escVision(snap.label)}» یک تحلیل و توصیه‌ی عملی بگیری.</span>`;
+  if(!hasKey) h+=`<div style="color:var(--amber);font-size:12px;margin:6px 0">⚠️ برای این کار کلید API لازم است — <b onclick="gotoVisionSettings()" style="cursor:pointer;text-decoration:underline">رفتن به تنظیمات</b>.</div>`;
+  h+=`<div id="${scope}AiResult" style="margin-top:8px">`;
+  h+= cached ? '' : aiEmptyState('«▶ اجرا» را بزن تا از روی داده‌های «'+escVision(snap.label)+'» یک تحلیل کارت‌بندی‌شده با امتیاز و توصیه‌های عملی بگیری.');
   h+=`</div>
-    <div style="color:var(--amber);font-size:11px;margin-top:9px;line-height:1.8">⚕️ آموزشی و کمکی است، نه تشخیص/تجویز؛ برای دوز دارو و هر تصمیم درمانی با پزشک. در این حالت خلاصه‌ی داده‌هایت (نه عکس) به سرویس هوش مصنوعی فرستاده می‌شود.</div>
+    <div style="color:var(--muted);font-size:10.5px;margin-top:10px;line-height:1.8;opacity:.85">⚕️ آموزشی و کمکی است، نه تشخیص/تجویز؛ برای دوز دارو با پزشک. خلاصه‌ی داده‌هایت (نه عکس) به سرویس هوش مصنوعی فرستاده می‌شود.</div>
   </div>`;
   box.innerHTML=h;
+  if(cached) renderAiResult(document.getElementById(scope+'AiResult'), cached.text);
 }
 async function runHealthAi(scope, force){
   const box=document.getElementById(scope+'AiResult'); if(!box) return;
@@ -9142,14 +9270,14 @@ async function runHealthAi(scope, force){
   if(!snap.text.trim()){ box.innerHTML=aiMsgBox('🤔','داده‌ی کافی نیست','هنوز داده‌ی کافی برای تحلیل ثبت نشده؛ چند وعده/قند/ورزش ثبت کن.','err'); return; }
   const hash=_hashStr(scope+'|'+snap.text);
   const cached=aiAdvCacheGet(scope,hash);
-  if(cached && !force){ box.innerHTML=labAiFmt(cached.text); return; }
-  box.innerHTML='<span style="color:var(--muted)">⏳ در حال تحلیل جامع… (چند ثانیه صبر کن)</span>';
+  if(cached && !force){ renderAiResult(box,cached.text); return; }
+  box.innerHTML=aiEmptyState('⏳ در حال تحلیل جامع… (چند ثانیه صبر کن)');
   try{
-    const text=await aiRetry(()=>callAIText(prov,key,HEALTH_AI_PROMPT(scope,snap),2560,1024), n=>{ box.innerHTML='<span style="color:var(--muted)">⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…</span>'; });
+    const text=await aiRetry(()=>callAIText(prov,key,HEALTH_AI_PROMPT(scope,snap),2560,1024), n=>{ box.innerHTML=aiEmptyState('⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'); });
     const clean=String(text||'').trim();
     if(!clean){ box.innerHTML=aiMsgBox('⚠️','پاسخی نیامد','دوباره امتحان کن.','err'); return; }
     aiAdvCacheSet(scope,hash,clean);
-    box.innerHTML=labAiFmt(clean);
+    renderAiResult(box,clean);
   }catch(e){ const ei=aiErrorInfo(e); box.innerHTML=aiMsgBox(ei.emoji,ei.title,ei.text,'err',String((e&&e.message)||e)); }
 }
 
