@@ -1713,7 +1713,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۱.۳.۲</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۱.۳.۳</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -8905,17 +8905,29 @@ function buildLabAIContext(){
   return { date:last.date, lines };
 }
 function LAB_AI_ANALYSIS_PROMPT(ctx){
-  return "You are an educational assistant for a person with diabetes reviewing their OWN lab results. Give a SHORT plain-language interpretation IN PERSIAN (Farsi).\n"+
-  "Strict rules:\n"+
-  "- Educational only. NEVER give a diagnosis. NEVER give specific medication or insulin doses or timing.\n"+
-  "- For anything important or abnormal, advise consulting their doctor.\n"+
-  "- Be concise: at most 6 short bullet lines, each starting with «•». Focus on out-of-range values and diabetes-relevant markers (HbA1c, FBS, lipids, kidney, liver, thyroid, anemia).\n"+
-  "- Calm tone, no alarming. Persian only, no English, no preamble.\n\n"+
+  return "You are a careful, knowledgeable health educator helping a person with diabetes understand their OWN lab results. Write a genuinely useful, structured interpretation IN PERSIAN (Farsi) — not a one-liner, and not just «go see your doctor».\n"+
+  "Write these four sections, each with its heading exactly as below and short bullet lines starting with «•»:\n"+
+  "🔎 خلاصه‌ی کلی\n"+
+  "• دو تا سه جمله درباره‌ی وضعیت کلی، به‌ویژه کنترل قند (HbA1c و قند ناشتا) و اگر مقدار قبلی هست، روند (بهتر/بدتر شده).\n"+
+  "⚠️ نکته‌های مهم\n"+
+  "• برای هر مقدارِ خارج از محدوده یک خط: نام آزمایش + عددش + به زبان ساده یعنی چه + یکی دو علتِ محتملِ عمومی.\n"+
+  "✅ کارهای عملی\n"+
+  "• سه تا پنج توصیه‌ی کاربردیِ سبک‌زندگی مرتبط با همین نتایج (تغذیه، فعالیت بدنی، آب، پیگیری).\n"+
+  "🩺 با پزشک درباره‌ی این‌ها صحبت کن\n"+
+  "• فهرست کوتاهِ مهم‌ترین موارد برای بررسی با پزشک.\n\n"+
+  "Rules: Persian only, no English words except the test names in the data. Be SPECIFIC to the numbers given (mention the actual values). Educational only — NEVER give a diagnosis, and NEVER give specific medication or insulin doses/timing. Calm, encouraging, practical tone. Keep total length focused (about 12–18 short lines). Do NOT repeat the heading list; just fill it in.\n\n"+
   "Lab results (date "+(ctx.date||'')+"):\n"+ctx.lines.join('\n');
 }
 function labAiFmt(text){
   const esc=s=>String(s).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
-  return esc(text).replace(/\n{2,}/g,'\n').replace(/\n/g,'<br>');
+  const lines=String(text||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  return lines.map(l=>{
+    if(/^(🔎|⚠️|✅|🩺|📊|🧪)/.test(l))
+      return `<div style="font-weight:800;color:var(--teal);font-size:12.8px;margin:11px 0 3px">${esc(l)}</div>`;
+    if(/^[•\-]/.test(l))
+      return `<div style="margin:3px 0;padding-right:2px">${esc(l)}</div>`;
+    return `<div style="margin:3px 0">${esc(l)}</div>`;
+  }).join('');
 }
 function renderLabAiPanel(){
   const box=document.getElementById('labAiPanel'); if(!box) return;
@@ -8959,7 +8971,7 @@ async function runLabAiAnalysis(force){
   if(cached && !force){ box.innerHTML=labAiFmt(cached.text); return; }
   box.innerHTML='<span style="color:var(--muted)">⏳ در حال تحلیل… (چند ثانیه)</span>';
   try{
-    const text=await callAIText(prov,key,LAB_AI_ANALYSIS_PROMPT(ctx),700);
+    const text=await callAIText(prov,key,LAB_AI_ANALYSIS_PROMPT(ctx),2048);
     const clean=String(text||'').trim();
     if(!clean){ box.innerHTML='<span style="color:var(--amber)">پاسخی دریافت نشد. دوباره امتحان کن.</span>'; return; }
     labAiCacheSet(hash,clean);
