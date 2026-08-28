@@ -827,6 +827,8 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <button class="tab" data-tab="cgm" onclick="switchTab('cgm',this)">📈 تحلیل CGM</button>
   <button class="tab" data-tab="labs" onclick="switchTab('labs',this)">🧪 آزمایش‌ها</button>
   <button class="tab" data-tab="exercise" onclick="switchTab('exercise',this)">🏃 ورزش</button>
+  <button class="tab" data-tab="chat" onclick="switchTab('chat',this)">💬 چت هوشمند</button>
+  <button class="tab" data-tab="aihistory" onclick="switchTab('aihistory',this)">🗂️ تاریخچه AI</button>
   <button class="tab" data-tab="profile" onclick="switchTab('profile',this)">👤 پروفایل</button>
 </div>
 <!-- نوار ناوبری پایین (حالت جدید) -->
@@ -851,6 +853,11 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <button class="qa-item" onclick="quickAdd('med')"><span class="qa-ico" style="background:rgba(154,134,224,.18);color:#c3b4f0">💊</span>دارو</button>
       <button class="qa-item" onclick="quickAdd('sleep')"><span class="qa-ico" style="background:rgba(91,143,214,.18);color:#9fc0f0">😴</span>خواب</button>
       <button class="qa-item" onclick="quickAdd('mood')"><span class="qa-ico" style="background:rgba(224,163,85,.16);color:#e9b877">🙂</span>حالت روحی</button>
+    </div>
+    <div class="qa-subt">هوش مصنوعی</div>
+    <div class="qa-grid">
+      <button class="qa-item" onclick="quickAdd('chat')"><span class="qa-ico" style="background:rgba(63,185,163,.18);color:#5fd3bd">💬</span>چت هوشمند</button>
+      <button class="qa-item" onclick="quickAdd('aihistory')"><span class="qa-ico" style="background:rgba(154,134,224,.18);color:#c3b4f0">🗂️</span>تاریخچه AI</button>
     </div>
     <div class="qa-subt">شروع و رفتن به بخش</div>
     <div class="qa-grid">
@@ -1543,12 +1550,12 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
 </div>
 <div class="card" id="c-profile-vision">
-  <h2><span>📷 تشخیص غذا از عکس (هوش مصنوعی)</span></h2>
+  <h2><span>🤖 هوش مصنوعی (کلیدها و انتخاب سرویس)</span></h2>
   <div class="card-body">
     <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:12px">
-      می‌توانی در ماشین‌حساب از بشقاب غذایت عکس بگیری تا خوراکی‌ها و گرم و کربوهیدرات و کالریِ تقریبی‌شان خودکار وارد شوند. این کار به یک <b style="color:var(--teal)">مدل بینایی ابری</b> و <b>کلید شخصی خودت</b> نیاز دارد (فقط لحظه‌ی تشخیص، اینترنت لازم است؛ بقیه‌ی برنامه آفلاین کار می‌کند). کلیدت فقط در همین مرورگر ذخیره می‌شود و جایی فرستاده نمی‌شود جز سرور همان سرویس.
-      <br>💡 گزینه‌ی <b style="color:var(--teal)">Gemini 🆓</b> سطح رایگان دارد؛ کلیدش را بدون کارت اعتباری از <b>aistudio.google.com</b> بگیر (کیفیتش کمی از Claude/GPT پایین‌تر است ولی برای شروعِ رایگان خوب است).
-      <br><b style="color:var(--red)">توجه:</b> برآوردِ گرم و ماکرو از روی عکس فقط تخمینِ آموزشی است و می‌تواند خطا داشته باشد؛ برای دوز انسولین حتماً با پزشک هماهنگ کن.
+      کلید هر سرویس هوش مصنوعی را وارد کن، و برای هر بخشِ برنامه انتخاب کن از کدام سرویس استفاده شود (مثلاً عکس‌ها با <b style="color:var(--teal)">Gemini رایگان</b>، تحلیل آزمایش با Claude، گزارش‌ها با OpenAI یا DeepSeek). کلیدها فقط در همین مرورگر ذخیره می‌شوند و در فایل بکاپ قرار نمی‌گیرند.
+      <br>💡 <b style="color:var(--teal)">Gemini 🆓</b> سطح رایگان دارد (کلید بدون کارت از aistudio.google.com). <b>DeepSeek</b> عکس ندارد و فقط برای بخش‌های متنی (تحلیل/چت) استفاده می‌شود.
+      <br><b style="color:var(--red)">توجه:</b> خروجی هوش مصنوعی فقط آموزشی و تخمینی است؛ برای دوز انسولین و تصمیم درمانی حتماً با پزشک هماهنگ کن.
     </div>
     <div id="visionSetting"></div>
   </div>
@@ -1587,6 +1594,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       </div>
       <div><label>سن (سال)</label><input type="number" id="age" placeholder="مثلاً 33" min="1" max="120"></div>
       <div><label>وزن (کیلوگرم)</label><input type="number" id="weight" placeholder="مثلاً 80" min="10" max="300"></div>
+      <div><label>جنسیت</label><select id="gender"><option value="">—</option><option value="male">مرد</option><option value="female">زن</option></select></div>
     </div>
 
     <label>نوع انسولین سریع (برای محاسبه‌ی زمان و نسبت‌ها)</label>
@@ -1712,8 +1720,24 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
 </div>
 
+<!-- ============ صفحه‌ی چت با هوش مصنوعی ============ -->
+<div class="page" id="page-chat">
+  <div class="card" style="min-height:60vh">
+    <h2><span>💬 چت با دیابوت</span></h2>
+    <div class="card-body" style="padding:12px"><div id="chatRoot"></div></div>
+  </div>
+</div>
+
+<!-- ============ صفحه‌ی تاریخچه‌ی هوش مصنوعی ============ -->
+<div class="page" id="page-aihistory">
+  <div class="card">
+    <h2><span>🗂️ تاریخچه‌ی هوش مصنوعی</span></h2>
+    <div class="card-body"><div id="aiHistoryRoot"></div></div>
+  </div>
+</div>
+
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۱.۷</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۱.۸</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3654,6 +3678,8 @@ function switchTab(name,btn){
   if(name==='labs'){ renderLabsTab(); }
   if(name==='exercise'){ renderExerciseTab(); }
   if(name==='profile'){ renderProfileTab(); }
+  if(name==='chat'){ renderChatTab(); }
+  if(name==='aihistory'){ renderAiHistoryTab(); }
 }
 /* ====== ثبت سریع (دکمه‌ی + وسط) ====== */
 function openQuickAdd(){ uiDing&&uiDing(); document.getElementById('qaOverlay').classList.add('show'); }
@@ -3675,6 +3701,8 @@ function quickAdd(type){
   else if(type==='cgmfile') go('profile','c-cgmup');
   else if(type==='calc'){ switchTab('calc'); }
   else if(type==='plan'){ switchTab('plan'); }
+  else if(type==='chat'){ switchTab('chat'); }
+  else if(type==='aihistory'){ switchTab('aihistory'); }
   else if(type==='bg') openQuickBG();
   else if(type==='med') openQEntry('qmedModal','qmedDateWrap','qmedTime',['qmedName','qmedDose'],'qmedName');
   else if(type==='sleep') openQEntry('qsleepModal','qsleepDateWrap',null,['qsleepHours'],'qsleepHours','qsleepQual');
@@ -3898,7 +3926,7 @@ function goToToday(){
 
 /* ====== پروفایل ====== */
 async function saveProfile(){
-  const p={diabetesType:val('diabetesType'),basalInsulin:val('basalInsulin'),insulinType:val('insulinType'),age:val('age'),weight:val('weight'),tdd:val('tdd'),ic:val('icRatio'),isf:val('isf')};
+  const p={diabetesType:val('diabetesType'),basalInsulin:val('basalInsulin'),insulinType:val('insulinType'),age:val('age'),weight:val('weight'),gender:val('gender'),tdd:val('tdd'),ic:val('icRatio'),isf:val('isf')};
   await storageSet(PKEY,JSON.stringify(p)); showSaved(p);
 }
 function val(id){return document.getElementById(id).value;}
@@ -3929,6 +3957,7 @@ async function loadProfile(){
     document.getElementById('insulinType').value=p.insulinType||'rapid';
     document.getElementById('age').value=p.age||'';
     document.getElementById('weight').value=p.weight||'';
+    { const gs=document.getElementById('gender'); if(gs) gs.value=p.gender||''; }
     document.getElementById('tdd').value=p.tdd||'';
     document.getElementById('icRatio').value=p.ic||'';
     document.getElementById('isf').value=p.isf||'';
@@ -3940,7 +3969,7 @@ async function loadProfile(){
 // کلیدهای localStorage که در بکاپ گنجانده می‌شوند (نقشه‌ی داده‌ی کاربر).
 // از مقادیر رشته‌ای مستقیم استفاده می‌شود چون بعضی از این const‌ها (CGMKEY, BGKEY, ...)
 // پایین‌تر در فایل تعریف شده‌اند و ارجاع به خودِ متغیر اینجا TDZ می‌دهد.
-const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1'];
+const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','custom_foods_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1'];
 
 async function renderProfileTab(){
   // فرم پروفایل (c-profile) حالا خودش داخل این تب است و وضعیت ذخیره‌شده را نشان می‌دهد.
@@ -6704,12 +6733,21 @@ const VISION_PROVIDER_KEY='vision_provider_v1';
 const VISION_KEY_PREFIX='vision_key_';        // + provider  → کلید API (فقط در همین مرورگر)
 const VISION_FOOD_KEY='vision_foods_v1';
 // شناسه‌ی مدل هر سرویس (قابل تغییر): بینایی برای تشخیص غذا و برآورد گرم/ماکرو
-const VISION_MODELS={ claude:'claude-opus-5', openai:'gpt-4o', gemini:'gemini-3.6-flash' };
-const VISION_PROVIDERS=['claude','openai','gemini'];
-function getVisionProvider(){ try{ const p=localStorage.getItem(VISION_PROVIDER_KEY); return VISION_PROVIDERS.includes(p)?p:'claude'; }catch(e){ return 'claude'; } }
+const VISION_MODELS={ claude:'claude-opus-5', openai:'gpt-4o', gemini:'gemini-3.6-flash', deepseek:'deepseek-chat' };
+const VISION_PROVIDERS=['claude','openai','gemini','deepseek'];
+const PROVIDER_NAMES={claude:'Claude',openai:'OpenAI',gemini:'Gemini',deepseek:'DeepSeek'};
+const PROVIDER_HINTS={claude:'console.anthropic.com',openai:'platform.openai.com',gemini:'رایگان: aistudio.google.com',deepseek:'platform.deepseek.com'};
+const PROVIDER_VISION={claude:true,openai:true,gemini:true,deepseek:false}; // دیپ‌سیک عکس ندارد
+function getVisionProvider(){ try{ const p=localStorage.getItem(VISION_PROVIDER_KEY); if(VISION_PROVIDERS.includes(p)&&getVisionKey(p)) return p; }catch(e){} const wk=VISION_PROVIDERS.find(x=>getVisionKey(x)); return wk||'claude'; }
 function setVisionProvider(p){ try{ localStorage.setItem(VISION_PROVIDER_KEY, VISION_PROVIDERS.includes(p)?p:'claude'); }catch(e){} renderVisionSetting(); }
 function getVisionKey(prov){ try{ return (localStorage.getItem(VISION_KEY_PREFIX+(prov||getVisionProvider()))||'').trim(); }catch(e){ return ''; } }
 function setVisionKey(prov,key){ try{ if(key){ localStorage.setItem(VISION_KEY_PREFIX+prov, String(key).trim()); } else { localStorage.removeItem(VISION_KEY_PREFIX+prov); } }catch(e){} }
+// انتخاب سرویس هوش مصنوعی برای هر بخش (اگر تنظیم نشده، از سرویس پیش‌فرض استفاده می‌شود)
+const AI_SECTION_KEY='ai_section_provider_v1';
+function sectionProvider(section){ try{ const o=JSON.parse(localStorage.getItem(AI_SECTION_KEY)||'{}'); const p=o[section]; return VISION_PROVIDERS.includes(p)?p:getVisionProvider(); }catch(e){ return getVisionProvider(); } }
+function setSectionProvider(section,prov){ try{ const o=JSON.parse(localStorage.getItem(AI_SECTION_KEY)||'{}'); if(prov) o[section]=prov; else delete o[section]; localStorage.setItem(AI_SECTION_KEY, JSON.stringify(o)); }catch(e){} }
+// سرویس بخش را برمی‌گرداند؛ اگر بخش تصویری است و سرویس عکس ندارد، به یک سرویسِ عکس‌دار برمی‌گردد
+function sectionProviderVision(section){ let p=sectionProvider(section); if(!PROVIDER_VISION[p]){ p=['gemini','claude','openai'].find(x=>getVisionKey(x))||'gemini'; } return p; }
 function escVision(s){ return String(s==null?'':s).replace(/[<>"'&]/g,c=>({'<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','&':'&amp;'}[c])); }
 // خطاهای خام سرویس‌های هوش مصنوعی → پیام فارسیِ واضح و کاربرپسند (برای همه‌ی بخش‌ها)
 function aiErrorInfo(e){
@@ -6889,17 +6927,54 @@ async function callAIText(prov, key, promptText, maxTok, thinkBudget){
   if(prov==='gemini'){
     return await _geminiGenerate(key, [{text:promptText}], mt, thinkBudget);
   }
-  if(prov==='openai'){
-    const res=await fetch('https://api.openai.com/v1/chat/completions',{ method:'POST',
+  if(prov==='openai' || prov==='deepseek'){
+    const url = prov==='deepseek' ? 'https://api.deepseek.com/chat/completions' : 'https://api.openai.com/v1/chat/completions';
+    const model = prov==='deepseek' ? VISION_MODELS.deepseek : VISION_MODELS.openai;
+    const res=await fetch(url,{ method:'POST',
       headers:{'content-type':'application/json','authorization':'Bearer '+key},
-      body:JSON.stringify({ model:VISION_MODELS.openai, max_tokens:mt, messages:[{role:'user',content:promptText}] }) });
-    if(!res.ok){ throw new Error('OpenAI ('+res.status+'): '+(await res.text()).slice(0,800)); }
+      body:JSON.stringify({ model, max_tokens:mt, messages:[{role:'user',content:promptText}] }) });
+    if(!res.ok){ throw new Error(PROVIDER_NAMES[prov]+' ('+res.status+'): '+(await res.text()).slice(0,800)); }
     const data=await res.json();
     return (data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'';
   }
   const res=await fetch('https://api.anthropic.com/v1/messages',{ method:'POST',
     headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
     body:JSON.stringify({ model:VISION_MODELS.claude, max_tokens:mt, messages:[{role:'user',content:[{type:'text',text:promptText}]}] }) });
+  if(!res.ok){ throw new Error('Claude ('+res.status+'): '+(await res.text()).slice(0,800)); }
+  const data=await res.json();
+  return (data.content||[]).filter(b=>b&&b.type==='text').map(b=>b.text).join('\n');
+}
+// تماس چندنوبتیِ چت (system + تاریخچه‌ی پیام‌ها). opts.speed: 'fast'|'smart' برای عمق فکرکردن Gemini
+async function callAIChat(prov, key, systemText, messages, opts){
+  opts=opts||{}; const mt=opts.maxTok||1500;
+  if(prov==='gemini'){
+    const url='https://generativelanguage.googleapis.com/v1beta/models/'+VISION_MODELS.gemini+':generateContent?key='+encodeURIComponent(key);
+    const contents=messages.map(m=>({ role:(m.role==='assistant'?'model':'user'), parts:[{text:String(m.content||'')}] }));
+    const gen={maxOutputTokens:mt,temperature:0.5}; if(opts.speed==='fast') gen.thinkingConfig={thinkingBudget:0};
+    const body={ contents, generationConfig:gen };
+    if(systemText) body.systemInstruction={parts:[{text:systemText}]};
+    const res=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+    if(!res.ok){ throw new Error('Gemini ('+res.status+'): '+(await res.text()).slice(0,800)); }
+    const data=await res.json(); const c=data.candidates&&data.candidates[0];
+    return (c&&c.content&&c.content.parts||[]).map(p=>p.text||'').join('\n');
+  }
+  if(prov==='openai' || prov==='deepseek'){
+    const url = prov==='deepseek' ? 'https://api.deepseek.com/chat/completions' : 'https://api.openai.com/v1/chat/completions';
+    let model = prov==='deepseek' ? VISION_MODELS.deepseek : VISION_MODELS.openai;
+    if(prov==='deepseek' && opts.speed==='smart') model='deepseek-reasoner';
+    const msgs=[]; if(systemText) msgs.push({role:'system',content:systemText}); messages.forEach(m=>msgs.push({role:m.role==='assistant'?'assistant':'user',content:String(m.content||'')}));
+    const res=await fetch(url,{ method:'POST', headers:{'content-type':'application/json','authorization':'Bearer '+key},
+      body:JSON.stringify({ model, max_tokens:mt, messages:msgs }) });
+    if(!res.ok){ throw new Error(PROVIDER_NAMES[prov]+' ('+res.status+'): '+(await res.text()).slice(0,800)); }
+    const data=await res.json();
+    return (data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'';
+  }
+  // Claude
+  const msgs=messages.map(m=>({role:m.role==='assistant'?'assistant':'user',content:String(m.content||'')}));
+  const body={ model:VISION_MODELS.claude, max_tokens:mt, messages:msgs }; if(systemText) body.system=systemText;
+  const res=await fetch('https://api.anthropic.com/v1/messages',{ method:'POST',
+    headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify(body) });
   if(!res.ok){ throw new Error('Claude ('+res.status+'): '+(await res.text()).slice(0,800)); }
   const data=await res.json();
   return (data.content||[]).filter(b=>b&&b.type==='text').map(b=>b.text).join('\n');
@@ -7045,7 +7120,7 @@ function gotoVisionSettings(){
   setTimeout(()=>{ const c=document.getElementById('c-profile-vision'); if(c) c.scrollIntoView({behavior:'smooth',block:'start'}); },220);
 }
 function startPlatePhoto(){
-  const prov=getVisionProvider();
+  const prov=sectionProviderVision('food');
   const s=document.getElementById('visionStatus');
   if(!getVisionKey(prov)){
     if(s){ s.style.display='block'; s.innerHTML='برای تشخیص از عکس، اول باید کلید API را در پروفایل وارد کنی. '
@@ -7057,7 +7132,7 @@ function startPlatePhoto(){
 async function handlePlatePhoto(inp){
   const file=inp&&inp.files&&inp.files[0]; if(inp) inp.value='';
   if(!file) return;
-  const prov=getVisionProvider(), key=getVisionKey(prov);
+  const prov=sectionProviderVision('food'), key=getVisionKey(prov);
   const s=document.getElementById('visionStatus'); if(s) s.style.display='block';
   const set=(html)=>{ if(s) s.innerHTML=html; };
   if(!key){ set(aiMsgBox('🔑','کلید API لازم است','اول در پروفایل → «تشخیص غذا از عکس» کلید را وارد کن، بعد دوباره امتحان کن.','err')); return; }
@@ -7089,48 +7164,67 @@ async function handlePlatePhoto(inp){
     const ei=aiErrorInfo(e); set(aiMsgBox(ei.emoji,ei.title,ei.text,'err',String((e&&e.message)||e)));
   }
 }
-function toggleVisionKeyView(){
-  const inp=document.getElementById('visionKeyInput'); if(!inp) return;
+function toggleVisionKeyView(prov){
+  const inp=document.getElementById('visionKeyInput_'+prov); if(!inp) return;
   inp.type=(inp.type==='password')?'text':'password';
 }
-function saveVisionKey(){
-  const prov=getVisionProvider();
-  const inp=document.getElementById('visionKeyInput'); if(!inp) return;
+function saveVisionKeyFor(prov){
+  const inp=document.getElementById('visionKeyInput_'+prov); if(!inp) return;
   const v=(inp.value||'').trim();
   if(!v){ if(typeof uiToast==='function') uiToast('کلید خالی است'); return; }
   setVisionKey(prov,v);
   renderVisionSetting();
-  if(typeof uiToast==='function') uiToast('کلید ذخیره شد');
+  if(typeof uiToast==='function') uiToast(PROVIDER_NAMES[prov]+' ذخیره شد');
 }
-function clearVisionKey(){
-  const prov=getVisionProvider();
+function clearVisionKeyFor(prov){
   setVisionKey(prov,'');
   renderVisionSetting();
   if(typeof uiToast==='function') uiToast('کلید حذف شد');
 }
+// بخش‌هایی که سرویس هوش مصنوعی برایشان انتخاب می‌شود
+const AI_SECTIONS=[
+  {id:'food', label:'📷 عکس غذا (ماشین‌حساب)', vision:true},
+  {id:'labread', label:'📷 خواندن عکس آزمایش', vision:true},
+  {id:'labanalysis', label:'🧪 تحلیل آزمایش', vision:false},
+  {id:'daily', label:'📋 تحلیل گزارش روزانه', vision:false},
+  {id:'overview', label:'📊 تحلیل گزارش کلی', vision:false},
+  {id:'home', label:'🏠 توصیه‌ی صفحه‌ی اول', vision:false},
+  {id:'chat', label:'💬 چت هوشمند', vision:false}
+];
 function renderVisionSetting(){
   const box=document.getElementById('visionSetting'); if(!box) return;
-  const prov=getVisionProvider();
-  const hasKey=!!getVisionKey(prov);
-  const NAMES={claude:'Claude',openai:'OpenAI',gemini:'Gemini'};
-  const HINTS={claude:'کلید Claude (از console.anthropic.com)',openai:'کلید OpenAI (از platform.openai.com)',gemini:'کلید Gemini (رایگان از aistudio.google.com)'};
-  const seg=(id,label)=>`<button type="button" onclick="setVisionProvider('${id}')" style="flex:1;padding:9px 4px;border-radius:10px;cursor:pointer;font-weight:700;font-size:12.5px;border:1px solid ${prov===id?'var(--teal)':'var(--line)'};background:${prov===id?'rgba(63,185,163,.18)':'transparent'};color:${prov===id?'var(--teal)':'var(--fg)'}">${label}</button>`;
-  const keyHint=HINTS[prov];
-  box.innerHTML=
-    `<div style="display:flex;gap:6px;margin-bottom:12px">${seg('claude','Claude')}${seg('openai','OpenAI')}${seg('gemini','Gemini 🆓')}</div>`+
-    `<label style="font-size:12px;color:var(--muted)">${keyHint}</label>`+
-    `<div style="display:flex;gap:6px;margin-top:6px">`+
-      `<input type="password" id="visionKeyInput" placeholder="${hasKey?'●●●●●●●●●●  (ذخیره‌شده)':'کلید API را اینجا بچسبان'}" autocomplete="off" style="flex:1;min-width:0">`+
-      `<button type="button" class="mini-btn" onclick="toggleVisionKeyView()" title="نمایش/مخفی">👁</button>`+
-    `</div>`+
-    `<div style="display:flex;gap:6px;margin-top:8px">`+
-      `<button type="button" class="quick-btn" style="flex:1" onclick="saveVisionKey()">💾 ذخیره‌ی کلید</button>`+
-      (hasKey?`<button type="button" class="clear-btn" onclick="clearVisionKey()">حذف کلید</button>`:'')+
-    `</div>`+
-    `<div style="font-size:12px;margin-top:10px;line-height:1.8;color:${hasKey?'var(--teal)':'var(--muted)'}">`+
-      (hasKey?('✓ کلید برای '+NAMES[prov]+' ذخیره است. حالا در تب ماشین‌حساب دکمه‌ی «📷 تشخیص غذا از عکس بشقاب» را بزن.')
-             :'هنوز کلیدی برای این سرویس ذخیره نشده. کلید را وارد و ذخیره کن.')+
-    `</div>`;
+  // ۱) کلیدهای چهار سرویس
+  let h=`<div style="font-weight:800;font-size:12.5px;color:var(--teal);margin-bottom:8px">۱) کلیدهای API (هر کدام را داشتی وارد کن)</div>`;
+  VISION_PROVIDERS.forEach(p=>{
+    const has=!!getVisionKey(p);
+    h+=`<div style="border:1px solid ${has?'var(--teal-dim)':'var(--line)'};border-radius:11px;padding:9px 10px;margin-bottom:8px;background:${has?'rgba(63,185,163,.07)':'transparent'}">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><b style="font-size:12.5px;color:${has?'var(--teal)':'var(--fg)'}">${PROVIDER_NAMES[p]}</b>${has?'<span style="font-size:10.5px;color:var(--teal)">✓ ذخیره‌شده</span>':''}${!PROVIDER_VISION[p]?'<span style="font-size:9.5px;color:var(--muted)">(بدون عکس)</span>':''}<span style="flex:1"></span><span style="font-size:9.5px;color:var(--muted)">${PROVIDER_HINTS[p]}</span></div>
+      <div style="display:flex;gap:5px">
+        <input type="password" id="visionKeyInput_${p}" placeholder="${has?'●●●●●●●●  (برای تغییر بچسبان)':'کلید API'}" autocomplete="off" style="flex:1;min-width:0;font-size:12px">
+        <button type="button" class="mini-btn" onclick="toggleVisionKeyView('${p}')" title="نمایش">👁</button>
+        <button type="button" class="mini-btn" onclick="saveVisionKeyFor('${p}')">💾</button>
+        ${has?`<button type="button" class="mini-btn" onclick="clearVisionKeyFor('${p}')" title="حذف">🗑</button>`:''}
+      </div>
+    </div>`;
+  });
+  // ۲) انتخاب سرویس برای هر بخش
+  const avail=VISION_PROVIDERS.filter(p=>getVisionKey(p));
+  h+=`<div style="font-weight:800;font-size:12.5px;color:var(--teal);margin:14px 0 8px">۲) کدام بخش با کدام هوش مصنوعی؟</div>`;
+  if(!avail.length){ h+=`<div style="font-size:11.5px;color:var(--amber);line-height:1.8">اول حداقل یک کلید بالا را ذخیره کن تا اینجا بتوانی انتخاب کنی.</div>`; }
+  else{
+    AI_SECTIONS.forEach(sec=>{
+      const opts=avail.filter(p=>!sec.vision || PROVIDER_VISION[p]);
+      const cur=sectionProvider(sec.id);
+      h+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+        <span style="flex:1;font-size:12px">${sec.label}${sec.vision?' <span style="font-size:9.5px;color:var(--muted)">(عکس)</span>':''}</span>
+        <select onchange="setSectionProvider('${sec.id}',this.value)" style="flex:0 0 auto;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:6px 8px;font-family:inherit;font-size:12px">
+          ${opts.map(p=>`<option value="${p}" ${p===cur?'selected':''}>${PROVIDER_NAMES[p]}</option>`).join('')}
+        </select>
+      </div>`;
+    });
+    h+=`<div style="font-size:10.5px;color:var(--muted);line-height:1.8;margin-top:6px">مثلاً عکس‌ها با Gemini (رایگان)، تحلیل آزمایش با Claude، گزارش روزانه با OpenAI، گزارش کلی با DeepSeek. دیپ‌سیک عکس ندارد پس برای بخش‌های عکسی نمی‌آید.</div>`;
+  }
+  box.innerHTML=h;
 }
 
 /* ===== تب ورزش: کتابخانه‌ی حرکت‌ها + برنامه + ثبت ===== */
@@ -8881,7 +8975,7 @@ const LAB_OCR_PROMPT=
 "Output PLAIN TEXT, one test per line, exactly: <English test name/abbreviation> <value> <unit>\n"+
 "Rules: use standard English names/abbreviations (FBS, HbA1c, Triglyceride, Cholesterol, LDL, HDL, Creatinine, Urea, BUN, Uric Acid, AST, ALT, ALP, TSH, T4, T3, Vitamin D, B12, Ferritin, Iron, Calcium, Hb, HCT, WBC, RBC, Platelet, ...). Keep the numeric value exactly as printed (use a decimal point, not comma). Include the unit if shown. One test per line. NO bullets, NO commentary, NO reference ranges. Skip anything you cannot read.";
 async function extractFromImageAI(file,prog){
-  const prov=getVisionProvider(), key=getVisionKey(prov);
+  const prov=sectionProviderVision('labread'), key=getVisionKey(prov);
   if(prog) prog.textContent='آماده‌سازی عکس برای هوش مصنوعی…';
   const img=await imageToJpeg(file,1600,0.85);           // وضوح بیشتر برای متن ریز
   if(prog) prog.textContent='خواندن عکس با هوش مصنوعی…';
@@ -8896,7 +8990,7 @@ function toggleLabAiRead(){ setLabAiRead(!labAiReadOn()); renderLabAiReadToggle(
 function renderLabAiReadToggle(){
   const box=document.getElementById('labAiReadBox'); if(!box) return;
   const on=labAiReadOn();
-  const hasKey=!!getVisionKey(getVisionProvider());
+  const hasKey=!!getVisionKey(sectionProviderVision('labread'));
   const knob=`<span style="position:absolute;top:3px;${on?'right:3px':'left:3px'};width:20px;height:20px;border-radius:50%;background:#fff"></span>`;
   box.innerHTML=
    `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:12px;border:1px solid ${on?'var(--teal-dim)':'var(--line)'};background:${on?'rgba(63,185,163,.10)':'transparent'}">
@@ -8974,7 +9068,7 @@ function renderLabAiPanel(){
   const curHash=_hashStr((ctx.date||'')+'|'+ctx.lines.join('|'));
   const last=aiLastGet('labs');
   const stale=(last && last.hash && last.hash!==curHash);
-  const hasKey=!!getVisionKey(getVisionProvider());
+  const hasKey=!!getVisionKey(sectionProvider('labanalysis'));
   let h=`<div style="margin-top:16px;padding:13px;border:1px solid var(--teal-dim);border-radius:12px;background:linear-gradient(135deg,#16212e,#1b2938)">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px">
       <div style="font-weight:800;color:var(--teal);font-size:13px">🤖 تحلیل هوش مصنوعی <span style="color:var(--muted);font-weight:600;font-size:10.5px">· ${faDigits(ctx.date||'')}</span></div>
@@ -8995,7 +9089,7 @@ function renderLabAiPanel(){
 }
 async function runLabAiAnalysis(force){
   const box=document.getElementById('labAiResult'); if(!box) return;
-  const prov=getVisionProvider(), key=getVisionKey(prov);
+  const prov=sectionProvider('labanalysis'), key=getVisionKey(prov);
   if(!key){ box.innerHTML=aiMsgBox('🔑','کلید API لازم است','اول در پروفایل → «تشخیص غذا از عکس» کلید را وارد کن.','err'); return; }
   if(!navigator.onLine){ box.innerHTML=aiMsgBox('📡','آفلاین هستی','تحلیل هوش مصنوعی به اینترنت نیاز دارد. آنلاین شو و دوباره «اجرا» را بزن.','err'); return; }
   const ctx=buildLabAIContext(); if(!ctx){ box.innerHTML=aiMsgBox('🤔','نتیجه‌ای نیست','هنوز آزمایشی ثبت نشده.','err'); return; }
@@ -9006,6 +9100,7 @@ async function runLabAiAnalysis(force){
     const clean=String(text||'').trim();
     if(!clean){ box.innerHTML=aiMsgBox('⚠️','پاسخی نیامد','دوباره امتحان کن.','err'); return; }
     aiLastSet('labs',{text:clean, ts:Date.now(), hash});
+    aiHistoryAdd('labs','labs','آزمایش '+(ctx.date||''), clean);
     renderLabAiPanel();
   }catch(e){
     const ei=aiErrorInfo(e); box.innerHTML=aiMsgBox(ei.emoji,ei.title,ei.text,'err',String((e&&e.message)||e));
@@ -9026,6 +9121,139 @@ const AI_LAST_KEY='ai_last_v1';
 function aiLastGet(scope){ try{ const o=JSON.parse(localStorage.getItem(AI_LAST_KEY)||'{}'); return o[scope]||null; }catch(e){ return null; } }
 function aiLastSet(scope,rec){ try{ const o=JSON.parse(localStorage.getItem(AI_LAST_KEY)||'{}'); o[scope]=rec; localStorage.setItem(AI_LAST_KEY, JSON.stringify(o)); }catch(e){} }
 function aiTimeStr(ts){ try{ const d=new Date(ts); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); const p=n=>String(n).padStart(2,'0'); return faDigits(jDateStr(j[0],j[1],j[2])+' · '+p(d.getHours())+':'+p(d.getMinutes())); }catch(e){ return ''; } }
+// کلید ذخیره‌ی هر بخش؛ گزارش روزانه به‌ازای هر روز جدا ذخیره و برای همیشه می‌ماند
+function scopeKey(scope){ if(scope==='daily'){ try{ return 'daily:'+dayKey(_dailyDate); }catch(e){ return 'daily'; } } return scope; }
+// تاریخچه‌ی هوش مصنوعی — هر تحلیل با تاریخش می‌ماند و در خروجی/ورودی هم منتقل می‌شود
+const AI_HISTORY_KEY='ai_history_v1';
+function aiHistoryLoad(){ try{ const a=JSON.parse(localStorage.getItem(AI_HISTORY_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function aiHistorySave(a){ try{ localStorage.setItem(AI_HISTORY_KEY, JSON.stringify(a)); }catch(e){} }
+const AI_KIND_FA={home:'صفحه‌ی اول',daily:'گزارش روزانه',overview:'گزارش کلی',labs:'آزمایش'};
+function aiHistoryAdd(key, kind, label, text){
+  try{ const a=aiHistoryLoad();
+    const rec={ id:'h'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), key, kind, label:label||'', ts:Date.now(), text };
+    const i=a.findIndex(x=>x.key===key);           // همان روز/بخش را به‌روزرسانی کن نه تکراری
+    if(i>=0) a[i]=rec; else a.push(rec);
+    a.sort((x,y)=>y.ts-x.ts);
+    aiHistorySave(a.slice(0,120));
+  }catch(e){}
+}
+/* ===== تب تاریخچه‌ی هوش مصنوعی ===== */
+function renderAiHistoryTab(){
+  const box=document.getElementById('aiHistoryRoot'); if(!box) return;
+  ensureAiAdvCss();
+  const a=aiHistoryLoad();
+  if(!a.length){ box.innerHTML=aiEmptyState('هنوز تحلیلی ذخیره نشده. در صفحه‌ی اول، گزارش روزانه، گزارش کلی یا آزمایش، دکمه‌ی «اجرا» را بزن تا برای همیشه اینجا بماند.'); return; }
+  let h=`<div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:11px">هر تحلیلِ هوش مصنوعی با تاریخش اینجا برای همیشه می‌ماند و در فایل خروجی هم منتقل می‌شود. برای دیدن، روی هرکدام بزن.</div>`;
+  a.forEach(rec=>{
+    const kind=AI_KIND_FA[rec.kind]||rec.kind;
+    const ic=rec.kind==='labs'?'🧪':rec.kind==='daily'?'📋':rec.kind==='overview'?'📊':'🏠';
+    h+=`<div style="border:1px solid var(--line);border-radius:12px;margin-bottom:9px;overflow:hidden;background:rgba(255,255,255,.02)">
+      <div onclick="aiHistToggle('${rec.id}')" style="display:flex;align-items:center;gap:9px;padding:11px 12px;cursor:pointer">
+        <span style="font-size:18px;flex:0 0 auto">${ic}</span>
+        <div style="flex:1;min-width:0"><div style="font-weight:800;font-size:12.5px;color:var(--teal)">${escVision(kind)}${rec.label?' · '+escVision(rec.label):''}</div>
+        <div style="font-size:10.5px;color:var(--muted);margin-top:2px">🕐 ${aiTimeStr(rec.ts)}</div></div>
+        <button class="lhe-del" onclick="event.stopPropagation();aiHistDelete('${rec.id}')" title="حذف">🗑</button>
+      </div>
+      <div id="hist-${rec.id}" style="display:none;padding:2px 12px 12px"></div>
+    </div>`;
+  });
+  box.innerHTML=h;
+}
+function aiHistToggle(id){ const el=document.getElementById('hist-'+id); if(!el) return;
+  if(el.style.display==='block'){ el.style.display='none'; return; }
+  const rec=aiHistoryLoad().find(x=>x.id===id); if(!rec) return;
+  renderAiResult(el, rec.text); el.style.display='block';
+}
+function aiHistDelete(id){ if(!confirm('این تحلیل از تاریخچه حذف شود؟')) return; aiHistorySave(aiHistoryLoad().filter(x=>x.id!==id)); renderAiHistoryTab(); }
+
+/* ===== چت با هوش مصنوعی (با آگاهی از داده‌های متابولیک) ===== */
+const AI_CHAT_KEY='ai_chats_v1';
+function chatLoad(){ try{ const o=JSON.parse(localStorage.getItem(AI_CHAT_KEY)||'{}'); if(!Array.isArray(o.chats))o.chats=[]; return o; }catch(e){ return {chats:[],activeId:null}; } }
+function chatSave(o){ try{ localStorage.setItem(AI_CHAT_KEY, JSON.stringify(o)); }catch(e){} }
+function chatActive(o){ o=o||chatLoad(); let c=o.chats.find(x=>x.id===o.activeId); if(!c){ c=o.chats[0]; if(c)o.activeId=c.id; } return c; }
+function chatNew(){ const o=chatLoad(); const c={id:'c'+Date.now().toString(36), title:'گفتگوی جدید', ts:Date.now(), provider:sectionProvider('chat'), speed:'smart', messages:[]}; o.chats.unshift(c); o.activeId=c.id; chatSave(o); renderChatTab(); }
+function chatDelete(id){ if(!confirm('این گفتگو حذف شود؟')) return; const o=chatLoad(); o.chats=o.chats.filter(x=>x.id!==id); if(o.activeId===id)o.activeId=(o.chats[0]||{}).id||null; chatSave(o); renderChatTab(); }
+function chatSelect(id){ const o=chatLoad(); o.activeId=id; chatSave(o); renderChatTab(); }
+function chatSetProvider(sel){ const o=chatLoad(); const c=chatActive(o); if(c){ c.provider=sel.value; chatSave(o); } }
+function chatSetSpeed(sel){ const o=chatLoad(); const c=chatActive(o); if(c){ c.speed=sel.value; chatSave(o); } }
+function buildChatSystemPrompt(){
+  let snap; try{ snap=buildHealthSnapshot('overview'); }catch(e){ snap={text:''}; }
+  let extra=''; try{ const p=JSON.parse(localStorage.getItem(PKEY)||'{}'); if(p.gender) extra='جنسیت: '+(p.gender==='male'?'مرد':p.gender==='female'?'زن':p.gender)+'\n'; }catch(e){}
+  return "تو «دیابوت» هستی؛ یک دستیار هوشمند، همدل و عملگرای دیابت که همه‌ی اطلاعات متابولیک این کاربر را می‌داند. همیشه فارسی، کوتاه، دقیق و کاربردی جواب بده و از داده‌های کاربر برای شخصی‌سازی استفاده کن.\n"+
+  "خط قرمزها: فقط آموزشی؛ هرگز تشخیص قطعی یا دوز دقیق انسولین/دارو برای اجرا نده؛ برای تصمیم درمانی کاربر را به پزشک ارجاع بده.\n"+
+  extra+
+  "خلاصه‌ی داده‌های کاربر:\n"+(snap.text||'(داده‌ی کافی ثبت نشده)');
+}
+let _chatCssDone=false;
+function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=document.createElement('style'); s.textContent=`
+  .chat-head{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+  .chat-sel{flex:1;min-width:0;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px;font-family:inherit;font-size:12.5px}
+  .chat-opts{display:flex;gap:8px;margin-bottom:10px}
+  .chat-opts label{flex:1;font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+  .chat-opts select{background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:7px;font-family:inherit;font-size:12px}
+  .chat-msgs{min-height:38vh;max-height:56vh;overflow-y:auto;display:flex;flex-direction:column;gap:9px;padding:6px 2px}
+  .chat-b{max-width:86%;padding:10px 13px;border-radius:15px;font-size:12.8px;line-height:1.9;word-break:break-word}
+  .chat-b.me{align-self:flex-start;background:linear-gradient(160deg,var(--teal),var(--teal-dim));color:#fff;border-bottom-right-radius:5px}
+  .chat-b.ai{align-self:flex-end;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);border-bottom-left-radius:5px}
+  .chat-input{display:flex;gap:7px;align-items:flex-end;margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+  .chat-input textarea{flex:1;resize:none;background:var(--field);border:1.5px solid var(--teal-dim);border-radius:14px;padding:11px 14px;font-family:inherit;font-size:13px;color:var(--ink);line-height:1.6;max-height:120px}
+  .chat-send{flex:0 0 auto;width:44px;height:44px;border-radius:50%;border:none;background:linear-gradient(145deg,var(--teal),var(--teal-dim));color:#fff;font-size:19px;cursor:pointer;box-shadow:0 4px 12px rgba(63,185,163,.4)}
+  `; document.head.appendChild(s);
+}
+function chatBubble(m){ const me=m.role==='user'; return `<div class="chat-b ${me?'me':'ai'}">${me?escVision(m.content).replace(/\n/g,'<br>'):labAiFmt(m.content)}</div>`; }
+function chatAutoGrow(t){ t.style.height='auto'; t.style.height=Math.min(120,t.scrollHeight)+'px'; }
+function renderChatMessages(c){ const mb=document.getElementById('chatMsgs'); if(!mb)return; mb.innerHTML=c.messages.map(chatBubble).join(''); mb.scrollTop=mb.scrollHeight; }
+function renderChatTab(){
+  const box=document.getElementById('chatRoot'); if(!box) return;
+  ensureAiAdvCss(); ensureChatCss();
+  const o=chatLoad();
+  if(!o.chats.length){ chatNew(); return; }
+  const c=chatActive(o); if(!c){ chatNew(); return; }
+  const prov=c.provider||sectionProvider('chat');
+  const withKeys=VISION_PROVIDERS.filter(p=>getVisionKey(p));
+  const hasKey=!!getVisionKey(prov);
+  let h=`<div class="chat-head">
+    <select class="chat-sel" onchange="chatSelect(this.value)">${o.chats.map(x=>`<option value="${x.id}" ${x.id===c.id?'selected':''}>${escVision(x.title||'گفتگو')}</option>`).join('')}</select>
+    <button type="button" class="mini-btn" onclick="chatNew()">➕ جدید</button>
+    <button type="button" class="mini-btn" onclick="chatDelete('${c.id}')">🗑</button>
+  </div>
+  <div class="chat-opts">
+    <label>سرویس هوش مصنوعی<select onchange="chatSetProvider(this)">${(withKeys.length?withKeys:VISION_PROVIDERS).map(p=>`<option value="${p}" ${p===prov?'selected':''}>${PROVIDER_NAMES[p]}</option>`).join('')}</select></label>
+    <label>حالت<select onchange="chatSetSpeed(this)"><option value="smart" ${c.speed!=='fast'?'selected':''}>دقیق</option><option value="fast" ${c.speed==='fast'?'selected':''}>سریع</option></select></label>
+  </div>`;
+  if(!hasKey) h+=`<div style="color:var(--amber);font-size:12px;margin:2px 2px 8px">⚠️ برای «${escVision(PROVIDER_NAMES[prov]||prov)}» کلید نداری — <b onclick="gotoVisionSettings()" style="cursor:pointer;text-decoration:underline">به تنظیمات برو</b> یا سرویس را عوض کن.</div>`;
+  h+=`<div class="chat-msgs" id="chatMsgs"></div>
+  <div class="chat-input"><textarea id="chatInput" rows="1" placeholder="از دیابوت بپرس… (قند، تغذیه، انسولین، ورزش، آزمایش)" oninput="chatAutoGrow(this)"></textarea><button type="button" class="chat-send" onclick="chatSend()">➤</button></div>`;
+  box.innerHTML=h;
+  const mb=document.getElementById('chatMsgs');
+  if(!c.messages.length){ mb.innerHTML=`<div style="text-align:center;color:var(--muted);font-size:12px;padding:22px 10px;line-height:1.9">سلام! من <b style="color:var(--teal)">دیابوت</b>م 🤖<br>با آگاهی از قند، تغذیه، انسولین، ورزش و آزمایش‌هایت، هرچی خواستی بپرس.</div>`; }
+  else renderChatMessages(c);
+}
+async function chatSend(){
+  const inp=document.getElementById('chatInput'); if(!inp) return;
+  const txt=(inp.value||'').trim(); if(!txt) return;
+  const o=chatLoad(); const c=chatActive(o); if(!c) return;
+  const prov=c.provider||sectionProvider('chat'); const key=getVisionKey(prov);
+  if(!key){ if(typeof uiToast==='function') uiToast('برای این سرویس کلید نداری'); return; }
+  if(!navigator.onLine){ if(typeof uiToast==='function') uiToast('آفلاین هستی'); return; }
+  c.messages.push({role:'user',content:txt,ts:Date.now()});
+  if(!c.title||c.title==='گفتگوی جدید') c.title=txt.slice(0,26);
+  chatSave(o); inp.value=''; chatAutoGrow(inp);
+  renderChatMessages(c);
+  const mb=document.getElementById('chatMsgs'); if(mb){ mb.insertAdjacentHTML('beforeend','<div class="chat-b ai" id="chatTyping">⏳ …</div>'); mb.scrollTop=mb.scrollHeight; }
+  try{
+    const sys=buildChatSystemPrompt();
+    const hist=c.messages.slice(-14).map(m=>({role:m.role,content:m.content}));
+    const reply=await aiRetry(()=>callAIChat(prov,key,sys,hist,{speed:c.speed,maxTok:1500}));
+    const clean=String(reply||'').trim()||'پاسخی دریافت نشد.';
+    c.messages.push({role:'assistant',content:clean,ts:Date.now()});
+    chatSave(o); renderChatMessages(c);
+  }catch(e){
+    const t=document.getElementById('chatTyping'); const ei=aiErrorInfo(e);
+    const html=`<div class="chat-b ai">${aiMsgBox(ei.emoji,ei.title,ei.text,'err',String((e&&e.message)||e))}</div>`;
+    if(t) t.outerHTML=html; else if(mb) mb.insertAdjacentHTML('beforeend',html);
+  }
+}
 function _dayFromKey(k){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(k)); return m?new Date(+m[1],+m[2]-1,+m[3]):null; }
 function _scopeWindow(scope){
   if(scope==='daily'){ const s=new Date(_dailyDate); s.setHours(0,0,0,0); const e=new Date(s); e.setHours(23,59,59,999);
@@ -9043,6 +9271,7 @@ function buildHealthSnapshot(scope){
   let minD=null,maxD=null; const seen=d=>{ if(d&&!isNaN(d)){ if(!minD||d<minD)minD=d; if(!maxD||d>maxD)maxD=d; } };
   try{ const p=JSON.parse(localStorage.getItem(PKEY)||'{}'); const pp=[];
     if(p.diabetesType) pp.push('دیابت '+(DTYPE_FA[p.diabetesType]||p.diabetesType));
+    if(p.gender) pp.push(p.gender==='male'?'مرد':p.gender==='female'?'زن':p.gender);
     if(p.age) pp.push('سن '+p.age); if(p.weight) pp.push('وزن '+p.weight+'kg');
     if(p.tdd) pp.push('TDD '+p.tdd); if(p.ic) pp.push('I:C 1:'+p.ic); if(p.isf) pp.push('ISF '+p.isf);
     if(pp.length) L.push('پروفایل: '+pp.join('، '));
@@ -9289,9 +9518,9 @@ function renderHealthAiPanel(scope){
   }
   const snap=buildHealthSnapshot(scope);
   const curHash=snap.text.trim()?_hashStr(scope+'|'+snap.text):'';
-  const last=aiLastGet(scope);
+  const last=aiLastGet(scopeKey(scope));
   const stale=(last && curHash && last.hash && last.hash!==curHash);
-  const hasKey=!!getVisionKey(getVisionProvider());
+  const hasKey=!!getVisionKey(sectionProvider(scope));
   let h=`<div style="margin-top:14px;padding:13px;border:1px solid var(--teal-dim);border-radius:14px;background:linear-gradient(135deg,#16212e,#1b2938)">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px">
       <div style="font-weight:800;color:var(--teal);font-size:13px">🤖 ${escVision(meta.title)} <span style="color:var(--muted);font-weight:600;font-size:10.5px">· ${escVision(snap.label)}</span></div>
@@ -9312,8 +9541,8 @@ function renderHealthAiPanel(scope){
 }
 async function runHealthAi(scope, force){
   const box=document.getElementById(scope+'AiResult'); if(!box) return;
-  const prov=getVisionProvider(), key=getVisionKey(prov);
-  if(!key){ box.innerHTML=aiMsgBox('🔑','کلید API لازم است','در پروفایل → «تشخیص غذا از عکس» کلید را وارد کن.','err'); return; }
+  const prov=sectionProvider(scope), key=getVisionKey(prov);
+  if(!key){ box.innerHTML=aiMsgBox('🔑','کلید API لازم است','در پروفایل → بخش هوش مصنوعی کلید را وارد کن.','err'); return; }
   if(!navigator.onLine){ box.innerHTML=aiMsgBox('📡','آفلاین هستی','برای تحلیل هوش مصنوعی به اینترنت نیاز است.','err'); return; }
   const snap=buildHealthSnapshot(scope);
   if(!snap.text.trim()){ box.innerHTML=aiMsgBox('🤔','داده‌ی کافی نیست','هنوز داده‌ی کافی برای تحلیل ثبت نشده؛ چند وعده/قند/ورزش ثبت کن.','err'); return; }
@@ -9323,7 +9552,9 @@ async function runHealthAi(scope, force){
     const text=await aiRetry(()=>callAIText(prov,key,HEALTH_AI_PROMPT(scope,snap),4096,512), n=>{ box.innerHTML=aiEmptyState('⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'); });
     const clean=String(text||'').trim();
     if(!clean){ box.innerHTML=aiMsgBox('⚠️','پاسخی نیامد','دوباره امتحان کن.','err'); return; }
-    aiLastSet(scope,{text:clean, ts:Date.now(), hash});
+    const sk=scopeKey(scope);
+    aiLastSet(sk,{text:clean, ts:Date.now(), hash});
+    aiHistoryAdd(sk, scope, snap.label, clean);
     renderHealthAiPanel(scope);   // بازرندر با زمان و کارت‌ها
   }catch(e){ const ei=aiErrorInfo(e); box.innerHTML=aiMsgBox(ei.emoji,ei.title,ei.text,'err',String((e&&e.message)||e)); }
 }
@@ -9340,7 +9571,7 @@ async function handleLabReportFile(input){
     if(/\.(xlsx|xls|csv)$/.test(name)){ prog.textContent='در حال خواندن اکسل…'; rows=await extractFromExcel(f); }
     else if(/\.pdf$/.test(name)||f.type==='application/pdf'){ prog.textContent='در حال خواندن PDF…'; rows=await extractFromPDF(f,prog); }
     else if((f.type&&f.type.startsWith('image/'))||/\.(jpe?g|png|webp|bmp|gif|heic)$/.test(name)){
-      if(labAiReadOn() && navigator.onLine && getVisionKey(getVisionProvider())){
+      if(labAiReadOn() && navigator.onLine && getVisionKey(sectionProviderVision('labread'))){
         prog.textContent='در حال خواندن عکس با هوش مصنوعی…';
         try{ rows=await extractFromImageAI(f,prog); }
         catch(e){ const ei=aiErrorInfo(e); prog.style.color='var(--muted)'; prog.textContent=ei.emoji+' '+ei.text+' فعلاً با حالت آفلاین می‌خوانم…'; rows=await extractFromImage(f,prog); }
