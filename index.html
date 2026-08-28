@@ -1741,7 +1741,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۲.۳</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۲.۴</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4752,13 +4752,16 @@ async function handleCustomFoodPhotoAI(inp){
   const note=document.getElementById('cfPhotoNote');
   const setNote=s=>{ if(note) note.textContent=s; };
   const prov=sectionProviderVision('cffood');
+  const anyVision=VISION_PROVIDERS.some(p=>PROVIDER_VISION[p]&&hasAnyKey(p));
   if(!navigator.onLine){ setNote('⚠️ خواندن با هوش مصنوعی به اینترنت نیاز دارد؛ الان آفلاینی. از «خواندن آفلاین» استفاده کن یا دستی وارد کن.'); inp.value=''; return; }
-  if(!hasAnyKey(prov)){ setNote('⚠️ برای «'+(PROVIDER_NAMES[prov]||prov)+'» کلید API نداری — به تنظیمات برو یا از «خواندن آفلاین» استفاده کن.'); inp.value=''; return; }
+  if(!anyVision){ setNote('⚠️ هیچ سرویس عکس‌داری کلید ندارد — به تنظیمات برو یا از «خواندن آفلاین» استفاده کن.'); inp.value=''; return; }
   try{
     setNote('در حال آماده‌سازی عکس برای هوش مصنوعی…');
     const img=await imageToJpeg(file,1400,0.85);
     setNote('خواندن برچسب با هوش مصنوعی…');
-    const text=await aiKeyFallback(prov, k=>callVision(prov,k,img,CF_AI_PROMPT,900,0), n=>setNote('سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'));
+    const text=await aiVisionFallback(prov, (p,k)=>callVision(p,k,img,CF_AI_PROMPT,900,0),
+      n=>setNote('سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'),
+      p=>{ if(p!==prov) setNote('سهمیه‌ی «'+(PROVIDER_NAMES[prov]||prov)+'» پر بود؛ تلاش با «'+(PROVIDER_NAMES[p]||p)+'»…'); });
     let o=null; try{ const t=String(text||''); const a=t.indexOf('{'),b=t.lastIndexOf('}'); if(a>=0&&b>a) o=JSON.parse(t.slice(a,b+1)); }catch(e){}
     if(!o){ setNote('نتوانستم برچسب را بخوانم. عکس واضح‌تر بده یا از «خواندن آفلاین» استفاده کن یا دستی وارد کن.'); inp.value=''; return; }
     const num=v=>{ const n=parseFloat(v); return isFinite(n)?n:null; };
@@ -6859,6 +6862,26 @@ async function aiKeyFallback(prov, makeCall, onRetry){
     }
   }
   throw lastErr;
+}
+// فالبک چندسرویسی برای کارهای عکسی: اگر سرویس انتخابی سهمیه‌اش پر شد (۴۲۹/۴۰۲) یا محدودیت جغرافیایی داشت،
+// خودکار سراغ سرویس عکس‌دار بعدی که کلید دارد می‌رود. makeCall(prov,key). onProv(prov) قبل از هر سرویس صدا زده می‌شود.
+async function aiVisionFallback(primary, makeCall, onRetry, onProv){
+  const order=[primary, ...VISION_PROVIDERS.filter(p=>p!==primary)];
+  const tried=new Set(); let lastErr;
+  for(const p of order){
+    if(tried.has(p) || !PROVIDER_VISION[p] || !hasAnyKey(p) || aiGeoBlocked(p)) continue;
+    tried.add(p);
+    if(onProv){ try{ onProv(p); }catch(_){} }
+    try{ return await aiKeyFallback(p, k=>makeCall(p,k), onRetry); }
+    catch(e){
+      lastErr=e; const m=String((e&&e.message)||e); const cm=m.match(/\((\d{3})\)/); const code=cm?+cm[1]:0;
+      const quota = code===429||code===402||/insufficient balance|quota|exceeded|rate limit|billing/i.test(m);
+      const geo   = /location|not supported|unsupported|region|country/i.test(m);
+      if(quota||geo) continue;   // سرویس بعدیِ عکس‌دار را امتحان کن
+      throw e;
+    }
+  }
+  throw lastErr || new Error('هیچ سرویس عکس‌دارِ در دسترسی نمانده');
 }
 // انتخاب سرویس هوش مصنوعی برای هر بخش (اگر تنظیم نشده، از سرویس پیش‌فرض استفاده می‌شود)
 const AI_SECTION_KEY='ai_section_provider_v1';
