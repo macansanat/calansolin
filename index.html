@@ -1737,7 +1737,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۱.۸</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۱.۸.۱</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -7183,13 +7183,13 @@ function clearVisionKeyFor(prov){
 }
 // بخش‌هایی که سرویس هوش مصنوعی برایشان انتخاب می‌شود
 const AI_SECTIONS=[
-  {id:'food', label:'📷 عکس غذا (ماشین‌حساب)', vision:true},
-  {id:'labread', label:'📷 خواندن عکس آزمایش', vision:true},
-  {id:'labanalysis', label:'🧪 تحلیل آزمایش', vision:false},
-  {id:'daily', label:'📋 تحلیل گزارش روزانه', vision:false},
-  {id:'overview', label:'📊 تحلیل گزارش کلی', vision:false},
-  {id:'home', label:'🏠 توصیه‌ی صفحه‌ی اول', vision:false},
-  {id:'chat', label:'💬 چت هوشمند', vision:false}
+  {id:'food', label:'عکس غذا', icon:'📷', vision:true},
+  {id:'labread', label:'عکس آزمایش', icon:'📷', vision:true},
+  {id:'labanalysis', label:'تحلیل آزمایش', icon:'🧪', vision:false},
+  {id:'daily', label:'گزارش روزانه', icon:'📋', vision:false},
+  {id:'overview', label:'گزارش کلی', icon:'📊', vision:false},
+  {id:'home', label:'صفحه‌ی اول', icon:'🏠', vision:false},
+  {id:'chat', label:'چت هوشمند', icon:'💬', vision:false}
 ];
 function renderVisionSetting(){
   const box=document.getElementById('visionSetting'); if(!box) return;
@@ -7212,17 +7212,19 @@ function renderVisionSetting(){
   h+=`<div style="font-weight:800;font-size:12.5px;color:var(--teal);margin:14px 0 8px">۲) کدام بخش با کدام هوش مصنوعی؟</div>`;
   if(!avail.length){ h+=`<div style="font-size:11.5px;color:var(--amber);line-height:1.8">اول حداقل یک کلید بالا را ذخیره کن تا اینجا بتوانی انتخاب کنی.</div>`; }
   else{
-    AI_SECTIONS.forEach(sec=>{
+    h+=`<div style="border:1px solid var(--line);border-radius:12px;overflow:hidden">`;
+    AI_SECTIONS.forEach((sec,i)=>{
       const opts=avail.filter(p=>!sec.vision || PROVIDER_VISION[p]);
       const cur=sectionProvider(sec.id);
-      h+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
-        <span style="flex:1;font-size:12px">${sec.label}${sec.vision?' <span style="font-size:9.5px;color:var(--muted)">(عکس)</span>':''}</span>
-        <select onchange="setSectionProvider('${sec.id}',this.value)" style="flex:0 0 auto;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:6px 8px;font-family:inherit;font-size:12px">
+      h+=`<div style="display:grid;grid-template-columns:1fr 118px;align-items:center;gap:10px;padding:9px 11px;${i?'border-top:1px solid var(--line)':''}">
+        <div style="min-width:0;display:flex;align-items:center;gap:7px;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="flex:0 0 auto">${sec.icon}</span><span style="overflow:hidden;text-overflow:ellipsis">${sec.label}</span></div>
+        <select onchange="setSectionProvider('${sec.id}',this.value)" style="width:100%;min-width:0;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:7px 6px;font-family:inherit;font-size:12px">
           ${opts.map(p=>`<option value="${p}" ${p===cur?'selected':''}>${PROVIDER_NAMES[p]}</option>`).join('')}
         </select>
       </div>`;
     });
-    h+=`<div style="font-size:10.5px;color:var(--muted);line-height:1.8;margin-top:6px">مثلاً عکس‌ها با Gemini (رایگان)، تحلیل آزمایش با Claude، گزارش روزانه با OpenAI، گزارش کلی با DeepSeek. دیپ‌سیک عکس ندارد پس برای بخش‌های عکسی نمی‌آید.</div>`;
+    h+=`</div>`;
+    h+=`<div style="font-size:10.5px;color:var(--muted);line-height:1.8;margin-top:8px">مثلاً عکس‌ها با Gemini (رایگان)، تحلیل آزمایش با Claude، گزارش‌ها با OpenAI یا DeepSeek. دیپ‌سیک عکس ندارد.</div>`;
   }
   box.innerHTML=h;
 }
@@ -9186,23 +9188,52 @@ function buildChatSystemPrompt(){
 }
 let _chatCssDone=false;
 function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=document.createElement('style'); s.textContent=`
-  .chat-head{display:flex;gap:6px;align-items:center;margin-bottom:8px}
-  .chat-sel{flex:1;min-width:0;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px;font-family:inherit;font-size:12.5px}
-  .chat-opts{display:flex;gap:8px;margin-bottom:10px}
-  .chat-opts label{flex:1;font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
-  .chat-opts select{background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:7px;font-family:inherit;font-size:12px}
-  .chat-msgs{min-height:38vh;max-height:56vh;overflow-y:auto;display:flex;flex-direction:column;gap:9px;padding:6px 2px}
-  .chat-b{max-width:86%;padding:10px 13px;border-radius:15px;font-size:12.8px;line-height:1.9;word-break:break-word}
+  .chatx{position:relative}
+  .chatx-top{display:flex;align-items:center;gap:9px;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:10px}
+  .chatx-burger{flex:0 0 auto;width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--field);color:var(--teal);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .chatx-tt{flex:1;min-width:0;display:flex;align-items:center;gap:6px;cursor:pointer;overflow:hidden}
+  .chatx-tt b{font-size:14px;font-weight:800;color:#eafffb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chatx-tt .pen{flex:0 0 auto;color:var(--muted);font-size:12px}
+  .chatx-title-inp{flex:1;min-width:0;background:var(--field);border:1.5px solid var(--teal);border-radius:9px;padding:7px 10px;font-family:inherit;font-size:13.5px;color:var(--ink)}
+  .chatx-opt{flex:0 0 auto;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:6px 5px;font-family:inherit;font-size:11px;max-width:88px}
+  .chat-msgs{min-height:44vh;max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:6px 2px}
+  .chat-b{max-width:88%;padding:10px 14px;border-radius:16px;font-size:13px;line-height:1.95;word-break:break-word;box-shadow:0 1px 3px rgba(0,0,0,.15)}
   .chat-b.me{align-self:flex-start;background:linear-gradient(160deg,var(--teal),var(--teal-dim));color:#fff;border-bottom-right-radius:5px}
-  .chat-b.ai{align-self:flex-end;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);border-bottom-left-radius:5px}
-  .chat-input{display:flex;gap:7px;align-items:flex-end;margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
-  .chat-input textarea{flex:1;resize:none;background:var(--field);border:1.5px solid var(--teal-dim);border-radius:14px;padding:11px 14px;font-family:inherit;font-size:13px;color:var(--ink);line-height:1.6;max-height:120px}
-  .chat-send{flex:0 0 auto;width:44px;height:44px;border-radius:50%;border:none;background:linear-gradient(145deg,var(--teal),var(--teal-dim));color:#fff;font-size:19px;cursor:pointer;box-shadow:0 4px 12px rgba(63,185,163,.4)}
+  .chat-b.ai{align-self:flex-end;background:#1b2735;border:1px solid var(--line);color:var(--ink);border-bottom-left-radius:5px}
+  .chat-input{display:flex;gap:8px;align-items:flex-end;margin-top:11px;border-top:1px solid var(--line);padding-top:11px}
+  .chat-input textarea{flex:1;resize:none;background:var(--field);border:1.5px solid var(--teal-dim);border-radius:16px;padding:12px 15px;font-family:inherit;font-size:13.5px;color:var(--ink);line-height:1.6;max-height:120px}
+  .chat-send{flex:0 0 auto;width:46px;height:46px;border-radius:50%;border:none;background:linear-gradient(145deg,var(--teal),var(--teal-dim));color:#fff;font-size:20px;cursor:pointer;box-shadow:0 4px 14px rgba(63,185,163,.45)}
+  .chatx-drawer{position:fixed;top:0;bottom:0;left:0;width:80%;max-width:330px;background:var(--panel,#131c26);border-right:1px solid var(--line);z-index:140;transform:translateX(-102%);transition:transform .26s cubic-bezier(.4,0,.2,1);overflow-y:auto;padding:16px 14px;box-shadow:6px 0 26px rgba(0,0,0,.4)}
+  .chatx-drawer.open{transform:translateX(0)}
+  .chatx-scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:139;opacity:0;pointer-events:none;transition:opacity .26s}
+  .chatx-scrim.open{opacity:1;pointer-events:auto}
+  .chatx-dhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .chatx-dhead b{font-size:15px;font-weight:800;color:var(--teal)}
+  .chatx-newbtn{background:linear-gradient(145deg,var(--teal),var(--teal-dim));border:none;color:#fff;border-radius:11px;padding:8px 13px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer}
+  .chatx-litem{display:flex;align-items:center;gap:9px;padding:11px 11px;border-radius:12px;cursor:pointer;margin-bottom:6px;border:1px solid transparent}
+  .chatx-litem:hover{background:rgba(255,255,255,.03)}
+  .chatx-litem.on{background:rgba(63,185,163,.12);border-color:var(--teal-dim)}
+  .chatx-litem .ci{flex:0 0 auto;font-size:16px}
+  .chatx-litem .ct{flex:1;min-width:0}
+  .chatx-litem .cn{font-size:12.7px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chatx-litem .cd{font-size:10px;color:var(--muted);margin-top:2px}
+  .chatx-litem .cx{flex:0 0 auto;background:transparent;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:4px}
   `; document.head.appendChild(s);
 }
 function chatBubble(m){ const me=m.role==='user'; return `<div class="chat-b ${me?'me':'ai'}">${me?escVision(m.content).replace(/\n/g,'<br>'):labAiFmt(m.content)}</div>`; }
 function chatAutoGrow(t){ t.style.height='auto'; t.style.height=Math.min(120,t.scrollHeight)+'px'; }
 function renderChatMessages(c){ const mb=document.getElementById('chatMsgs'); if(!mb)return; mb.innerHTML=c.messages.map(chatBubble).join(''); mb.scrollTop=mb.scrollHeight; }
+function openChatDrawer(){ const d=document.getElementById('chatDrawer'),s=document.getElementById('chatScrim'); if(d)d.classList.add('open'); if(s)s.classList.add('open'); }
+function closeChatDrawer(){ const d=document.getElementById('chatDrawer'),s=document.getElementById('chatScrim'); if(d)d.classList.remove('open'); if(s)s.classList.remove('open'); }
+function chatEditTitle(){
+  const wrap=document.getElementById('chatTitleWrap'); if(!wrap) return;
+  const cur=(chatActive()||{}).title||'گفتگو';
+  const inp=document.createElement('input'); inp.className='chatx-title-inp'; inp.value=cur;
+  inp.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); inp.blur(); } };
+  inp.onblur=()=>chatSaveTitle(inp.value);
+  wrap.replaceWith(inp); inp.focus(); inp.select();
+}
+function chatSaveTitle(v){ const o=chatLoad(); const c=chatActive(o); if(c){ const t=(v||'').trim(); if(t) c.title=t; chatSave(o); } renderChatTab(); }
 function renderChatTab(){
   const box=document.getElementById('chatRoot'); if(!box) return;
   ensureAiAdvCss(); ensureChatCss();
@@ -9212,21 +9243,33 @@ function renderChatTab(){
   const prov=c.provider||sectionProvider('chat');
   const withKeys=VISION_PROVIDERS.filter(p=>getVisionKey(p));
   const hasKey=!!getVisionKey(prov);
-  let h=`<div class="chat-head">
-    <select class="chat-sel" onchange="chatSelect(this.value)">${o.chats.map(x=>`<option value="${x.id}" ${x.id===c.id?'selected':''}>${escVision(x.title||'گفتگو')}</option>`).join('')}</select>
-    <button type="button" class="mini-btn" onclick="chatNew()">➕ جدید</button>
-    <button type="button" class="mini-btn" onclick="chatDelete('${c.id}')">🗑</button>
-  </div>
-  <div class="chat-opts">
-    <label>سرویس هوش مصنوعی<select onchange="chatSetProvider(this)">${(withKeys.length?withKeys:VISION_PROVIDERS).map(p=>`<option value="${p}" ${p===prov?'selected':''}>${PROVIDER_NAMES[p]}</option>`).join('')}</select></label>
-    <label>حالت<select onchange="chatSetSpeed(this)"><option value="smart" ${c.speed!=='fast'?'selected':''}>دقیق</option><option value="fast" ${c.speed==='fast'?'selected':''}>سریع</option></select></label>
-  </div>`;
-  if(!hasKey) h+=`<div style="color:var(--amber);font-size:12px;margin:2px 2px 8px">⚠️ برای «${escVision(PROVIDER_NAMES[prov]||prov)}» کلید نداری — <b onclick="gotoVisionSettings()" style="cursor:pointer;text-decoration:underline">به تنظیمات برو</b> یا سرویس را عوض کن.</div>`;
+  const provOpts=(withKeys.length?withKeys:VISION_PROVIDERS).map(p=>`<option value="${p}" ${p===prov?'selected':''}>${PROVIDER_NAMES[p]}</option>`).join('');
+  let h=`<div class="chatx">
+    <div class="chatx-top">
+      <button type="button" class="chatx-burger" onclick="openChatDrawer()" title="گفتگوها">☰</button>
+      <div class="chatx-tt" id="chatTitleWrap" onclick="chatEditTitle()"><b>${escVision(c.title||'گفتگوی جدید')}</b><span class="pen">✏️</span></div>
+      <select class="chatx-opt" onchange="chatSetProvider(this)" title="سرویس">${provOpts}</select>
+      <select class="chatx-opt" onchange="chatSetSpeed(this)" title="حالت"><option value="smart" ${c.speed!=='fast'?'selected':''}>دقیق</option><option value="fast" ${c.speed==='fast'?'selected':''}>سریع</option></select>
+    </div>`;
+  if(!hasKey) h+=`<div style="color:var(--amber);font-size:12px;margin:0 2px 8px">⚠️ برای «${escVision(PROVIDER_NAMES[prov]||prov)}» کلید نداری — <b onclick="gotoVisionSettings()" style="cursor:pointer;text-decoration:underline">تنظیمات</b> یا سرویس را عوض کن.</div>`;
   h+=`<div class="chat-msgs" id="chatMsgs"></div>
-  <div class="chat-input"><textarea id="chatInput" rows="1" placeholder="از دیابوت بپرس… (قند، تغذیه، انسولین، ورزش، آزمایش)" oninput="chatAutoGrow(this)"></textarea><button type="button" class="chat-send" onclick="chatSend()">➤</button></div>`;
+    <div class="chat-input"><textarea id="chatInput" rows="1" placeholder="از دیابوت بپرس…" oninput="chatAutoGrow(this)"></textarea><button type="button" class="chat-send" onclick="chatSend()">➤</button></div>
+  </div>`;
+  // کشوی گفتگوها (سمت چپ)
+  h+=`<div class="chatx-scrim" id="chatScrim" onclick="closeChatDrawer()"></div>
+    <div class="chatx-drawer" id="chatDrawer">
+      <div class="chatx-dhead"><b>💬 گفتگوها</b><button type="button" class="chatx-newbtn" onclick="chatNew();closeChatDrawer()">➕ جدید</button></div>`;
+  o.chats.forEach(x=>{
+    h+=`<div class="chatx-litem ${x.id===c.id?'on':''}" onclick="chatSelect('${x.id}');closeChatDrawer()">
+      <span class="ci">💬</span>
+      <div class="ct"><div class="cn">${escVision(x.title||'گفتگو')}</div><div class="cd">${aiTimeStr(x.ts)}</div></div>
+      <button type="button" class="cx" onclick="event.stopPropagation();chatDelete('${x.id}')" title="حذف">🗑</button>
+    </div>`;
+  });
+  h+=`</div>`;
   box.innerHTML=h;
   const mb=document.getElementById('chatMsgs');
-  if(!c.messages.length){ mb.innerHTML=`<div style="text-align:center;color:var(--muted);font-size:12px;padding:22px 10px;line-height:1.9">سلام! من <b style="color:var(--teal)">دیابوت</b>م 🤖<br>با آگاهی از قند، تغذیه، انسولین، ورزش و آزمایش‌هایت، هرچی خواستی بپرس.</div>`; }
+  if(!c.messages.length){ mb.innerHTML=`<div style="text-align:center;color:var(--muted);font-size:12.5px;padding:26px 12px;line-height:2">سلام! من <b style="color:var(--teal)">دیابوت</b>م 🤖<br>با آگاهی از قند، تغذیه، انسولین، ورزش و آزمایش‌هایت، هرچی خواستی بپرس.</div>`; }
   else renderChatMessages(c);
 }
 async function chatSend(){
