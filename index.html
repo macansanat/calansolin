@@ -1737,7 +1737,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۱.۸.۱</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۱.۹</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3928,6 +3928,7 @@ function goToToday(){
 async function saveProfile(){
   const p={diabetesType:val('diabetesType'),basalInsulin:val('basalInsulin'),insulinType:val('insulinType'),age:val('age'),weight:val('weight'),gender:val('gender'),tdd:val('tdd'),ic:val('icRatio'),isf:val('isf')};
   await storageSet(PKEY,JSON.stringify(p)); showSaved(p);
+  if(typeof updateProfileCardTitle==='function') updateProfileCardTitle();
 }
 function val(id){return document.getElementById(id).value;}
 const DTYPE_FA={type1:'نوع ۱',type2:'نوع ۲',lada:'LADA',mody:'MODY',gestational:'بارداری',other:'سایر'};
@@ -3969,7 +3970,7 @@ async function loadProfile(){
 // کلیدهای localStorage که در بکاپ گنجانده می‌شوند (نقشه‌ی داده‌ی کاربر).
 // از مقادیر رشته‌ای مستقیم استفاده می‌شود چون بعضی از این const‌ها (CGMKEY, BGKEY, ...)
 // پایین‌تر در فایل تعریف شده‌اند و ارجاع به خودِ متغیر اینجا TDZ می‌دهد.
-const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','custom_foods_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1'];
+const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','custom_foods_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1'];
 
 async function renderProfileTab(){
   // فرم پروفایل (c-profile) حالا خودش داخل این تب است و وضعیت ذخیره‌شده را نشان می‌دهد.
@@ -3978,6 +3979,37 @@ async function renderProfileTab(){
   renderZoomSetting();
   renderVisionSetting();
   renderDataStats();
+  setupProfileCards();
+}
+// همه‌ی باکس‌های پروفایل جمع‌شونده و پیش‌فرض بسته؛ کارت پروفایل در صدر با عنوانِ اطلاعات شخصی
+function setupProfileCards(){
+  const page=document.getElementById('page-profile'); if(!page) return;
+  const pc=document.getElementById('c-profile');
+  if(pc && page.firstElementChild!==pc) page.insertBefore(pc, page.firstElementChild);
+  let st={}; try{ st=JSON.parse(localStorage.getItem('coll_state')||'{}'); }catch(e){}
+  page.querySelectorAll(':scope > .card').forEach(card=>{
+    const id=card.id; if(!id) return;
+    card.classList.add('coll');
+    if(st[id]===undefined) card.classList.add('closed');            // پیش‌فرض: بسته
+    else card.classList.toggle('closed', !!st[id]);
+    const h2=card.querySelector('h2');
+    if(h2 && !h2.getAttribute('onclick')) h2.setAttribute('onclick', "toggleCard('"+id+"')");
+  });
+  updateProfileCardTitle();
+}
+function updateProfileCardTitle(){
+  const pc=document.getElementById('c-profile'); if(!pc) return;
+  const span=pc.querySelector('h2 > span'); if(!span) return;
+  let title='پروفایل و انسولین روزانه';
+  try{ const p=JSON.parse(localStorage.getItem(PKEY)||'{}'); const parts=[];
+    if(p.diabetesType) parts.push('دیابت '+(DTYPE_FA[p.diabetesType]||p.diabetesType));
+    if(p.gender) parts.push(p.gender==='male'?'مرد':'زن');
+    if(p.age) parts.push(faDigits(p.age)+' ساله');
+    if(p.weight) parts.push(faDigits(p.weight)+' کیلو');
+    if(parts.length) title=parts.join(' · ');
+  }catch(e){}
+  const badge=span.querySelector('.step-num');
+  span.innerHTML=(badge?badge.outerHTML:'')+'👤 '+escVision(title);
 }
 
 async function renderDataStats(){
@@ -6738,16 +6770,45 @@ const VISION_PROVIDERS=['claude','openai','gemini','deepseek'];
 const PROVIDER_NAMES={claude:'Claude',openai:'OpenAI',gemini:'Gemini',deepseek:'DeepSeek'};
 const PROVIDER_HINTS={claude:'console.anthropic.com',openai:'platform.openai.com',gemini:'رایگان: aistudio.google.com',deepseek:'platform.deepseek.com'};
 const PROVIDER_VISION={claude:true,openai:true,gemini:true,deepseek:false}; // دیپ‌سیک عکس ندارد
-function getVisionProvider(){ try{ const p=localStorage.getItem(VISION_PROVIDER_KEY); if(VISION_PROVIDERS.includes(p)&&getVisionKey(p)) return p; }catch(e){} const wk=VISION_PROVIDERS.find(x=>getVisionKey(x)); return wk||'claude'; }
+function getVisionProvider(){ try{ const p=localStorage.getItem(VISION_PROVIDER_KEY); if(VISION_PROVIDERS.includes(p)&&hasAnyKey(p)) return p; }catch(e){} const wk=VISION_PROVIDERS.find(x=>hasAnyKey(x)); return wk||'claude'; }
 function setVisionProvider(p){ try{ localStorage.setItem(VISION_PROVIDER_KEY, VISION_PROVIDERS.includes(p)?p:'claude'); }catch(e){} renderVisionSetting(); }
 function getVisionKey(prov){ try{ return (localStorage.getItem(VISION_KEY_PREFIX+(prov||getVisionProvider()))||'').trim(); }catch(e){ return ''; } }
 function setVisionKey(prov,key){ try{ if(key){ localStorage.setItem(VISION_KEY_PREFIX+prov, String(key).trim()); } else { localStorage.removeItem(VISION_KEY_PREFIX+prov); } }catch(e){} }
+// کلید پشتیبان (دوم) برای هر سرویس — وقتی کلید اول لیمیت خورد، خودکار با دومی امتحان می‌شود
+function getVisionKeyBackup(prov){ try{ return (localStorage.getItem(VISION_KEY_PREFIX+prov+'_2')||'').trim(); }catch(e){ return ''; } }
+function setVisionKeyBackup(prov,key){ try{ if(key){ localStorage.setItem(VISION_KEY_PREFIX+prov+'_2', String(key).trim()); } else { localStorage.removeItem(VISION_KEY_PREFIX+prov+'_2'); } }catch(e){} }
+function getVisionKeys(prov){ return [getVisionKey(prov), getVisionKeyBackup(prov)].filter(Boolean); }
+function hasAnyKey(prov){ return getVisionKeys(prov).length>0; }
+// نشانِ مسدودیِ جغرافیایی در همین سشن (برای اینکه بعد از اولین خطای لوکیشن، دیگر بی‌جهت درخواست نفرستد)
+window._aiGeoBlock=window._aiGeoBlock||{};
+function aiGeoBlocked(prov){ return !!window._aiGeoBlock[prov]; }
+function setAiGeoBlocked(prov){ window._aiGeoBlock[prov]=1; }
+function clearAiGeoBlock(prov){ delete window._aiGeoBlock[prov]; }
+// تماس با تلاشِ کلید پشتیبان روی لیمیت/۴۰۲/۴۲۹ + کوتاه‌کردنِ محلیِ مسدودیِ جغرافیایی (بدون مصرف توکن)
+async function aiKeyFallback(prov, makeCall, onRetry){
+  const keys=getVisionKeys(prov);
+  if(!keys.length) throw new Error(PROVIDER_NAMES[prov]+' (401): کلیدی ثبت نشده');
+  if(aiGeoBlocked(prov)) throw new Error(PROVIDER_NAMES[prov]+' (400): User location is not supported (بدون ارسال، توکنی مصرف نشد)');
+  let lastErr;
+  for(let i=0;i<keys.length;i++){
+    try{ const r=await aiRetry(()=>makeCall(keys[i]), onRetry); clearAiGeoBlock(prov); return r; }
+    catch(e){
+      lastErr=e; const m=String((e&&e.message)||e);
+      const cm=m.match(/\((\d{3})\)/); const code=cm?+cm[1]:0;
+      if(/location|not supported|unsupported|region|country/i.test(m)){ setAiGeoBlocked(prov); throw e; }
+      const quota = code===429 || code===402 || /insufficient balance|quota|exceeded|rate limit|billing/i.test(m);
+      if(quota && i<keys.length-1) continue;   // برو سراغ کلید پشتیبان
+      throw e;
+    }
+  }
+  throw lastErr;
+}
 // انتخاب سرویس هوش مصنوعی برای هر بخش (اگر تنظیم نشده، از سرویس پیش‌فرض استفاده می‌شود)
 const AI_SECTION_KEY='ai_section_provider_v1';
 function sectionProvider(section){ try{ const o=JSON.parse(localStorage.getItem(AI_SECTION_KEY)||'{}'); const p=o[section]; return VISION_PROVIDERS.includes(p)?p:getVisionProvider(); }catch(e){ return getVisionProvider(); } }
 function setSectionProvider(section,prov){ try{ const o=JSON.parse(localStorage.getItem(AI_SECTION_KEY)||'{}'); if(prov) o[section]=prov; else delete o[section]; localStorage.setItem(AI_SECTION_KEY, JSON.stringify(o)); }catch(e){} }
 // سرویس بخش را برمی‌گرداند؛ اگر بخش تصویری است و سرویس عکس ندارد، به یک سرویسِ عکس‌دار برمی‌گردد
-function sectionProviderVision(section){ let p=sectionProvider(section); if(!PROVIDER_VISION[p]){ p=['gemini','claude','openai'].find(x=>getVisionKey(x))||'gemini'; } return p; }
+function sectionProviderVision(section){ let p=sectionProvider(section); if(!PROVIDER_VISION[p]){ p=['gemini','claude','openai'].find(x=>hasAnyKey(x))||'gemini'; } return p; }
 function escVision(s){ return String(s==null?'':s).replace(/[<>"'&]/g,c=>({'<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','&':'&amp;'}[c])); }
 // خطاهای خام سرویس‌های هوش مصنوعی → پیام فارسیِ واضح و کاربرپسند (برای همه‌ی بخش‌ها)
 function aiErrorInfo(e){
@@ -6758,6 +6819,8 @@ function aiErrorInfo(e){
     return {emoji:'📡', title:'ارتباط برقرار نشد', text:'به سرویس هوش مصنوعی وصل نشدیم. اینترنت (یا VPN) را بررسی کن و دوباره امتحان کن.'};
   if(code===429)
     return {emoji:'⏳', title:'سهمیه‌ی سرویس پر شد', text:'تعداد درخواست‌ها زیاد شده. چند دقیقه صبر کن و دوباره امتحان کن؛ اگر سقفِ روزانه‌ی رایگان پر شده، فردا دوباره کار می‌کند — یا از کلید/سرویس دیگری استفاده کن.'};
+  if(code===402 || /insufficient balance|insufficient_quota|billing|no credit/i.test(raw))
+    return {emoji:'💳', title:'اعتبار حساب تمام شده', text:'موجودیِ حساب این سرویس (مثلاً DeepSeek) تمام شده است. باید در پنل همان سرویس شارژ/اعتبار اضافه کنی، یا سرویس دیگری را برای این بخش انتخاب کنی.'};
   if(code===401||code===403)
     return geo ? {emoji:'🌍', title:'در دسترس نیست', text:'این سرویس از موقعیت جغرافیایی تو باز نیست. با VPN (کشور پشتیبانی‌شده) یا درگاه واسط امتحان کن.'}
                : {emoji:'🔑', title:'کلید پذیرفته نشد', text:'کلید API نامعتبر است یا اجازه ندارد. آن را در پروفایل → «تشخیص غذا از عکس» بررسی یا دوباره وارد کن.'};
@@ -7122,7 +7185,7 @@ function gotoVisionSettings(){
 function startPlatePhoto(){
   const prov=sectionProviderVision('food');
   const s=document.getElementById('visionStatus');
-  if(!getVisionKey(prov)){
+  if(!hasAnyKey(prov)){
     if(s){ s.style.display='block'; s.innerHTML='برای تشخیص از عکس، اول باید کلید API را در پروفایل وارد کنی. '
       +'<button type="button" class="mini-btn" style="margin-right:6px" onclick="gotoVisionSettings()">رفتن به تنظیمات</button>'; }
     return;
@@ -7132,16 +7195,16 @@ function startPlatePhoto(){
 async function handlePlatePhoto(inp){
   const file=inp&&inp.files&&inp.files[0]; if(inp) inp.value='';
   if(!file) return;
-  const prov=sectionProviderVision('food'), key=getVisionKey(prov);
+  const prov=sectionProviderVision('food');
   const s=document.getElementById('visionStatus'); if(s) s.style.display='block';
   const set=(html)=>{ if(s) s.innerHTML=html; };
-  if(!key){ set(aiMsgBox('🔑','کلید API لازم است','اول در پروفایل → «تشخیص غذا از عکس» کلید را وارد کن، بعد دوباره امتحان کن.','err')); return; }
+  if(!hasAnyKey(prov)){ set(aiMsgBox('🔑','کلید API لازم است','اول در پروفایل → بخش هوش مصنوعی کلید را وارد کن، بعد دوباره امتحان کن.','err')); return; }
   if(!navigator.onLine){ set(aiMsgBox('📡','آفلاین هستی','تشخیص از عکس به اینترنت نیاز دارد. آنلاین شو و دوباره امتحان کن، یا خوراکی‌ها را دستی وارد کن.','err')); return; }
   set(aiMsgBox('⏳','در حال آماده‌سازی عکس…','کمی صبر کن.'));
   try{
     const img=await imageToJpeg(file,1024,0.82);
     set(aiMsgBox('🔎','در حال تحلیل با هوش مصنوعی…','چند ثانیه طول می‌کشد.'));
-    const text=await aiRetry(()=>callVision(prov,key,img,null,1500,0), n=>set(aiMsgBox('⏳','سرویس شلوغ است','تلاش دوباره ('+faDigits(String(n))+')… کمی صبر کن.')));
+    const text=await aiKeyFallback(prov, k=>callVision(prov,k,img,null,1500,0), n=>set(aiMsgBox('⏳','سرویس شلوغ است','تلاش دوباره ('+faDigits(String(n))+')… کمی صبر کن.')));
     const items=parseVisionJSON(text);
     if(!items.length){ set(aiMsgBox('🤔','غذایی تشخیص داده نشد','عکس واضح‌تر و از بالای بشقاب بگیر، یا خوراکی‌ها را دستی وارد کن.','err')); return; }
     const plan=planVisionRows(items);
@@ -7172,7 +7235,7 @@ function saveVisionKeyFor(prov){
   const inp=document.getElementById('visionKeyInput_'+prov); if(!inp) return;
   const v=(inp.value||'').trim();
   if(!v){ if(typeof uiToast==='function') uiToast('کلید خالی است'); return; }
-  setVisionKey(prov,v);
+  setVisionKey(prov,v); clearAiGeoBlock(prov);
   renderVisionSetting();
   if(typeof uiToast==='function') uiToast(PROVIDER_NAMES[prov]+' ذخیره شد');
 }
@@ -7181,6 +7244,13 @@ function clearVisionKeyFor(prov){
   renderVisionSetting();
   if(typeof uiToast==='function') uiToast('کلید حذف شد');
 }
+function saveVisionKeyBackupFor(prov){
+  const inp=document.getElementById('visionKeyBackup_'+prov); if(!inp) return;
+  const v=(inp.value||'').trim(); if(!v){ if(typeof uiToast==='function') uiToast('کلید پشتیبان خالی است'); return; }
+  setVisionKeyBackup(prov,v); clearAiGeoBlock(prov); renderVisionSetting();
+  if(typeof uiToast==='function') uiToast('کلید پشتیبان '+PROVIDER_NAMES[prov]+' ذخیره شد');
+}
+function clearVisionKeyBackupFor(prov){ setVisionKeyBackup(prov,''); renderVisionSetting(); if(typeof uiToast==='function') uiToast('کلید پشتیبان حذف شد'); }
 // بخش‌هایی که سرویس هوش مصنوعی برایشان انتخاب می‌شود
 const AI_SECTIONS=[
   {id:'food', label:'عکس غذا', icon:'📷', vision:true},
@@ -7196,19 +7266,24 @@ function renderVisionSetting(){
   // ۱) کلیدهای چهار سرویس
   let h=`<div style="font-weight:800;font-size:12.5px;color:var(--teal);margin-bottom:8px">۱) کلیدهای API (هر کدام را داشتی وارد کن)</div>`;
   VISION_PROVIDERS.forEach(p=>{
-    const has=!!getVisionKey(p);
+    const has=!!getVisionKey(p); const has2=!!getVisionKeyBackup(p);
     h+=`<div style="border:1px solid ${has?'var(--teal-dim)':'var(--line)'};border-radius:11px;padding:9px 10px;margin-bottom:8px;background:${has?'rgba(63,185,163,.07)':'transparent'}">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><b style="font-size:12.5px;color:${has?'var(--teal)':'var(--fg)'}">${PROVIDER_NAMES[p]}</b>${has?'<span style="font-size:10.5px;color:var(--teal)">✓ ذخیره‌شده</span>':''}${!PROVIDER_VISION[p]?'<span style="font-size:9.5px;color:var(--muted)">(بدون عکس)</span>':''}<span style="flex:1"></span><span style="font-size:9.5px;color:var(--muted)">${PROVIDER_HINTS[p]}</span></div>
       <div style="display:flex;gap:5px">
-        <input type="password" id="visionKeyInput_${p}" placeholder="${has?'●●●●●●●●  (برای تغییر بچسبان)':'کلید API'}" autocomplete="off" style="flex:1;min-width:0;font-size:12px">
+        <input type="password" id="visionKeyInput_${p}" placeholder="${has?'●●●●●●●●  (کلید اصلی)':'کلید API اصلی'}" autocomplete="off" style="flex:1;min-width:0;font-size:12px">
         <button type="button" class="mini-btn" onclick="toggleVisionKeyView('${p}')" title="نمایش">👁</button>
         <button type="button" class="mini-btn" onclick="saveVisionKeyFor('${p}')">💾</button>
         ${has?`<button type="button" class="mini-btn" onclick="clearVisionKeyFor('${p}')" title="حذف">🗑</button>`:''}
       </div>
+      <div style="display:flex;gap:5px;margin-top:5px">
+        <input type="password" id="visionKeyBackup_${p}" placeholder="${has2?'●●●●●●●●  (کلید پشتیبان)':'کلید پشتیبان (اختیاری) — وقتی اولی لیمیت خورد'}" autocomplete="off" style="flex:1;min-width:0;font-size:11.5px;opacity:.9">
+        <button type="button" class="mini-btn" onclick="saveVisionKeyBackupFor('${p}')" title="ذخیره‌ی پشتیبان">💾₂</button>
+        ${has2?`<button type="button" class="mini-btn" onclick="clearVisionKeyBackupFor('${p}')" title="حذف پشتیبان">🗑</button>`:''}
+      </div>
     </div>`;
   });
   // ۲) انتخاب سرویس برای هر بخش
-  const avail=VISION_PROVIDERS.filter(p=>getVisionKey(p));
+  const avail=VISION_PROVIDERS.filter(p=>hasAnyKey(p));
   h+=`<div style="font-weight:800;font-size:12.5px;color:var(--teal);margin:14px 0 8px">۲) کدام بخش با کدام هوش مصنوعی؟</div>`;
   if(!avail.length){ h+=`<div style="font-size:11.5px;color:var(--amber);line-height:1.8">اول حداقل یک کلید بالا را ذخیره کن تا اینجا بتوانی انتخاب کنی.</div>`; }
   else{
@@ -8977,11 +9052,11 @@ const LAB_OCR_PROMPT=
 "Output PLAIN TEXT, one test per line, exactly: <English test name/abbreviation> <value> <unit>\n"+
 "Rules: use standard English names/abbreviations (FBS, HbA1c, Triglyceride, Cholesterol, LDL, HDL, Creatinine, Urea, BUN, Uric Acid, AST, ALT, ALP, TSH, T4, T3, Vitamin D, B12, Ferritin, Iron, Calcium, Hb, HCT, WBC, RBC, Platelet, ...). Keep the numeric value exactly as printed (use a decimal point, not comma). Include the unit if shown. One test per line. NO bullets, NO commentary, NO reference ranges. Skip anything you cannot read.";
 async function extractFromImageAI(file,prog){
-  const prov=sectionProviderVision('labread'), key=getVisionKey(prov);
+  const prov=sectionProviderVision('labread');
   if(prog) prog.textContent='آماده‌سازی عکس برای هوش مصنوعی…';
   const img=await imageToJpeg(file,1600,0.85);           // وضوح بیشتر برای متن ریز
   if(prog) prog.textContent='خواندن عکس با هوش مصنوعی…';
-  const text=await aiRetry(()=>callVision(prov,key,img,LAB_OCR_PROMPT,1500,0), n=>{ if(prog) prog.textContent='سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'; });
+  const text=await aiKeyFallback(prov, k=>callVision(prov,k,img,LAB_OCR_PROMPT,1500,0), n=>{ if(prog) prog.textContent='سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'; });
   const lines=String(text||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
   window._lastOcrLines=(window._lastOcrLines||[]).concat(lines);
   return parseLabLines(lines);
@@ -8992,7 +9067,7 @@ function toggleLabAiRead(){ setLabAiRead(!labAiReadOn()); renderLabAiReadToggle(
 function renderLabAiReadToggle(){
   const box=document.getElementById('labAiReadBox'); if(!box) return;
   const on=labAiReadOn();
-  const hasKey=!!getVisionKey(sectionProviderVision('labread'));
+  const hasKey=hasAnyKey(sectionProviderVision('labread'));
   const knob=`<span style="position:absolute;top:3px;${on?'right:3px':'left:3px'};width:20px;height:20px;border-radius:50%;background:#fff"></span>`;
   box.innerHTML=
    `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:12px;border:1px solid ${on?'var(--teal-dim)':'var(--line)'};background:${on?'rgba(63,185,163,.10)':'transparent'}">
@@ -9070,7 +9145,7 @@ function renderLabAiPanel(){
   const curHash=_hashStr((ctx.date||'')+'|'+ctx.lines.join('|'));
   const last=aiLastGet('labs');
   const stale=(last && last.hash && last.hash!==curHash);
-  const hasKey=!!getVisionKey(sectionProvider('labanalysis'));
+  const hasKey=hasAnyKey(sectionProvider('labanalysis'));
   let h=`<div style="margin-top:16px;padding:13px;border:1px solid var(--teal-dim);border-radius:12px;background:linear-gradient(135deg,#16212e,#1b2938)">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px">
       <div style="font-weight:800;color:var(--teal);font-size:13px">🤖 تحلیل هوش مصنوعی <span style="color:var(--muted);font-weight:600;font-size:10.5px">· ${faDigits(ctx.date||'')}</span></div>
@@ -9091,17 +9166,18 @@ function renderLabAiPanel(){
 }
 async function runLabAiAnalysis(force){
   const box=document.getElementById('labAiResult'); if(!box) return;
-  const prov=sectionProvider('labanalysis'), key=getVisionKey(prov);
-  if(!key){ box.innerHTML=aiMsgBox('🔑','کلید API لازم است','اول در پروفایل → «تشخیص غذا از عکس» کلید را وارد کن.','err'); return; }
+  const prov=sectionProvider('labanalysis');
+  if(!hasAnyKey(prov)){ box.innerHTML=aiMsgBox('🔑','کلید API لازم است','اول در پروفایل → بخش هوش مصنوعی کلید را وارد کن.','err'); return; }
   if(!navigator.onLine){ box.innerHTML=aiMsgBox('📡','آفلاین هستی','تحلیل هوش مصنوعی به اینترنت نیاز دارد. آنلاین شو و دوباره «اجرا» را بزن.','err'); return; }
   const ctx=buildLabAIContext(); if(!ctx){ box.innerHTML=aiMsgBox('🤔','نتیجه‌ای نیست','هنوز آزمایشی ثبت نشده.','err'); return; }
   const hash=_hashStr((ctx.date||'')+'|'+ctx.lines.join('|'));
   box.innerHTML=aiEmptyState('⏳ در حال تحلیل… (چند ثانیه)');
   try{
-    const text=await aiRetry(()=>callAIText(prov,key,LAB_JSON_PROMPT(ctx),4096,512), n=>{ box.innerHTML=aiEmptyState('⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'); });
+    const text=await aiKeyFallback(prov, k=>callAIText(prov,k,LAB_JSON_PROMPT(ctx),4096,512), n=>{ box.innerHTML=aiEmptyState('⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'); });
     const clean=String(text||'').trim();
     if(!clean){ box.innerHTML=aiMsgBox('⚠️','پاسخی نیامد','دوباره امتحان کن.','err'); return; }
     aiLastSet('labs',{text:clean, ts:Date.now(), hash});
+    aiMemoryCapture(clean);
     aiHistoryAdd('labs','labs','آزمایش '+(ctx.date||''), clean);
     renderLabAiPanel();
   }catch(e){
@@ -9139,13 +9215,40 @@ function aiHistoryAdd(key, kind, label, text){
     aiHistorySave(a.slice(0,120));
   }catch(e){}
 }
+/* ===== حافظه‌ی یادگیریِ دستیار — با گذر زمان با متابولیک کاربر وفق می‌گیرد ===== */
+const AI_MEMORY_KEY='ai_memory_v1';
+function aiMemoryLoad(){ try{ const a=JSON.parse(localStorage.getItem(AI_MEMORY_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function aiMemorySave(a){ try{ localStorage.setItem(AI_MEMORY_KEY, JSON.stringify(a)); }catch(e){} }
+function aiMemoryAdd(notes){
+  if(!Array.isArray(notes)) return; const a=aiMemoryLoad();
+  const norm=s=>String(s||'').replace(/\s+/g,' ').trim();
+  const seen=new Set(a.map(x=>norm(x.t)));
+  notes.forEach(n=>{ const t=norm((n&&typeof n==='object')?(n.t||n.text):n); if(t && t.length>4 && !seen.has(t)){ seen.add(t); a.push({t, ts:Date.now()}); } });
+  aiMemorySave(a.slice(-60));   // آخرین ۶۰ یادگیری
+}
+function aiMemoryCapture(rawText){ try{ const d=parseAiJSON(rawText); if(d && Array.isArray(d.memory)) aiMemoryAdd(d.memory); }catch(e){} }
+function aiMemoryText(){ const a=aiMemoryLoad(); if(!a.length) return ''; return 'آنچه در طول زمان درباره‌ی این کاربر یاد گرفته‌ای (برای شخصی‌سازیِ پاسخ به‌کار ببر):\n- '+a.slice(-25).map(x=>x.t).join('\n- ')+'\n'; }
+function aiMemoryClear(){ if(!confirm('همه‌ی چیزهایی که دستیار یاد گرفته پاک شود؟')) return; aiMemorySave([]); renderAiHistoryTab(); }
+
 /* ===== تب تاریخچه‌ی هوش مصنوعی ===== */
 function renderAiHistoryTab(){
   const box=document.getElementById('aiHistoryRoot'); if(!box) return;
   ensureAiAdvCss();
-  const a=aiHistoryLoad();
-  if(!a.length){ box.innerHTML=aiEmptyState('هنوز تحلیلی ذخیره نشده. در صفحه‌ی اول، گزارش روزانه، گزارش کلی یا آزمایش، دکمه‌ی «اجرا» را بزن تا برای همیشه اینجا بماند.'); return; }
-  let h=`<div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:11px">هر تحلیلِ هوش مصنوعی با تاریخش اینجا برای همیشه می‌ماند و در فایل خروجی هم منتقل می‌شود. برای دیدن، روی هرکدام بزن.</div>`;
+  const a=aiHistoryLoad(); const mem=aiMemoryLoad();
+  let h='';
+  // کارتِ «حافظه‌ی دستیار» — چیزهایی که با گذر زمان یاد گرفته
+  if(mem.length){
+    h+=`<div style="border:1px solid var(--teal-dim);border-radius:13px;padding:12px 13px;margin-bottom:12px;background:linear-gradient(135deg,#16212e,#1b2938)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-weight:800;color:var(--teal);font-size:13px">🧠 حافظه‌ی دستیار <span style="color:var(--muted);font-weight:600;font-size:10px">(${faDigits(mem.length)} نکته)</span></div>
+        <button type="button" class="mini-btn" onclick="aiMemoryClear()">پاک‌کردن</button>
+      </div>
+      <div style="font-size:10.5px;color:var(--muted);line-height:1.7;margin-bottom:7px">دستیار با گذر زمان این‌ها را از داده‌های تو یاد گرفته و در تحلیل‌ها و چت به‌کار می‌برد (در فایل بکاپ هم می‌ماند).</div>
+      ${mem.slice(-25).reverse().map(x=>`<div style="display:flex;gap:7px;font-size:12px;line-height:1.85;margin:3px 0"><span style="color:var(--teal)">•</span><span>${escVision(x.t)}</span></div>`).join('')}
+    </div>`;
+  }
+  if(!a.length){ box.innerHTML=h+aiEmptyState('هنوز تحلیلی ذخیره نشده. در صفحه‌ی اول، گزارش روزانه، گزارش کلی یا آزمایش، دکمه‌ی «اجرا» را بزن تا برای همیشه اینجا بماند و دستیار یاد بگیرد.'); return; }
+  h+=`<div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:11px">هر تحلیلِ هوش مصنوعی با تاریخش اینجا برای همیشه می‌ماند و در فایل خروجی هم منتقل می‌شود. برای دیدن، روی هرکدام بزن.</div>`;
   a.forEach(rec=>{
     const kind=AI_KIND_FA[rec.kind]||rec.kind;
     const ic=rec.kind==='labs'?'🧪':rec.kind==='daily'?'📋':rec.kind==='overview'?'📊':'🏠';
@@ -9184,6 +9287,7 @@ function buildChatSystemPrompt(){
   return "تو «دیابوت» هستی؛ یک دستیار هوشمند، همدل و عملگرای دیابت که همه‌ی اطلاعات متابولیک این کاربر را می‌داند. همیشه فارسی، کوتاه، دقیق و کاربردی جواب بده و از داده‌های کاربر برای شخصی‌سازی استفاده کن.\n"+
   "خط قرمزها: فقط آموزشی؛ هرگز تشخیص قطعی یا دوز دقیق انسولین/دارو برای اجرا نده؛ برای تصمیم درمانی کاربر را به پزشک ارجاع بده.\n"+
   extra+
+  aiMemoryText()+
   "خلاصه‌ی داده‌های کاربر:\n"+(snap.text||'(داده‌ی کافی ثبت نشده)');
 }
 let _chatCssDone=false;
@@ -9241,7 +9345,7 @@ function renderChatTab(){
   if(!o.chats.length){ chatNew(); return; }
   const c=chatActive(o); if(!c){ chatNew(); return; }
   const prov=c.provider||sectionProvider('chat');
-  const withKeys=VISION_PROVIDERS.filter(p=>getVisionKey(p));
+  const withKeys=VISION_PROVIDERS.filter(p=>hasAnyKey(p));
   const hasKey=!!getVisionKey(prov);
   const provOpts=(withKeys.length?withKeys:VISION_PROVIDERS).map(p=>`<option value="${p}" ${p===prov?'selected':''}>${PROVIDER_NAMES[p]}</option>`).join('');
   let h=`<div class="chatx">
@@ -9276,8 +9380,8 @@ async function chatSend(){
   const inp=document.getElementById('chatInput'); if(!inp) return;
   const txt=(inp.value||'').trim(); if(!txt) return;
   const o=chatLoad(); const c=chatActive(o); if(!c) return;
-  const prov=c.provider||sectionProvider('chat'); const key=getVisionKey(prov);
-  if(!key){ if(typeof uiToast==='function') uiToast('برای این سرویس کلید نداری'); return; }
+  const prov=c.provider||sectionProvider('chat');
+  if(!hasAnyKey(prov)){ if(typeof uiToast==='function') uiToast('برای این سرویس کلید نداری'); return; }
   if(!navigator.onLine){ if(typeof uiToast==='function') uiToast('آفلاین هستی'); return; }
   c.messages.push({role:'user',content:txt,ts:Date.now()});
   if(!c.title||c.title==='گفتگوی جدید') c.title=txt.slice(0,26);
@@ -9287,7 +9391,7 @@ async function chatSend(){
   try{
     const sys=buildChatSystemPrompt();
     const hist=c.messages.slice(-14).map(m=>({role:m.role,content:m.content}));
-    const reply=await aiRetry(()=>callAIChat(prov,key,sys,hist,{speed:c.speed,maxTok:1500}));
+    const reply=await aiKeyFallback(prov, k=>callAIChat(prov,k,sys,hist,{speed:c.speed,maxTok:1500}));
     const clean=String(reply||'').trim()||'پاسخی دریافت نشد.';
     c.messages.push({role:'assistant',content:clean,ts:Date.now()});
     chatSave(o); renderChatMessages(c);
@@ -9396,12 +9500,16 @@ function HEALTH_AI_PROMPT(scope, snap){
   '{"k":"adherence","items":[{"t":"...","d":"..."}]},'+
   '{"k":"pattern","items":[{"t":"<a pattern seen + the fix>","d":"..."}]},'+
   '{"k":"doctor","items":[{"t":"...","d":"..."}]}'+
-  ']}\n\n'+
+  '],'+
+  '"memory":["<0-3 NEW durable insights about THIS user worth remembering long-term: patterns, sensitivities, what works for them — Persian short phrases; [] if nothing new>"]'+
+  '}\n\n'+
   "Rules: Persian only. Each item is an OBJECT {t,d}: t = one short punchy line (max ~12 words); d = a fuller 1-2 sentence explanation (why it matters + how to do it) — include d for every item. 2-4 items per card.\n"+
+  "In `memory`, add only genuinely durable, user-specific insights (not generic advice, not one-off numbers) so you personalize better over time; use the already-learned notes below and avoid repeating them.\n"+
   "Be SPECIFIC to the actual numbers/foods (به عددها و خوراکی‌ها اشاره کن).\n"+
   "IMPORTANT reasoning: compute any «per week» rate ONLY from the stated active window in the data; NEVER describe a bigger number as an increase to a smaller one (e.g. don't say «افزایش از ۱۱ جلسه به ۴ بار»). For exercise, compare the given «بار در هفته» to a target of 4-5/week.\n"+
   "For adherence: use the logged insulin/med facts, but do NOT assume the user's prescribed regimen or that a missing log means a missed injection — phrase gaps gently as «شاید ثبت نشده». Never imply they took a wrong amount.\n"+
   "The \"redline\" card MUST list concrete foods/habits to avoid based on their glucose and labs. Educational only — NEVER give a diagnosis and NEVER give specific insulin/medication doses or timing. Keep every card; if a card has little to say, give 1-2 useful items. Output compact JSON only.\n\n"+
+  aiMemoryText()+
   "داده‌ها ("+snap.label+"):\n"+snap.text;
 }
 // دستور JSON مشترک برای تحلیل آزمایش (همان کارت‌بندی)
@@ -9411,8 +9519,10 @@ function LAB_JSON_PROMPT(ctx){
   '{"score":<0-100 integer overall lab picture>,"scoreLabel":"<2-3 word Persian>","headline":"<one strong Persian sentence>",'+
   '"cards":[{"k":"abnormal","items":[{"t":"<test + value + plain meaning>","d":"<likely cause + 1-2 sentence explanation>"}]},'+
   '{"k":"diet","items":[{"t":"...","d":"..."}]},{"k":"redline","items":[{"t":"<food/habit to avoid given these labs>","d":"..."}]},'+
-  '{"k":"exercise","items":[{"t":"...","d":"..."}]},{"k":"doctor","items":[{"t":"...","d":"..."}]}]}\n\n'+
+  '{"k":"exercise","items":[{"t":"...","d":"..."}]},{"k":"doctor","items":[{"t":"...","d":"..."}]}],'+
+  '"memory":["<0-2 NEW durable insights about THIS user from these labs, Persian; [] if none>"]}\n\n'+
   "Rules: Persian only. Each item is an OBJECT {t,d}: t = short line (max ~12 words); d = a fuller 1-2 sentence explanation. 2-4 items per card. Be specific to the actual values. Educational only — no diagnosis, no medication/insulin doses. Output compact JSON only.\n\n"+
+  aiMemoryText()+
   "Lab results (date "+(ctx.date||'')+"):\n"+ctx.lines.join('\n');
 }
 /* ===== موتور رندرِ کارتیِ خروجی هوش مصنوعی (شیک، طبقه‌بندی‌شده) ===== */
@@ -9563,7 +9673,7 @@ function renderHealthAiPanel(scope){
   const curHash=snap.text.trim()?_hashStr(scope+'|'+snap.text):'';
   const last=aiLastGet(scopeKey(scope));
   const stale=(last && curHash && last.hash && last.hash!==curHash);
-  const hasKey=!!getVisionKey(sectionProvider(scope));
+  const hasKey=hasAnyKey(sectionProvider(scope));
   let h=`<div style="margin-top:14px;padding:13px;border:1px solid var(--teal-dim);border-radius:14px;background:linear-gradient(135deg,#16212e,#1b2938)">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px">
       <div style="font-weight:800;color:var(--teal);font-size:13px">🤖 ${escVision(meta.title)} <span style="color:var(--muted);font-weight:600;font-size:10.5px">· ${escVision(snap.label)}</span></div>
@@ -9584,19 +9694,20 @@ function renderHealthAiPanel(scope){
 }
 async function runHealthAi(scope, force){
   const box=document.getElementById(scope+'AiResult'); if(!box) return;
-  const prov=sectionProvider(scope), key=getVisionKey(prov);
-  if(!key){ box.innerHTML=aiMsgBox('🔑','کلید API لازم است','در پروفایل → بخش هوش مصنوعی کلید را وارد کن.','err'); return; }
+  const prov=sectionProvider(scope);
+  if(!hasAnyKey(prov)){ box.innerHTML=aiMsgBox('🔑','کلید API لازم است','در پروفایل → بخش هوش مصنوعی کلید را وارد کن.','err'); return; }
   if(!navigator.onLine){ box.innerHTML=aiMsgBox('📡','آفلاین هستی','برای تحلیل هوش مصنوعی به اینترنت نیاز است.','err'); return; }
   const snap=buildHealthSnapshot(scope);
   if(!snap.text.trim()){ box.innerHTML=aiMsgBox('🤔','داده‌ی کافی نیست','هنوز داده‌ی کافی برای تحلیل ثبت نشده؛ چند وعده/قند/ورزش ثبت کن.','err'); return; }
   const hash=_hashStr(scope+'|'+snap.text);
   box.innerHTML=aiEmptyState('⏳ در حال تحلیل جامع… (چند ثانیه صبر کن)');
   try{
-    const text=await aiRetry(()=>callAIText(prov,key,HEALTH_AI_PROMPT(scope,snap),4096,512), n=>{ box.innerHTML=aiEmptyState('⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'); });
+    const text=await aiKeyFallback(prov, k=>callAIText(prov,k,HEALTH_AI_PROMPT(scope,snap),4096,512), n=>{ box.innerHTML=aiEmptyState('⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'); });
     const clean=String(text||'').trim();
     if(!clean){ box.innerHTML=aiMsgBox('⚠️','پاسخی نیامد','دوباره امتحان کن.','err'); return; }
     const sk=scopeKey(scope);
     aiLastSet(sk,{text:clean, ts:Date.now(), hash});
+    aiMemoryCapture(clean);
     aiHistoryAdd(sk, scope, snap.label, clean);
     renderHealthAiPanel(scope);   // بازرندر با زمان و کارت‌ها
   }catch(e){ const ei=aiErrorInfo(e); box.innerHTML=aiMsgBox(ei.emoji,ei.title,ei.text,'err',String((e&&e.message)||e)); }
@@ -9614,7 +9725,7 @@ async function handleLabReportFile(input){
     if(/\.(xlsx|xls|csv)$/.test(name)){ prog.textContent='در حال خواندن اکسل…'; rows=await extractFromExcel(f); }
     else if(/\.pdf$/.test(name)||f.type==='application/pdf'){ prog.textContent='در حال خواندن PDF…'; rows=await extractFromPDF(f,prog); }
     else if((f.type&&f.type.startsWith('image/'))||/\.(jpe?g|png|webp|bmp|gif|heic)$/.test(name)){
-      if(labAiReadOn() && navigator.onLine && getVisionKey(sectionProviderVision('labread'))){
+      if(labAiReadOn() && navigator.onLine && hasAnyKey(sectionProviderVision('labread'))){
         prog.textContent='در حال خواندن عکس با هوش مصنوعی…';
         try{ rows=await extractFromImageAI(f,prog); }
         catch(e){ const ei=aiErrorInfo(e); prog.style.color='var(--muted)'; prog.textContent=ei.emoji+' '+ei.text+' فعلاً با حالت آفلاین می‌خوانم…'; rows=await extractFromImage(f,prog); }
