@@ -1713,7 +1713,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۱.۳</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۱.۳.۱</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -6705,6 +6705,40 @@ function setVisionProvider(p){ try{ localStorage.setItem(VISION_PROVIDER_KEY, VI
 function getVisionKey(prov){ try{ return (localStorage.getItem(VISION_KEY_PREFIX+(prov||getVisionProvider()))||'').trim(); }catch(e){ return ''; } }
 function setVisionKey(prov,key){ try{ if(key){ localStorage.setItem(VISION_KEY_PREFIX+prov, String(key).trim()); } else { localStorage.removeItem(VISION_KEY_PREFIX+prov); } }catch(e){} }
 function escVision(s){ return String(s==null?'':s).replace(/[<>"'&]/g,c=>({'<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','&':'&amp;'}[c])); }
+// خطاهای خام سرویس‌های هوش مصنوعی → پیام فارسیِ واضح و کاربرپسند (برای همه‌ی بخش‌ها)
+function aiErrorInfo(e){
+  const raw=String((e&&e.message)||e||'');
+  const codeM=raw.match(/\((\d{3})\)/); const code=codeM?+codeM[1]:0;
+  const geo=/location|not supported|region|country|unsupported/i.test(raw);
+  if(!code && /failed to fetch|networkerror|load failed|fetch/i.test(raw))
+    return {emoji:'📡', title:'ارتباط برقرار نشد', text:'به سرویس هوش مصنوعی وصل نشدیم. اینترنت (یا VPN) را بررسی کن و دوباره امتحان کن.'};
+  if(code===429)
+    return {emoji:'⏳', title:'سهمیه‌ی سرویس پر شد', text:'تعداد درخواست‌ها زیاد شده. چند دقیقه صبر کن و دوباره امتحان کن؛ اگر سقفِ روزانه‌ی رایگان پر شده، فردا دوباره کار می‌کند — یا از کلید/سرویس دیگری استفاده کن.'};
+  if(code===401||code===403)
+    return geo ? {emoji:'🌍', title:'در دسترس نیست', text:'این سرویس از موقعیت جغرافیایی تو باز نیست. با VPN (کشور پشتیبانی‌شده) یا درگاه واسط امتحان کن.'}
+               : {emoji:'🔑', title:'کلید پذیرفته نشد', text:'کلید API نامعتبر است یا اجازه ندارد. آن را در پروفایل → «تشخیص غذا از عکس» بررسی یا دوباره وارد کن.'};
+  if(code===400)
+    return geo ? {emoji:'🌍', title:'در دسترس نیست', text:'این سرویس از موقعیت جغرافیایی تو باز نیست. با VPN (کشور پشتیبانی‌شده) امتحان کن.'}
+               : /api[_ ]?key|invalid key/i.test(raw)
+                 ? {emoji:'🔑', title:'کلید نامعتبر', text:'کلید API درست نیست. آن را در تنظیمات بررسی کن.'}
+                 : {emoji:'⚠️', title:'درخواست نامعتبر', text:'درخواست پذیرفته نشد. دوباره امتحان کن؛ اگر تکرار شد، عکس واضح‌تری بده یا سرویس را عوض کن.'};
+  if(code===404)
+    return {emoji:'🔍', title:'مدل در دسترس نیست', text:'مدل انتخاب‌شده الان قابل استفاده نیست. کمی بعد یا با سرویس دیگری امتحان کن.'};
+  if(code>=500)
+    return {emoji:'🛠️', title:'سرویس موقتاً قطع است', text:'سرویس هوش مصنوعی الان پاسخ نمی‌دهد. کمی بعد دوباره امتحان کن.'};
+  return {emoji:'⚠️', title:'خطای غیرمنتظره', text:'ارتباط با هوش مصنوعی به مشکل خورد. دوباره امتحان کن؛ اگر ادامه داشت، کلید یا سرویس را عوض کن.'};
+}
+// جعبه‌ی پیام شیک و یکدست برای وضعیت/خطای هوش مصنوعی
+function aiMsgBox(emoji,title,text,tone){
+  const col = tone==='err'?'#e0a355' : tone==='ok'?'var(--teal)' : 'var(--fg)';
+  return `<div style="display:flex;gap:9px;align-items:flex-start">
+      <span style="font-size:17px;line-height:1.4;flex:0 0 auto">${emoji}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:800;color:${col};font-size:13px">${escVision(title)}</div>
+        <div style="color:var(--muted);font-size:11.8px;line-height:1.9;margin-top:2px">${escVision(text)}</div>
+      </div>
+    </div>`;
+}
 
 function loadVisionFoods(){ try{ const a=JSON.parse(localStorage.getItem(VISION_FOOD_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
 function saveVisionFoodsArr(arr){ try{ localStorage.setItem(VISION_FOOD_KEY, JSON.stringify(arr)); }catch(e){} }
@@ -6970,29 +7004,33 @@ async function handlePlatePhoto(inp){
   const prov=getVisionProvider(), key=getVisionKey(prov);
   const s=document.getElementById('visionStatus'); if(s) s.style.display='block';
   const set=(html)=>{ if(s) s.innerHTML=html; };
-  if(!key){ set('اول کلید API را در پروفایل وارد کن.'); return; }
-  if(!navigator.onLine){ set('⚠️ برای تشخیص از عکس به اینترنت نیاز است؛ الان آفلاینی. خوراکی‌ها را دستی وارد کن.'); return; }
-  set('⏳ در حال آماده‌سازی عکس…');
+  if(!key){ set(aiMsgBox('🔑','کلید API لازم است','اول در پروفایل → «تشخیص غذا از عکس» کلید را وارد کن، بعد دوباره امتحان کن.','err')); return; }
+  if(!navigator.onLine){ set(aiMsgBox('📡','آفلاین هستی','تشخیص از عکس به اینترنت نیاز دارد. آنلاین شو و دوباره امتحان کن، یا خوراکی‌ها را دستی وارد کن.','err')); return; }
+  set(aiMsgBox('⏳','در حال آماده‌سازی عکس…','کمی صبر کن.'));
   try{
     const img=await imageToJpeg(file,1024,0.82);
-    set('🔎 در حال تحلیل عکس با هوش مصنوعی… (چند ثانیه صبر کن)');
+    set(aiMsgBox('🔎','در حال تحلیل با هوش مصنوعی…','چند ثانیه طول می‌کشد.'));
     const text=await callVision(prov,key,img);
     const items=parseVisionJSON(text);
-    if(!items.length){ set('🤔 غذایی در عکس تشخیص داده نشد. عکس واضح‌تر و از بالای بشقاب بگیر، یا خوراکی‌ها را دستی وارد کن.'); return; }
+    if(!items.length){ set(aiMsgBox('🤔','غذایی تشخیص داده نشد','عکس واضح‌تر و از بالای بشقاب بگیر، یا خوراکی‌ها را دستی وارد کن.','err')); return; }
     const plan=planVisionRows(items);
-    if(!plan.length){ set('🤔 نتیجه‌ی معتبری برنگشت. دوباره امتحان کن.'); return; }
+    if(!plan.length){ set(aiMsgBox('🤔','نتیجه‌ی معتبری برنگشت','دوباره امتحان کن.','err')); return; }
     clearEmptyCalcRows();
     plan.forEach(p=>addCalcRowFor(p.cat,p.item,p.unit,p.count));
     calcCarbs();
-    const names=plan.map(p=>`${escVision(p.item)} (${faDigits(String(p.count))} ${escVision(p.unit)})${p.matched?'':' 🆕'}`).join('، ');
+    const names=plan.map(p=>`${escVision(p.item)} <span style="color:var(--muted)">(${faDigits(String(p.count))} ${escVision(p.unit)})</span>${p.matched?'':' 🆕'}`).join('، ');
     const nNew=plan.filter(p=>!p.matched).length;
-    set(`✅ ${faDigits(String(plan.length))} خوراکی اضافه شد: <b>${names}</b>`
-      +(nNew?`<div style="color:var(--muted);font-size:11px;margin-top:5px">🆕 = در دیتابیس نبود و به‌صورت موقت از عکس ساخته شد.</div>`:'')
-      +`<div style="color:var(--muted);font-size:11.5px;margin-top:7px;line-height:1.9">تشخیص و تعداد تخمینِ هوش مصنوعی‌اند و ممکن است خطا داشته باشند (مثلاً نوع نان)؛ دسته/خوراکی/واحد/تعداد هر ردیف را می‌توانی دستی اصلاح کنی. برای دوز انسولین حتماً با پزشک هماهنگ کن.</div>`);
+    set(`<div style="display:flex;gap:9px;align-items:flex-start">
+        <span style="font-size:17px;flex:0 0 auto">✅</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:800;color:var(--teal);font-size:13px">${faDigits(String(plan.length))} خوراکی اضافه شد</div>
+          <div style="font-size:12px;line-height:2;margin-top:3px">${names}</div>`
+      +(nNew?`<div style="color:var(--muted);font-size:11px;margin-top:5px">🆕 = در دیتابیس نبود و موقتاً از عکس ساخته شد.</div>`:'')
+      +`<div style="color:var(--muted);font-size:11.3px;margin-top:7px;line-height:1.9">این تشخیص و تعداد تخمینِ هوش مصنوعی‌اند و ممکن است خطا داشته باشند (مثلاً نوع نان)؛ هر ردیف را می‌توانی دستی اصلاح کنی. برای دوز انسولین حتماً با پزشک هماهنگ کن.</div>
+        </div></div>`);
     const card=document.getElementById('c-carb'); if(card) card.scrollIntoView({behavior:'smooth',block:'start'});
   }catch(e){
-    set('⚠️ خطا در تشخیص: '+escVision(String((e&&e.message)||e)).slice(0,300)
-      +'<div style="color:var(--muted);font-size:11.5px;margin-top:6px">کلید API را در پروفایل بررسی کن، اینترنت را چک کن، یا دوباره امتحان کن.</div>');
+    const ei=aiErrorInfo(e); set(aiMsgBox(ei.emoji,ei.title,ei.text,'err'));
   }
 }
 function toggleVisionKeyView(){
@@ -8884,8 +8922,8 @@ function renderLabAiPanel(){
 async function runLabAiAnalysis(force){
   const box=document.getElementById('labAiResult'); if(!box) return;
   const prov=getVisionProvider(), key=getVisionKey(prov);
-  if(!key){ box.innerHTML='<span style="color:var(--amber)">اول کلید API را در پروفایل وارد کن.</span>'; return; }
-  if(!navigator.onLine){ box.innerHTML='<span style="color:var(--amber)">برای تحلیل هوش مصنوعی به اینترنت نیاز است.</span>'; return; }
+  if(!key){ box.innerHTML=aiMsgBox('🔑','کلید API لازم است','اول در پروفایل → «تشخیص غذا از عکس» کلید را وارد کن.','err'); return; }
+  if(!navigator.onLine){ box.innerHTML=aiMsgBox('📡','آفلاین هستی','تحلیل هوش مصنوعی به اینترنت نیاز دارد. آنلاین شو و دوباره «اجرا» را بزن.','err'); return; }
   const ctx=buildLabAIContext(); if(!ctx){ box.innerHTML='نتیجه‌ای برای تحلیل نیست.'; return; }
   const hash=_hashStr((ctx.date||'')+'|'+ctx.lines.join('|'));
   const cached=labAiCacheGet(hash);
@@ -8898,7 +8936,7 @@ async function runLabAiAnalysis(force){
     labAiCacheSet(hash,clean);
     box.innerHTML=labAiFmt(clean);
   }catch(e){
-    box.innerHTML='<span style="color:var(--amber)">خطا: '+String((e&&e.message)||e).replace(/[<>&]/g,'')+'</span>';
+    const ei=aiErrorInfo(e); box.innerHTML=aiMsgBox(ei.emoji,ei.title,ei.text,'err');
   }
 }
 
@@ -8917,7 +8955,7 @@ async function handleLabReportFile(input){
       if(labAiReadOn() && navigator.onLine && getVisionKey(getVisionProvider())){
         prog.textContent='در حال خواندن عکس با هوش مصنوعی…';
         try{ rows=await extractFromImageAI(f,prog); }
-        catch(e){ prog.style.color='var(--amber)'; prog.textContent='هوش مصنوعی خطا داد؛ برگشت به حالت آفلاین… ('+((e&&e.message)||e)+')'; prog.style.color='var(--muted)'; rows=await extractFromImage(f,prog); }
+        catch(e){ const ei=aiErrorInfo(e); prog.style.color='var(--muted)'; prog.textContent=ei.emoji+' '+ei.text+' فعلاً با حالت آفلاین می‌خوانم…'; rows=await extractFromImage(f,prog); }
       } else {
         prog.textContent='در حال خواندن عکس… (آفلاین، بار اول کمی طول می‌کشد)';
         rows=await extractFromImage(f,prog);
