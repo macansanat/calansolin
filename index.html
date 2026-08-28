@@ -1039,13 +1039,13 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     </div>
 
     <label class="qbg-lbl" id="cfServingLbl">وزن یک وعده (گرم) — الزامی</label>
-    <input type="number" id="cfServing" class="qbg-in" inputmode="decimal" placeholder="مثلاً ۳۰" style="margin-bottom:6px">
+    <input type="number" id="cfServing" class="qbg-in" inputmode="decimal" placeholder="مثلاً ۳۰" style="margin-bottom:6px" oninput="cfUpdateUnitPreview()">
     <div class="qins-note" id="cfBasisNote">مقادیر را همان‌طور که روی برچسب برای «هر وعده / Serving» نوشته وارد کن؛ خودم به ۱۰۰ گرم تبدیل می‌کنم.</div>
 
     <hr class="cf-hr">
     <div class="cf-sec">🍞 کربوهیدرات (مبنای دوز انسولین)</div>
     <label class="qbg-lbl">کربوهیدرات کل (گرم)</label>
-    <input type="number" id="cfCarb" class="qbg-in" inputmode="decimal" placeholder="گرم — اگر روی برچسب نبود خالی بگذار" style="margin-bottom:6px">
+    <input type="number" id="cfCarb" class="qbg-in" inputmode="decimal" placeholder="گرم — اگر روی برچسب نبود خالی بگذار" style="margin-bottom:6px" oninput="cfUpdateUnitPreview()">
     <div class="qins-note">خیلی از برچسب‌های ایرانی «کربوهیدرات» ندارند. اگر نبود، این را خالی بگذار و در عوض <b>انرژی (کالری)</b> و در صورت وجود پروتئین/چربی را وارد کن؛ خودم کربوهیدرات را از روی انرژی <b>تخمین</b> می‌زنم. (تخمینی — با پزشک/برچسب دقیق‌تر بسنج.)</div>
 
     <div class="cf-sec">ارزش تغذیه‌ای (اختیاری)</div>
@@ -1055,17 +1055,19 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <div><label>چربی (گرم)</label><input type="number" id="cfFat" class="qbg-in" inputmode="decimal" placeholder="گرم"></div>
       <div><label>فیبر (گرم)</label><input type="number" id="cfFiber" class="qbg-in" inputmode="decimal" placeholder="گرم"></div>
       <div><label>چربی ترانس (گرم)</label><input type="number" id="cfTrans" class="qbg-in" inputmode="decimal" placeholder="گرم"></div>
-      <div><label>انرژی (کالری)</label><input type="number" id="cfKcal" class="qbg-in" inputmode="decimal" placeholder="kcal"></div>
+      <div><label>انرژی (کالری)</label><input type="number" id="cfKcal" class="qbg-in" inputmode="decimal" placeholder="kcal" oninput="cfUpdateUnitPreview()"></div>
     </div>
 
     <hr class="cf-hr">
     <div class="cf-sec">🔢 واحد شمارشی (اختیاری) — مثل «عدد / تیکه»</div>
-    <div class="qins-note">اگر این خوراکی دانه‌ای/تکه‌ای است (مثل رایس کیک، بیسکویت، نان)، اینجا یک واحد بساز تا در ماشین‌حساب مثلاً «۴ عدد» را انتخاب کنی. فقط <b>وزن هر عدد به گرم</b> را بده؛ بقیه خودکار حساب می‌شود.</div>
+    <div class="qins-note">اگر خوراکی دانه‌ای/تکه‌ای است (رایس‌کیک، بیسکویت، نان)، اینجا یک واحد بساز تا در ماشین‌حساب بگویی «چند عدد خوردم». اگر وزن هر عدد را نمی‌دانی، فقط <b>وزن کل بسته</b> و <b>تعداد کل دانه‌ها</b> را بده؛ خودم وزن، کالری و کربوهیدراتِ هر عدد را حساب می‌کنم.</div>
     <div class="cf-grid">
-      <div><label>نام واحد</label><input type="text" id="cfUnitName" class="qbg-in" placeholder="عدد"></div>
-      <div><label>وزن هر واحد (گرم)</label><input type="number" id="cfUnitG" class="qbg-in" inputmode="decimal" placeholder="مثلاً ۹"></div>
-      <div><label>تعداد در بسته (اختیاری)</label><input type="number" id="cfPackN" class="qbg-in" inputmode="decimal" placeholder="مثلاً ۱۲"></div>
+      <div><label>نام واحد</label><input type="text" id="cfUnitName" class="qbg-in" placeholder="عدد" oninput="cfUpdateUnitPreview()"></div>
+      <div><label>وزن کل بسته (گرم)</label><input type="number" id="cfPackWeight" class="qbg-in" inputmode="decimal" placeholder="مثلاً ۱۱۰" oninput="cfDerivePerUnit()"></div>
+      <div><label>تعداد کل در بسته</label><input type="number" id="cfPackN" class="qbg-in" inputmode="decimal" placeholder="مثلاً ۱۲" oninput="cfDerivePerUnit()"></div>
+      <div><label>وزن هر واحد (گرم)</label><input type="number" id="cfUnitG" class="qbg-in" inputmode="decimal" placeholder="خودکار یا دستی" oninput="cfUpdateUnitPreview()"></div>
     </div>
+    <div id="cfUnitPreview" class="qins-note" style="display:none;color:var(--teal);border:1px solid var(--teal-dim);border-radius:9px;padding:8px 10px;background:rgba(63,185,163,.06)"></div>
 
     <div class="qbg-actions"><button class="qbg-cancel" onclick="closeCustomFood()">بستن</button><button class="qbg-save" id="cfSaveBtn" onclick="saveCustomFood()">💾 ذخیره در کتابخانه</button></div>
     <button type="button" id="cfResetBtn" class="cf-reset-btn" style="display:none" onclick="resetFoodOverride()">↩️ بازگردانی این خوراکی به مقدار پیش‌فرض برنامه</button>
@@ -1750,7 +1752,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۲.۸</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۲.۹</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4486,7 +4488,8 @@ function openCustomFood(){
 }
 function closeCustomFood(){ const m=document.getElementById('customFoodModal'); if(m) m.classList.remove('show'); }
 function resetCustomFoodForm(){
-  ['cfName','cfCarb','cfSugar','cfProt','cfFat','cfFiber','cfTrans','cfKcal','cfServing','cfUnitName','cfUnitG','cfPackN'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value=''; });
+  ['cfName','cfCarb','cfSugar','cfProt','cfFat','cfFiber','cfTrans','cfKcal','cfServing','cfUnitName','cfUnitG','cfPackN','cfPackWeight'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value=''; });
+  const upv=document.getElementById('cfUnitPreview'); if(upv){ upv.style.display='none'; upv.innerHTML=''; }
   window._cfEditId=null;
   window._cfOvKey=null; window._cfOvCat=null; window._cfOvItem=null;
   const nm=document.getElementById('cfName'); if(nm) nm.disabled=false;
@@ -4505,6 +4508,33 @@ function cfSetBasis(b){
   if(note) note.textContent = b==='serving'
     ? 'مقادیر را همان‌طور که روی برچسب برای «هر وعده / Serving» نوشته وارد کن؛ خودم به ۱۰۰ گرم تبدیل می‌کنم.'
     : 'مقادیر را به ازای ۱۰۰ گرم وارد کن.';
+  cfUpdateUnitPreview();
+}
+// وزن هر واحد را از «وزن کل بسته ÷ تعداد» به‌دست می‌آورد
+function cfDerivePerUnit(){
+  const gv=id=>{ const e=document.getElementById(id); return e?parseFloat(faToEnDigits(e.value)):NaN; };
+  const pw=gv('cfPackWeight'), pn=gv('cfPackN');
+  if(pw>0 && pn>0){ const g=document.getElementById('cfUnitG'); if(g) g.value=Math.round(pw/pn*100)/100; }
+  cfUpdateUnitPreview();
+}
+// پیش‌نمایش زنده‌ی «هر عدد چقدر است» (وزن/کربوهیدرات/کالری)
+function cfUpdateUnitPreview(){
+  const box=document.getElementById('cfUnitPreview'); if(!box) return;
+  const num=id=>{ const e=document.getElementById(id); const v=e?parseFloat(faToEnDigits(e.value)):NaN; return isNaN(v)?0:v; };
+  const isEmpty=id=>{ const e=document.getElementById(id); return !e||String(e.value).trim()===''; };
+  const uName=((document.getElementById('cfUnitName')||{}).value||'').trim()||'عدد';
+  const ug=num('cfUnitG');
+  const basis=window._cfBasis||'serving';
+  const base = basis==='serving' ? num('cfServing') : 100;
+  if(!(ug>0) || !(base>0)){ box.style.display='none'; return; }
+  const kcal=num('cfKcal'), prot=num('cfProt'), fat=num('cfFat');
+  let carb; if(isEmpty('cfCarb')){ carb = kcal>0 ? Math.max(0,(kcal-4*prot-9*fat)/4) : 0; } else carb=num('cfCarb');
+  const cU=Math.round(carb/base*ug*10)/10, kU=Math.round(kcal/base*ug);
+  box.style.display='block';
+  box.innerHTML=`🔢 هر ${escVision(uName)} ≈ <b>${faDigits(String(ug))} گرم</b>`+
+    (cU>0?` · ~<b>${faDigits(String(cU))}</b> گرم کربوهیدرات`:'')+
+    (kU>0?` · ~<b>${faDigits(String(kU))}</b> کالری`:'')+
+    (cU>0?`<br><span style="color:var(--muted)">مثلاً ۴ ${escVision(uName)} ≈ ${faDigits(String(Math.round(cU*4*10)/10))} گرم کربوهیدرات</span>`:'');
 }
 function saveCustomFood(){
   const name=sanitizeFoodName(document.getElementById('cfName').value);
@@ -4566,6 +4596,7 @@ function editCustomFood(id){
   set('cfName',f.name); set('cfCarb',f.carb100); set('cfSugar',f.sugar100); set('cfProt',f.protein100);
   set('cfFat',f.fat100); set('cfFiber',f.fiber100); set('cfTrans',f.trans100); set('cfKcal',f.kcal100); set('cfServing',f.serving||'');
   set('cfUnitName',f.unitName||''); set('cfUnitG',f.unitGrams||''); set('cfPackN',f.packCount||'');
+  cfUpdateUnitPreview();
   const sb=document.getElementById('cfSaveBtn'); if(sb) sb.textContent='💾 به‌روزرسانی';
   const box=document.querySelector('#customFoodModal .qbg-box'); if(box) box.scrollTop=0;
 }
@@ -4747,6 +4778,7 @@ async function handleCustomFoodPhoto(inp){
     setV('cfFat',r.fat);
     setV('cfFiber',r.fiber);
     setV('cfTrans',r.trans);
+    cfUpdateUnitPreview();
     if(best.found<=0) setNote('چیزی خوانده نشد. عکس واضح‌تر (نور کافی، صاف، نزدیک به جدول، صافِ افقی نه کج) بده یا مقادیر را دستی وارد کن.');
     else setNote('✓ '+faDigits(best.found)+' مقدار خوانده شد. حتماً همه را با برچسب چک کن و در صورت لزوم اصلاح کن؛ اگر کربوهیدرات نبود از انرژی تخمین زده می‌شود.');
   }catch(e){
@@ -4798,6 +4830,7 @@ async function handleCustomFoodPhotoAI(inp){
     setV('cfFat',macro(o.fat_g));
     setV('cfFiber',macro(o.fiber_g));
     setV('cfTrans',macro(o.trans_g));
+    cfUpdateUnitPreview();
     const found=['energy_kcal','carb_g','sugar_g','protein_g','fat_g','fiber_g'].filter(k=>num(o[k])!=null).length;
     setNote(found?('✓ '+faDigits(String(found))+' مقدار خوانده شد. حتماً همه را با برچسب چک و در صورت لزوم اصلاح کن.'):'چیزی خوانده نشد؛ عکس واضح‌تر بده یا دستی وارد کن.');
   }catch(e){
