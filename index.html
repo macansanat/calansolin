@@ -1022,8 +1022,12 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <div class="cf-msg" id="cfMsg"></div>
 
     <input type="file" id="cfPhoto" accept="image/*" style="display:none" onchange="handleCustomFoodPhoto(this)">
-    <button type="button" class="cf-photo-btn" onclick="document.getElementById('cfPhoto').click()">📷 خواندن خودکار از عکس برچسب تغذیه</button>
-    <div class="qins-note" id="cfPhotoNote">عکسِ جدول تغذیه را بده (انگلیسی یا فارسی) تا مقادیر را بخوانم و فرم را پر کنم؛ <b>حتماً بعدش چک و اصلاح کن</b>. کمکِ «بهترین‌تلاش» است: اغلب فقط انرژی و وزن وعده را مطمئن می‌خواند و روی برچسب‌های <b>براق/منحنی/کج</b> ممکن است ناقص باشد. بهترین نتیجه: صاف روبه‌رو، نور کافی، بدون انعکاس. همه‌ی پردازش داخل مرورگر خودت است.</div>
+    <input type="file" id="cfPhotoAI" accept="image/*" style="display:none" onchange="handleCustomFoodPhotoAI(this)">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button type="button" class="cf-photo-btn" style="flex:1;min-width:150px" onclick="document.getElementById('cfPhoto').click()">📷 خواندن آفلاین از عکس برچسب</button>
+      <button type="button" class="cf-photo-btn" style="flex:1;min-width:150px;background:rgba(63,185,163,.14);border-color:var(--teal-dim)" onclick="document.getElementById('cfPhotoAI').click()">🤖 خواندن با هوش مصنوعی</button>
+    </div>
+    <div class="qins-note" id="cfPhotoNote">عکسِ جدول تغذیه را بده تا مقادیر خوانده و فرم پر شود؛ <b>حتماً بعدش چک و اصلاح کن</b>. «آفلاین» کاملاً داخل مرورگر است (چیزی فرستاده نمی‌شود) ولی روی برچسب‌های براق/کج ناقص می‌خواند. «هوش مصنوعی» دقیق‌تر است اما آنلاین است و عکس به سرویس فرستاده می‌شود و به کلید API نیاز دارد.</div>
 
     <label class="qbg-lbl">نام خوراکی</label>
     <input type="text" id="cfName" class="qbg-in" placeholder="مثلاً کره‌بادام‌زمینی رژیمی" style="margin-bottom:14px">
@@ -1737,7 +1741,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۲.۰</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۲.۱</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -1909,6 +1913,13 @@ const DB = {
     "نان جو":{ "یک برش":11 },
     "نان همبرگری":{ "عدد":26 },
     "نان لقمه/فانتزی":{ "عدد":22 },
+    "رایس کیک ساده (نان برنجی پفکی)":{ "عدد":7,"عدد مینی":2 },
+    "رایس کیک قهوه‌ای/سبوس‌دار":{ "عدد":7,"عدد مینی":2 },
+    "رایس کیک ذرت":{ "عدد":7 },
+    "رایس کیک چندغله":{ "عدد":7 },
+    "رایس کیک کینوا":{ "عدد":7 },
+    "رایس کیک شکلاتی (روکش‌دار)":{ "عدد":9 },
+    "رایس کیک کارامل":{ "عدد":8 },
     "جو دوسر (خشک)":{ "قاشق غذاخوری":9,"لیوان":54 },
     "گندم/بلغور پخته":{ "قاشق غذاخوری":6,"لیوان":38 },
     "سیب‌زمینی آب‌پز":{ "قاشق غذاخوری":5,"عدد کوچک":15,"عدد متوسط":30,"عدد بزرگ":45 },
@@ -4726,6 +4737,50 @@ async function handleCustomFoodPhoto(inp){
     else setNote('✓ '+faDigits(best.found)+' مقدار خوانده شد. حتماً همه را با برچسب چک کن و در صورت لزوم اصلاح کن؛ اگر کربوهیدرات نبود از انرژی تخمین زده می‌شود.');
   }catch(e){
     setNote('خطا در خواندن عکس. مقادیر را دستی وارد کن.');
+  }
+  inp.value='';
+}
+
+// خواندن برچسب تغذیه با هوش مصنوعی (آنلاین، دقیق‌تر) — دقیقاً مثل خواندن آزمایش از عکس
+const CF_AI_PROMPT=
+"You are reading a FOOD NUTRITION FACTS label from a photo (text may be Persian/Farsi or English). Extract the nutrition values.\n"+
+"Return ONLY a JSON object, no commentary, with these keys (use null if a value is not printed):\n"+
+'{"name": string|null, "basis": "serving"|"100g", "serving_g": number|null, "energy_kcal": number|null, "carb_g": number|null, "sugar_g": number|null, "protein_g": number|null, "fat_g": number|null, "fiber_g": number|null, "trans_g": number|null}\n'+
+"Rules: If the label lists values 'per serving', set basis to 'serving' and serving_g to that serving weight in grams. If values are 'per 100g', set basis to '100g'. Use a decimal point (not comma). name = short product name if visible. Numbers only for numeric fields (no units).";
+async function handleCustomFoodPhotoAI(inp){
+  const file=inp.files&&inp.files[0]; if(!file) return;
+  const note=document.getElementById('cfPhotoNote');
+  const setNote=s=>{ if(note) note.textContent=s; };
+  const prov=sectionProviderVision('food');
+  if(!navigator.onLine){ setNote('⚠️ خواندن با هوش مصنوعی به اینترنت نیاز دارد؛ الان آفلاینی. از «خواندن آفلاین» استفاده کن یا دستی وارد کن.'); inp.value=''; return; }
+  if(!hasAnyKey(prov)){ setNote('⚠️ برای «'+(PROVIDER_NAMES[prov]||prov)+'» کلید API نداری — به تنظیمات برو یا از «خواندن آفلاین» استفاده کن.'); inp.value=''; return; }
+  try{
+    setNote('در حال آماده‌سازی عکس برای هوش مصنوعی…');
+    const img=await imageToJpeg(file,1400,0.85);
+    setNote('خواندن برچسب با هوش مصنوعی…');
+    const text=await aiKeyFallback(prov, k=>callVision(prov,k,img,CF_AI_PROMPT,900,0), n=>setNote('سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'));
+    let o=null; try{ const t=String(text||''); const a=t.indexOf('{'),b=t.lastIndexOf('}'); if(a>=0&&b>a) o=JSON.parse(t.slice(a,b+1)); }catch(e){}
+    if(!o){ setNote('نتوانستم برچسب را بخوانم. عکس واضح‌تر بده یا از «خواندن آفلاین» استفاده کن یا دستی وارد کن.'); inp.value=''; return; }
+    const num=v=>{ const n=parseFloat(v); return isFinite(n)?n:null; };
+    const setV=(id,v)=>{ const e=document.getElementById(id); if(e&&v!=null) e.value=v; };
+    const nm=document.getElementById('cfName'); if(nm && !nm.value.trim() && o.name) nm.value=String(o.name).slice(0,60);
+    const sg=num(o.serving_g);
+    if(o.basis==='serving' && sg){ cfSetBasis('serving'); setV('cfServing',sg); }
+    else if(o.basis==='100g'){ cfSetBasis('100'); }
+    else if(sg){ cfSetBasis('serving'); setV('cfServing',sg); }
+    else cfSetBasis('100');
+    setV('cfKcal',num(o.energy_kcal));
+    setV('cfCarb',num(o.carb_g));
+    setV('cfSugar',num(o.sugar_g));
+    setV('cfProt',num(o.protein_g));
+    setV('cfFat',num(o.fat_g));
+    setV('cfFiber',num(o.fiber_g));
+    setV('cfTrans',num(o.trans_g));
+    const found=['energy_kcal','carb_g','sugar_g','protein_g','fat_g','fiber_g'].filter(k=>num(o[k])!=null).length;
+    setNote(found?('✓ '+faDigits(String(found))+' مقدار خوانده شد. حتماً همه را با برچسب چک و در صورت لزوم اصلاح کن.'):'چیزی خوانده نشد؛ عکس واضح‌تر بده یا دستی وارد کن.');
+  }catch(e){
+    const ei=(typeof aiErrorInfo==='function')?aiErrorInfo(e):{text:'خطا در خواندن عکس'};
+    setNote('خطا: '+ei.text+' — می‌توانی از «خواندن آفلاین» استفاده کنی یا دستی وارد کنی.');
   }
   inp.value='';
 }
