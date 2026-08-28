@@ -1737,8 +1737,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 
 <!-- ============ صفحه‌ی چت با هوش مصنوعی ============ -->
 <div class="page" id="page-chat">
-  <div class="card" style="min-height:60vh">
-    <h2><span>💬 چت با دیابوت</span></h2>
+  <div class="card chat-card">
     <div class="card-body" style="padding:12px"><div id="chatRoot"></div></div>
   </div>
 </div>
@@ -1752,7 +1751,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۲.۹</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۳.۰</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -6944,21 +6943,31 @@ async function aiKeyFallback(prov, makeCall, onRetry){
 async function aiFallbackChain(primary, makeCall, opts){
   opts=opts||{}; const vision=!!opts.vision, onRetry=opts.onRetry, onProv=opts.onProv;
   const order=[primary, ...VISION_PROVIDERS.filter(p=>p!==primary)];
-  const tried={}; let lastErr, first=true;
+  const tried={}; let lastErr, first=true; const fails=[]; let nTried=0;
+  const reasonFa=m=>{ const cm=m.match(/\((\d{3})\)/); const code=cm?+cm[1]:0;
+    if(/location|not supported|unsupported|region|country/i.test(m)) return 'منطقه‌ی جغرافیایی';
+    if(code===402||/insufficient balance|no credit/i.test(m)) return 'اعتبار تمام';
+    if(code===429||/quota|exceeded|rate limit/i.test(m)) return 'سهمیه پر';
+    if(code===401||code===403||/invalid.*key|api[_ ]?key/i.test(m)) return 'کلید نامعتبر';
+    return code?('خطای '+faDigits(String(code))):'خطا'; };
   for(const p of order){
     if(tried[p] || !hasAnyKey(p) || aiGeoBlocked(p) || (vision && !PROVIDER_VISION[p])) continue;
-    tried[p]=1;
+    tried[p]=1; nTried++;
     if(onProv){ try{ onProv(p, !first); }catch(_){} }
     first=false;
     try{ return await aiKeyFallback(p, k=>makeCall(p,k), onRetry); }
     catch(e){
       lastErr=e; const m=String((e&&e.message)||e); const cm=m.match(/\((\d{3})\)/); const code=cm?+cm[1]:0;
+      fails.push(PROVIDER_NAMES[p]+'؛ '+reasonFa(m));
       const quota = code===429||code===402||/insufficient balance|quota|exceeded|rate limit|billing/i.test(m);
       const geo   = /location|not supported|unsupported|region|country/i.test(m);
-      if(quota||geo) continue;   // سرویس بعدی را امتحان کن
+      const auth  = code===401||code===403||/invalid.*key|api[_ ]?key|unauthor/i.test(m);
+      if(quota||geo||auth) continue;   // این سرویس نشد → سرویس بعدیِ دارای کلید را امتحان کن
       throw e;
     }
   }
+  // اگر بیش از یک سرویس امتحان شد و همه ناموفق بودند، خطای خلاصه‌ی روشن بده
+  if(nTried>1){ const err=new Error('ALLFAIL:: همه‌ی سرویس‌ها ناموفق بودند — '+fails.join(' | ')); err.allFail=fails; throw err; }
   throw lastErr || new Error(PROVIDER_NAMES[primary]+' (401): سرویسِ در دسترسی نمانده');
 }
 // سازگاری: نسخه‌ی عکسی
@@ -6973,6 +6982,10 @@ function escVision(s){ return String(s==null?'':s).replace(/[<>"'&]/g,c=>({'<':'
 // خطاهای خام سرویس‌های هوش مصنوعی → پیام فارسیِ واضح و کاربرپسند (برای همه‌ی بخش‌ها)
 function aiErrorInfo(e){
   const raw=String((e&&e.message)||e||'');
+  if(e&&e.allFail || /^ALLFAIL::/.test(raw)){
+    const list=(e&&e.allFail)?e.allFail.join('، '):raw.replace(/^ALLFAIL::\s*/,'');
+    return {emoji:'🚫', title:'همه‌ی سرویس‌ها ناموفق بودند', text:'هیچ‌کدام از سرویس‌های دارای کلید جواب ندادند ('+list+'). برای رفعش: کلید یک سرویسِ دیگر اضافه کن، اعتبار سرویس را شارژ کن، یا اگر خطای «منطقه» است با VPN امتحان کن.'};
+  }
   const codeM=raw.match(/\((\d{3})\)/); const code=codeM?+codeM[1]:0;
   const geo=/location|not supported|region|country|unsupported/i.test(raw);
   if(!code && /failed to fetch|networkerror|load failed|fetch/i.test(raw))
@@ -9508,7 +9521,10 @@ function buildChatSystemPrompt(){
 }
 let _chatCssDone=false;
 function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=document.createElement('style'); s.textContent=`
-  .chatx{position:relative;display:flex;flex-direction:column}
+  #page-chat .chat-card{display:flex;flex-direction:column;height:calc(100dvh - 118px);min-height:400px;margin-bottom:0;overflow:hidden}
+  #page-chat .chat-card>.card-body{flex:1;min-height:0;display:flex}
+  #page-chat #chatRoot{flex:1;min-height:0;display:flex}
+  .chatx{position:relative;display:flex;flex-direction:column;flex:1;min-height:0;width:100%}
   .chatx-top{display:flex;align-items:center;gap:9px;padding-bottom:11px;border-bottom:1px solid var(--line);margin-bottom:12px}
   .chatx-burger{flex:0 0 auto;width:40px;height:40px;border-radius:13px;border:1px solid var(--line);background:linear-gradient(160deg,rgba(63,185,163,.14),var(--field));color:var(--teal);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
   .chatx-burger:active{transform:scale(.92)}
@@ -9516,7 +9532,7 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .chatx-tt b{font-size:14.5px;font-weight:800;color:#eafffb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .chatx-tt .pen{flex:0 0 auto;color:var(--muted);font-size:11px;opacity:.7}
   .chatx-title-inp{flex:1;min-width:0;background:var(--field);border:1.5px solid var(--teal);border-radius:10px;padding:8px 11px;font-family:inherit;font-size:13.5px;color:var(--ink)}
-  .chat-msgs{min-height:46vh;max-height:58vh;overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding:6px 2px 4px;scroll-behavior:smooth}
+  .chat-msgs{flex:1 1 auto;min-height:120px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:14px;padding:6px 2px 4px}
   .chat-row{display:flex;flex-direction:column;max-width:90%}
   .chat-row.me{align-self:flex-start;align-items:flex-start}
   .chat-row.ai{align-self:flex-end;align-items:flex-end}
@@ -9532,7 +9548,7 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .chat-act{background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:8px;width:28px;height:28px;font-size:12.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.13s}
   .chat-act:active{transform:scale(.9)}
   .chat-act:hover{color:var(--teal);border-color:var(--teal-dim)}
-  .chat-dock{margin-top:12px;background:linear-gradient(180deg,rgba(255,255,255,.02),transparent);border:1px solid var(--line);border-radius:22px;padding:9px 9px 8px;box-shadow:0 6px 22px rgba(0,0,0,.22)}
+  .chat-dock{flex:0 0 auto;margin-top:12px;background:linear-gradient(180deg,rgba(255,255,255,.02),transparent);border:1px solid var(--line);border-radius:22px;padding:9px 9px 8px;box-shadow:0 6px 22px rgba(0,0,0,.22)}
   .chat-attach-preview{display:flex;gap:7px;flex-wrap:wrap;padding:2px 4px 8px}
   .chat-attach-preview .ap{position:relative;background:var(--field);border:1px solid var(--line);border-radius:11px;padding:5px 26px 5px 9px;font-size:11px;color:var(--ink);display:flex;align-items:center;gap:6px}
   .chat-attach-preview .ap img{width:26px;height:26px;border-radius:6px;object-fit:cover}
@@ -9791,15 +9807,22 @@ function chatSpeak(text){ try{ if(!window.speechSynthesis) return; speechSynthes
 }catch(e){} }
 // ── گفتار به متن (یک‌بار) ─────────────────────────────
 function _mkRecog(){ const R=window.SpeechRecognition||window.webkitSpeechRecognition; if(!R) return null; const r=new R(); r.lang='fa-IR'; r.interimResults=true; r.maxAlternatives=1; return r; }
-let _chatRecog=null;
+let _chatRecog=null, _chatMicTimer=null;
+function _chatMicOff(btn){ if(_chatMicTimer){ clearTimeout(_chatMicTimer); _chatMicTimer=null; } if(_chatRecog){ try{ _chatRecog.onend=null; _chatRecog.onerror=null; _chatRecog.stop(); }catch(e){} try{ _chatRecog.abort&&_chatRecog.abort(); }catch(e){} } _chatRecog=null; if(btn) btn.classList.remove('on'); }
 function chatVoiceInput(){ const btn=document.getElementById('chatMicBtn');
-  if(_chatRecog){ try{_chatRecog.stop();}catch(e){} return; }
-  const r=_mkRecog(); if(!r){ uiToast('مرورگر گفتار به متن را پشتیبانی نمی‌کند'); return; }
+  if(_chatRecog){ _chatMicOff(btn); return; }   // روشن بود → خاموش کن (همیشه ریست می‌شود)
+  const r=_mkRecog(); if(!r){ uiToast('این مرورگر گفتار به متن را پشتیبانی نمی‌کند (روی iOS اغلب کار نمی‌کند).'); return; }
   _chatRecog=r; if(btn) btn.classList.add('on');
   const inp=document.getElementById('chatInput'); const base=inp?inp.value:'';
-  r.onresult=e=>{ let s=''; for(let k=0;k<e.results.length;k++) s+=e.results[k][0].transcript; if(inp){ inp.value=(base?base+' ':'')+s; chatAutoGrow(inp); } };
-  r.onerror=()=>{}; r.onend=()=>{ _chatRecog=null; if(btn) btn.classList.remove('on'); };
-  try{ r.start(); }catch(e){ _chatRecog=null; if(btn) btn.classList.remove('on'); }
+  let started=false, got=false;
+  r.onstart=()=>{ started=true; };
+  r.onaudiostart=()=>{ started=true; };
+  r.onresult=e=>{ got=true; let s=''; for(let k=0;k<e.results.length;k++) s+=e.results[k][0].transcript; if(inp){ inp.value=(base?base+' ':'')+s; chatAutoGrow(inp); } };
+  r.onerror=ev=>{ const er=ev&&ev.error; if(/not-allowed|service-not-allowed/.test(er||'')) uiToast('اجازه‌ی میکروفون داده نشد'); else if(er && er!=='no-speech' && er!=='aborted') uiToast('گفتار به متن کار نکرد'); };
+  r.onend=()=>{ _chatMicOff(btn); };
+  try{ r.start(); }catch(e){ _chatMicOff(btn); uiToast('نشد شروع کنم؛ دوباره امتحان کن'); return; }
+  // نگهبان iOS: اگر تا ۳ ثانیه هیچ شروعی/نتیجه‌ای نبود، خودکار خاموش کن (تا دکمه گیر نکند)
+  _chatMicTimer=setTimeout(()=>{ if(_chatRecog && !started && !got){ _chatMicOff(btn); uiToast('این مرورگر (iOS) گفتار به متن را پشتیبانی نمی‌کند.'); } }, 3000);
 }
 // ── گفتگوی صوتی زنده ─────────────────────────────────
 let _chatLiveOn=false, _chatLiveRecog=null;
@@ -9817,20 +9840,32 @@ function chatLiveOpen(){ const c=chatActive(); const prov=(c&&c.provider)||secti
       <button type="button" class="chat-pill" style="flex:1;justify-content:center;padding:12px" onclick="chatLiveClose()">🔴 پایان گفتگو</button>
     </div></div>`;
   document.body.appendChild(bg);
-  _chatLiveOn=true; chatLiveListen();
+  _chatLiveOn=true; _chatLiveFails=0; chatLiveListen();
 }
 function chatLiveStatus(st,tx){ const a=document.getElementById('chatLiveSt'),b=document.getElementById('chatLiveTx'),o=document.getElementById('chatLiveOrb');
   if(a&&st!=null) a.textContent=st; if(b&&tx!=null) b.textContent=tx;
   if(o) o.textContent=(st&&st.indexOf('فکر')>=0)?'💭':(st&&st.indexOf('صحبت')>=0)?'🔊':'🎙️';
 }
+let _chatLiveFails=0, _chatLiveTimer=null;
 function chatLiveListen(){ if(!_chatLiveOn) return; if(window.speechSynthesis&&speechSynthesis.speaking) return;
   const r=_mkRecog(); if(!r){ chatLiveClose(); return; } _chatLiveRecog=r;
   chatLiveStatus('در حال گوش دادن…','صحبت کن…');
-  let finalTxt='';
-  r.onresult=e=>{ let s=''; for(let k=0;k<e.results.length;k++) s+=e.results[k][0].transcript; finalTxt=s; chatLiveStatus(null,s); };
-  r.onerror=()=>{};
-  r.onend=()=>{ _chatLiveRecog=null; const t=(finalTxt||'').trim(); if(!_chatLiveOn) return; if(t) chatLiveAsk(t); else chatLiveListen(); };
-  try{ r.start(); }catch(e){ setTimeout(chatLiveListen,600); }
+  let finalTxt='', started=false, got=false;
+  if(_chatLiveTimer){ clearTimeout(_chatLiveTimer); _chatLiveTimer=null; }
+  r.onstart=r.onaudiostart=()=>{ started=true; _chatLiveFails=0; };
+  r.onresult=e=>{ got=true; let s=''; for(let k=0;k<e.results.length;k++) s+=e.results[k][0].transcript; finalTxt=s; chatLiveStatus(null,s); };
+  r.onerror=ev=>{ const er=ev&&ev.error; if(/not-allowed|service-not-allowed/.test(er||'')){ chatLiveStatus('اجازه‌ی میکروفون رد شد','برای گفتگوی صوتی باید اجازه‌ی میکروفون بدهی.'); _chatLiveOn=false; } };
+  r.onend=()=>{ _chatLiveRecog=null; if(_chatLiveTimer){ clearTimeout(_chatLiveTimer); _chatLiveTimer=null; }
+    if(!_chatLiveOn) return; const t=(finalTxt||'').trim();
+    if(t){ _chatLiveFails=0; chatLiveAsk(t); return; }
+    // چیزی گرفته نشد: اگر مرورگر اصلاً شروع نکرد (iOS)، بعد از چند تلاش دست بردار
+    if(!started && !got){ _chatLiveFails++; if(_chatLiveFails>=3){ chatLiveStatus('پشتیبانی نمی‌شود','مرورگر تو (احتمالاً iOS/سافاری) گفتگوی صوتی زنده را پشتیبانی نمی‌کند. از دکمه‌ی 🔊 روی پیام‌ها برای شنیدن پاسخ استفاده کن.'); _chatLiveOn=false; return; } }
+    else _chatLiveFails=0;
+    setTimeout(()=>{ if(_chatLiveOn) chatLiveListen(); }, 500);
+  };
+  try{ r.start(); }catch(e){ _chatLiveFails++; if(_chatLiveFails>=3){ chatLiveStatus('پشتیبانی نمی‌شود','این مرورگر گفتگوی صوتی زنده را پشتیبانی نمی‌کند.'); _chatLiveOn=false; return; } setTimeout(()=>{ if(_chatLiveOn) chatLiveListen(); },600); return; }
+  // نگهبان: اگر تا ۴ ثانیه هیچ صدایی شروع نشد، جلسه را پایان بده تا حلقه بی‌نهایت نشود
+  _chatLiveTimer=setTimeout(()=>{ if(_chatLiveOn && !started && !got && _chatLiveRecog){ try{ _chatLiveRecog.stop(); }catch(e){} } }, 4000);
 }
 async function chatLiveAsk(txt){ chatLiveStatus('در حال فکر کردن…', txt);
   const o=chatLoad(); const c=chatActive(o); if(!c){ chatLiveClose(); return; }
@@ -9849,7 +9884,7 @@ async function chatLiveAsk(txt){ chatLiveStatus('در حال فکر کردن…'
     chatSpeak(clean);   // پس از پایانِ گفتار دوباره گوش می‌دهد
   }catch(e){ const ei=aiErrorInfo(e); chatLiveStatus('خطا', ei.text); setTimeout(()=>{ if(_chatLiveOn) chatLiveListen(); },1500); }
 }
-function chatLiveClose(){ _chatLiveOn=false; try{ if(_chatLiveRecog) _chatLiveRecog.stop(); }catch(e){} _chatLiveRecog=null;
+function chatLiveClose(){ _chatLiveOn=false; if(_chatLiveTimer){ clearTimeout(_chatLiveTimer); _chatLiveTimer=null; } try{ if(_chatLiveRecog){ _chatLiveRecog.onend=null; _chatLiveRecog.stop(); _chatLiveRecog.abort&&_chatLiveRecog.abort(); } }catch(e){} _chatLiveRecog=null;
   try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
   const b=document.getElementById('chatLiveBg'); if(b) b.remove();
 }
