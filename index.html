@@ -1058,6 +1058,15 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <div><label>انرژی (کالری)</label><input type="number" id="cfKcal" class="qbg-in" inputmode="decimal" placeholder="kcal"></div>
     </div>
 
+    <hr class="cf-hr">
+    <div class="cf-sec">🔢 واحد شمارشی (اختیاری) — مثل «عدد / تیکه»</div>
+    <div class="qins-note">اگر این خوراکی دانه‌ای/تکه‌ای است (مثل رایس کیک، بیسکویت، نان)، اینجا یک واحد بساز تا در ماشین‌حساب مثلاً «۴ عدد» را انتخاب کنی. فقط <b>وزن هر عدد به گرم</b> را بده؛ بقیه خودکار حساب می‌شود.</div>
+    <div class="cf-grid">
+      <div><label>نام واحد</label><input type="text" id="cfUnitName" class="qbg-in" placeholder="عدد"></div>
+      <div><label>وزن هر واحد (گرم)</label><input type="number" id="cfUnitG" class="qbg-in" inputmode="decimal" placeholder="مثلاً ۹"></div>
+      <div><label>تعداد در بسته (اختیاری)</label><input type="number" id="cfPackN" class="qbg-in" inputmode="decimal" placeholder="مثلاً ۱۲"></div>
+    </div>
+
     <div class="qbg-actions"><button class="qbg-cancel" onclick="closeCustomFood()">بستن</button><button class="qbg-save" id="cfSaveBtn" onclick="saveCustomFood()">💾 ذخیره در کتابخانه</button></div>
     <button type="button" id="cfResetBtn" class="cf-reset-btn" style="display:none" onclick="resetFoodOverride()">↩️ بازگردانی این خوراکی به مقدار پیش‌فرض برنامه</button>
 
@@ -1741,7 +1750,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۲.۷</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۲.۸</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4477,7 +4486,7 @@ function openCustomFood(){
 }
 function closeCustomFood(){ const m=document.getElementById('customFoodModal'); if(m) m.classList.remove('show'); }
 function resetCustomFoodForm(){
-  ['cfName','cfCarb','cfSugar','cfProt','cfFat','cfFiber','cfTrans','cfKcal','cfServing'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value=''; });
+  ['cfName','cfCarb','cfSugar','cfProt','cfFat','cfFiber','cfTrans','cfKcal','cfServing','cfUnitName','cfUnitG','cfPackN'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value=''; });
   window._cfEditId=null;
   window._cfOvKey=null; window._cfOvCat=null; window._cfOvItem=null;
   const nm=document.getElementById('cfName'); if(nm) nm.disabled=false;
@@ -4521,6 +4530,10 @@ function saveCustomFood(){
     f={ carb100:carb, sugar100:sugar, protein100:prot, fat100:fat, fiber100:fiber, trans100:trans, kcal100:kcal, serving:serving>0?serving:0 };
   }
   f.name=name;
+  // واحد شمارشی دلخواه (عدد/تیکه): وزن هر واحد + تعداد در بسته
+  const uName=sanitizeFoodName((document.getElementById('cfUnitName')||{}).value||'');
+  const uG=num('cfUnitG'), packN=num('cfPackN');
+  if(uName && uG>0){ f.unitName=uName; f.unitGrams=uG; if(packN>0) f.packCount=packN; }
   // حالت «اصلاح خوراکی آماده از برچسب»: به‌جای کتابخانه‌ی شخصی، به‌عنوان override ذخیره کن
   if(window._cfOvKey){
     f.cat=window._cfOvCat; f.item=window._cfOvItem;
@@ -4552,6 +4565,7 @@ function editCustomFood(id){
   const set=(id2,v)=>{ const e=document.getElementById(id2); if(e) e.value=(v||v===0)?v:''; };
   set('cfName',f.name); set('cfCarb',f.carb100); set('cfSugar',f.sugar100); set('cfProt',f.protein100);
   set('cfFat',f.fat100); set('cfFiber',f.fiber100); set('cfTrans',f.trans100); set('cfKcal',f.kcal100); set('cfServing',f.serving||'');
+  set('cfUnitName',f.unitName||''); set('cfUnitG',f.unitGrams||''); set('cfPackN',f.packCount||'');
   const sb=document.getElementById('cfSaveBtn'); if(sb) sb.textContent='💾 به‌روزرسانی';
   const box=document.querySelector('#customFoodModal .qbg-box'); if(box) box.scrollTop=0;
 }
@@ -4772,13 +4786,18 @@ async function handleCustomFoodPhotoAI(inp){
     else if(o.basis==='100g'){ cfSetBasis('100'); }
     else if(sg){ cfSetBasis('serving'); setV('cfServing',sg); }
     else cfSetBasis('100');
+    // نگهبان سازگاری: در مبنای «وعده»، هیچ درشت‌مغذی نمی‌تواند از وزن کل وعده بیشتر باشد؛
+    // اگر مدل مقدار ناسازگار (مثلاً کربوهیدرات به‌ازای ۱۰۰گرم) داده، آن را نادیده بگیر تا خراب پر نشود.
+    const basisServing = (document.getElementById('cfBasisSeg')&&document.querySelector('#cfBasisSeg button.on')||{}).dataset?.v==='serving';
+    const cap = basisServing && sg ? sg*1.02 : Infinity;
+    const macro=v=>{ const n=num(v); return (n!=null && n<=cap)?n:null; };
     setV('cfKcal',num(o.energy_kcal));
-    setV('cfCarb',num(o.carb_g));
-    setV('cfSugar',num(o.sugar_g));
-    setV('cfProt',num(o.protein_g));
-    setV('cfFat',num(o.fat_g));
-    setV('cfFiber',num(o.fiber_g));
-    setV('cfTrans',num(o.trans_g));
+    setV('cfCarb',macro(o.carb_g));
+    setV('cfSugar',macro(o.sugar_g));
+    setV('cfProt',macro(o.protein_g));
+    setV('cfFat',macro(o.fat_g));
+    setV('cfFiber',macro(o.fiber_g));
+    setV('cfTrans',macro(o.trans_g));
     const found=['energy_kcal','carb_g','sugar_g','protein_g','fat_g','fiber_g'].filter(k=>num(o[k])!=null).length;
     setNote(found?('✓ '+faDigits(String(found))+' مقدار خوانده شد. حتماً همه را با برچسب چک و در صورت لزوم اصلاح کن.'):'چیزی خوانده نشد؛ عکس واضح‌تر بده یا دستی وارد کن.');
   }catch(e){
@@ -6760,6 +6779,16 @@ function saveCustomFoodsArr(arr){
 function round4(n){ return Math.round((+n||0)*10000)/10000; }
 // حذف کاراکترهای خطرناک/شکننده از نام محصول (جلوگیری از تزریق در innerHTML و شکستن onclick)
 function sanitizeFoodName(s){ return String(s||'').replace(/[<>"'`\\]/g,'').replace(/\s+/g,' ').trim(); }
+// واحد شمارشی دلخواه (عدد/تیکه + بسته) را به گزینه‌های واحدِ یک خوراکی اضافه می‌کند
+function _addCustomUnitOptions(units, f, c100){
+  const un=sanitizeFoodName(f.unitName||''), ug=+f.unitGrams||0;
+  if(un && ug>0){
+    let lbl=un; if(units[lbl]!=null) lbl=un+` (${faDigits(ug)} گرم)`;
+    units[lbl]=round4(c100*ug/100); window._customUnitG[lbl]=ug;
+    const pn=+f.packCount||0;
+    if(pn>0){ const plbl=`بسته (${faDigits(pn)} ${un})`; units[plbl]=round4(c100*ug*pn/100); window._customUnitG[plbl]=ug*pn; }
+  }
+}
 // محصولات شخصی را درون DB و نقشه‌ی تغذیه‌ی جدا ادغام می‌کند تا در جستجو و محاسبه دیده شوند
 function applyCustomFoods(){
   const arr=loadCustomFoods();
@@ -6778,6 +6807,7 @@ function applyCustomFoods(){
         units[lbl]=round4(c100*f.serving/100);
         window._customUnitG[lbl]=+f.serving;
       }
+      _addCustomUnitOptions(units, f, c100);
       DB[CUSTOM_CAT][name]=units;
       window._customNutr[name]={ kcal:+f.kcal100||0, carb:c100, protein:+f.protein100||0, fat:+f.fat100||0,
                       fiber:+f.fiber100||0, sugar:+f.sugar100||0, min:{}, vit:{} };
@@ -6813,6 +6843,7 @@ function applyFoodOverrides(){
     const f=ov[key], c100=+f.carb100||0;
     const units={ 'گرم': round4(c100/100) };
     if(f.serving>0){ const lbl=`وعده (${faDigits(f.serving)} گرم)`; units[lbl]=round4(c100*f.serving/100); window._customUnitG[lbl]=+f.serving; }
+    _addCustomUnitOptions(units, f, c100);
     DB[cat][item]=units;
     window._customNutr[item]={ kcal:+f.kcal100||0, carb:c100, protein:+f.protein100||0, fat:+f.fat100||0, fiber:+f.fiber100||0, sugar:+f.sugar100||0, min:{}, vit:{} };
   }
