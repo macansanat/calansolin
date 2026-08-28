@@ -1713,7 +1713,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۱.۶</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۱.۶.۱</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -9001,7 +9001,7 @@ async function runLabAiAnalysis(force){
   if(cached && !force){ renderAiResult(box,cached.text); return; }
   box.innerHTML=aiEmptyState('⏳ در حال تحلیل… (چند ثانیه)');
   try{
-    const text=await aiRetry(()=>callAIText(prov,key,LAB_JSON_PROMPT(ctx),2560,1024), n=>{ box.innerHTML=aiEmptyState('⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'); });
+    const text=await aiRetry(()=>callAIText(prov,key,LAB_JSON_PROMPT(ctx),4096,512), n=>{ box.innerHTML=aiEmptyState('⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'); });
     const clean=String(text||'').trim();
     if(!clean){ box.innerHTML=aiMsgBox('⚠️','پاسخی نیامد','دوباره امتحان کن.','err'); return; }
     labAiCacheSet(hash,clean);
@@ -9142,12 +9142,29 @@ const CARD_META={
   abnormal: {t:'موارد مهم آزمایش', icon:'⚠️', c:'#e0a355'},
   doctor:   {t:'با پزشک صحبت کن', icon:'🩺', c:'#5fd3bd'}
 };
+// JSON ناقص/بریده را ترمیم می‌کند (رشته‌ی باز را می‌بندد، ویرگول آخر را حذف، براکت‌های باز را می‌بندد)
+function _repairTruncatedJson(t){
+  let inStr=false, esc=false; const stack=[];
+  for(let i=0;i<t.length;i++){ const ch=t[i];
+    if(inStr){ if(esc)esc=false; else if(ch==='\\')esc=true; else if(ch==='"')inStr=false; }
+    else { if(ch==='"')inStr=true; else if(ch==='{')stack.push('}'); else if(ch==='[')stack.push(']'); else if(ch==='}'||ch===']')stack.pop(); }
+  }
+  let s=t;
+  if(inStr) s+='"';                 // رشته‌ی نیمه‌باز
+  s=s.replace(/[\s,]+$/,'');         // ویرگول/فاصله‌ی آخر
+  s=s.replace(/:\s*$/,':null');      // کلیدِ بدون مقدار
+  while(stack.length) s+=stack.pop();
+  return s;
+}
 function parseAiJSON(text){
   if(!text) return null;
   let t=String(text).replace(/```json/gi,'').replace(/```/g,'').trim();
-  const a=t.indexOf('{'), b=t.lastIndexOf('}');
-  if(a<0||b<=a) return null;
-  try{ return JSON.parse(t.slice(a,b+1)); }catch(e){ return null; }
+  const a=t.indexOf('{'); if(a<0) return null;
+  t=t.slice(a);
+  const b=t.lastIndexOf('}');
+  if(b>0){ try{ return JSON.parse(t.slice(0,b+1)); }catch(e){} }
+  try{ return JSON.parse(_repairTruncatedJson(t)); }catch(e){}
+  return null;
 }
 function aiRobotSVG(){
   return `<svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -9273,7 +9290,7 @@ async function runHealthAi(scope, force){
   if(cached && !force){ renderAiResult(box,cached.text); return; }
   box.innerHTML=aiEmptyState('⏳ در حال تحلیل جامع… (چند ثانیه صبر کن)');
   try{
-    const text=await aiRetry(()=>callAIText(prov,key,HEALTH_AI_PROMPT(scope,snap),2560,1024), n=>{ box.innerHTML=aiEmptyState('⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'); });
+    const text=await aiRetry(()=>callAIText(prov,key,HEALTH_AI_PROMPT(scope,snap),4096,512), n=>{ box.innerHTML=aiEmptyState('⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'); });
     const clean=String(text||'').trim();
     if(!clean){ box.innerHTML=aiMsgBox('⚠️','پاسخی نیامد','دوباره امتحان کن.','err'); return; }
     aiAdvCacheSet(scope,hash,clean);
