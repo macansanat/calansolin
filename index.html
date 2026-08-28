@@ -1741,7 +1741,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۲.۱</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۲.۲</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4751,7 +4751,7 @@ async function handleCustomFoodPhotoAI(inp){
   const file=inp.files&&inp.files[0]; if(!file) return;
   const note=document.getElementById('cfPhotoNote');
   const setNote=s=>{ if(note) note.textContent=s; };
-  const prov=sectionProviderVision('food');
+  const prov=sectionProviderVision('cffood');
   if(!navigator.onLine){ setNote('⚠️ خواندن با هوش مصنوعی به اینترنت نیاز دارد؛ الان آفلاینی. از «خواندن آفلاین» استفاده کن یا دستی وارد کن.'); inp.value=''; return; }
   if(!hasAnyKey(prov)){ setNote('⚠️ برای «'+(PROVIDER_NAMES[prov]||prov)+'» کلید API نداری — به تنظیمات برو یا از «خواندن آفلاین» استفاده کن.'); inp.value=''; return; }
   try{
@@ -7360,7 +7360,8 @@ function saveVisionKeyBackupFor(prov){
 function clearVisionKeyBackupFor(prov){ setVisionKeyBackup(prov,''); renderVisionSetting(); if(typeof uiToast==='function') uiToast('کلید پشتیبان حذف شد'); }
 // بخش‌هایی که سرویس هوش مصنوعی برایشان انتخاب می‌شود
 const AI_SECTIONS=[
-  {id:'food', label:'عکس غذا', icon:'📷', vision:true},
+  {id:'food', label:'عکس غذا (بشقاب)', icon:'📷', vision:true},
+  {id:'cffood', label:'برچسب تغذیه', icon:'🏷️', vision:true},
   {id:'labread', label:'عکس آزمایش', icon:'📷', vision:true},
   {id:'labanalysis', label:'تحلیل آزمایش', icon:'🧪', vision:false},
   {id:'daily', label:'گزارش روزانه', icon:'📋', vision:false},
