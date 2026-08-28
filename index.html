@@ -1741,7 +1741,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۲.۴</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۲.۵</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -6832,12 +6832,23 @@ const PROVIDER_HINTS={claude:'console.anthropic.com',openai:'platform.openai.com
 const PROVIDER_VISION={claude:true,openai:true,gemini:true,deepseek:false}; // دیپ‌سیک عکس ندارد
 function getVisionProvider(){ try{ const p=localStorage.getItem(VISION_PROVIDER_KEY); if(VISION_PROVIDERS.includes(p)&&hasAnyKey(p)) return p; }catch(e){} const wk=VISION_PROVIDERS.find(x=>hasAnyKey(x)); return wk||'claude'; }
 function setVisionProvider(p){ try{ localStorage.setItem(VISION_PROVIDER_KEY, VISION_PROVIDERS.includes(p)?p:'claude'); }catch(e){} renderVisionSetting(); }
-function getVisionKey(prov){ try{ return (localStorage.getItem(VISION_KEY_PREFIX+(prov||getVisionProvider()))||'').trim(); }catch(e){ return ''; } }
-function setVisionKey(prov,key){ try{ if(key){ localStorage.setItem(VISION_KEY_PREFIX+prov, String(key).trim()); } else { localStorage.removeItem(VISION_KEY_PREFIX+prov); } }catch(e){} }
-// کلید پشتیبان (دوم) برای هر سرویس — وقتی کلید اول لیمیت خورد، خودکار با دومی امتحان می‌شود
-function getVisionKeyBackup(prov){ try{ return (localStorage.getItem(VISION_KEY_PREFIX+prov+'_2')||'').trim(); }catch(e){ return ''; } }
-function setVisionKeyBackup(prov,key){ try{ if(key){ localStorage.setItem(VISION_KEY_PREFIX+prov+'_2', String(key).trim()); } else { localStorage.removeItem(VISION_KEY_PREFIX+prov+'_2'); } }catch(e){} }
-function getVisionKeys(prov){ return [getVisionKey(prov), getVisionKeyBackup(prov)].filter(Boolean); }
+// هر سرویس می‌تواند «هر تعداد» کلید داشته باشد؛ به‌ترتیب امتحان می‌شوند و روی لیمیت به کلید بعدی می‌رود.
+const VISION_KEYS_PREFIX='vision_keys_';   // + provider → آرایه‌ی JSON از کلیدها
+function _visionKeysRaw(prov){ try{ const a=JSON.parse(localStorage.getItem(VISION_KEYS_PREFIX+prov)||'null'); if(Array.isArray(a)) return a.map(x=>String(x||'').trim()).filter(Boolean); }catch(e){} return null; }
+function setVisionKeysArr(prov, arr){ try{ const seen={}, clean=[]; (arr||[]).forEach(x=>{ const k=String(x||'').trim(); if(k&&!seen[k]){ seen[k]=1; clean.push(k); } }); if(clean.length) localStorage.setItem(VISION_KEYS_PREFIX+prov, JSON.stringify(clean)); else localStorage.removeItem(VISION_KEYS_PREFIX+prov); }catch(e){} }
+function _visionKeysMigrate(prov){   // مهاجرت یک‌باره از ساختار قدیم (کلید اصلی + پشتیبان)
+  const arr=[]; try{ const m=(localStorage.getItem(VISION_KEY_PREFIX+prov)||'').trim(); if(m) arr.push(m);
+    const b=(localStorage.getItem(VISION_KEY_PREFIX+prov+'_2')||'').trim(); if(b) arr.push(b); }catch(e){}
+  if(arr.length){ setVisionKeysArr(prov, arr); try{ localStorage.removeItem(VISION_KEY_PREFIX+prov); localStorage.removeItem(VISION_KEY_PREFIX+prov+'_2'); }catch(e){} }
+  return arr;
+}
+function getVisionKeys(prov){ prov=prov||getVisionProvider(); const a=_visionKeysRaw(prov); return a!=null ? a : _visionKeysMigrate(prov); }
+function getVisionKey(prov){ return getVisionKeys(prov||getVisionProvider())[0]||''; }
+function setVisionKey(prov,key){ const a=getVisionKeys(prov); if(key){ const k=String(key).trim(); if(a.length) a[0]=k; else a.push(k); } else { a.shift(); } setVisionKeysArr(prov,a); }
+function addVisionKey(prov,key){ const k=String(key||'').trim(); if(!k) return false; const a=getVisionKeys(prov); if(a.indexOf(k)>=0) return false; a.push(k); setVisionKeysArr(prov,a); return true; }
+function removeVisionKeyAt(prov,i){ const a=getVisionKeys(prov); if(i>=0&&i<a.length){ a.splice(i,1); setVisionKeysArr(prov,a); } }
+function getVisionKeyBackup(prov){ return getVisionKeys(prov)[1]||''; }   // سازگاری با کدهای قدیمی
+function setVisionKeyBackup(prov,key){ if(key) addVisionKey(prov,key); }
 function hasAnyKey(prov){ return getVisionKeys(prov).length>0; }
 // نشانِ مسدودیِ جغرافیایی در همین سشن (برای اینکه بعد از اولین خطای لوکیشن، دیگر بی‌جهت درخواست نفرستد)
 window._aiGeoBlock=window._aiGeoBlock||{};
@@ -6863,26 +6874,31 @@ async function aiKeyFallback(prov, makeCall, onRetry){
   }
   throw lastErr;
 }
-// فالبک چندسرویسی برای کارهای عکسی: اگر سرویس انتخابی سهمیه‌اش پر شد (۴۲۹/۴۰۲) یا محدودیت جغرافیایی داشت،
-// خودکار سراغ سرویس عکس‌دار بعدی که کلید دارد می‌رود. makeCall(prov,key). onProv(prov) قبل از هر سرویس صدا زده می‌شود.
-async function aiVisionFallback(primary, makeCall, onRetry, onProv){
+// فالبک سرتاسری بین سرویس‌ها: از سرویسِ اصلی شروع می‌کند و درونِ آن همه‌ی کلیدها را امتحان می‌کند؛
+// اگر سرویس سهمیه‌اش پر شد (۴۲۹/۴۰۲) یا محدودیت جغرافیایی داشت، خودکار سراغ سرویس بعدیِ دارای کلید می‌رود.
+// makeCall(prov,key). vision=true فقط سرویس‌های عکس‌دار. onProv(prov,isSwitch) قبل از هر سرویس صدا زده می‌شود.
+async function aiFallbackChain(primary, makeCall, opts){
+  opts=opts||{}; const vision=!!opts.vision, onRetry=opts.onRetry, onProv=opts.onProv;
   const order=[primary, ...VISION_PROVIDERS.filter(p=>p!==primary)];
-  const tried=new Set(); let lastErr;
+  const tried={}; let lastErr, first=true;
   for(const p of order){
-    if(tried.has(p) || !PROVIDER_VISION[p] || !hasAnyKey(p) || aiGeoBlocked(p)) continue;
-    tried.add(p);
-    if(onProv){ try{ onProv(p); }catch(_){} }
+    if(tried[p] || !hasAnyKey(p) || aiGeoBlocked(p) || (vision && !PROVIDER_VISION[p])) continue;
+    tried[p]=1;
+    if(onProv){ try{ onProv(p, !first); }catch(_){} }
+    first=false;
     try{ return await aiKeyFallback(p, k=>makeCall(p,k), onRetry); }
     catch(e){
       lastErr=e; const m=String((e&&e.message)||e); const cm=m.match(/\((\d{3})\)/); const code=cm?+cm[1]:0;
       const quota = code===429||code===402||/insufficient balance|quota|exceeded|rate limit|billing/i.test(m);
       const geo   = /location|not supported|unsupported|region|country/i.test(m);
-      if(quota||geo) continue;   // سرویس بعدیِ عکس‌دار را امتحان کن
+      if(quota||geo) continue;   // سرویس بعدی را امتحان کن
       throw e;
     }
   }
-  throw lastErr || new Error('هیچ سرویس عکس‌دارِ در دسترسی نمانده');
+  throw lastErr || new Error(PROVIDER_NAMES[primary]+' (401): سرویسِ در دسترسی نمانده');
 }
+// سازگاری: نسخه‌ی عکسی
+function aiVisionFallback(primary, makeCall, onRetry, onProv){ return aiFallbackChain(primary, makeCall, {vision:true, onRetry, onProv}); }
 // انتخاب سرویس هوش مصنوعی برای هر بخش (اگر تنظیم نشده، از سرویس پیش‌فرض استفاده می‌شود)
 const AI_SECTION_KEY='ai_section_provider_v1';
 function sectionProvider(section){ try{ const o=JSON.parse(localStorage.getItem(AI_SECTION_KEY)||'{}'); const p=o[section]; return VISION_PROVIDERS.includes(p)?p:getVisionProvider(); }catch(e){ return getVisionProvider(); } }
@@ -7336,7 +7352,7 @@ async function handlePlatePhoto(inp){
   try{
     const img=await imageToJpeg(file,1024,0.82);
     set(aiMsgBox('🔎','در حال تحلیل با هوش مصنوعی…','چند ثانیه طول می‌کشد.'));
-    const text=await aiKeyFallback(prov, k=>callVision(prov,k,img,null,1500,0), n=>set(aiMsgBox('⏳','سرویس شلوغ است','تلاش دوباره ('+faDigits(String(n))+')… کمی صبر کن.')));
+    const text=await aiVisionFallback(prov, (p,k)=>callVision(p,k,img,null,1500,0), n=>set(aiMsgBox('⏳','سرویس شلوغ است','تلاش دوباره ('+faDigits(String(n))+')… کمی صبر کن.')), (p,sw)=>{ if(sw) set(aiMsgBox('🔄','تغییر سرویس','سهمیه‌ی سرویس قبلی پر بود؛ تلاش با «'+(PROVIDER_NAMES[p]||p)+'»…')); });
     const items=parseVisionJSON(text);
     if(!items.length){ set(aiMsgBox('🤔','غذایی تشخیص داده نشد','عکس واضح‌تر و از بالای بشقاب بگیر، یا خوراکی‌ها را دستی وارد کن.','err')); return; }
     const plan=planVisionRows(items);
@@ -7363,26 +7379,24 @@ function toggleVisionKeyView(prov){
   const inp=document.getElementById('visionKeyInput_'+prov); if(!inp) return;
   inp.type=(inp.type==='password')?'text':'password';
 }
-function saveVisionKeyFor(prov){
+function addVisionKeyFor(prov){
   const inp=document.getElementById('visionKeyInput_'+prov); if(!inp) return;
   const v=(inp.value||'').trim();
   if(!v){ if(typeof uiToast==='function') uiToast('کلید خالی است'); return; }
-  setVisionKey(prov,v); clearAiGeoBlock(prov);
+  const ok=addVisionKey(prov,v); clearAiGeoBlock(prov);
   renderVisionSetting();
-  if(typeof uiToast==='function') uiToast(PROVIDER_NAMES[prov]+' ذخیره شد');
+  if(typeof uiToast==='function') uiToast(ok?(PROVIDER_NAMES[prov]+' — کلید افزوده شد'):'این کلید قبلاً ثبت شده');
 }
-function clearVisionKeyFor(prov){
-  setVisionKey(prov,'');
+function removeVisionKeyFor(prov,i){
+  removeVisionKeyAt(prov,i);
   renderVisionSetting();
   if(typeof uiToast==='function') uiToast('کلید حذف شد');
 }
-function saveVisionKeyBackupFor(prov){
-  const inp=document.getElementById('visionKeyBackup_'+prov); if(!inp) return;
-  const v=(inp.value||'').trim(); if(!v){ if(typeof uiToast==='function') uiToast('کلید پشتیبان خالی است'); return; }
-  setVisionKeyBackup(prov,v); clearAiGeoBlock(prov); renderVisionSetting();
-  if(typeof uiToast==='function') uiToast('کلید پشتیبان '+PROVIDER_NAMES[prov]+' ذخیره شد');
-}
-function clearVisionKeyBackupFor(prov){ setVisionKeyBackup(prov,''); renderVisionSetting(); if(typeof uiToast==='function') uiToast('کلید پشتیبان حذف شد'); }
+// سازگاری با فراخوانی‌های قدیمی
+function saveVisionKeyFor(prov){ addVisionKeyFor(prov); }
+function clearVisionKeyFor(prov){ setVisionKeysArr(prov,[]); renderVisionSetting(); if(typeof uiToast==='function') uiToast('کلیدها حذف شدند'); }
+function saveVisionKeyBackupFor(prov){ addVisionKeyFor(prov); }
+function clearVisionKeyBackupFor(prov){ renderVisionSetting(); }
 // بخش‌هایی که سرویس هوش مصنوعی برایشان انتخاب می‌شود
 const AI_SECTIONS=[
   {id:'food', label:'عکس غذا (بشقاب)', icon:'📷', vision:true},
@@ -7397,21 +7411,24 @@ const AI_SECTIONS=[
 function renderVisionSetting(){
   const box=document.getElementById('visionSetting'); if(!box) return;
   // ۱) کلیدهای چهار سرویس
-  let h=`<div style="font-weight:800;font-size:12.5px;color:var(--teal);margin-bottom:8px">۱) کلیدهای API (هر کدام را داشتی وارد کن)</div>`;
+  let h=`<div style="font-weight:800;font-size:12.5px;color:var(--teal);margin-bottom:4px">۱) کلیدهای API</div>
+    <div style="font-size:10.5px;color:var(--muted);line-height:1.7;margin-bottom:8px">برای هر سرویس می‌توانی <b>هر تعداد کلید</b> بگذاری. به‌ترتیب امتحان می‌شوند؛ هر کلید که به لیمیت بخورد خودکار می‌رود سراغ کلید بعدی، و اگر سهمیه‌ی کل یک سرویس پر شود سرِ همه‌ی برنامه به سرویس بعدیِ دارای کلید سوییچ می‌کند.</div>`;
   VISION_PROVIDERS.forEach(p=>{
-    const has=!!getVisionKey(p); const has2=!!getVisionKeyBackup(p);
+    const keys=getVisionKeys(p); const n=keys.length; const has=n>0;
     h+=`<div style="border:1px solid ${has?'var(--teal-dim)':'var(--line)'};border-radius:11px;padding:9px 10px;margin-bottom:8px;background:${has?'rgba(63,185,163,.07)':'transparent'}">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><b style="font-size:12.5px;color:${has?'var(--teal)':'var(--fg)'}">${PROVIDER_NAMES[p]}</b>${has?'<span style="font-size:10.5px;color:var(--teal)">✓ ذخیره‌شده</span>':''}${!PROVIDER_VISION[p]?'<span style="font-size:9.5px;color:var(--muted)">(بدون عکس)</span>':''}<span style="flex:1"></span><span style="font-size:9.5px;color:var(--muted)">${PROVIDER_HINTS[p]}</span></div>
-      <div style="display:flex;gap:5px">
-        <input type="password" id="visionKeyInput_${p}" placeholder="${has?'●●●●●●●●  (کلید اصلی)':'کلید API اصلی'}" autocomplete="off" style="flex:1;min-width:0;font-size:12px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><b style="font-size:12.5px;color:${has?'var(--teal)':'var(--fg)'}">${PROVIDER_NAMES[p]}</b>${has?`<span style="font-size:10.5px;color:var(--teal)">✓ ${faDigits(String(n))} کلید</span>`:''}${!PROVIDER_VISION[p]?'<span style="font-size:9.5px;color:var(--muted)">(بدون عکس)</span>':''}<span style="flex:1"></span><span style="font-size:9.5px;color:var(--muted)">${PROVIDER_HINTS[p]}</span></div>`;
+    keys.forEach((k,i)=>{
+      const mask=k.length>10?(k.slice(0,4)+'…'+k.slice(-4)):'●●●●●';
+      h+=`<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:11.5px">
+        <span style="flex:0 0 auto;width:20px;height:20px;border-radius:6px;background:var(--field);color:var(--teal);display:flex;align-items:center;justify-content:center;font-size:10px">${faDigits(String(i+1))}</span>
+        <code style="flex:1;min-width:0;direction:ltr;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${escVision(mask)}</code>
+        <button type="button" class="mini-btn" onclick="removeVisionKeyFor('${p}',${i})" title="حذف این کلید">🗑</button>
+      </div>`;
+    });
+    h+=`<div style="display:flex;gap:5px;margin-top:${has?'6':'0'}px">
+        <input type="password" id="visionKeyInput_${p}" placeholder="${has?'کلید جدید برای افزودن':'کلید API این سرویس'}" autocomplete="off" style="flex:1;min-width:0;font-size:12px">
         <button type="button" class="mini-btn" onclick="toggleVisionKeyView('${p}')" title="نمایش">👁</button>
-        <button type="button" class="mini-btn" onclick="saveVisionKeyFor('${p}')">💾</button>
-        ${has?`<button type="button" class="mini-btn" onclick="clearVisionKeyFor('${p}')" title="حذف">🗑</button>`:''}
-      </div>
-      <div style="display:flex;gap:5px;margin-top:5px">
-        <input type="password" id="visionKeyBackup_${p}" placeholder="${has2?'●●●●●●●●  (کلید پشتیبان)':'کلید پشتیبان (اختیاری) — وقتی اولی لیمیت خورد'}" autocomplete="off" style="flex:1;min-width:0;font-size:11.5px;opacity:.9">
-        <button type="button" class="mini-btn" onclick="saveVisionKeyBackupFor('${p}')" title="ذخیره‌ی پشتیبان">💾₂</button>
-        ${has2?`<button type="button" class="mini-btn" onclick="clearVisionKeyBackupFor('${p}')" title="حذف پشتیبان">🗑</button>`:''}
+        <button type="button" class="mini-btn" onclick="addVisionKeyFor('${p}')" title="افزودن کلید">➕</button>
       </div>
     </div>`;
   });
@@ -9189,7 +9206,7 @@ async function extractFromImageAI(file,prog){
   if(prog) prog.textContent='آماده‌سازی عکس برای هوش مصنوعی…';
   const img=await imageToJpeg(file,1600,0.85);           // وضوح بیشتر برای متن ریز
   if(prog) prog.textContent='خواندن عکس با هوش مصنوعی…';
-  const text=await aiKeyFallback(prov, k=>callVision(prov,k,img,LAB_OCR_PROMPT,1500,0), n=>{ if(prog) prog.textContent='سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'; });
+  const text=await aiVisionFallback(prov, (p,k)=>callVision(p,k,img,LAB_OCR_PROMPT,1500,0), n=>{ if(prog) prog.textContent='سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'; }, (p,sw)=>{ if(sw&&prog) prog.textContent='سهمیه پر بود؛ تلاش با «'+(PROVIDER_NAMES[p]||p)+'»…'; });
   const lines=String(text||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
   window._lastOcrLines=(window._lastOcrLines||[]).concat(lines);
   return parseLabLines(lines);
@@ -9306,7 +9323,7 @@ async function runLabAiAnalysis(force){
   const hash=_hashStr((ctx.date||'')+'|'+ctx.lines.join('|'));
   box.innerHTML=aiEmptyState('⏳ در حال تحلیل… (چند ثانیه)');
   try{
-    const text=await aiKeyFallback(prov, k=>callAIText(prov,k,LAB_JSON_PROMPT(ctx),4096,512), n=>{ box.innerHTML=aiEmptyState('⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'); });
+    const text=await aiFallbackChain(prov, (p,k)=>callAIText(p,k,LAB_JSON_PROMPT(ctx),4096,512), {onRetry:n=>{ box.innerHTML=aiEmptyState('⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'); }, onProv:(p,sw)=>{ if(sw) box.innerHTML=aiEmptyState('🔄 سهمیه پر بود؛ تلاش با «'+(PROVIDER_NAMES[p]||p)+'»…'); }});
     const clean=String(text||'').trim();
     if(!clean){ box.innerHTML=aiMsgBox('⚠️','پاسخی نیامد','دوباره امتحان کن.','err'); return; }
     aiLastSet('labs',{text:clean, ts:Date.now(), hash});
@@ -9664,7 +9681,8 @@ async function chatSend(){
     const sys=buildChatSystemPrompt();
     const hist=c.messages.slice(-14).map(m=>{ const mm={role:m.role,content:m.content}; if(m===umsg && imgs.length) mm.images=imgs; return mm; });
     const onDelta=chunk=>{ if(_chatAbort) return; acc+=chunk; const b=bubble(); if(b){ b.innerHTML=labAiFmt(acc)+'<span class="chat-cur"></span>'; if(mb) mb.scrollTop=mb.scrollHeight; } };
-    const reply=await aiKeyFallback(prov, k=>callAIChatStream(prov,k,sys,hist,{speed:c.speed,maxTok:1500},onDelta));
+    const reply=await aiFallbackChain(prov, (p,k)=>callAIChatStream(p,k,sys,hist,{speed:c.speed,maxTok:1500},onDelta),
+      {onProv:(p,sw)=>{ if(sw){ acc=''; const b=bubble(); if(b) b.innerHTML='<span style="color:var(--muted);font-size:11.5px">سهمیه پر بود؛ تلاش با «'+escVision(PROVIDER_NAMES[p]||p)+'»…</span><span class="chat-cur"></span>'; } }});
     const clean=String(reply||acc||'').trim()||'پاسخی دریافت نشد.';
     c.messages.push({role:'assistant',content:clean,ts:Date.now()});
     chatSave(o); renderChatMessages(c);
@@ -9757,7 +9775,7 @@ async function chatLiveAsk(txt){ chatLiveStatus('در حال فکر کردن…'
   try{
     const sys=buildChatSystemPrompt()+'\nاین گفتگوی صوتی است؛ خیلی کوتاه، محاوره‌ای و در حد چند جمله جواب بده.';
     const hist=c.messages.slice(-12).map(m=>({role:m.role,content:m.content}));
-    const reply=await aiKeyFallback(prov, k=>callAIChat(prov,k,sys,hist,{speed:'fast',maxTok:400}));
+    const reply=await aiFallbackChain(prov, (p,k)=>callAIChat(p,k,sys,hist,{speed:'fast',maxTok:400}), {});
     const clean=String(reply||'').trim()||'متوجه نشدم.';
     c.messages.push({role:'assistant',content:clean,ts:Date.now()}); chatSave(o);
     if(document.getElementById('chatMsgs')) renderChatMessages(c);
@@ -10070,7 +10088,7 @@ async function runHealthAi(scope, force){
   const hash=_hashStr(scope+'|'+snap.text);
   box.innerHTML=aiEmptyState('⏳ در حال تحلیل جامع… (چند ثانیه صبر کن)');
   try{
-    const text=await aiKeyFallback(prov, k=>callAIText(prov,k,HEALTH_AI_PROMPT(scope,snap),4096,512), n=>{ box.innerHTML=aiEmptyState('⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'); });
+    const text=await aiFallbackChain(prov, (p,k)=>callAIText(p,k,HEALTH_AI_PROMPT(scope,snap),4096,512), {onRetry:n=>{ box.innerHTML=aiEmptyState('⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'); }, onProv:(p,sw)=>{ if(sw) box.innerHTML=aiEmptyState('🔄 سهمیه پر بود؛ تلاش با «'+(PROVIDER_NAMES[p]||p)+'»…'); }});
     const clean=String(text||'').trim();
     if(!clean){ box.innerHTML=aiMsgBox('⚠️','پاسخی نیامد','دوباره امتحان کن.','err'); return; }
     const sk=scopeKey(scope);
