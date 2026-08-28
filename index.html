@@ -1713,7 +1713,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۱.۳.۴</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۱.۴</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -6821,6 +6821,23 @@ async function imageToJpeg(file, maxDim, q){
   const dataURL=cv.toDataURL('image/jpeg',q);
   return { b64:dataURL.split(',')[1], mediaType:'image/jpeg', dataURL };
 }
+// درخواست به Gemini با کنترلِ «بودجه‌ی فکرکردن» (thinkBudget) برای صرفه‌جویی توکن.
+// اگر مدل thinkingConfig را نپذیرفت (۴۰۰)، خودکار بدون آن دوباره می‌فرستد (fallback امن).
+async function _geminiGenerate(key, parts, mt, thinkBudget){
+  const url='https://generativelanguage.googleapis.com/v1beta/models/'+VISION_MODELS.gemini+':generateContent?key='+encodeURIComponent(key);
+  const mkBody=(useThink)=>{ const gen={maxOutputTokens:mt,temperature:0.2}; if(useThink && thinkBudget!=null) gen.thinkingConfig={thinkingBudget:thinkBudget}; return JSON.stringify({contents:[{parts}],generationConfig:gen}); };
+  const post=(body)=>fetch(url,{method:'POST',headers:{'content-type':'application/json'},body});
+  let res=await post(mkBody(true));
+  if(!res.ok){
+    const t=(await res.text()).slice(0,800);
+    if(res.status===400 && thinkBudget!=null && /thinking/i.test(t)){
+      res=await post(mkBody(false));   // مدل thinkingConfig را نمی‌شناسد → بدون آن
+      if(!res.ok){ throw new Error('Gemini ('+res.status+'): '+(await res.text()).slice(0,800)); }
+    }else{ throw new Error('Gemini ('+res.status+'): '+t); }
+  }
+  const data=await res.json(); const c=data.candidates&&data.candidates[0];
+  return (c&&c.content&&c.content.parts||[]).map(p=>p.text||'').join('\n');
+}
 const VISION_PROMPT=
 "You are a nutrition-estimation assistant for an educational diabetes app used in Iran. Look at the photo of a meal/plate and identify each distinct food or drink.\n"+
 "Return ONLY a compact JSON array (no markdown fences, no commentary). Each element must be exactly:\n"+
@@ -6832,23 +6849,11 @@ const VISION_PROMPT=
 "- carb_g/protein_g/fat_g/kcal are plain numbers for the WHOLE visible portion (unit × count). grams is the total edible grams.\n"+
 "- Names in Persian, numbers numeric. If nothing recognizable, return []. Output the JSON array only.";
 
-// تماس بینایی (با عکس). promptText اختیاری؛ پیش‌فرض تشخیص غذا. maxTok برای مدیریت توکن.
-async function callVision(prov, key, img, promptText, maxTok){
+// تماس بینایی (با عکس). promptText اختیاری؛ maxTok/thinkBudget برای مدیریت توکن.
+async function callVision(prov, key, img, promptText, maxTok, thinkBudget){
   const prompt=promptText||VISION_PROMPT; const mt=maxTok||1500;
   if(prov==='gemini'){
-    const url='https://generativelanguage.googleapis.com/v1beta/models/'+VISION_MODELS.gemini+':generateContent?key='+encodeURIComponent(key);
-    const res=await fetch(url,{
-      method:'POST',
-      headers:{'content-type':'application/json'},
-      body:JSON.stringify({
-        contents:[{ parts:[ {text:prompt}, {inline_data:{mime_type:img.mediaType, data:img.b64}} ] }],
-        generationConfig:{ maxOutputTokens:mt, temperature:0.2 }
-      })
-    });
-    if(!res.ok){ throw new Error('Gemini ('+res.status+'): '+(await res.text()).slice(0,800)); }
-    const data=await res.json();
-    const cand=data.candidates&&data.candidates[0];
-    return (cand&&cand.content&&cand.content.parts||[]).map(p=>p.text||'').join('\n');
+    return await _geminiGenerate(key, [ {text:prompt}, {inline_data:{mime_type:img.mediaType, data:img.b64}} ], mt, thinkBudget);
   }
   if(prov==='openai'){
     const res=await fetch('https://api.openai.com/v1/chat/completions',{
@@ -6873,15 +6878,10 @@ async function callVision(prov, key, img, promptText, maxTok){
   return (data.content||[]).filter(b=>b&&b.type==='text').map(b=>b.text).join('\n');
 }
 // تماس فقط‌متنی (بدون عکس) — سبک و کم‌توکن؛ برای تحلیل مقادیر آزمایش.
-async function callAIText(prov, key, promptText, maxTok){
+async function callAIText(prov, key, promptText, maxTok, thinkBudget){
   const mt=maxTok||700;
   if(prov==='gemini'){
-    const url='https://generativelanguage.googleapis.com/v1beta/models/'+VISION_MODELS.gemini+':generateContent?key='+encodeURIComponent(key);
-    const res=await fetch(url,{ method:'POST', headers:{'content-type':'application/json'},
-      body:JSON.stringify({ contents:[{parts:[{text:promptText}]}], generationConfig:{maxOutputTokens:mt,temperature:0.3} }) });
-    if(!res.ok){ throw new Error('Gemini ('+res.status+'): '+(await res.text()).slice(0,800)); }
-    const data=await res.json(); const c=data.candidates&&data.candidates[0];
-    return (c&&c.content&&c.content.parts||[]).map(p=>p.text||'').join('\n');
+    return await _geminiGenerate(key, [{text:promptText}], mt, thinkBudget);
   }
   if(prov==='openai'){
     const res=await fetch('https://api.openai.com/v1/chat/completions',{ method:'POST',
@@ -7060,7 +7060,7 @@ async function handlePlatePhoto(inp){
   try{
     const img=await imageToJpeg(file,1024,0.82);
     set(aiMsgBox('🔎','در حال تحلیل با هوش مصنوعی…','چند ثانیه طول می‌کشد.'));
-    const text=await aiRetry(()=>callVision(prov,key,img), n=>set(aiMsgBox('⏳','سرویس شلوغ است','تلاش دوباره ('+faDigits(String(n))+')… کمی صبر کن.')));
+    const text=await aiRetry(()=>callVision(prov,key,img,null,1500,0), n=>set(aiMsgBox('⏳','سرویس شلوغ است','تلاش دوباره ('+faDigits(String(n))+')… کمی صبر کن.')));
     const items=parseVisionJSON(text);
     if(!items.length){ set(aiMsgBox('🤔','غذایی تشخیص داده نشد','عکس واضح‌تر و از بالای بشقاب بگیر، یا خوراکی‌ها را دستی وارد کن.','err')); return; }
     const plan=planVisionRows(items);
@@ -8879,7 +8879,7 @@ async function extractFromImageAI(file,prog){
   if(prog) prog.textContent='آماده‌سازی عکس برای هوش مصنوعی…';
   const img=await imageToJpeg(file,1600,0.85);           // وضوح بیشتر برای متن ریز
   if(prog) prog.textContent='خواندن عکس با هوش مصنوعی…';
-  const text=await aiRetry(()=>callVision(prov,key,img,LAB_OCR_PROMPT,1500), n=>{ if(prog) prog.textContent='سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'; });
+  const text=await aiRetry(()=>callVision(prov,key,img,LAB_OCR_PROMPT,1500,0), n=>{ if(prog) prog.textContent='سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'; });
   const lines=String(text||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
   window._lastOcrLines=(window._lastOcrLines||[]).concat(lines);
   return parseLabLines(lines);
@@ -8992,7 +8992,7 @@ async function runLabAiAnalysis(force){
   if(cached && !force){ box.innerHTML=labAiFmt(cached.text); return; }
   box.innerHTML='<span style="color:var(--muted)">⏳ در حال تحلیل… (چند ثانیه)</span>';
   try{
-    const text=await aiRetry(()=>callAIText(prov,key,LAB_AI_ANALYSIS_PROMPT(ctx),2048), n=>{ box.innerHTML='<span style="color:var(--muted)">⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…</span>'; });
+    const text=await aiRetry(()=>callAIText(prov,key,LAB_AI_ANALYSIS_PROMPT(ctx),2560,1024), n=>{ box.innerHTML='<span style="color:var(--muted)">⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…</span>'; });
     const clean=String(text||'').trim();
     if(!clean){ box.innerHTML='<span style="color:var(--amber)">پاسخی دریافت نشد. دوباره امتحان کن.</span>'; return; }
     labAiCacheSet(hash,clean);
