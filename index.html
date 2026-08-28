@@ -1741,7 +1741,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۲.۲</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۲.۳</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4779,8 +4779,10 @@ async function handleCustomFoodPhotoAI(inp){
     const found=['energy_kcal','carb_g','sugar_g','protein_g','fat_g','fiber_g'].filter(k=>num(o[k])!=null).length;
     setNote(found?('✓ '+faDigits(String(found))+' مقدار خوانده شد. حتماً همه را با برچسب چک و در صورت لزوم اصلاح کن.'):'چیزی خوانده نشد؛ عکس واضح‌تر بده یا دستی وارد کن.');
   }catch(e){
-    const ei=(typeof aiErrorInfo==='function')?aiErrorInfo(e):{text:'خطا در خواندن عکس'};
-    setNote('خطا: '+ei.text+' — می‌توانی از «خواندن آفلاین» استفاده کنی یا دستی وارد کنی.');
+    const ei=(typeof aiErrorInfo==='function')?aiErrorInfo(e):{emoji:'⚠️',title:'خطا',text:'خطا در خواندن عکس'};
+    if(note && typeof aiMsgBox==='function'){
+      note.innerHTML=aiMsgBox(ei.emoji,ei.title,ei.text+' — می‌توانی از «خواندن آفلاین» استفاده کنی یا دستی وارد کنی.','err',String((e&&e.message)||e));
+    } else setNote('خطا: '+ei.text);
   }
   inp.value='';
 }
