@@ -1737,7 +1737,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۱.۹</b> · انتشار: ۱۴۰۵/۰۶/۰۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۲.۰</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -7042,6 +7042,58 @@ async function callAIChat(prov, key, systemText, messages, opts){
   const data=await res.json();
   return (data.content||[]).filter(b=>b&&b.type==='text').map(b=>b.text).join('\n');
 }
+// نسخه‌ی جریانی (استریم) گفتگو — پاسخ را کلمه‌کلمه با onDelta(chunk) تحویل می‌دهد و در پایان کل متن را برمی‌گرداند.
+// messages: [{role, content, images?:[{mediaType,b64,dataURL}]}] — تصاویر فقط روی آخرین پیام کاربر اعمال می‌شود.
+async function callAIChatStream(prov, key, systemText, messages, opts, onDelta){
+  opts=opts||{}; const mt=opts.maxTok||1500; const emit=t=>{ if(t&&onDelta) onDelta(t); };
+  const hasImg=m=>m&&Array.isArray(m.images)&&m.images.length;
+  // خواننده‌ی عمومی SSE
+  async function readSSE(res, pick){
+    if(!res.ok){ throw new Error(PROVIDER_NAMES[prov]+' ('+res.status+'): '+(await res.text()).slice(0,800)); }
+    if(!res.body||!res.body.getReader){ // بدون استریم مرورگر: کل متن
+      const txt=await res.text(); let full=''; txt.split(/\n/).forEach(line=>{ const s=line.replace(/^data:\s?/,''); if(s&&s!=='[DONE]'){ try{ const t=pick(JSON.parse(s)); if(t){ full+=t; emit(t); } }catch(e){} } }); return full;
+    }
+    const reader=res.body.getReader(), dec=new TextDecoder(); let buf='', full='';
+    for(;;){ const {value,done}=await reader.read(); if(done) break; buf+=dec.decode(value,{stream:true});
+      let idx; while((idx=buf.indexOf('\n'))>=0){ let line=buf.slice(0,idx); buf=buf.slice(idx+1); line=line.replace(/\r$/,'');
+        if(!line || line.startsWith(':') || line.startsWith('event:')) continue;
+        const s=line.replace(/^data:\s?/,''); if(!s||s==='[DONE]') continue;
+        try{ const t=pick(JSON.parse(s)); if(t){ full+=t; emit(t); } }catch(e){} }
+    }
+    return full;
+  }
+  if(prov==='gemini'){
+    const url='https://generativelanguage.googleapis.com/v1beta/models/'+VISION_MODELS.gemini+':streamGenerateContent?alt=sse&key='+encodeURIComponent(key);
+    const contents=messages.map(m=>{ const parts=[{text:String(m.content||'')}];
+      if(hasImg(m)) m.images.forEach(im=>parts.push({inline_data:{mime_type:im.mediaType,data:im.b64}}));
+      return { role:(m.role==='assistant'?'model':'user'), parts }; });
+    const gen={maxOutputTokens:mt,temperature:0.5}; if(opts.speed==='fast') gen.thinkingConfig={thinkingBudget:0};
+    const body={ contents, generationConfig:gen }; if(systemText) body.systemInstruction={parts:[{text:systemText}]};
+    const res=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+    return await readSSE(res, d=>((d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[]).map(p=>p.text||'').join(''));
+  }
+  if(prov==='openai' || prov==='deepseek'){
+    const url = prov==='deepseek' ? 'https://api.deepseek.com/chat/completions' : 'https://api.openai.com/v1/chat/completions';
+    let model = prov==='deepseek' ? VISION_MODELS.deepseek : VISION_MODELS.openai;
+    if(prov==='deepseek' && opts.speed==='smart') model='deepseek-reasoner';
+    const msgs=[]; if(systemText) msgs.push({role:'system',content:systemText});
+    messages.forEach(m=>{ const role=m.role==='assistant'?'assistant':'user';
+      if(hasImg(m) && prov==='openai'){ const arr=[{type:'text',text:String(m.content||'')}]; m.images.forEach(im=>arr.push({type:'image_url',image_url:{url:im.dataURL}})); msgs.push({role,content:arr}); }
+      else msgs.push({role,content:String(m.content||'')}); });
+    const res=await fetch(url,{ method:'POST', headers:{'content-type':'application/json','authorization':'Bearer '+key},
+      body:JSON.stringify({ model, max_tokens:mt, stream:true, messages:msgs }) });
+    return await readSSE(res, d=>(d.choices&&d.choices[0]&&d.choices[0].delta&&d.choices[0].delta.content)||'');
+  }
+  // Claude
+  const msgs=messages.map(m=>{ const role=m.role==='assistant'?'assistant':'user';
+    if(hasImg(m)){ const arr=[{type:'text',text:String(m.content||'')}]; m.images.forEach(im=>arr.push({type:'image',source:{type:'base64',media_type:im.mediaType,data:im.b64}})); return {role,content:arr}; }
+    return {role,content:String(m.content||'')}; });
+  const body={ model:VISION_MODELS.claude, max_tokens:mt, stream:true, messages:msgs }; if(systemText) body.system=systemText;
+  const res=await fetch('https://api.anthropic.com/v1/messages',{ method:'POST',
+    headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify(body) });
+  return await readSSE(res, d=>(d.type==='content_block_delta'&&d.delta&&(d.delta.text||''))||'');
+}
 function parseVisionJSON(text){
   if(!text) return [];
   let t=String(text).replace(/```json/gi,'').replace(/```/g,'').trim();
@@ -9292,29 +9344,60 @@ function buildChatSystemPrompt(){
 }
 let _chatCssDone=false;
 function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=document.createElement('style'); s.textContent=`
-  .chatx{position:relative}
-  .chatx-top{display:flex;align-items:center;gap:9px;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:10px}
-  .chatx-burger{flex:0 0 auto;width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--field);color:var(--teal);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .chatx{position:relative;display:flex;flex-direction:column}
+  .chatx-top{display:flex;align-items:center;gap:9px;padding-bottom:11px;border-bottom:1px solid var(--line);margin-bottom:12px}
+  .chatx-burger{flex:0 0 auto;width:40px;height:40px;border-radius:13px;border:1px solid var(--line);background:linear-gradient(160deg,rgba(63,185,163,.14),var(--field));color:var(--teal);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+  .chatx-burger:active{transform:scale(.92)}
   .chatx-tt{flex:1;min-width:0;display:flex;align-items:center;gap:6px;cursor:pointer;overflow:hidden}
-  .chatx-tt b{font-size:14px;font-weight:800;color:#eafffb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .chatx-tt .pen{flex:0 0 auto;color:var(--muted);font-size:12px}
-  .chatx-title-inp{flex:1;min-width:0;background:var(--field);border:1.5px solid var(--teal);border-radius:9px;padding:7px 10px;font-family:inherit;font-size:13.5px;color:var(--ink)}
-  .chatx-opt{flex:0 0 auto;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:6px 5px;font-family:inherit;font-size:11px;max-width:88px}
-  .chat-msgs{min-height:44vh;max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:6px 2px}
-  .chat-b{max-width:88%;padding:10px 14px;border-radius:16px;font-size:13px;line-height:1.95;word-break:break-word;box-shadow:0 1px 3px rgba(0,0,0,.15)}
-  .chat-b.me{align-self:flex-start;background:linear-gradient(160deg,var(--teal),var(--teal-dim));color:#fff;border-bottom-right-radius:5px}
-  .chat-b.ai{align-self:flex-end;background:#1b2735;border:1px solid var(--line);color:var(--ink);border-bottom-left-radius:5px}
-  .chat-input{display:flex;gap:8px;align-items:flex-end;margin-top:11px;border-top:1px solid var(--line);padding-top:11px}
-  .chat-input textarea{flex:1;resize:none;background:var(--field);border:1.5px solid var(--teal-dim);border-radius:16px;padding:12px 15px;font-family:inherit;font-size:13.5px;color:var(--ink);line-height:1.6;max-height:120px}
-  .chat-send{flex:0 0 auto;width:46px;height:46px;border-radius:50%;border:none;background:linear-gradient(145deg,var(--teal),var(--teal-dim));color:#fff;font-size:20px;cursor:pointer;box-shadow:0 4px 14px rgba(63,185,163,.45)}
-  .chatx-drawer{position:fixed;top:0;bottom:0;left:0;width:80%;max-width:330px;background:var(--panel,#131c26);border-right:1px solid var(--line);z-index:140;transform:translateX(-102%);transition:transform .26s cubic-bezier(.4,0,.2,1);overflow-y:auto;padding:16px 14px;box-shadow:6px 0 26px rgba(0,0,0,.4)}
+  .chatx-tt b{font-size:14.5px;font-weight:800;color:#eafffb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chatx-tt .pen{flex:0 0 auto;color:var(--muted);font-size:11px;opacity:.7}
+  .chatx-title-inp{flex:1;min-width:0;background:var(--field);border:1.5px solid var(--teal);border-radius:10px;padding:8px 11px;font-family:inherit;font-size:13.5px;color:var(--ink)}
+  .chat-msgs{min-height:46vh;max-height:58vh;overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding:6px 2px 4px;scroll-behavior:smooth}
+  .chat-row{display:flex;flex-direction:column;max-width:90%}
+  .chat-row.me{align-self:flex-start;align-items:flex-start}
+  .chat-row.ai{align-self:flex-end;align-items:flex-end}
+  .chat-b{padding:11px 15px;border-radius:19px;font-size:13.5px;line-height:2;word-break:break-word;box-shadow:0 2px 10px rgba(0,0,0,.18);position:relative}
+  .chat-row.me .chat-b{background:linear-gradient(150deg,var(--teal),var(--teal-dim));color:#fff;border-bottom-right-radius:6px}
+  .chat-row.ai .chat-b{background:linear-gradient(160deg,#1e2c3b,#18222e);border:1px solid var(--line);color:var(--ink);border-bottom-left-radius:6px}
+  .chat-b .cimg{display:block;max-width:190px;max-height:190px;border-radius:12px;margin:0 0 7px;border:1px solid rgba(255,255,255,.14)}
+  .chat-b .cfile{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border-radius:9px;padding:5px 9px;font-size:11.5px;margin:0 0 6px}
+  .chat-cur{display:inline-block;width:7px;height:14px;background:var(--teal);border-radius:2px;vertical-align:-2px;animation:chatBlink 1s steps(2) infinite;margin-inline-start:2px}
+  @keyframes chatBlink{50%{opacity:0}}
+  .chat-acts{display:flex;gap:3px;margin-top:5px;opacity:0;transition:.15s;flex-wrap:wrap}
+  .chat-row:hover .chat-acts,.chat-acts.show{opacity:1}
+  .chat-act{background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:8px;width:28px;height:28px;font-size:12.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.13s}
+  .chat-act:active{transform:scale(.9)}
+  .chat-act:hover{color:var(--teal);border-color:var(--teal-dim)}
+  .chat-dock{margin-top:12px;background:linear-gradient(180deg,rgba(255,255,255,.02),transparent);border:1px solid var(--line);border-radius:22px;padding:9px 9px 8px;box-shadow:0 6px 22px rgba(0,0,0,.22)}
+  .chat-attach-preview{display:flex;gap:7px;flex-wrap:wrap;padding:2px 4px 8px}
+  .chat-attach-preview .ap{position:relative;background:var(--field);border:1px solid var(--line);border-radius:11px;padding:5px 26px 5px 9px;font-size:11px;color:var(--ink);display:flex;align-items:center;gap:6px}
+  .chat-attach-preview .ap img{width:26px;height:26px;border-radius:6px;object-fit:cover}
+  .chat-attach-preview .ap .rm{position:absolute;top:2px;left:3px;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:13px;line-height:1}
+  .chat-inline{display:flex;gap:9px;align-items:flex-end}
+  .chat-inline textarea{flex:1;resize:none;background:transparent;border:none;padding:8px 10px;font-family:inherit;font-size:14px;color:var(--ink);line-height:1.7;max-height:130px;outline:none}
+  .chat-send{flex:0 0 auto;width:44px;height:44px;border-radius:50%;border:none;background:linear-gradient(145deg,var(--teal),var(--teal-dim));color:#fff;font-size:19px;cursor:pointer;box-shadow:0 4px 14px rgba(63,185,163,.45);transition:.14s}
+  .chat-send:active{transform:scale(.9)}
+  .chat-send.stop{background:linear-gradient(145deg,#e06666,#c0504d);box-shadow:0 4px 14px rgba(224,102,102,.45)}
+  .chat-tools{display:flex;align-items:center;gap:5px;padding:8px 4px 2px;flex-wrap:wrap}
+  .chat-tool{flex:0 0 auto;width:36px;height:36px;border-radius:11px;border:1px solid var(--line);background:var(--field);color:var(--teal);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.14s}
+  .chat-tool:active{transform:scale(.9)}
+  .chat-tool.on{background:linear-gradient(145deg,var(--teal),var(--teal-dim));color:#fff;border-color:transparent;animation:chatPulse 1.4s infinite}
+  @keyframes chatPulse{0%,100%{box-shadow:0 0 0 0 rgba(63,185,163,.5)}50%{box-shadow:0 0 0 7px rgba(63,185,163,0)}}
+  .chat-seg{flex:1 1 auto;display:flex;justify-content:flex-end;gap:6px;min-width:0}
+  .chat-pill{display:inline-flex;align-items:center;gap:5px;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:6px 11px;font-size:11.5px;font-weight:700;color:var(--ink);cursor:pointer;transition:.14s;white-space:nowrap}
+  .chat-pill:active{transform:scale(.96)}
+  .chat-pill .cap{color:var(--muted);font-weight:600;font-size:10px}
+  .chat-pill.spd{gap:4px}
+  .chat-pill.spd .dot{width:6px;height:6px;border-radius:50%;background:var(--teal)}
+  .chat-pill.spd.fast .dot{background:var(--amber)}
+  .chatx-drawer{position:fixed;top:0;bottom:0;left:0;width:82%;max-width:340px;background:linear-gradient(180deg,#16212d,#111a24);border-right:1px solid var(--line);z-index:140;transform:translateX(-102%);transition:transform .26s cubic-bezier(.4,0,.2,1);overflow-y:auto;padding:16px 14px;box-shadow:8px 0 30px rgba(0,0,0,.5)}
   .chatx-drawer.open{transform:translateX(0)}
-  .chatx-scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:139;opacity:0;pointer-events:none;transition:opacity .26s}
+  .chatx-scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:139;opacity:0;pointer-events:none;transition:opacity .26s;backdrop-filter:blur(2px)}
   .chatx-scrim.open{opacity:1;pointer-events:auto}
-  .chatx-dhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-  .chatx-dhead b{font-size:15px;font-weight:800;color:var(--teal)}
-  .chatx-newbtn{background:linear-gradient(145deg,var(--teal),var(--teal-dim));border:none;color:#fff;border-radius:11px;padding:8px 13px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer}
-  .chatx-litem{display:flex;align-items:center;gap:9px;padding:11px 11px;border-radius:12px;cursor:pointer;margin-bottom:6px;border:1px solid transparent}
+  .chatx-dhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .chatx-dhead b{font-size:15.5px;font-weight:800;color:var(--teal)}
+  .chatx-newbtn{background:linear-gradient(145deg,var(--teal),var(--teal-dim));border:none;color:#fff;border-radius:12px;padding:9px 14px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer}
+  .chatx-litem{display:flex;align-items:center;gap:9px;padding:11px 11px;border-radius:13px;cursor:pointer;margin-bottom:6px;border:1px solid transparent}
   .chatx-litem:hover{background:rgba(255,255,255,.03)}
   .chatx-litem.on{background:rgba(63,185,163,.12);border-color:var(--teal-dim)}
   .chatx-litem .ci{flex:0 0 auto;font-size:16px}
@@ -9322,11 +9405,34 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .chatx-litem .cn{font-size:12.7px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .chatx-litem .cd{font-size:10px;color:var(--muted);margin-top:2px}
   .chatx-litem .cx{flex:0 0 auto;background:transparent;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:4px}
+  .chat-sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150;display:flex;align-items:flex-end;justify-content:center;animation:chatFade .18s}
+  @keyframes chatFade{from{opacity:0}}
+  .chat-sheet{width:100%;max-width:520px;background:linear-gradient(180deg,#1a2531,#141d27);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:14px 14px 20px;box-shadow:0 -8px 30px rgba(0,0,0,.5);animation:chatUp .22s cubic-bezier(.4,0,.2,1)}
+  @keyframes chatUp{from{transform:translateY(40px);opacity:.4}}
+  .chat-sheet h4{margin:2px 0 12px;font-size:13.5px;color:var(--teal);text-align:center}
+  .chat-sheet .opt{display:flex;align-items:center;gap:10px;padding:12px 13px;border-radius:13px;border:1px solid var(--line);background:var(--field);margin-bottom:8px;cursor:pointer;font-size:13px;font-weight:700;color:var(--ink);transition:.13s}
+  .chat-sheet .opt.on{border-color:var(--teal);background:rgba(63,185,163,.12)}
+  .chat-sheet .opt .ic{font-size:17px}
+  .chat-sheet .opt .sub{font-weight:600;font-size:10.5px;color:var(--muted);margin-top:2px}
+  .chat-live{display:flex;flex-direction:column;align-items:center;gap:14px;padding:26px 10px 6px}
+  .chat-live .orb{width:118px;height:118px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--teal),var(--teal-dim));display:flex;align-items:center;justify-content:center;font-size:44px;box-shadow:0 0 0 0 rgba(63,185,163,.5);animation:chatOrb 1.8s infinite}
+  @keyframes chatOrb{0%,100%{box-shadow:0 0 0 0 rgba(63,185,163,.45);transform:scale(1)}50%{box-shadow:0 0 0 22px rgba(63,185,163,0);transform:scale(1.05)}}
+  .chat-live .st{font-size:13px;color:var(--ink);font-weight:700;min-height:20px;text-align:center}
+  .chat-live .tx{font-size:11.5px;color:var(--muted);text-align:center;min-height:16px;max-width:280px}
   `; document.head.appendChild(s);
 }
-function chatBubble(m){ const me=m.role==='user'; return `<div class="chat-b ${me?'me':'ai'}">${me?escVision(m.content).replace(/\n/g,'<br>'):labAiFmt(m.content)}</div>`; }
-function chatAutoGrow(t){ t.style.height='auto'; t.style.height=Math.min(120,t.scrollHeight)+'px'; }
-function renderChatMessages(c){ const mb=document.getElementById('chatMsgs'); if(!mb)return; mb.innerHTML=c.messages.map(chatBubble).join(''); mb.scrollTop=mb.scrollHeight; }
+function chatBubble(m,idx){ const me=m.role==='user';
+  let att='';
+  if(Array.isArray(m.images)) att+=m.images.map(im=>`<img class="cimg" src="${im.dataURL||im}" alt="">`).join('');
+  if(Array.isArray(m.files)) att+=m.files.map(f=>`<span class="cfile">📎 ${escVision(f.name||'فایل')}</span>`).join('');
+  const body=me?(escVision(m.content||'').replace(/\n/g,'<br>')):labAiFmt(m.content||'');
+  const acts=me
+    ? `<button class="chat-act" onclick="chatCopyMsg(${idx})" title="کپی">📋</button><button class="chat-act" onclick="chatEditMsg(${idx})" title="ویرایش">✏️</button><button class="chat-act" onclick="chatDeleteMsg(${idx})" title="حذف">🗑</button>`
+    : `<button class="chat-act" onclick="chatCopyMsg(${idx})" title="کپی">📋</button><button class="chat-act" onclick="chatReadMsg(${idx},this)" title="خواندن">🔊</button><button class="chat-act" onclick="chatDeleteMsg(${idx})" title="حذف">🗑</button>`;
+  return `<div class="chat-row ${me?'me':'ai'}"><div class="chat-b">${att}${body||'<span style="color:var(--muted)">…</span>'}</div><div class="chat-acts">${acts}</div></div>`;
+}
+function chatAutoGrow(t){ t.style.height='auto'; t.style.height=Math.min(130,t.scrollHeight)+'px'; }
+function renderChatMessages(c){ const mb=document.getElementById('chatMsgs'); if(!mb)return; mb.innerHTML=c.messages.map((m,i)=>chatBubble(m,i)).join(''); mb.scrollTop=mb.scrollHeight; }
 function openChatDrawer(){ const d=document.getElementById('chatDrawer'),s=document.getElementById('chatScrim'); if(d)d.classList.add('open'); if(s)s.classList.add('open'); }
 function closeChatDrawer(){ const d=document.getElementById('chatDrawer'),s=document.getElementById('chatScrim'); if(d)d.classList.remove('open'); if(s)s.classList.remove('open'); }
 function chatEditTitle(){
@@ -9348,16 +9454,34 @@ function renderChatTab(){
   const withKeys=VISION_PROVIDERS.filter(p=>hasAnyKey(p));
   const hasKey=!!getVisionKey(prov);
   const provOpts=(withKeys.length?withKeys:VISION_PROVIDERS).map(p=>`<option value="${p}" ${p===prov?'selected':''}>${PROVIDER_NAMES[p]}</option>`).join('');
+  const spd=c.speed==='fast'?'fast':'smart';
   let h=`<div class="chatx">
     <div class="chatx-top">
       <button type="button" class="chatx-burger" onclick="openChatDrawer()" title="گفتگوها">☰</button>
       <div class="chatx-tt" id="chatTitleWrap" onclick="chatEditTitle()"><b>${escVision(c.title||'گفتگوی جدید')}</b><span class="pen">✏️</span></div>
-      <select class="chatx-opt" onchange="chatSetProvider(this)" title="سرویس">${provOpts}</select>
-      <select class="chatx-opt" onchange="chatSetSpeed(this)" title="حالت"><option value="smart" ${c.speed!=='fast'?'selected':''}>دقیق</option><option value="fast" ${c.speed==='fast'?'selected':''}>سریع</option></select>
+      <button type="button" class="chatx-burger" onclick="chatNew()" title="گفتگوی جدید" style="font-size:20px">＋</button>
     </div>`;
   if(!hasKey) h+=`<div style="color:var(--amber);font-size:12px;margin:0 2px 8px">⚠️ برای «${escVision(PROVIDER_NAMES[prov]||prov)}» کلید نداری — <b onclick="gotoVisionSettings()" style="cursor:pointer;text-decoration:underline">تنظیمات</b> یا سرویس را عوض کن.</div>`;
   h+=`<div class="chat-msgs" id="chatMsgs"></div>
-    <div class="chat-input"><textarea id="chatInput" rows="1" placeholder="از دیابوت بپرس…" oninput="chatAutoGrow(this)"></textarea><button type="button" class="chat-send" onclick="chatSend()">➤</button></div>
+    <div class="chat-dock">
+      <div class="chat-attach-preview" id="chatAttachPrev" style="display:none"></div>
+      <div class="chat-inline">
+        <textarea id="chatInput" rows="1" placeholder="از دیابوت بپرس…" oninput="chatAutoGrow(this)"></textarea>
+        <button type="button" class="chat-send" id="chatSendBtn" onclick="chatSend()">➤</button>
+      </div>
+      <div class="chat-tools">
+        <button type="button" class="chat-tool" onclick="chatAttachMenu()" title="پیوست">＋</button>
+        <button type="button" class="chat-tool" id="chatMicBtn" onclick="chatVoiceInput()" title="گفتار به متن">🎙️</button>
+        <button type="button" class="chat-tool" onclick="chatLiveOpen()" title="گفتگوی صوتی زنده">📞</button>
+        <div class="chat-seg">
+          <button type="button" class="chat-pill" onclick="chatProviderMenu()" title="سرویس"><span class="cap">سرویس</span><b>${escVision(PROVIDER_NAMES[prov]||prov)}</b></button>
+          <button type="button" class="chat-pill spd ${spd==='fast'?'fast':''}" onclick="chatToggleSpeed()" title="حالت"><span class="dot"></span><b>${spd==='fast'?'سریع':'دقیق'}</b></button>
+        </div>
+      </div>
+    </div>
+    <input type="file" id="chatFileImg" accept="image/*" style="display:none" onchange="chatOnPickImage(this)">
+    <input type="file" id="chatFileCam" accept="image/*" capture="environment" style="display:none" onchange="chatOnPickImage(this)">
+    <input type="file" id="chatFileDoc" accept=".txt,.md,.csv,.json,.log,text/*" style="display:none" onchange="chatOnPickFile(this)">
   </div>`;
   // کشوی گفتگوها (سمت چپ)
   h+=`<div class="chatx-scrim" id="chatScrim" onclick="closeChatDrawer()"></div>
@@ -9372,34 +9496,197 @@ function renderChatTab(){
   });
   h+=`</div>`;
   box.innerHTML=h;
+  _chatAttach=[]; chatRenderAttach();
   const mb=document.getElementById('chatMsgs');
   if(!c.messages.length){ mb.innerHTML=`<div style="text-align:center;color:var(--muted);font-size:12.5px;padding:26px 12px;line-height:2">سلام! من <b style="color:var(--teal)">دیابوت</b>م 🤖<br>با آگاهی از قند، تغذیه، انسولین، ورزش و آزمایش‌هایت، هرچی خواستی بپرس.</div>`; }
   else renderChatMessages(c);
 }
+// ── پیوست‌ها ─────────────────────────────────────────
+let _chatAttach=[];      // [{kind:'image', mediaType,b64,dataURL} | {kind:'file', name, text}]
+let _chatBusy=false, _chatAbort=false;
+function chatRenderAttach(){ const box=document.getElementById('chatAttachPrev'); if(!box) return;
+  if(!_chatAttach.length){ box.style.display='none'; box.innerHTML=''; return; }
+  box.style.display='flex';
+  box.innerHTML=_chatAttach.map((a,i)=>a.kind==='image'
+    ? `<div class="ap"><img src="${a.dataURL}" alt=""><span>عکس</span><button class="rm" onclick="chatRmAttach(${i})">×</button></div>`
+    : `<div class="ap">📎 <span>${escVision(a.name||'فایل')}</span><button class="rm" onclick="chatRmAttach(${i})">×</button></div>`).join('');
+}
+function chatRmAttach(i){ _chatAttach.splice(i,1); chatRenderAttach(); }
+function chatAttachMenu(){
+  chatSheet('پیوست کردن', [
+    {ic:'🖼️', label:'عکس از گالری', sub:'ارسال تصویر برای تحلیل', act:()=>{ const el=document.getElementById('chatFileImg'); if(el){el.value='';el.click();} }},
+    {ic:'📷', label:'دوربین', sub:'گرفتن عکس با دوربین', act:()=>{ const el=document.getElementById('chatFileCam'); if(el){el.value='';el.click();} }},
+    {ic:'📎', label:'فایل متنی', sub:'txt / csv / json …', act:()=>{ const el=document.getElementById('chatFileDoc'); if(el){el.value='';el.click();} }},
+  ]);
+}
+async function chatOnPickImage(inp){ const f=inp.files&&inp.files[0]; if(!f) return;
+  const c=chatActive(); const prov=(c&&c.provider)||sectionProvider('chat');
+  if(!PROVIDER_VISION[prov]){ uiToast('«'+(PROVIDER_NAMES[prov]||prov)+'» عکس را پشتیبانی نمی‌کند؛ سرویس را عوض کن'); return; }
+  try{ const img=await imageToJpeg(f, 1024, 0.82); _chatAttach.push({kind:'image', mediaType:img.mediaType, b64:img.b64, dataURL:img.dataURL}); chatRenderAttach(); }
+  catch(e){ uiToast('خطا در خواندن عکس'); }
+}
+function chatOnPickFile(inp){ const f=inp.files&&inp.files[0]; if(!f) return;
+  if(f.size>200000){ uiToast('فایل خیلی بزرگ است (حداکثر ~۲۰۰ کیلوبایت)'); return; }
+  const r=new FileReader(); r.onload=()=>{ _chatAttach.push({kind:'file', name:f.name, text:String(r.result||'').slice(0,8000)}); chatRenderAttach(); }; r.readAsText(f);
+}
+// ── انتخاب سرویس/حالت ─────────────────────────────────
+function chatProviderMenu(){ const o=chatLoad(); const c=chatActive(o); if(!c) return;
+  const cur=c.provider||sectionProvider('chat');
+  const withKeys=VISION_PROVIDERS.filter(p=>hasAnyKey(p));
+  const list=(withKeys.length?withKeys:VISION_PROVIDERS);
+  chatSheet('انتخاب سرویس هوش مصنوعی', list.map(p=>({
+    ic:p===cur?'🟢':'⚪', label:PROVIDER_NAMES[p], sub:(hasAnyKey(p)?'کلید موجود':'بدون کلید')+(PROVIDER_VISION[p]?' · پشتیبانی عکس':''), on:p===cur,
+    act:()=>{ c.provider=p; chatSave(o); renderChatTab(); }
+  })));
+}
+function chatToggleSpeed(){ const o=chatLoad(); const c=chatActive(o); if(!c) return; c.speed=(c.speed==='fast')?'smart':'fast'; chatSave(o); renderChatTab(); }
+// ── شیت پایین‌صفحه‌ی عمومی ─────────────────────────────
+let _chatSheetActs=[];
+function chatSheet(title, opts){ chatSheetClose();
+  _chatSheetActs=opts.map(o=>o.act);
+  const bg=document.createElement('div'); bg.className='chat-sheet-bg'; bg.id='chatSheetBg'; bg.onclick=e=>{ if(e.target===bg) chatSheetClose(); };
+  bg.innerHTML=`<div class="chat-sheet"><h4>${escVision(title)}</h4>${opts.map((o,i)=>
+    `<div class="opt ${o.on?'on':''}" onclick="chatSheetPick(${i})"><span class="ic">${o.ic||'•'}</span><div><div>${escVision(o.label)}</div>${o.sub?`<div class="sub">${escVision(o.sub)}</div>`:''}</div></div>`).join('')}</div>`;
+  document.body.appendChild(bg);
+}
+function chatSheetPick(i){ const a=_chatSheetActs[i]; chatSheetClose(); if(a) a(); }
+function chatSheetClose(){ const b=document.getElementById('chatSheetBg'); if(b) b.remove(); }
+// ── ارسال (استریم کلمه‌کلمه) ──────────────────────────
 async function chatSend(){
+  if(_chatBusy){ _chatAbort=true; return; }   // دکمه در حالت توقف
   const inp=document.getElementById('chatInput'); if(!inp) return;
-  const txt=(inp.value||'').trim(); if(!txt) return;
+  const txt=(inp.value||'').trim();
+  if(!txt && !_chatAttach.length) return;
   const o=chatLoad(); const c=chatActive(o); if(!c) return;
   const prov=c.provider||sectionProvider('chat');
-  if(!hasAnyKey(prov)){ if(typeof uiToast==='function') uiToast('برای این سرویس کلید نداری'); return; }
-  if(!navigator.onLine){ if(typeof uiToast==='function') uiToast('آفلاین هستی'); return; }
-  c.messages.push({role:'user',content:txt,ts:Date.now()});
-  if(!c.title||c.title==='گفتگوی جدید') c.title=txt.slice(0,26);
-  chatSave(o); inp.value=''; chatAutoGrow(inp);
+  if(!hasAnyKey(prov)){ uiToast('برای این سرویس کلید نداری'); return; }
+  if(!navigator.onLine){ uiToast('آفلاین هستی'); return; }
+  const imgs=_chatAttach.filter(a=>a.kind==='image').map(a=>({mediaType:a.mediaType,b64:a.b64,dataURL:a.dataURL}));
+  const files=_chatAttach.filter(a=>a.kind==='file');
+  let content=txt;
+  files.forEach(f=>{ content+=(content?'\n\n':'')+'محتوای فایل «'+f.name+'»:\n'+f.text; });
+  const umsg={role:'user',content:content||'(عکس)',ts:Date.now()};
+  if(imgs.length) umsg.images=imgs.map(im=>({dataURL:im.dataURL}));
+  if(files.length) umsg.files=files.map(f=>({name:f.name}));
+  c.messages.push(umsg);
+  if(!c.title||c.title==='گفتگوی جدید') c.title=(txt||'گفتگوی تصویری').slice(0,26);
+  chatSave(o); inp.value=''; chatAutoGrow(inp); _chatAttach=[]; chatRenderAttach();
   renderChatMessages(c);
-  const mb=document.getElementById('chatMsgs'); if(mb){ mb.insertAdjacentHTML('beforeend','<div class="chat-b ai" id="chatTyping">⏳ …</div>'); mb.scrollTop=mb.scrollHeight; }
+  const mb=document.getElementById('chatMsgs');
+  // حباب زنده‌ی پاسخ
+  const rowId='chatLive'+Date.now().toString(36);
+  if(mb){ mb.insertAdjacentHTML('beforeend',`<div class="chat-row ai" id="${rowId}"><div class="chat-b"><span class="chat-cur"></span></div></div>`); mb.scrollTop=mb.scrollHeight; }
+  const bubble=()=>{ const r=document.getElementById(rowId); return r?r.querySelector('.chat-b'):null; };
+  chatSetBusy(true);
+  let acc='';
   try{
     const sys=buildChatSystemPrompt();
-    const hist=c.messages.slice(-14).map(m=>({role:m.role,content:m.content}));
-    const reply=await aiKeyFallback(prov, k=>callAIChat(prov,k,sys,hist,{speed:c.speed,maxTok:1500}));
-    const clean=String(reply||'').trim()||'پاسخی دریافت نشد.';
+    const hist=c.messages.slice(-14).map(m=>{ const mm={role:m.role,content:m.content}; if(m===umsg && imgs.length) mm.images=imgs; return mm; });
+    const onDelta=chunk=>{ if(_chatAbort) return; acc+=chunk; const b=bubble(); if(b){ b.innerHTML=labAiFmt(acc)+'<span class="chat-cur"></span>'; if(mb) mb.scrollTop=mb.scrollHeight; } };
+    const reply=await aiKeyFallback(prov, k=>callAIChatStream(prov,k,sys,hist,{speed:c.speed,maxTok:1500},onDelta));
+    const clean=String(reply||acc||'').trim()||'پاسخی دریافت نشد.';
     c.messages.push({role:'assistant',content:clean,ts:Date.now()});
     chatSave(o); renderChatMessages(c);
+    if(_chatLiveOn) chatSpeak(clean);
   }catch(e){
-    const t=document.getElementById('chatTyping'); const ei=aiErrorInfo(e);
-    const html=`<div class="chat-b ai">${aiMsgBox(ei.emoji,ei.title,ei.text,'err',String((e&&e.message)||e))}</div>`;
-    if(t) t.outerHTML=html; else if(mb) mb.insertAdjacentHTML('beforeend',html);
-  }
+    if(acc){ // چیزی استریم شده بود؛ همان را ذخیره کن
+      c.messages.push({role:'assistant',content:acc.trim(),ts:Date.now()}); chatSave(o); renderChatMessages(c);
+    } else {
+      const ei=aiErrorInfo(e); const r=document.getElementById(rowId);
+      const html=`<div class="chat-b">${aiMsgBox(ei.emoji,ei.title,ei.text,'err',String((e&&e.message)||e))}</div>`;
+      if(r) r.innerHTML=html; else if(mb) mb.insertAdjacentHTML('beforeend','<div class="chat-row ai">'+html+'</div>');
+    }
+  } finally { chatSetBusy(false); _chatAbort=false; }
+}
+function chatSetBusy(b){ _chatBusy=b; const btn=document.getElementById('chatSendBtn'); if(btn){ btn.classList.toggle('stop',b); btn.innerHTML=b?'■':'➤'; } }
+// ── اکشن پیام‌ها ──────────────────────────────────────
+function chatCopyMsg(i){ const c=chatActive(); const m=c&&c.messages[i]; if(!m) return;
+  const t=String(m.content||''); if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(()=>uiToast('کپی شد'),()=>uiToast('کپی نشد'));
+  else { const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');uiToast('کپی شد');}catch(e){} ta.remove(); }
+}
+function chatDeleteMsg(i){ const o=chatLoad(); const c=chatActive(o); if(!c||!c.messages[i]) return;
+  if(!confirm('این پیام حذف شود؟')) return; c.messages.splice(i,1); chatSave(o); renderChatMessages(c);
+}
+function chatEditMsg(i){ const o=chatLoad(); const c=chatActive(o); const m=c&&c.messages[i]; if(!m||m.role!=='user') return;
+  const inp=document.getElementById('chatInput'); if(!inp) return;
+  inp.value=String(m.content||''); chatAutoGrow(inp); inp.focus();
+  // پیام و پاسخ بعدش را حذف کن تا با ارسال دوباره جایگزین شوند
+  c.messages.splice(i, (c.messages[i+1]&&c.messages[i+1].role==='assistant')?2:1);
+  chatSave(o); renderChatMessages(c);
+}
+function chatReadMsg(i,btn){ const c=chatActive(); const m=c&&c.messages[i]; if(!m) return;
+  if(window.speechSynthesis&&speechSynthesis.speaking){ speechSynthesis.cancel(); return; }
+  chatSpeak(String(m.content||''));
+}
+function chatSpeak(text){ try{ if(!window.speechSynthesis) return; speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(String(text||'').replace(/[#*_`>-]/g,'').slice(0,600));
+  u.lang='fa-IR'; u.rate=1; const v=(speechSynthesis.getVoices()||[]).find(x=>/fa|persian/i.test(x.lang+x.name)); if(v) u.voice=v;
+  u.onend=()=>{ if(_chatLiveOn) chatLiveListen(); };
+  speechSynthesis.speak(u);
+}catch(e){} }
+// ── گفتار به متن (یک‌بار) ─────────────────────────────
+function _mkRecog(){ const R=window.SpeechRecognition||window.webkitSpeechRecognition; if(!R) return null; const r=new R(); r.lang='fa-IR'; r.interimResults=true; r.maxAlternatives=1; return r; }
+let _chatRecog=null;
+function chatVoiceInput(){ const btn=document.getElementById('chatMicBtn');
+  if(_chatRecog){ try{_chatRecog.stop();}catch(e){} return; }
+  const r=_mkRecog(); if(!r){ uiToast('مرورگر گفتار به متن را پشتیبانی نمی‌کند'); return; }
+  _chatRecog=r; if(btn) btn.classList.add('on');
+  const inp=document.getElementById('chatInput'); const base=inp?inp.value:'';
+  r.onresult=e=>{ let s=''; for(let k=0;k<e.results.length;k++) s+=e.results[k][0].transcript; if(inp){ inp.value=(base?base+' ':'')+s; chatAutoGrow(inp); } };
+  r.onerror=()=>{}; r.onend=()=>{ _chatRecog=null; if(btn) btn.classList.remove('on'); };
+  try{ r.start(); }catch(e){ _chatRecog=null; if(btn) btn.classList.remove('on'); }
+}
+// ── گفتگوی صوتی زنده ─────────────────────────────────
+let _chatLiveOn=false, _chatLiveRecog=null;
+function chatLiveOpen(){ const c=chatActive(); const prov=(c&&c.provider)||sectionProvider('chat');
+  if(!hasAnyKey(prov)){ uiToast('برای این سرویس کلید نداری'); return; }
+  const R=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!R||!window.speechSynthesis){ uiToast('مرورگر گفتگوی صوتی زنده را پشتیبانی نمی‌کند'); return; }
+  const bg=document.createElement('div'); bg.className='chat-sheet-bg'; bg.id='chatLiveBg';
+  bg.innerHTML=`<div class="chat-sheet"><div class="chat-live">
+      <div class="orb" id="chatLiveOrb">🎙️</div>
+      <div class="st" id="chatLiveSt">در حال گوش دادن…</div>
+      <div class="tx" id="chatLiveTx">صحبت کن؛ من می‌شنوم و جواب می‌دهم.</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button type="button" class="chat-pill" style="flex:1;justify-content:center;padding:12px" onclick="chatLiveClose()">🔴 پایان گفتگو</button>
+    </div></div>`;
+  document.body.appendChild(bg);
+  _chatLiveOn=true; chatLiveListen();
+}
+function chatLiveStatus(st,tx){ const a=document.getElementById('chatLiveSt'),b=document.getElementById('chatLiveTx'),o=document.getElementById('chatLiveOrb');
+  if(a&&st!=null) a.textContent=st; if(b&&tx!=null) b.textContent=tx;
+  if(o) o.textContent=(st&&st.indexOf('فکر')>=0)?'💭':(st&&st.indexOf('صحبت')>=0)?'🔊':'🎙️';
+}
+function chatLiveListen(){ if(!_chatLiveOn) return; if(window.speechSynthesis&&speechSynthesis.speaking) return;
+  const r=_mkRecog(); if(!r){ chatLiveClose(); return; } _chatLiveRecog=r;
+  chatLiveStatus('در حال گوش دادن…','صحبت کن…');
+  let finalTxt='';
+  r.onresult=e=>{ let s=''; for(let k=0;k<e.results.length;k++) s+=e.results[k][0].transcript; finalTxt=s; chatLiveStatus(null,s); };
+  r.onerror=()=>{};
+  r.onend=()=>{ _chatLiveRecog=null; const t=(finalTxt||'').trim(); if(!_chatLiveOn) return; if(t) chatLiveAsk(t); else chatLiveListen(); };
+  try{ r.start(); }catch(e){ setTimeout(chatLiveListen,600); }
+}
+async function chatLiveAsk(txt){ chatLiveStatus('در حال فکر کردن…', txt);
+  const o=chatLoad(); const c=chatActive(o); if(!c){ chatLiveClose(); return; }
+  const prov=c.provider||sectionProvider('chat');
+  c.messages.push({role:'user',content:txt,ts:Date.now()});
+  if(!c.title||c.title==='گفتگوی جدید') c.title=txt.slice(0,26);
+  chatSave(o);
+  try{
+    const sys=buildChatSystemPrompt()+'\nاین گفتگوی صوتی است؛ خیلی کوتاه، محاوره‌ای و در حد چند جمله جواب بده.';
+    const hist=c.messages.slice(-12).map(m=>({role:m.role,content:m.content}));
+    const reply=await aiKeyFallback(prov, k=>callAIChat(prov,k,sys,hist,{speed:'fast',maxTok:400}));
+    const clean=String(reply||'').trim()||'متوجه نشدم.';
+    c.messages.push({role:'assistant',content:clean,ts:Date.now()}); chatSave(o);
+    if(document.getElementById('chatMsgs')) renderChatMessages(c);
+    chatLiveStatus('در حال صحبت…', clean.slice(0,120));
+    chatSpeak(clean);   // پس از پایانِ گفتار دوباره گوش می‌دهد
+  }catch(e){ const ei=aiErrorInfo(e); chatLiveStatus('خطا', ei.text); setTimeout(()=>{ if(_chatLiveOn) chatLiveListen(); },1500); }
+}
+function chatLiveClose(){ _chatLiveOn=false; try{ if(_chatLiveRecog) _chatLiveRecog.stop(); }catch(e){} _chatLiveRecog=null;
+  try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
+  const b=document.getElementById('chatLiveBg'); if(b) b.remove();
 }
 function _dayFromKey(k){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(k)); return m?new Date(+m[1],+m[2]-1,+m[3]):null; }
 function _scopeWindow(scope){
