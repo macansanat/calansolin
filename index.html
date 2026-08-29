@@ -1839,7 +1839,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۵.۱</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۵.۲</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -10401,9 +10401,12 @@ function buildHealthSnapshot(scope){
   // خواب
   try{ const sl=jl('sleep_log_v1').filter(x=>{ const pj=parseJDate(x.date); if(!pj) return false; const g=j2g(pj[0],pj[1],pj[2]); return inWin(new Date(g[0],g[1]-1,g[2])); });
     if(sl.length){ const h=sl.reduce((a,b)=>a+(+b.hours||0),0)/sl.length; L.push('خواب: میانگین ~'+(Math.round(h*10)/10)+' ساعت'); } }catch(e){}
-  // آزمایش (آخرین، موارد غیرطبیعی)
-  try{ const lc=buildLabAIContext(); if(lc){ const abn=lc.lines.filter(l=>/\[HIGH\]|\[LOW\]/.test(l));
-    L.push('آخرین آزمایش ('+lc.date+'): '+(abn.length?abn.join(' ؛ '):lc.lines.slice(0,6).join(' ؛ '))); } }catch(e){}
+  // آزمایش (آخرین برگه — همه‌ی مقادیرِ ثبت‌شده، نه فقط غیرطبیعی‌ها؛ غیرطبیعی‌ها اول)
+  try{ const lc=buildLabAIContext(); if(lc){
+    const isAbn=l=>/\[HIGH\]|\[LOW\]/.test(l);
+    const ordered=lc.lines.filter(isAbn).concat(lc.lines.filter(l=>!isAbn(l)));
+    const shown=ordered.slice(0,45);   // سقفِ منطقی برای توکن
+    L.push('آخرین آزمایش ('+lc.date+' — همه‌ی مقادیر ثبت‌شده'+(ordered.length>shown.length?('؛ '+shown.length+' مورد از '+ordered.length):'')+'): '+shown.join(' ؛ ')); } }catch(e){}
   return { label:w.label, text:L.join('\n') };
 }
 function HEALTH_AI_PROMPT(scope, snap){
