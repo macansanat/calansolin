@@ -400,6 +400,17 @@ select{cursor:pointer;text-overflow:ellipsis;padding-right:10px;padding-left:28p
 .search-item:hover,.search-item.active{background:var(--teal-dim)}
 .search-item .cat{color:var(--muted);font-size:11.5px}
 .search-empty{padding:12px;text-align:center;color:var(--muted);font-size:13px}
+.med-si{align-items:center}
+.med-si-name{flex:1;cursor:pointer}
+.med-i{width:22px;height:22px;flex:none;border-radius:50%;border:1px solid var(--violet);background:transparent;color:var(--violet);font-weight:800;font-style:italic;font-size:13px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;font-family:Georgia,serif}
+.med-i:hover{background:var(--violet);color:#fff}
+.med-add{color:var(--teal);font-size:12.5px;background:var(--field)}
+.med-add:hover{background:var(--teal-dim)}
+.med-inforow{padding:9px 0;border-bottom:1px solid var(--line)}
+.med-inforow:last-child{border-bottom:none}
+.med-info-lbl{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:3px}
+.med-info-val{font-size:14px;color:var(--ink);line-height:1.7}
+.med-info-disc{margin-top:14px;background:rgba(224,163,85,.12);border:1px solid rgba(224,163,85,.35);border-radius:10px;padding:10px 12px;font-size:12.5px;color:var(--ink);line-height:1.7}
 .carb-out{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center;font-weight:700;direction:ltr;font-size:15px;min-width:70px;color:var(--blue)}
 .carb-out small{color:var(--muted);font-size:10px;display:block;font-weight:400}
 .del{background:transparent;border:1px solid var(--line);color:var(--red);border-radius:10px;width:42px;height:44px;cursor:pointer;font-size:18px}
@@ -1002,15 +1013,31 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <div class="qbg-box">
     <button class="qbg-x" onclick="closeQEntry('qmedModal')" title="بستن">✕</button>
     <div class="qbg-head"><span class="qbg-badge" style="background:rgba(154,134,224,.18)">💊</span><div><div class="qbg-title">ثبت دارو</div><div class="qbg-sub">داروی مصرف‌شده را ثبت کن تا سابقه‌اش را داشته باشی.</div></div></div>
-    <label class="qbg-lbl">نام دارو</label>
-    <input type="text" id="qmedName" class="qbg-in" placeholder="مثلاً متفورمین" style="margin-bottom:14px">
+    <label class="qbg-lbl">نام دارو <span style="color:var(--muted);font-weight:400">(جست‌وجو در کتابخانه یا تایپ دستی)</span></label>
+    <div class="food-search-wrap" style="margin-bottom:14px">
+      <input type="text" id="qmedName" class="qbg-in" placeholder="مثلاً متفورمین…" autocomplete="off" oninput="medDoSearch('qmed')" onfocus="medDoSearch('qmed')">
+      <div class="search-results" id="qmedResults"></div>
+    </div>
     <label class="qbg-lbl">دوز / تعداد (اختیاری)</label>
     <input type="text" id="qmedDose" class="qbg-in" placeholder="مثلاً ۵۰۰ میلی‌گرم — ۱ قرص" style="margin-bottom:14px">
+    <label class="qbg-lbl">طریقه و زمان مصرف (اختیاری)</label>
+    <input type="text" id="qmedTiming" class="qbg-in" placeholder="مثلاً بعد از غذا — صبح و شب" style="margin-bottom:14px">
     <div class="qbg-grid">
       <div><label class="qbg-lbl">تاریخ (شمسی)</label><div id="qmedDateWrap"></div></div>
       <div><label class="qbg-lbl">ساعت</label><input type="time" id="qmedTime" class="qbg-in"></div>
     </div>
     <div class="qbg-actions"><button class="qbg-cancel" onclick="closeQEntry('qmedModal')">لغو</button><button class="qbg-save" onclick="saveQuickMed()">💾 ذخیره</button></div>
+  </div>
+</div>
+
+<!-- پاپ‌آپ توضیح دارو -->
+<div class="qbg-modal" id="medInfoBg" onclick="if(event.target===this)closeMedInfo()" style="z-index:130">
+  <div class="qbg-box" style="max-width:440px;max-height:calc(100vh - 32px);overflow-y:auto">
+    <button class="qbg-x" onclick="closeMedInfo()" title="بستن">✕</button>
+    <div class="qbg-head"><span class="qbg-badge" style="background:rgba(154,134,224,.18)">💊</span><div><div class="qbg-title" id="medInfoTitle"></div><div class="qbg-sub" id="medInfoCat"></div></div></div>
+    <div id="medInfoBody" style="margin-top:6px"></div>
+    <div class="med-info-disc">⚠️ این اطلاعات صرفاً <b>آموزشی</b> است. دوز و زمان‌بندی قطعیِ داروی شما را فقط <b>پزشک</b> تعیین می‌کند.</div>
+    <div class="qbg-actions" style="margin-top:14px"><button class="qbg-save" onclick="closeMedInfo()">فهمیدم</button></div>
   </div>
 </div>
 
@@ -1839,7 +1866,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۵.۶</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۶.۰</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3247,7 +3274,7 @@ function renderDailyReport(){
   try{ const bz=(planData._basal||{})[key]; if(bz){ basalDose=(+bz.dose||0); basalIns={name:bz.type||'', dose:bz.dose}; ev.push({sm:bz.time?smFromT(bz.time):1440, time:bz.time?faDigits(bz.time):'', ico:'🛡️', color:'#5fd3bd', title:'انسولین پایه', detail:(bz.type?bz.type+' · ':'')+faDigits(bz.dose)+' واحد', kind:'basal', key:key}); } }catch(e){}
   try{ loadBG().forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); bgCount++; ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🩸', color:'#f0a29b', title:'قند خون', detail:faDigits(x.glu)+' mg/dL', kind:'bg', iso:x.iso}); } }); }catch(e){}
   const jlog=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'[]'); }catch(e){ return []; } };
-  jlog('med_log_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'💊', color:'#c3b4f0', title:'دارو', detail:x.name+(x.dose?' · '+x.dose:''), kind:'med', iso:x.iso}); } });
+  jlog('med_log_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'💊', color:'#c3b4f0', title:'دارو', detail:x.name+(x.dose?' · '+x.dose:'')+(x.timing?' · '+x.timing:''), kind:'med', iso:x.iso}); } });
   jlog('mood_log_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🙂', color:'#e9b877', title:'حالت روحی', detail:x.mood+(x.note?' · '+x.note:''), kind:'mood', iso:x.iso}); } });
   try{ (loadExLog().entries||[]).forEach(x=>{ if(x.ts&&dayKey(new Date(x.ts))===key){ const d=new Date(x.ts); ev.push({sm:x.time?smFromT(x.time):hourMin(d), time:x.time?faDigits(x.time):fmtHM(d), ico:'🏃', color:'#9fc0f0', title:'ورزش', detail:(x.items||[]).map(it=>it.name).join('، '), kind:'exlog', ts:x.ts}); } }); }catch(e){}
   try{ loadExercise().forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🏃', color:'#9fc0f0', title:'ورزش', detail:(x.what||'')+(x.dur?' · '+faDigits(x.dur)+' دقیقه':''), kind:'exercise', iso:x.iso}); } }); }catch(e){}
@@ -3555,10 +3582,15 @@ function evMedForm(iso){
   const d=new Date(iso); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); const p=n=>String(n).padStart(2,'0');
   return `<div class="ev-form">
     <div class="ev-fh"><span class="ev-badge" style="background:rgba(195,180,240,.18)">💊</span><div class="ev-ftitle">ویرایش دارو</div></div>
-    <label class="qbg-lbl">نام دارو</label>
-    <input type="text" id="evMedName" class="qbg-in" value="${(x.name||'').replace(/"/g,'&quot;')}">
+    <label class="qbg-lbl">نام دارو <span style="color:var(--muted);font-weight:400">(جست‌وجو یا تایپ)</span></label>
+    <div class="food-search-wrap">
+      <input type="text" id="evMedName" class="qbg-in" autocomplete="off" oninput="medDoSearch('evMed')" onfocus="medDoSearch('evMed')" value="${(x.name||'').replace(/"/g,'&quot;')}">
+      <div class="search-results" id="evMedResults"></div>
+    </div>
     <label class="qbg-lbl">دوز / تعداد (اختیاری)</label>
     <input type="text" id="evMedDose" class="qbg-in" value="${(x.dose||'').replace(/"/g,'&quot;')}">
+    <label class="qbg-lbl">طریقه و زمان مصرف (اختیاری)</label>
+    <input type="text" id="evMedTiming" class="qbg-in" value="${(x.timing||'').replace(/"/g,'&quot;')}">
     <div class="qbg-grid">
       <div><label class="qbg-lbl">تاریخ (شمسی)</label>${jDateFieldHTML('evMedDate', jDateStr(j[0],j[1],j[2]))}</div>
       <div><label class="qbg-lbl">ساعت</label><input type="time" id="evMedTime" class="qbg-in" value="${p(d.getHours())}:${p(d.getMinutes())}"></div>
@@ -3572,7 +3604,7 @@ function saveEvMed(){
   const pj=parseJDate((document.getElementById('evMedDate')||{}).value||''); if(!pj){ alert('تاریخ را انتخاب کن.'); return; }
   const g=j2g(pj[0],pj[1],pj[2]); const tv=(document.getElementById('evMedTime').value||'00:00').split(':'); const hh=parseInt(tv[0],10)||0, mm=parseInt(tv[1],10)||0;
   const d=new Date(g[0],g[1]-1,g[2],hh,mm); const p=n=>String(n).padStart(2,'0');
-  x.name=name; x.dose=(document.getElementById('evMedDose').value||'').trim(); x.iso=d.toISOString(); x.time=`${jDateStr(pj[0],pj[1],pj[2])} ${p(hh)}:${p(mm)}`;
+  x.name=name; x.dose=(document.getElementById('evMedDose').value||'').trim(); x.timing=(document.getElementById('evMedTiming').value||'').trim(); x.iso=d.toISOString(); x.time=`${jDateStr(pj[0],pj[1],pj[2])} ${p(hh)}:${p(mm)}`;
   jlogSet('med_log_v1',arr); closeEvEdit(); uiToast('✓ ذخیره شد'); refreshAfterEdit();
 }
 function delEvMed(){ if(!_evEdit) return; if(!confirm('این دارو حذف شود؟')) return; jlogSet('med_log_v1', jlogGet('med_log_v1').filter(r=>r.iso!==_evEdit.iso)); closeEvEdit(); uiToast('✓ حذف شد'); refreshAfterEdit(); }
@@ -3665,7 +3697,7 @@ function collectAllEvents(){
   for(const key in basals){ const bz=basals[key]; if(!bz||String(key).split('-').length!==3) continue;
     out.push({dateKey:key, sm:bz.time?smFromT(bz.time):1440, time:bz.time?faDigits(bz.time):'', ico:'🛡️', color:'#5fd3bd', title:'انسولین پایه', detail:(bz.type?bz.type+' · ':'')+faDigits(bz.dose)+' واحد', kind:'basal', key}); }
   try{ loadBG().forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'🩸', color:'#f0a29b', title:'قند خون', detail:faDigits(x.glu)+' mg/dL', kind:'bg', iso:x.iso}); }); }catch(e){}
-  jlogGet('med_log_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'💊', color:'#c3b4f0', title:'دارو', detail:x.name+(x.dose?' · '+x.dose:''), kind:'med', iso:x.iso}); });
+  jlogGet('med_log_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'💊', color:'#c3b4f0', title:'دارو', detail:x.name+(x.dose?' · '+x.dose:'')+(x.timing?' · '+x.timing:''), kind:'med', iso:x.iso}); });
   jlogGet('mood_log_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'🙂', color:'#e9b877', title:'حالت روحی', detail:x.mood+(x.note?' · '+x.note:''), kind:'mood', iso:x.iso}); });
   jlogGet('sleep_log_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:-1, time:'', ico:'😴', color:'#9fc0f0', title:'خواب', detail:faDigits(x.hours)+' ساعت'+(x.quality?' · '+x.quality:''), kind:'sleep', iso:x.iso}); });
   try{ (loadExLog().entries||[]).forEach(x=>{ if(!x.ts) return; const d=new Date(x.ts); out.push({dateKey:dayKey(d), sm:x.time?smFromT(x.time):(d.getHours()*60+d.getMinutes()), time:x.time?faDigits(x.time):hm(d), ico:'🏃', color:'#9fc0f0', title:'ورزش', detail:(x.items||[]).map(it=>it.name).join('، '), kind:'exlog', ts:x.ts}); }); }catch(e){}
@@ -3944,7 +3976,7 @@ function quickAdd(type){
   else if(type==='chat'){ switchTab('chat'); }
   else if(type==='aihistory'){ switchTab('aihistory'); }
   else if(type==='bg') openQuickBG();
-  else if(type==='med') openQEntry('qmedModal','qmedDateWrap','qmedTime',['qmedName','qmedDose'],'qmedName');
+  else if(type==='med'){ openQEntry('qmedModal','qmedDateWrap','qmedTime',['qmedName','qmedDose','qmedTiming'],'qmedName'); const rb=document.getElementById('qmedResults'); if(rb){ rb.classList.remove('show'); rb.innerHTML=''; } }
   else if(type==='sleep') openQEntry('qsleepModal','qsleepDateWrap',null,['qsleepHours'],'qsleepHours','qsleepQual');
   else if(type==='mood') openQEntry('qmoodModal','qmoodDateWrap','qmoodTime',['qmoodNote'],null,'qmoodPick');
 }
@@ -3977,7 +4009,7 @@ function saveQuickMed(){
   const name=(document.getElementById('qmedName').value||'').trim();
   if(!name){ alert('نام دارو را وارد کن.'); return; }
   const dt=qDateTimeISO('qmedDate','qmedTime'); if(!dt){ alert('تاریخ را انتخاب کن.'); return; }
-  qLogPush('med_log_v1',{iso:dt.iso, time:dt.sh, name, dose:(document.getElementById('qmedDose').value||'').trim()});
+  qLogPush('med_log_v1',{iso:dt.iso, time:dt.sh, name, dose:(document.getElementById('qmedDose').value||'').trim(), timing:(document.getElementById('qmedTiming').value||'').trim()});
   closeQEntry('qmedModal'); uiToast('✓ دارو ثبت شد'); afterQuickLog();
 }
 function saveQuickSleep(){
@@ -3996,6 +4028,216 @@ function saveQuickMood(){
   closeQEntry('qmoodModal'); uiToast('✓ حالت روحی ثبت شد'); afterQuickLog();
 }
 function afterQuickLog(){ const st=document.getElementById('dataStats'); if(st) renderDataStats(); if(typeof renderDashboard==='function') renderDashboard(); }
+
+/* ====== کتابخانه‌ی داروها (آموزشی) ====== */
+/* هر دارو: n=نام، u=کاربرد، d=دوز رایج آموزشی، t=طریقه/زمان مصرف، no=نکته. اعداد صرفاً آموزشی‌اند؛ دوز قطعی با پزشک. */
+const MED_CAT_EMOJI={'دیابت خوراکی':'💊','انسولین':'💉','GLP-1 و لاغری':'📉','فشار خون':'🫀','چربی خون':'🩸','قلب و ضدانعقاد':'❤️','عصب و درد (نوروپاتی)':'⚡','کلیه و نقرس':'🫘','تیروئید':'🦋','گوارش':'🌀','مکمل و ویتامین':'🌱','روان و خواب':'🧠','چشم و پوست':'👁️','آنتی‌بیوتیک و عفونت':'🦠'};
+const MED_DB={
+ 'دیابت خوراکی':[
+  {n:'متفورمین (گلوکوفاژ)',u:'خط اول دیابت نوع ۲؛ مقاومت به انسولین را کم و قند کبدی را مهار می‌کند.',d:'۵۰۰ تا ۱۰۰۰ میلی‌گرم، ۱ تا ۳ بار در روز (حداکثر رایج ۲۰۰۰–۲۵۵۰).',t:'همراه یا بلافاصله بعد از غذا (برای کاهش تهوع و دل‌پیچه).',no:'ممکن است B12 را کم کند؛ در نارسایی کلیه محدود می‌شود.'},
+  {n:'متفورمین آهسته‌رهش (XR)',u:'همان متفورمین با آزادسازی تدریجی؛ ملایم‌تر بر معده.',d:'۵۰۰ تا ۲۰۰۰ میلی‌گرم، معمولاً ۱ بار در روز.',t:'شب همراه شام؛ قرص کامل بلعیده شود (نجویدن).',no:'اگر متفورمین معمولی معده را اذیت کرد، جایگزین خوبی است.'},
+  {n:'گلی‌بنکلامید (گلی‌بوراید)',u:'سولفونیل‌اوره؛ ترشح انسولین از لوزالمعده را زیاد می‌کند.',d:'۱٫۲۵ تا ۵ میلی‌گرم، ۱ تا ۲ بار در روز.',t:'۳۰ دقیقه قبل صبحانه (و شام در دوز دوم).',no:'خطر افت قند؛ اگر وعده را حذف کردی مصرف نکن.'},
+  {n:'گلی‌کلازید (دیامیکرون)',u:'سولفونیل‌اوره با افت قند کمتر از گلی‌بنکلامید.',d:'۳۰ تا ۱۲۰ میلی‌گرم (MR) روزانه؛ یا ۸۰ میلی‌گرم ۱–۲ بار.',t:'MR با صبحانه، یک‌بار در روز.',no:'مراقب افت قند به‌ویژه در سالمندان باش.'},
+  {n:'گلی‌مپراید (آماریل)',u:'سولفونیل‌اورهٔ روزی‌یک‌بار.',d:'۱ تا ۴ میلی‌گرم (حداکثر ۸) روزانه.',t:'با اولین وعدهٔ اصلی (صبحانه).',no:'افت قند ممکن است طولانی باشد.'},
+  {n:'رپاگلیناید',u:'مگلیتیناید؛ ترشح سریع انسولین همراه وعده.',d:'۰٫۵ تا ۴ میلی‌گرم قبل هر وعده.',t:'۱۵ تا ۳۰ دقیقه قبل هر وعدهٔ اصلی؛ وعده نخوردی، نخور.',no:'برای افرادِ با برنامهٔ غذایی نامنظم مناسب است.'},
+  {n:'پیوگلیتازون (اکتوس)',u:'تیازولیدین‌دیون؛ حساسیت بافت به انسولین را بالا می‌برد.',d:'۱۵ تا ۴۵ میلی‌گرم روزانه.',t:'یک‌بار در روز، با یا بدون غذا (ساعت ثابت).',no:'ممکن است ورم و افزایش وزن بدهد؛ در نارسایی قلب احتیاط.'},
+  {n:'سیتاگلیپتین (جانوویا)',u:'مهارکنندهٔ DPP-4؛ قند بعد غذا را ملایم کنترل می‌کند.',d:'۱۰۰ میلی‌گرم روزانه (در نارسایی کلیه کمتر).',t:'یک‌بار در روز، با یا بدون غذا.',no:'افت قند کم؛ معمولاً کنار متفورمین.'},
+  {n:'ویلداگلیپتین (گالووس)',u:'مهارکنندهٔ DPP-4.',d:'۵۰ میلی‌گرم، ۱ تا ۲ بار در روز.',t:'صبح و عصر (اگر دو بار).',no:'با متفورمین ترکیبِ گالووس‌مت هم دارد.'},
+  {n:'لیناگلیپتین (تراجنتا)',u:'مهارکنندهٔ DPP-4؛ بدون نیاز به تنظیم دوز کلیوی.',d:'۵ میلی‌گرم روزانه.',t:'یک‌بار در روز، ساعت ثابت.',no:'گزینهٔ خوب در نارسایی کلیه.'},
+  {n:'امپاگلیفلوزین (جاردیانس)',u:'مهارکنندهٔ SGLT2؛ دفع قند از ادرار + محافظت قلب و کلیه.',d:'۱۰ تا ۲۵ میلی‌گرم روزانه.',t:'صبح، با یا بدون غذا.',no:'آب کافی بنوش؛ خطر عفونت ادراری/قارچی؛ در بیماری روزه‌داری/کم‌آبی احتیاط.'},
+  {n:'داپاگلیفلوزین (فورکسیگا)',u:'مهارکنندهٔ SGLT2؛ مفید برای قلب و کلیه.',d:'۵ تا ۱۰ میلی‌گرم روزانه.',t:'صبح، با یا بدون غذا.',no:'مراقب کم‌آبی و عفونت ناحیهٔ تناسلی باش.'},
+  {n:'کاناگلیفلوزین',u:'مهارکنندهٔ SGLT2.',d:'۱۰۰ تا ۳۰۰ میلی‌گرم روزانه.',t:'قبل از اولین وعده (صبحانه).',no:'مراقبت از پا مهم است.'},
+  {n:'آکاربوز (گلوکوبای)',u:'جذب کربوهیدرات در روده را کند می‌کند؛ قند بعد غذا را پایین می‌آورد.',d:'۵۰ تا ۱۰۰ میلی‌گرم، ۳ بار در روز.',t:'با اولین لقمهٔ هر وعده جویده شود.',no:'نفخ و گاز شایع است؛ افت قند را با گلوکز خالص درمان کن نه شکر معمولی.'},
+  {n:'سماگلوتاید خوراکی (رایبلسوس)',u:'آگونیست GLP-1 خوراکی؛ قند و اشتها را کم می‌کند.',d:'۳ تا ۱۴ میلی‌گرم روزانه.',t:'ناشتای صبح با نصف لیوان آب؛ ۳۰ دقیقه قبل خوردن/نوشیدن/داروی دیگر.',no:'رعایت زمان ناشتا برای جذب حیاتی است.'},
+  {n:'گلوکوانس (متفورمین+گلی‌بنکلامید)',u:'ترکیب دو داروی خوراکی دیابت.',d:'طبق نسخه (مثلاً ۵۰۰/۲٫۵).',t:'همراه وعده‌های غذایی.',no:'خطر افت قند به‌خاطر جزء سولفونیل‌اوره.'},
+  {n:'جانومت (متفورمین+سیتاگلیپتین)',u:'ترکیب متفورمین و مهارکنندهٔ DPP-4.',d:'طبق نسخه، ۲ بار در روز.',t:'همراه غذا.',no:'ملایم‌تر بر قند بعد غذا.'}
+ ],
+ 'انسولین':[
+  {n:'انسولین رگولار (R / اکترپید)',u:'انسولین کوتاه‌اثر برای پوشش وعده.',d:'طبق نسبت کربوهیدرات/دوز اصلاحی پزشک.',t:'۳۰ دقیقه قبل غذا، زیرجلدی.',no:'زمان‌بندی با وعده مهم است؛ دوز شخصی با پزشک.'},
+  {n:'انسولین NPH (هومولین N)',u:'انسولین متوسط‌اثر پایه.',d:'طبق نظر پزشک؛ اغلب شب یا دو نوبت.',t:'قبل خواب و/یا صبح؛ قبل تزریق خوب بچرخانده (نه تکان شدید) شود.',no:'اوج اثر دارد؛ خطر افت قند نیمه‌شب.'},
+  {n:'گلارژین (لانتوس/توجئو)',u:'انسولین پایهٔ بلنداثر بدون اوج مشخص.',d:'یک‌بار در روز طبق پزشک.',t:'هر روز ساعت ثابت، زیرجلدی.',no:'با انسولین سریع در یک سرنگ مخلوط نشود.'},
+  {n:'دتمیر (لومیر)',u:'انسولین پایهٔ بلنداثر.',d:'۱ تا ۲ بار در روز طبق پزشک.',t:'ساعت ثابت هر روز.',no:'محل تزریق را بچرخان.'},
+  {n:'دگلودک (ترسیبا)',u:'انسولین پایهٔ خیلی طولانی‌اثر (بیش از ۴۲ ساعت).',d:'یک‌بار در روز.',t:'هر روز، انعطاف زمانی بیشتر دارد.',no:'برای افراد با برنامهٔ نامنظم مناسب‌تر.'},
+  {n:'آسپارت (نووراپید/فیاسپ)',u:'انسولین سریع‌اثر برای وعده.',d:'طبق نسبت کربوهیدرات پزشک.',t:'درست قبل یا هنگام شروع غذا.',no:'فیاسپ سریع‌تر از نووراپید است.'},
+  {n:'لیسپرو (هومالوگ)',u:'انسولین سریع‌اثر وعده.',d:'طبق پزشک.',t:'۰ تا ۱۵ دقیقه قبل غذا.',no:'دوز اصلاحی فقط با راهنمای پزشک.'},
+  {n:'گلولیزین (اپیدرا)',u:'انسولین سریع‌اثر وعده.',d:'طبق پزشک.',t:'کمی قبل یا بعد شروع غذا.',no:'—'},
+  {n:'انسولین میکس ۷۰/۳۰',u:'ترکیب پایه و سریع در یک قلم.',d:'معمولاً صبح و شب طبق پزشک.',t:'کمی قبل صبحانه و شام؛ قبل تزریق خوب مخلوط شود.',no:'برنامهٔ غذایی منظم لازم دارد.'}
+ ],
+ 'GLP-1 و لاغری':[
+  {n:'لیراگلوتاید (ویکتوزا/ساکسندا)',u:'آگونیست GLP-1؛ کنترل قند و کاهش اشتها/وزن.',d:'ویکتوزا تا ۱٫۸ و ساکسندا تا ۳ میلی‌گرم، تزریق روزانه.',t:'یک‌بار در روز، ساعت ثابت، زیرجلدی، مستقل از غذا.',no:'دوز به‌تدریج بالا می‌رود تا تهوع کم شود.'},
+  {n:'سماگلوتاید تزریقی (اوزمپیک/ویگووی)',u:'آگونیست GLP-1 هفتگی؛ قند و وزن.',d:'۰٫۲۵ تا ۲ میلی‌گرم، هفته‌ای یک‌بار.',t:'هفته‌ای یک روز ثابت، زیرجلدی، مستقل از غذا.',no:'تهوع اولیه شایع؛ به‌تدریج زیاد می‌شود.'},
+  {n:'دولاگلوتاید (ترولیسیتی)',u:'آگونیست GLP-1 هفتگی.',d:'۰٫۷۵ تا ۴٫۵ میلی‌گرم هفتگی.',t:'هفته‌ای یک‌بار، ساعت آزاد.',no:'قلم آمادهٔ مصرف.'},
+  {n:'تیرزپاتاید (مونجارو)',u:'آگونیست دوگانهٔ GIP/GLP-1؛ کنترل قوی قند و وزن.',d:'۲٫۵ تا ۱۵ میلی‌گرم هفتگی.',t:'هفته‌ای یک‌بار، زیرجلدی.',no:'افزایش دوز پلکانی برای تحمل بهتر.'},
+  {n:'اورلیستات (زنیکال)',u:'جذب چربی روده را کم می‌کند (کمک به لاغری).',d:'۱۲۰ میلی‌گرم با هر وعدهٔ چرب.',t:'همراه یا تا ۱ ساعت بعد وعدهٔ حاوی چربی.',no:'دفع چرب و نفخ؛ ویتامین‌های محلول در چربی کم می‌شوند.'}
+ ],
+ 'فشار خون':[
+  {n:'کاپتوپریل',u:'مهارکنندهٔ ACE؛ فشار خون و محافظت کلیهٔ دیابتی.',d:'۱۲٫۵ تا ۵۰ میلی‌گرم، ۲ تا ۳ بار در روز.',t:'۱ ساعت قبل غذا (ناشتا).',no:'سرفهٔ خشک شایع؛ پتاسیم را بالا می‌برد.'},
+  {n:'انالاپریل',u:'مهارکنندهٔ ACE.',d:'۵ تا ۲۰ میلی‌گرم، ۱ تا ۲ بار در روز.',t:'ساعت ثابت، با یا بدون غذا.',no:'مراقب سرفه و افت فشار اول دوره.'},
+  {n:'لیزینوپریل',u:'مهارکنندهٔ ACE روزی‌یک‌بار؛ محافظت کلیه.',d:'۵ تا ۴۰ میلی‌گرم روزانه.',t:'یک‌بار در روز، ساعت ثابت.',no:'کنترل دوره‌ای کراتینین و پتاسیم.'},
+  {n:'رامیپریل',u:'مهارکنندهٔ ACE؛ محافظت قلب و کلیه.',d:'۲٫۵ تا ۱۰ میلی‌گرم روزانه.',t:'یک‌بار در روز.',no:'—'},
+  {n:'لوزارتان',u:'مسدودکنندهٔ گیرندهٔ آنژیوتانسین (ARB)؛ جایگزین ACE بدون سرفه.',d:'۲۵ تا ۱۰۰ میلی‌گرم روزانه.',t:'یک‌بار در روز، ساعت ثابت.',no:'برای نفروپاتی دیابتی مفید است.'},
+  {n:'والزارتان',u:'ARB.',d:'۸۰ تا ۳۲۰ میلی‌گرم روزانه.',t:'یک‌بار در روز.',no:'—'},
+  {n:'تلمیزارتان',u:'ARB بلنداثر.',d:'۲۰ تا ۸۰ میلی‌گرم روزانه.',t:'یک‌بار در روز.',no:'—'},
+  {n:'آملودیپین',u:'مسدودکنندهٔ کانال کلسیم؛ فشار خون.',d:'۵ تا ۱۰ میلی‌گرم روزانه.',t:'یک‌بار در روز، ساعت ثابت.',no:'ممکن است ورم مچ پا بدهد.'},
+  {n:'هیدروکلروتیازید (HCTZ)',u:'دیورتیک تیازیدی؛ فشار خون.',d:'۱۲٫۵ تا ۲۵ میلی‌گرم روزانه.',t:'صبح (تا شب‌ادراری نشود).',no:'ممکن است قند و اسیداوریک را کمی بالا ببرد.'},
+  {n:'فوروزماید (لازیکس)',u:'دیورتیک قوی؛ ورم و فشار.',d:'۲۰ تا ۸۰ میلی‌گرم طبق پزشک.',t:'صبح (و ظهر در دوز دوم).',no:'پتاسیم را کم می‌کند؛ کنترل الکترولیت.'},
+  {n:'اسپیرونولاکتون',u:'دیورتیک نگه‌دارندهٔ پتاسیم.',d:'۲۵ تا ۱۰۰ میلی‌گرم روزانه.',t:'صبح همراه غذا.',no:'پتاسیم را بالا می‌برد؛ با ACE/ARB احتیاط.'},
+  {n:'آتنولول',u:'بتابلاکر؛ فشار و ضربان.',d:'۲۵ تا ۱۰۰ میلی‌گرم روزانه.',t:'یک‌بار در روز.',no:'می‌تواند علائم افت قند را بپوشاند.'},
+  {n:'متوپرولول',u:'بتابلاکر قلبی.',d:'۲۵ تا ۲۰۰ میلی‌گرم روزانه.',t:'با غذا؛ فرم آهسته‌رهش یک‌بار در روز.',no:'ناگهانی قطع نشود.'},
+  {n:'کارودیلول',u:'بتابلاکر؛ نارسایی قلب و فشار.',d:'۳٫۱۲۵ تا ۲۵ میلی‌گرم، ۲ بار در روز.',t:'همراه غذا (کاهش افت فشار).',no:'—'},
+  {n:'بیزوپرولول',u:'بتابلاکر انتخابی قلب.',d:'۲٫۵ تا ۱۰ میلی‌گرم روزانه.',t:'صبح.',no:'—'},
+  {n:'متیل‌دوپا',u:'فشار خون (به‌ویژه بارداری).',d:'۲۵۰ تا ۵۰۰ میلی‌گرم، ۲ تا ۳ بار.',t:'ساعت‌های ثابت.',no:'خواب‌آلودگی اولیه.'}
+ ],
+ 'چربی خون':[
+  {n:'آتورواستاتین (لیپیتور)',u:'استاتین؛ کاهش LDL و پیشگیری قلبی‌عروقی.',d:'۱۰ تا ۸۰ میلی‌گرم روزانه.',t:'یک‌بار در روز، شب یا هر ساعت ثابت.',no:'درد عضلانی غیرعادی را به پزشک بگو؛ کنترل کبد.'},
+  {n:'روزوواستاتین (کرستور)',u:'استاتین قوی.',d:'۵ تا ۴۰ میلی‌گرم روزانه.',t:'یک‌بار در روز، ساعت آزاد.',no:'—'},
+  {n:'سیمواستاتین',u:'استاتین.',d:'۱۰ تا ۴۰ میلی‌گرم روزانه.',t:'شب (اثر بهتر).',no:'با گریپ‌فروت تداخل دارد.'},
+  {n:'ازتیمایب',u:'جذب کلسترول روده‌ای را کم می‌کند.',d:'۱۰ میلی‌گرم روزانه.',t:'یک‌بار در روز، ساعت ثابت.',no:'اغلب کنار استاتین.'},
+  {n:'فنوفیبرات',u:'کاهش تری‌گلیسرید بالا.',d:'۱۴۵ تا ۲۰۰ میلی‌گرم روزانه.',t:'همراه غذا.',no:'برای تری‌گلیسرید خیلی بالا.'},
+  {n:'ژمفیبروزیل',u:'فیبرات؛ تری‌گلیسرید.',d:'۶۰۰ میلی‌گرم، ۲ بار در روز.',t:'۳۰ دقیقه قبل صبحانه و شام.',no:'با استاتین احتیاط (درد عضله).'},
+  {n:'امگا-۳ (روغن ماهی)',u:'کاهش تری‌گلیسرید و کمک قلبی.',d:'۱ تا ۴ گرم روزانه.',t:'همراه غذا.',no:'مکمل؛ کیفیت متفاوت است.'}
+ ],
+ 'قلب و ضدانعقاد':[
+  {n:'آسپرین (ASA) کاردیو',u:'ضدپلاکت؛ پیشگیری سکته/حملهٔ قلبی در افراد پرخطر.',d:'۸۰ تا ۱۰۰ میلی‌گرم روزانه.',t:'همراه یا بعد غذا (کاهش آزار معده).',no:'خطر خونریزی؛ فقط با تجویز پزشک برای پیشگیری.'},
+  {n:'کلوپیدوگرل (پلاویکس)',u:'ضدپلاکت؛ بعد از استنت/سکته.',d:'۷۵ میلی‌گرم روزانه.',t:'یک‌بار در روز، ساعت ثابت.',no:'خودسر قطع نشود.'},
+  {n:'وارفارین',u:'ضدانعقاد؛ فیبریلاسیون/لختهٔ خون.',d:'طبق INR و نظر پزشک.',t:'یک‌بار در روز، ساعت ثابت (اغلب عصر).',no:'کنترل منظم INR؛ ثبات مصرف سبزیجات برگ‌سبز.'},
+  {n:'ریواروکسابان',u:'ضدانعقاد خوراکی جدید (NOAC).',d:'۱۵ تا ۲۰ میلی‌گرم روزانه.',t:'همراه غذای اصلی (جذب بهتر).',no:'نیاز به کنترل INR ندارد.'},
+  {n:'آتورو/نیتروگلیسیرین (TNG)',u:'گشادکنندهٔ عروق؛ درد قفسهٔ سینه (آنژین).',d:'زیرزبانی طبق نیاز؛ اسپری/قرص.',t:'هنگام درد، زیرزبانی؛ نشسته مصرف شود.',no:'اگر با ۳ نوبت درد نخوابید، اورژانس.'},
+  {n:'ایزوسورباید',u:'پیشگیری از آنژین.',d:'۱۰ تا ۴۰ میلی‌گرم، ۲ تا ۳ بار.',t:'با فاصلهٔ روزانه (نه شب) تا تحمل ایجاد نشود.',no:'سردرد اولیه شایع.'},
+  {n:'دیگوکسین',u:'نارسایی قلب/کنترل ضربان.',d:'۰٫۱۲۵ تا ۰٫۲۵ میلی‌گرم روزانه.',t:'یک‌بار در روز، ساعت ثابت.',no:'محدودهٔ درمانی باریک؛ کنترل سطح خونی.'}
+ ],
+ 'عصب و درد (نوروپاتی)':[
+  {n:'پره‌گابالین (لیریکا)',u:'درد عصبی دیابتی (نوروپاتی).',d:'۷۵ تا ۳۰۰ میلی‌گرم روزانه در ۲ نوبت.',t:'صبح و شب، با یا بدون غذا.',no:'خواب‌آلودگی و سرگیجه؛ تدریجی قطع شود.'},
+  {n:'گاباپنتین (نورونتین)',u:'درد عصبی دیابتی.',d:'۳۰۰ تا ۱۲۰۰ میلی‌گرم، ۳ بار در روز.',t:'سه نوبت با فاصله؛ دوز اول شب برای خواب‌آلودگی.',no:'دوز به‌تدریج بالا می‌رود.'},
+  {n:'دولوکستین (سیمبالتا)',u:'درد نوروپاتی و افسردگی.',d:'۳۰ تا ۶۰ میلی‌گرم روزانه.',t:'یک‌بار در روز، ساعت ثابت.',no:'ناگهانی قطع نشود.'},
+  {n:'آمی‌تریپتیلین',u:'درد عصبی/کمک به خواب.',d:'۱۰ تا ۵۰ میلی‌گرم شبانه.',t:'شب، ۱ تا ۲ ساعت قبل خواب.',no:'خشکی دهان و خواب‌آلودگی؛ در سالمند احتیاط.'},
+  {n:'نورتریپتیلین',u:'درد عصبی با عوارض کمتر از آمی‌تریپتیلین.',d:'۱۰ تا ۵۰ میلی‌گرم شبانه.',t:'شب.',no:'—'}
+ ],
+ 'کلیه و نقرس':[
+  {n:'آلوپورینول',u:'کاهش اسیداوریک؛ پیشگیری از نقرس.',d:'۱۰۰ تا ۳۰۰ میلی‌گرم روزانه.',t:'بعد غذا، آب فراوان.',no:'در حملهٔ حاد شروع نشود؛ راش پوستی را جدی بگیر.'},
+  {n:'کلشی‌سین',u:'حملهٔ حاد نقرس.',d:'۰٫۵ تا ۱ میلی‌گرم طبق دستور.',t:'در شروع حمله؛ طبق نظر پزشک.',no:'اسهال نشانهٔ زیاده‌روی است.'},
+  {n:'تامسولوسین',u:'بزرگی پروستات؛ تسهیل ادرار.',d:'۰٫۴ میلی‌گرم روزانه.',t:'۳۰ دقیقه بعد یک وعدهٔ ثابت، ساعت ثابت.',no:'افت فشار وضعیتی (سرگیجه هنگام بلندشدن).'},
+  {n:'سدیم بی‌کربنات',u:'اصلاح اسیدی خون در نارسایی مزمن کلیه.',d:'طبق پزشک.',t:'همراه وعده‌ها.',no:'فقط با تجویز نفرولوژیست.'}
+ ],
+ 'تیروئید':[
+  {n:'لووتیروکسین (ال‌تیروکسین)',u:'کم‌کاری تیروئید (شایع کنار دیابت نوع ۱).',d:'۲۵ تا ۲۰۰ میکروگرم روزانه طبق TSH.',t:'ناشتای صبح، ۳۰ تا ۶۰ دقیقه قبل صبحانه، با آب.',no:'با آهن/کلسیم/معده فاصله بده؛ ساعت ثابت مهم است.'},
+  {n:'متی‌مازول',u:'پرکاری تیروئید.',d:'۵ تا ۳۰ میلی‌گرم روزانه.',t:'ساعت ثابت، اغلب با غذا.',no:'گلودرد/تب را فوری به پزشک بگو (افت گلبول سفید).'},
+  {n:'پروپیل‌تیواوراسیل (PTU)',u:'پرکاری تیروئید (به‌ویژه سه‌ماههٔ اول بارداری).',d:'طبق پزشک، چند نوبت.',t:'با فاصلهٔ منظم.',no:'کنترل کبد.'}
+ ],
+ 'گوارش':[
+  {n:'امپرازول',u:'مهارکنندهٔ پمپ پروتون؛ سوزش سردل و زخم.',d:'۲۰ تا ۴۰ میلی‌گرم روزانه.',t:'۳۰ تا ۶۰ دقیقه قبل صبحانه (ناشتا).',no:'مصرف طولانی B12 و منیزیم را کم می‌کند.'},
+  {n:'پنتوپرازول',u:'مهارکنندهٔ پمپ پروتون.',d:'۲۰ تا ۴۰ میلی‌گرم روزانه.',t:'قبل صبحانه.',no:'—'},
+  {n:'فاموتیدین',u:'کاهش اسید معده.',d:'۲۰ تا ۴۰ میلی‌گرم، ۱ تا ۲ بار.',t:'قبل غذا یا شب.',no:'—'},
+  {n:'متوکلوپرامید',u:'تهوع و کندی تخلیهٔ معده (گاستروپارزی دیابتی).',d:'۱۰ میلی‌گرم، ۳ بار در روز.',t:'۳۰ دقیقه قبل غذا و قبل خواب.',no:'مصرف کوتاه‌مدت؛ عوارض حرکتی.'},
+  {n:'دومپریدون',u:'تهوع و نفخ؛ کمک به تخلیهٔ معده.',d:'۱۰ میلی‌گرم، تا ۳ بار.',t:'۱۵ تا ۳۰ دقیقه قبل غذا.',no:'در بیماری قلبی احتیاط.'},
+  {n:'لاکتولوز',u:'یبوست.',d:'۱۵ تا ۳۰ میلی‌لیتر روزانه.',t:'صبح یا شب، با آب فراوان.',no:'ممکن است نفخ بدهد.'}
+ ],
+ 'مکمل و ویتامین':[
+  {n:'ویتامین D3',u:'کمبود ویتامین D (شایع در دیابت).',d:'۱۰۰۰ تا ۲۰۰۰ واحد روزانه یا مگادوز هفتگی طبق پزشک.',t:'همراه وعدهٔ چرب (جذب بهتر).',no:'دوز بالا فقط با آزمایش و تجویز.'},
+  {n:'کلسیم',u:'سلامت استخوان.',d:'۵۰۰ تا ۱۰۰۰ میلی‌گرم روزانه.',t:'همراه غذا؛ با لووتیروکسین/آهن فاصله بده.',no:'یک‌جا بیش از ۵۰۰ میلی‌گرم جذب نمی‌شود.'},
+  {n:'ویتامین B12',u:'جبران کمبود ناشی از متفورمین/نوروپاتی.',d:'۱۰۰۰ میکروگرم روزانه یا آمپول طبق پزشک.',t:'با یا بدون غذا.',no:'در مصرف طولانی متفورمین دوره‌ای چک شود.'},
+  {n:'اسید فولیک',u:'کم‌خونی/بارداری.',d:'۱ میلی‌گرم روزانه (۵ میلی‌گرم بارداری).',t:'ساعت ثابت.',no:'—'},
+  {n:'آهن (فروس سولفات)',u:'کم‌خونی فقر آهن.',d:'۱ تا ۳ قرص روزانه طبق پزشک.',t:'ناشتا با آب یا ویتامین C؛ با چای/کلسیم/معده فاصله.',no:'مدفوع تیره طبیعی است؛ یبوست شایع.'},
+  {n:'منیزیم',u:'گرفتگی عضله/کمبود منیزیم.',d:'۲۵۰ تا ۴۰۰ میلی‌گرم روزانه.',t:'شب همراه غذا.',no:'دوز بالا اسهال می‌دهد.'},
+  {n:'امگا-۳',u:'سلامت قلب و تری‌گلیسرید.',d:'۱ تا ۲ گرم روزانه.',t:'همراه غذا.',no:'—'},
+  {n:'کوآنزیم Q10',u:'مکمل انرژی سلولی؛ گاهی برای درد عضلانی استاتین.',d:'۱۰۰ تا ۲۰۰ میلی‌گرم روزانه.',t:'همراه غذای چرب.',no:'شواهد محدود؛ مکمل.'}
+ ],
+ 'روان و خواب':[
+  {n:'سرترالین',u:'افسردگی/اضطراب (شایع در دیابت).',d:'۵۰ تا ۲۰۰ میلی‌گرم روزانه.',t:'صبح یا شب، ساعت ثابت.',no:'اثر کامل ۲ تا ۴ هفته؛ ناگهانی قطع نشود.'},
+  {n:'فلوکستین',u:'افسردگی/اضطراب.',d:'۲۰ تا ۶۰ میلی‌گرم روزانه.',t:'صبح.',no:'—'},
+  {n:'اس‌سیتالوپرام',u:'افسردگی/اضطراب با تحمل خوب.',d:'۱۰ تا ۲۰ میلی‌گرم روزانه.',t:'ساعت ثابت.',no:'—'},
+  {n:'ملاتونین',u:'کمک به تنظیم خواب.',d:'۳ تا ۵ میلی‌گرم شبانه.',t:'۳۰ تا ۶۰ دقیقه قبل خواب.',no:'مکمل؛ خواب‌آلودگی صبح احتمالی.'},
+  {n:'آلپرازولام',u:'اضطراب/حملهٔ پانیک (کوتاه‌مدت).',d:'۰٫۲۵ تا ۰٫۵ میلی‌گرم طبق پزشک.',t:'هنگام نیاز؛ محدود.',no:'وابستگی‌آور؛ فقط با تجویز و کوتاه‌مدت.'}
+ ],
+ 'چشم و پوست':[
+  {n:'اشک مصنوعی (قطره)',u:'خشکی چشم.',d:'۱ قطره، چند بار در روز.',t:'هنگام نیاز؛ با لنز/داروی چشمی دیگر ۵ دقیقه فاصله.',no:'—'},
+  {n:'کلوتریمازول (کرم)',u:'عفونت قارچی پوست (شایع در دیابت).',d:'۲ بار در روز روی ناحیه.',t:'صبح و شب روی پوست تمیز و خشک.',no:'تا چند روز بعد بهبود ادامه بده.'},
+  {n:'کرم مرطوب‌کنندهٔ پا',u:'خشکی و ترک پاشنه (مراقبت پای دیابتی).',d:'روزانه.',t:'بعد شست‌وشو؛ لای انگشتان نمالید.',no:'زخم یا قرمزی پا را جدی بگیر.'}
+ ],
+ 'آنتی‌بیوتیک و عفونت':[
+  {n:'سفالکسین',u:'عفونت پوست/بافت نرم (مثل زخم پا).',d:'۵۰۰ میلی‌گرم، ۲ تا ۴ بار در روز.',t:'با فاصلهٔ منظم؛ دورهٔ کامل تمام شود.',no:'حتی با بهبود، دوره را نصفه رها نکن.'},
+  {n:'سیپروفلوکساسین',u:'عفونت ادراری/برخی عفونت‌ها.',d:'۲۵۰ تا ۵۰۰ میلی‌گرم، ۲ بار در روز.',t:'با آب فراوان؛ با کلسیم/آهن/لبنیات فاصله بده.',no:'می‌تواند قند را نوسانی کند؛ درد تاندون را جدی بگیر.'},
+  {n:'کوآموکسی‌کلاو',u:'عفونت‌های شایع (تنفسی/پوست).',d:'۶۲۵ میلی‌گرم، ۲ تا ۳ بار در روز.',t:'با شروع غذا (کاهش تهوع).',no:'دورهٔ کامل.'},
+  {n:'مترونیدازول',u:'عفونت بی‌هوازی/برخی زخم‌ها.',d:'۲۵۰ تا ۵۰۰ میلی‌گرم، ۲ تا ۳ بار.',t:'با غذا؛ در طول دوره الکل ممنوع.',no:'مزهٔ فلزی شایع.'}
+ ]
+};
+const custom_meds_key='custom_meds_v1';
+function medLoadCustom(){ try{ return JSON.parse(localStorage.getItem(custom_meds_key)||'[]'); }catch(e){ return []; } }
+function medSaveCustom(arr){ try{ localStorage.setItem(custom_meds_key,JSON.stringify(arr)); }catch(e){} }
+let MED_INDEX=[];
+function buildMedIndex(){
+  MED_INDEX=[];
+  Object.keys(MED_DB).forEach(cat=>{ MED_DB[cat].forEach(m=>{ MED_INDEX.push({cat,n:m.n,u:m.u,d:m.d,t:m.t,no:m.no,custom:false,norm:normalizeFa(m.n)}); }); });
+  medLoadCustom().forEach(m=>{ MED_INDEX.push({cat:m.cat||'داروهای من',n:m.n,u:m.u||'',d:m.d||'',t:m.t||'',no:m.no||'',custom:true,norm:normalizeFa(m.n)}); });
+}
+function medEmoji(cat){ return MED_CAT_EMOJI[cat]||'💊'; }
+function medEsc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function medQ(s){ return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+// جست‌وجوی دارو در فرم ثبت/ویرایش. prefix = پیشوند شناسه‌ی فیلدها (qmed یا evMed)
+function medDoSearch(prefix){
+  const inp=document.getElementById(prefix+'Name'); if(!inp) return;
+  const box=document.getElementById(prefix+'Results'); if(!box) return;
+  const q=normalizeFa(inp.value.trim());
+  if(!q){ box.classList.remove('show'); box.innerHTML=''; return; }
+  const matches=MED_INDEX.filter(x=>x.norm.includes(q)).slice(0,40);
+  let h='';
+  if(matches.length===0){
+    h='<div class="search-empty">در کتابخانه نبود — می‌توانی همین نام را دستی ثبت کنی.</div>';
+  }else{
+    h=matches.map((m,i)=>{
+      const gi=MED_INDEX.indexOf(m);
+      return `<div class="search-item med-si">
+        <span class="med-si-name" onclick="medPick('${prefix}',${gi})">${medEmoji(m.cat)} ${medEsc(m.n)}${m.custom?' <span style=\"color:var(--muted);font-size:10px\">(من)</span>':''}</span>
+        <span style="display:flex;align-items:center;gap:6px">
+          <span class="cat">${medEsc(m.cat)}</span>
+          <button type="button" class="med-i" title="توضیح دارو" onclick="event.stopPropagation();medShowInfo(${gi})">i</button>
+        </span>
+      </div>`;
+    }).join('');
+  }
+  // گزینه‌ی افزودن دستی
+  h+=`<div class="search-item med-add" onclick="medAddCustomFromSearch('${prefix}')">➕ افزودن «<b>${medEsc(inp.value.trim())}</b>» به داروهای من</div>`;
+  box.innerHTML=h; box.classList.add('show');
+}
+function medPick(prefix,gi){
+  const m=MED_INDEX[gi]; if(!m) return;
+  const nameEl=document.getElementById(prefix+'Name');
+  const doseEl=document.getElementById(prefix+'Dose');
+  const timeEl=document.getElementById(prefix+'Timing');
+  if(nameEl) nameEl.value=m.n;
+  if(doseEl && !doseEl.value.trim()) doseEl.value=m.d||'';
+  if(timeEl && !timeEl.value.trim()) timeEl.value=m.t||'';
+  const box=document.getElementById(prefix+'Results'); if(box) box.classList.remove('show');
+}
+function medAddCustomFromSearch(prefix){
+  const searchEl=document.getElementById(prefix+'Name');
+  const nm=(searchEl?searchEl.value.trim():''); if(!nm){ return; }
+  let arr=medLoadCustom();
+  if(!arr.some(x=>normalizeFa(x.n)===normalizeFa(nm))){
+    arr.push({n:nm,cat:'داروهای من',u:'',d:'',t:'',no:''}); medSaveCustom(arr); buildMedIndex();
+  }
+  const nameEl=document.getElementById(prefix+'Name'); if(nameEl) nameEl.value=nm;
+  const box=document.getElementById(prefix+'Results'); if(box) box.classList.remove('show');
+  uiToast('✓ به داروهای من اضافه شد');
+}
+function medShowInfo(gi){
+  const m=MED_INDEX[gi]; if(!m) return;
+  const bg=document.getElementById('medInfoBg'); if(!bg) return;
+  document.getElementById('medInfoTitle').innerHTML=`${medEmoji(m.cat)} ${medEsc(m.n)}`;
+  document.getElementById('medInfoCat').textContent=m.cat||'';
+  const rows=[
+    ['🎯 کاربرد', m.u],
+    ['💊 دوز رایج (آموزشی)', m.d],
+    ['⏱ طریقه و زمان مصرف', m.t],
+    ['📌 نکته', m.no]
+  ].filter(r=>r[1]);
+  document.getElementById('medInfoBody').innerHTML=rows.map(r=>
+    `<div class="med-inforow"><div class="med-info-lbl">${r[0]}</div><div class="med-info-val">${medEsc(r[1])}</div></div>`
+  ).join('')||'<div class="med-info-val">توضیحی ثبت نشده.</div>';
+  bg.classList.add('show');
+}
+function closeMedInfo(){ const bg=document.getElementById('medInfoBg'); if(bg) bg.classList.remove('show'); }
+
 /* ====== فرم سریع انسولین → planData ====== */
 const INS_RAPID=['اپیدرا (گلولیزین)','نووراپید / نوولاگ (آسپارت)','هومالوگ (لیسپرو)','فیاسپ (آسپارت سریع‌تر)','لیومجو (لیسپرو سریع‌تر)','رگولار / اکترپید (R)','هومولین R'];
 const INS_BASAL=['لانتوس (گلارژین U100)','توجئو (گلارژین U300)','لومیر (دتمیر)','ترسیبا (دگلودک)','بازاگلار (گلارژین)','NPH / هومولین N','اینسولاتارد','رایزودگ ۷۰/۳۰ (دگلودک/آسپارت)','نوومیکس ۳۰','نوومیکس ۵۰','هومولین ۷۰/۳۰','هومالوگ‌میکس ۲۵','میکستارد ۳۰'];
@@ -4302,7 +4544,7 @@ async function loadProfile(){
 // کلیدهای localStorage که در بکاپ گنجانده می‌شوند (نقشه‌ی داده‌ی کاربر).
 // از مقادیر رشته‌ای مستقیم استفاده می‌شود چون بعضی از این const‌ها (CGMKEY, BGKEY, ...)
 // پایین‌تر در فایل تعریف شده‌اند و ارجاع به خودِ متغیر اینجا TDZ می‌دهد.
-const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','custom_foods_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1'];
+const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','custom_foods_v1','custom_meds_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1'];
 
 async function renderProfileTab(){
   // فرم پروفایل (c-profile) حالا خودش داخل این تب است و وضعیت ذخیره‌شده را نشان می‌دهد.
@@ -11694,6 +11936,7 @@ function restoreCollState(){
 }
 
 applyCustomFoods();   // محصولات شخصی را ادغام و شاخص جستجو را می‌سازد
+buildMedIndex();      // شاخص جست‌وجوی کتابخانه‌ی داروها
 if(!restoreCalcState()) addFoodRow();   // بازیابی خوراکی‌های واردشده بعد از رفرش
 applyTheme();
 applyNavMode();
