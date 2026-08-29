@@ -1839,7 +1839,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۵.۲</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۵.۳</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -9858,8 +9858,10 @@ function chatRenderSuggestions(list){
   const box=document.getElementById('chatSuggestions'); if(!box) return;
   if(!chatSuggestOn() || !list || !list.length){ box.innerHTML=''; box.style.display='none'; return; }
   box.style.display='flex';
-  box.innerHTML=list.map(q=>`<button type="button" class="chat-sug" onclick="chatUseSuggestion(this)">${escVision(q)}</button>`).join('');
+  box.innerHTML=`<button type="button" class="chat-sug-x" onclick="chatCloseSuggestions()" title="بستن پیشنهادها" aria-label="بستن">×</button>`
+    +list.map(q=>`<button type="button" class="chat-sug" onclick="chatUseSuggestion(this)">${escVision(q)}</button>`).join('');
 }
+function chatCloseSuggestions(){ const box=document.getElementById('chatSuggestions'); if(box){ box.innerHTML=''; box.style.display='none'; } }
 function chatUseSuggestion(btn){
   const t=btn.textContent||''; const inp=document.getElementById('chatInput');
   if(inp){ inp.value=t; chatAutoGrow(inp); inp.focus(); }
@@ -9881,11 +9883,15 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   #page-chat #chatRoot{flex:1;min-height:0;display:flex}
   .chatx{position:relative;display:flex;flex-direction:column;flex:1;min-height:0;width:100%}
   /* ── نوار بالای شیشه‌ای (مثل کلود) ── */
-  .chatx-appbar{position:sticky;top:0;z-index:6;flex:0 0 auto;direction:ltr;display:flex;align-items:center;gap:6px;padding:calc(8px + env(safe-area-inset-top)) 10px 8px;background:var(--glass);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);border-bottom:1px solid var(--glass-brd)}
+  .chatx-appbar{position:sticky;top:0;z-index:6;flex:0 0 auto;direction:ltr;display:flex;align-items:center;gap:6px;padding:calc(8px + env(safe-area-inset-top)) 10px 8px;background:var(--glass);backdrop-filter:blur(22px) saturate(1.7);-webkit-backdrop-filter:blur(22px) saturate(1.7);border-bottom:1px solid var(--glass-brd);box-shadow:0 2px 14px rgba(0,0,0,.10)}
   .cxa-btn{flex:0 0 auto;width:38px;height:38px;border-radius:11px;border:none;background:transparent;color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.14s;-webkit-tap-highlight-color:transparent}
   .cxa-btn:hover{background:rgba(127,127,127,.12)}
   .cxa-btn:active{transform:scale(.88)}
   .cxa-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  /* دکمه‌ی بازگشت به خانه — واضح‌تر و متمایز */
+  .cxa-home{background:linear-gradient(145deg,var(--teal),var(--teal-dim));color:#fff;box-shadow:0 3px 10px rgba(63,185,163,.4)}
+  .cxa-home:hover{background:linear-gradient(145deg,var(--teal),var(--teal-dim));filter:brightness(1.06)}
+  .cxa-home svg{stroke-width:2.1}
   .cxa-center{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;overflow:hidden;padding:0 4px}
   .cxa-logo{flex:0 0 auto;width:26px;height:26px;border-radius:8px;background:linear-gradient(145deg,var(--teal),var(--teal-dim));display:flex;align-items:center;justify-content:center;box-shadow:0 3px 9px rgba(63,185,163,.3)}
   .cxa-logo svg{width:16px;height:16px;display:block}
@@ -9911,7 +9917,9 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .chat-act:hover{color:var(--teal);border-color:var(--teal-dim)}
   /* ── داک پایینِ شیشه‌ای (همیشه چسبیده به پایین) ── */
   .chat-dock{flex:0 0 auto;position:sticky;bottom:0;z-index:6;width:100%;padding:9px 12px calc(10px + env(safe-area-inset-bottom));background:var(--glass);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);border-top:1px solid var(--glass-brd)}
-  .chat-capsule{max-width:840px;margin:0 auto;background:var(--field);border:1px solid var(--line);border-radius:26px;padding:8px 8px 7px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+  /* کپسول ورودی: عادی شیشه‌ای و بدون سطحِ جدا؛ با فوکوس مات می‌شود تا متن خوانا شود */
+  .chat-capsule{max-width:840px;margin:0 auto;background:transparent;border:1px solid var(--line);border-radius:26px;padding:8px 8px 7px;transition:background .16s,border-color .16s,box-shadow .16s}
+  .chat-capsule:focus-within{background:var(--field);border-color:var(--teal);box-shadow:0 6px 20px rgba(0,0,0,.16)}
   .chat-capsule-row{display:flex;align-items:center;gap:5px;padding:2px 2px 0}
   /* چیپ‌های پیشنهادِ سوال بعدی (مثل کلود) */
   .chat-sugs{display:flex;flex-wrap:wrap;gap:7px;max-width:840px;margin:0 auto 9px;justify-content:flex-end}
@@ -9919,6 +9927,19 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .chat-sug:hover{border-color:var(--teal);color:var(--teal)}
   .chat-sug:active{transform:scale(.96)}
   .chat-sug::before{content:'✨ ';opacity:.7}
+  .chat-sug-x{flex:0 0 auto;order:99;width:30px;height:30px;border-radius:50%;background:var(--field);border:1px solid var(--line);color:var(--muted);font-size:17px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.14s;align-self:center}
+  .chat-sug-x:hover{color:var(--red);border-color:var(--red)}
+  .chat-sug-x:active{transform:scale(.9)}
+  /* پاپ‌آپ تغییر نام گفتگو */
+  .chat-rename-bg{position:fixed;inset:0;z-index:160;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:22px;animation:chatFade .16s}
+  .chat-rename{width:100%;max-width:380px;background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:20px 18px 16px;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:chatUp .2s cubic-bezier(.4,0,.2,1)}
+  .chat-rename h4{margin:0 0 14px;font-size:15px;font-weight:800;color:var(--ink);text-align:center}
+  .chat-rename-inp{width:100%;background:var(--field);border:1.5px solid var(--teal);border-radius:13px;padding:13px 14px;font-family:inherit;font-size:15px;color:var(--ink);outline:none;text-align:right}
+  .chat-rename-btns{display:flex;gap:9px;margin-top:16px}
+  .crn-btn{flex:1;border:none;border-radius:13px;padding:12px;font-family:inherit;font-weight:800;font-size:13.5px;cursor:pointer;transition:.14s}
+  .crn-btn:active{transform:scale(.97)}
+  .crn-cancel{background:var(--field);border:1px solid var(--line);color:var(--muted)}
+  .crn-ok{background:linear-gradient(145deg,var(--teal),var(--teal-dim));color:#fff;box-shadow:0 4px 14px rgba(63,185,163,.4)}
   .chat-attach-preview{display:flex;gap:7px;flex-wrap:wrap;padding:2px 4px 8px}
   .chat-attach-preview .ap{position:relative;background:var(--field);border:1px solid var(--line);border-radius:11px;padding:5px 26px 5px 9px;font-size:11px;color:var(--ink);display:flex;align-items:center;gap:6px}
   .chat-attach-preview .ap img{width:26px;height:26px;border-radius:6px;object-fit:cover}
@@ -10008,14 +10029,28 @@ let _lastNonChatTab='home';
 function chatGoBack(){ switchTab(_lastNonChatTab||'home'); }
 function openChatDrawer(){ const d=document.getElementById('chatDrawer'),s=document.getElementById('chatScrim'); if(d)d.classList.add('open'); if(s)s.classList.add('open'); }
 function closeChatDrawer(){ const d=document.getElementById('chatDrawer'),s=document.getElementById('chatScrim'); if(d)d.classList.remove('open'); if(s)s.classList.remove('open'); }
+// تغییر نام گفتگو با پاپ‌آپ (مثل کلود)
 function chatEditTitle(){
-  const wrap=document.getElementById('chatTitleWrap'); if(!wrap) return;
   const cur=(chatActive()||{}).title||'گفتگو';
-  const inp=document.createElement('input'); inp.className='chatx-title-inp'; inp.value=cur;
-  inp.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); inp.blur(); } };
-  inp.onblur=()=>chatSaveTitle(inp.value);
-  wrap.replaceWith(inp); inp.focus(); inp.select();
+  chatCloseRename();
+  const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='chatRenameBg';
+  bg.onclick=e=>{ if(e.target===bg) chatCloseRename(); };
+  bg.innerHTML=`<div class="chat-rename" role="dialog" aria-modal="true">
+    <h4>✏️ تغییر نام گفتگو</h4>
+    <input id="chatRenameInp" class="chat-rename-inp" type="text" maxlength="60" placeholder="نام گفتگو…">
+    <div class="chat-rename-btns">
+      <button type="button" class="crn-btn crn-cancel" onclick="chatCloseRename()">انصراف</button>
+      <button type="button" class="crn-btn crn-ok" onclick="chatRenameConfirm()">ذخیره</button>
+    </div>
+  </div>`;
+  document.body.appendChild(bg);
+  const inp=document.getElementById('chatRenameInp');
+  inp.value=cur;
+  inp.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); chatRenameConfirm(); } else if(e.key==='Escape'){ chatCloseRename(); } };
+  setTimeout(()=>{ inp.focus(); inp.select(); },60);
 }
+function chatRenameConfirm(){ const inp=document.getElementById('chatRenameInp'); const v=inp?inp.value:''; chatCloseRename(); chatSaveTitle(v); }
+function chatCloseRename(){ const b=document.getElementById('chatRenameBg'); if(b) b.remove(); }
 function chatSaveTitle(v){ const o=chatLoad(); const c=chatActive(o); if(c){ const t=(v||'').trim(); if(t) c.title=t; chatSave(o); } renderChatTab(); }
 function renderChatTab(){
   const box=document.getElementById('chatRoot'); if(!box) return;
@@ -10037,7 +10072,7 @@ function renderChatTab(){
         <span class="cxa-ttl">${escVision(c.title||'گفتگوی جدید')}</span><span class="cxa-pen">✏️</span>
       </div>
       <button type="button" class="cxa-btn" onclick="chatNew()" title="گفتگوی جدید" aria-label="گفتگوی جدید"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
-      <button type="button" class="cxa-btn" onclick="chatGoBack()" title="بازگشت به برنامه" aria-label="بازگشت به برنامه"><svg viewBox="0 0 24 24"><path d="M3 11.4 12 4l9 7.4"/><path d="M5.5 10v9.5h13V10"/></svg></button>
+      <button type="button" class="cxa-btn cxa-home" onclick="chatGoBack()" title="بازگشت به برنامه" aria-label="بازگشت به برنامه"><svg viewBox="0 0 24 24"><path d="M3 11.4 12 4l9 7.4"/><path d="M5.5 10v9.5h13V10"/></svg></button>
     </div>`;
   if(!hasKey) h+=`<div style="color:var(--amber);font-size:12px;padding:9px 14px 0;max-width:840px;margin:0 auto">⚠️ برای «${escVision(PROVIDER_NAMES[prov]||prov)}» کلید نداری — <b onclick="gotoVisionSettings()" style="cursor:pointer;text-decoration:underline">تنظیمات</b> یا سرویس را عوض کن.</div>`;
   h+=`<div class="chat-msgs" id="chatMsgs"></div>
