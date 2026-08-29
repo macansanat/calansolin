@@ -151,6 +151,19 @@ body.nav-bottom{padding-bottom:100px}
 .theme-sw{flex:0 0 auto;width:30px;height:30px;border-radius:9px;border:1px solid rgba(255,255,255,.15);box-shadow:inset 0 1px 3px rgba(0,0,0,.3)}
 .theme-nm{flex:1;font-size:12.5px;font-weight:700;color:var(--ink);text-align:right;line-height:1.4}
 .theme-ck{flex:0 0 auto;color:var(--teal);font-weight:900;font-size:14px}
+/* ===== کارت ناظرِ دیروز ===== */
+.wd-card{margin:18px 0 4px;padding:14px 15px;border-radius:16px;background:linear-gradient(150deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-right:4px solid var(--wc);box-shadow:0 4px 16px rgba(0,0,0,.14)}
+.wd-head{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+.wd-emo{font-size:22px;flex:0 0 auto}
+.wd-ttl{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.wd-ttl b{font-size:14.5px;font-weight:800;color:var(--ink)}
+.wd-sub{font-size:10.5px;color:var(--muted);font-weight:600}
+.wd-score{flex:0 0 auto;font-size:11px;font-weight:800;padding:5px 11px;border-radius:20px;border:1px solid;white-space:nowrap}
+.wd-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.wd-list li{position:relative;padding-right:18px;font-size:12.8px;line-height:1.85;color:var(--ink)}
+.wd-list li::before{content:'▪';position:absolute;right:2px;top:0;color:var(--wc);font-size:13px}
+.wd-goods{margin-top:10px;padding-top:9px;border-top:1px dashed var(--line);font-size:11.8px;color:var(--muted);line-height:1.8}
+.wd-praise{font-size:13.2px;line-height:1.95;color:var(--ink)}
 /* ===== داشبورد خانه ===== */
 .dash-hero{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:22px;margin-bottom:16px;text-align:center;position:relative;overflow:hidden}
 .dash-hero::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--teal),transparent)}
@@ -1611,12 +1624,23 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
 </div>
 <div class="card" id="c-profile-chatlayout">
-  <h2><span>💬 چیدمان چت هوشمند</span></h2>
+  <h2><span>💬 چت هوشمند (ظاهر و رفتار)</span></h2>
   <div class="card-body">
-    <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:12px">
-      ظاهر تب چت را انتخاب کن: <b style="color:var(--teal)">حباب‌دار</b> (همین حالت فعلی)، <b style="color:var(--teal)">مثل کلود</b> (پاسخ‌ها تمام‌عرض و ساده)، یا <b style="color:var(--teal)">مثل ChatGPT</b> (ردیف‌های تمام‌عرض).
+    <div style="font-weight:800;font-size:13px;color:var(--teal);margin-bottom:7px">چیدمان</div>
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:10px">
+      ظاهر تب چت: <b style="color:var(--teal)">حباب‌دار</b>، <b style="color:var(--teal)">مثل کلود</b> (پاسخ‌ها تمام‌عرض)، یا <b style="color:var(--teal)">مثل ChatGPT</b>.
     </div>
     <div id="chatLayoutSetting"></div>
+    <div style="font-weight:800;font-size:13px;color:var(--teal);margin:18px 0 7px">لحن دستیار</div>
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:10px">
+      دیابوت با چه لحنی با تو حرف بزند؟ اگر روزهای سختی داری و نیاز به دلگرمی داری، <b style="color:var(--teal)">رفیق مهربان</b> را انتخاب کن.
+    </div>
+    <div id="chatPersonaSetting"></div>
+    <div style="font-weight:800;font-size:13px;color:var(--teal);margin:18px 0 7px">پیشنهاد سوال بعدی</div>
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:10px">
+      مثل کلود، بعد از هر پاسخ چند سوالِ بعدیِ محتمل پیشنهاد شود تا با یک لمس بپرسی. پیش‌فرض روشن.
+    </div>
+    <div id="chatSuggestSetting"></div>
   </div>
 </div>
 <div class="card" id="c-profile-zoom">
@@ -1815,7 +1839,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۴.۱</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۵.۰</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -2983,6 +3007,92 @@ function dashGluStatus(v){
   if(v>180) return {k:'high',c:'#f0a29b',t:'بالای محدوده'};
   return {k:'in',c:'#6fd39a',t:'در محدوده'};
 }
+/* ====== ناظرِ دیروز (سختگیر ولی منصف) — قاعده‌محور، آفلاین و بدون توکن ======
+   داده‌های «دیروز» را بررسی می‌کند و امروز روی خانه هشدارِ کوتاه یا تشویق نشان می‌دهد. */
+function buildYesterdayReview(){
+  const jl=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'[]'); }catch(e){ return []; } };
+  const y=new Date(); y.setDate(y.getDate()-1); y.setHours(0,0,0,0);
+  const key=dayKey(y);
+  const sameDay=iso=>{ try{ return dayKey(new Date(iso))===key; }catch(e){ return false; } };
+  let prof={}; try{ prof=JSON.parse(localStorage.getItem(PKEY)||'{}'); }catch(e){}
+  // تغذیه + انسولین
+  let meals=0, carb=0, bolusShots=0, hasBasal=false;
+  try{ const arr=(planData&&planData[key])||[]; meals=arr.length;
+    arr.forEach(m=>{ carb+=(+m.carb||0); if(+m.insDose>0) bolusShots++; });
+    if(planData&&planData._basal&&planData._basal[key]) hasBasal=true;
+  }catch(e){}
+  // قند
+  let bgVals=[];
+  try{ (window._cgmReadings||[]).forEach(r=>{ if(r&&r.t&&r.t.dateObj&&dayKey(r.t.dateObj)===key) bgVals.push(r.glu); }); }catch(e){}
+  if(bgVals.length<3){ try{ loadBG().forEach(x=>{ if(x.iso&&sameDay(x.iso)) bgVals.push(x.glu); }); }catch(e){} }
+  const bgAvg=bgVals.length?Math.round(bgVals.reduce((a,b)=>a+b,0)/bgVals.length):null;
+  const bgLow=bgVals.some(g=>g<70);
+  // ورزش
+  let exSess=0;
+  try{ (loadExLog().entries||[]).forEach(e=>{ if(e.ts&&sameDay(e.ts)) exSess++; }); }catch(e){}
+  try{ loadExercise().forEach(x=>{ const d=x.iso||x.start; if(d&&sameDay(d)) exSess++; }); }catch(e){}
+  // دارو (فقط اگر کاربر قبلاً دارو ثبت می‌کرده، نبودِ آن را تذکر بده)
+  const medLog=jl('med_log_v1');
+  const medsY=medLog.filter(x=>x.iso&&sameDay(x.iso)).length;
+  const medsBefore=medLog.some(x=>{ try{ return new Date(x.iso)<y; }catch(e){ return false; } });
+  // آیا اصلاً دیروز چیزی ثبت شده؟
+  const anyY = meals||bgVals.length||exSess||medsY||hasBasal;
+  // آیا اصلاً کاربر داده‌ای دارد (کاربر تازه‌وارد را اذیت نکن)
+  const anyEver = (window._cgmReadings&&window._cgmReadings.length) || loadBG().length>0 ||
+    (planData&&Object.keys(planData).some(k=>k!=='_basal'&&Array.isArray(planData[k])&&planData[k].length)) || medLog.length>0;
+  if(!anyEver) return {show:false};
+
+  const warns=[], goods=[]; let score=100;
+  if(!anyY){
+    return {show:true, score:null, tone:'flat', dayLabel:_jLabel(y),
+      warns:['دیروز هیچ داده‌ای ثبت نکردی — برای اینکه بتوانم کمکت کنم، امروز قند/وعده/ورزش را ثبت کن.'], goods:[]};
+  }
+  // قند
+  if(bgVals.length===0){ score-=12; warns.push('دیروز قندت را اندازه نگرفتی؛ بدون آن نمی‌شود کنترل را سنجید.'); }
+  else{
+    if(bgAvg>180){ score-=25; warns.push('میانگین قند دیروز بالا بود (~'+faDigits(bgAvg)+') — امروز سبک‌تر بخور و بعد از غذا حرکت کن.'); }
+    else if(bgAvg>154){ score-=12; warns.push('میانگین قند دیروز کمی بالا بود (~'+faDigits(bgAvg)+').'); }
+    else goods.push('قندت دیروز در محدوده‌ی خوبی بود (~'+faDigits(bgAvg)+') 👏');
+    if(bgLow){ score-=10; warns.push('دیروز افت قند (زیر ۷۰) داشتی — علتش را با پزشک بررسی کن.'); }
+  }
+  // کربوهیدرات
+  if(carb>250){ score-=18; warns.push('کربوهیدرات دیروز زیاد بود (~'+faDigits(Math.round(carb))+' گرم) — پرخوری قند را بالا می‌برد.'); }
+  else if(carb>180){ score-=8; warns.push('کربوهیدرات دیروز کمی زیاد بود (~'+faDigits(Math.round(carb))+' گرم).'); }
+  else if(meals) goods.push('کربوهیدرات دیروز معقول بود.');
+  // انسولین بولوس (فقط اگر کاربر انسولین‌درمانی دارد)
+  if(meals && bolusShots===0 && (prof.insulinType||prof.tdd)){ score-=12; warns.push('دیروز وعده داشتی ولی انسولین بولوسی ثبت نشد — اگر لازم بود، ثبت/تزریق را فراموش نکن.'); }
+  else if(bolusShots>0) goods.push('انسولین وعده‌هایت را ثبت کردی ✅');
+  // ورزش
+  if(exSess===0){ score-=20; warns.push('دیروز ورزشی ثبت نکردی — امروز حداقل یک پیاده‌رویِ کوتاه جبرانش کن.'); }
+  else goods.push('دیروز ورزش کردی، عالی بود 🏃');
+  // دارو
+  if(medsBefore && medsY===0){ score-=8; warns.push('دیروز دارویی ثبت نکردی — اگر باید مصرف می‌کردی، یادت باشد.'); }
+  else if(medsY>0) goods.push('داروهایت را ثبت کردی.');
+
+  score=Math.max(0,Math.min(100,Math.round(score)));
+  const tone = score>=80?'good' : score>=55?'warn' : 'bad';
+  return {show:true, score, tone, dayLabel:_jLabel(y), warns:warns.slice(0,4), goods:goods.slice(0,3)};
+}
+function _jLabel(d){ try{ const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); return faDigits(jDateStr(j[0],j[1],j[2])); }catch(e){ return ''; } }
+function renderWatchdogCard(){
+  let r; try{ r=buildYesterdayReview(); }catch(e){ return ''; }
+  if(!r||!r.show) return '';
+  const col = r.tone==='good'?'#6fd39a' : r.tone==='bad'?'#e0685f' : r.tone==='warn'?'#e0a355' : '#8fa1b6';
+  const emo = r.tone==='good'?'🎉' : r.tone==='bad'?'🚨' : r.tone==='warn'?'⚠️' : '📝';
+  const hdr = r.tone==='good'?'آفرین! دیروز خوب پیش رفت' : (r.tone==='flat'?'یادآوری' : 'ناظرِ دیروز');
+  let body='';
+  if(r.tone==='good' && r.goods.length){
+    body=`<div class="wd-praise">دیروز (${r.dayLabel}) خوب مدیریت کردی: ${r.goods.join(' · ')}. همین‌طور ادامه بده! 💪</div>`;
+  } else {
+    if(r.warns.length) body+=`<ul class="wd-list">`+r.warns.map(w=>`<li>${escVision(w)}</li>`).join('')+`</ul>`;
+    if(r.goods.length && r.tone!=='flat') body+=`<div class="wd-goods">✅ نکات مثبت: ${escVision(r.goods.join(' · '))}</div>`;
+  }
+  const scoreChip = (r.score!=null)?`<span class="wd-score" style="color:${col};border-color:${col}55;background:${col}18">امتیاز دیروز: ${faDigits(r.score)}</span>`:'';
+  return `<div class="wd-card" style="--wc:${col}">
+    <div class="wd-head"><span class="wd-emo">${emo}</span><div class="wd-ttl"><b>${emo==='🚨'?'🕵️ ':''}${escVision(hdr)}</b><span class="wd-sub">مرورِ دیروز · ${r.dayLabel}</span></div>${scoreChip}</div>
+    ${body}
+  </div>`;
+}
 function renderDashboard(){
   const box=document.getElementById('dashboard'); if(!box) return;
   // آخرین قند: در حالت خودکار جدیدترین منبع؛ در حالت صریح همان منبع
@@ -3057,6 +3167,7 @@ function renderDashboard(){
     todayMeals=arr.length;
     arr.forEach(m=>{ if(m.time){ if(!lastMeal||m.time>lastMeal.time) lastMeal=m; } if(m.insDose){ if(!lastIns||(m.time>lastIns.time)) lastIns=m; } });
   }catch(e){}
+  h+=renderWatchdogCard();
   h+=`<div class="dash-sec-t">📅 امروز</div><div class="dash-today">
     <div class="dtoday-item"><span class="dti-ico">🍽️</span><div><div class="dti-v">${faDigits(todayMeals)}</div><div class="dti-l">وعده‌ی ثبت‌شده</div></div></div>
     <div class="dtoday-item"><span class="dti-ico">💉</span><div><div class="dti-v">${lastIns?faDigits(String(lastIns.insDose))+' واحد':'—'}</div><div class="dti-l">آخرین انسولین${lastIns&&lastIns.time?' · '+faDigits(lastIns.time):''}</div></div></div>
@@ -4045,6 +4156,43 @@ function renderChatLayoutSetting(){
      </button>`).join('')+`</div>`;
 }
 
+/* ====== شخصیت (لحن) دستیار چت ====== */
+const CHAT_PERSONA_KEY='chat_persona_v1';
+const CHAT_PERSONAS=[
+  {id:'consultant', name:'مشاور', emoji:'🧭', desc:'متعادل، عملگرا و راهنمای گام‌به‌گام',
+   sys:'لحن تو یک «مشاورِ» آرام، متعادل و عملگراست: توضیح روشن، گام‌های کوچکِ عملی و بدون قضاوت.'},
+  {id:'doctor', name:'دکتر و متخصص', emoji:'🩺', desc:'دقیق و بالینی، با زبان علمیِ ساده',
+   sys:'لحن تو یک «متخصصِ» دقیق و بالینی است: با اصطلاحات درست ولی قابل‌فهم توضیح بده، مکانیسم‌ها را کوتاه بگو. باز هم تشخیص قطعی و دوز دقیقِ اجرایی نده و کاربر را برای تصمیم نهایی به پزشکِ خودش ارجاع بده.'},
+  {id:'strict', name:'سختگیر', emoji:'💪', desc:'رُک و پرتوقع، تو را پاسخگو نگه می‌دارد',
+   sys:'لحن تو «سختگیر و پرتوقع» است: رُک، مستقیم و بی‌تعارف. اگر کاربر کوتاهی کرده (ورزش‌نکردن، پرخوری، ثبت‌نکردن) صریح و کوتاه تذکر بده و او را پاسخگو نگه دار — ولی هرگز تحقیر نکن و همیشه یک قدم عملی برای جبران بده.'},
+  {id:'friend', name:'رفیق مهربان', emoji:'🤗', desc:'برای روزهای سخت: امیدبخش و حمایتگر',
+   sys:'لحن تو یک «رفیقِ مهربان و امیدبخش» است: گرم، همدل و حمایتگر. نقاط قوت کاربر را ببین و بگو، از تلاش‌هایش تعریف کن، استرس را کم کن و امید بده. اول احساسش را به رسمیت بشناس، بعد یک قدم کوچک و شدنی پیشنهاد بده.'}
+];
+function getChatPersona(){ try{ const v=localStorage.getItem(CHAT_PERSONA_KEY)||'consultant'; return CHAT_PERSONAS.some(x=>x.id===v)?v:'consultant'; }catch(e){ return 'consultant'; } }
+function setChatPersona(id){ try{ localStorage.setItem(CHAT_PERSONA_KEY,id); }catch(e){} renderChatPersonaSetting(); const p=CHAT_PERSONAS.find(x=>x.id===id); uiToast('لحن دستیار: '+((p&&p.name)||id)); }
+function chatPersonaSys(){ const p=CHAT_PERSONAS.find(x=>x.id===getChatPersona()); return p?p.sys:''; }
+function renderChatPersonaSetting(){
+  const box=document.getElementById('chatPersonaSetting'); if(!box) return;
+  const cur=getChatPersona();
+  box.innerHTML=`<div class="navmode-seg col">`+CHAT_PERSONAS.map(p=>
+    `<button type="button" class="${p.id===cur?'on':''}" onclick="setChatPersona('${p.id}')">
+       <b>${p.emoji} ${p.name}</b><small>${p.desc}</small>
+     </button>`).join('')+`</div>`;
+}
+
+/* ====== پیشنهاد سوال بعدی در چت (مثل کلود) ====== */
+const CHAT_SUGGEST_KEY='chat_suggest_v1';
+function chatSuggestOn(){ try{ return (localStorage.getItem(CHAT_SUGGEST_KEY)||'1')==='1'; }catch(e){ return true; } }
+function setChatSuggest(on){ try{ localStorage.setItem(CHAT_SUGGEST_KEY, on?'1':'0'); }catch(e){} renderChatSuggestSetting(); uiToast(on?'پیشنهاد سوال بعدی روشن شد':'پیشنهاد سوال بعدی خاموش شد'); if(!on){ const b=document.getElementById('chatSuggestions'); if(b){ b.innerHTML=''; b.style.display='none'; } } }
+function renderChatSuggestSetting(){
+  const box=document.getElementById('chatSuggestSetting'); if(!box) return;
+  const on=chatSuggestOn();
+  box.innerHTML=`<div class="navmode-seg">
+    <button class="${on?'on':''}" onclick="setChatSuggest(true)">✅ روشن</button>
+    <button class="${!on?'on':''}" onclick="setChatSuggest(false)">⛔ خاموش</button>
+  </div>`;
+}
+
 // ===== بزرگ‌نمایی دستی فقط برای محتوای وسط (هدر/نوارها ثابت) =====
 const ZOOM_KEY='zoom_enabled_v1';
 let _zScale=1, _pinchDist=0, _pinchStartScale=1, _lastTap=0;
@@ -4154,7 +4302,7 @@ async function loadProfile(){
 // کلیدهای localStorage که در بکاپ گنجانده می‌شوند (نقشه‌ی داده‌ی کاربر).
 // از مقادیر رشته‌ای مستقیم استفاده می‌شود چون بعضی از این const‌ها (CGMKEY, BGKEY, ...)
 // پایین‌تر در فایل تعریف شده‌اند و ارجاع به خودِ متغیر اینجا TDZ می‌دهد.
-const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','custom_foods_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','app_theme_v1','chat_layout_v1'];
+const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','custom_foods_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1'];
 
 async function renderProfileTab(){
   // فرم پروفایل (c-profile) حالا خودش داخل این تب است و وضعیت ذخیره‌شده را نشان می‌دهد.
@@ -4162,6 +4310,8 @@ async function renderProfileTab(){
   renderNavSetting();
   renderThemeSetting();
   renderChatLayoutSetting();
+  renderChatPersonaSetting();
+  renderChatSuggestSetting();
   renderZoomSetting();
   renderVisionSetting();
   renderDataStats();
@@ -9685,11 +9835,35 @@ function chatSetSpeed(sel){ const o=chatLoad(); const c=chatActive(o); if(c){ c.
 function buildChatSystemPrompt(){
   let snap; try{ snap=buildHealthSnapshot('overview'); }catch(e){ snap={text:''}; }
   let extra=''; try{ const p=JSON.parse(localStorage.getItem(PKEY)||'{}'); if(p.gender) extra='جنسیت: '+(p.gender==='male'?'مرد':p.gender==='female'?'زن':p.gender)+'\n'; }catch(e){}
+  let persona=''; try{ persona='لحن و نقشِ تو در این گفتگو: '+chatPersonaSys()+'\n'; }catch(e){}
+  let suggest=''; try{ if(chatSuggestOn()) suggest='\nدر پایانِ هر پاسخ، دقیقاً یک خطِ جدا با این قالب بگذار (برای پیشنهادِ سوال بعدی به کاربر): «@@SUGGEST@@ سوال۱ || سوال۲ || سوال۳» — دو یا سه سوالِ کوتاهِ فارسی (هرکدام کمتر از ۷ کلمه) که کاربر احتمالاً بعد از این می‌پرسد، از زبانِ خودِ کاربر (اول‌شخص). این خط را هیچ‌وقت توضیح نده.\n'; }catch(e){}
   return "تو «دیابوت» هستی؛ یک دستیار هوشمند، همدل و عملگرای دیابت که همه‌ی اطلاعات متابولیک این کاربر را می‌داند. همیشه فارسی، کوتاه، دقیق و کاربردی جواب بده و از داده‌های کاربر برای شخصی‌سازی استفاده کن.\n"+
+  persona+
   "خط قرمزها: فقط آموزشی؛ هرگز تشخیص قطعی یا دوز دقیق انسولین/دارو برای اجرا نده؛ برای تصمیم درمانی کاربر را به پزشک ارجاع بده.\n"+
   extra+
+  suggest+
   aiMemoryText()+
   "خلاصه‌ی داده‌های کاربر:\n"+(snap.text||'(داده‌ی کافی ثبت نشده)');
+}
+// جدا کردنِ خطِ پیشنهادها از متنِ پاسخ؛ خروجی: {text, suggestions[]}
+function chatParseSuggestions(raw){
+  const s=String(raw||'');
+  const m=s.match(/@@SUGGEST@@([^\n]*)/);
+  if(!m) return {text:s.trim(), suggestions:[]};
+  const list=m[1].split(/\|\||[|؛]/).map(x=>x.replace(/^[\s\-–•*]+/,'').trim()).filter(x=>x.length>1).slice(0,3);
+  const text=s.replace(/\n?@@SUGGEST@@[^\n]*/,'').trim();
+  return {text, suggestions:list};
+}
+function chatRenderSuggestions(list){
+  const box=document.getElementById('chatSuggestions'); if(!box) return;
+  if(!chatSuggestOn() || !list || !list.length){ box.innerHTML=''; box.style.display='none'; return; }
+  box.style.display='flex';
+  box.innerHTML=list.map(q=>`<button type="button" class="chat-sug" onclick="chatUseSuggestion(this)">${escVision(q)}</button>`).join('');
+}
+function chatUseSuggestion(btn){
+  const t=btn.textContent||''; const inp=document.getElementById('chatInput');
+  if(inp){ inp.value=t; chatAutoGrow(inp); inp.focus(); }
+  const box=document.getElementById('chatSuggestions'); if(box){ box.innerHTML=''; box.style.display='none'; }
 }
 let _chatCssDone=false;
 function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=document.createElement('style'); s.textContent=`
@@ -9730,6 +9904,12 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .chat-dock{flex:0 0 auto;position:sticky;bottom:0;z-index:6;width:100%;padding:9px 12px calc(10px + env(safe-area-inset-bottom));background:var(--glass);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);border-top:1px solid var(--glass-brd)}
   .chat-capsule{max-width:840px;margin:0 auto;background:var(--field);border:1px solid var(--line);border-radius:26px;padding:8px 8px 7px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
   .chat-capsule-row{display:flex;align-items:center;gap:5px;padding:2px 2px 0}
+  /* چیپ‌های پیشنهادِ سوال بعدی (مثل کلود) */
+  .chat-sugs{display:flex;flex-wrap:wrap;gap:7px;max-width:840px;margin:0 auto 9px;justify-content:flex-end}
+  .chat-sug{background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:16px;padding:7px 13px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:.14s;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  .chat-sug:hover{border-color:var(--teal);color:var(--teal)}
+  .chat-sug:active{transform:scale(.96)}
+  .chat-sug::before{content:'✨ ';opacity:.7}
   .chat-attach-preview{display:flex;gap:7px;flex-wrap:wrap;padding:2px 4px 8px}
   .chat-attach-preview .ap{position:relative;background:var(--field);border:1px solid var(--line);border-radius:11px;padding:5px 26px 5px 9px;font-size:11px;color:var(--ink);display:flex;align-items:center;gap:6px}
   .chat-attach-preview .ap img{width:26px;height:26px;border-radius:6px;object-fit:cover}
@@ -9853,6 +10033,7 @@ function renderChatTab(){
   if(!hasKey) h+=`<div style="color:var(--amber);font-size:12px;padding:9px 14px 0;max-width:840px;margin:0 auto">⚠️ برای «${escVision(PROVIDER_NAMES[prov]||prov)}» کلید نداری — <b onclick="gotoVisionSettings()" style="cursor:pointer;text-decoration:underline">تنظیمات</b> یا سرویس را عوض کن.</div>`;
   h+=`<div class="chat-msgs" id="chatMsgs"></div>
     <div class="chat-dock">
+      <div class="chat-sugs" id="chatSuggestions" style="display:none"></div>
       <div class="chat-attach-preview" id="chatAttachPrev" style="display:none"></div>
       <div class="chat-capsule">
         <div class="chat-inline">
@@ -9890,6 +10071,9 @@ function renderChatTab(){
   const mb=document.getElementById('chatMsgs');
   if(!c.messages.length){ mb.innerHTML=`<div style="text-align:center;color:var(--muted);font-size:12.5px;padding:26px 12px;line-height:2">سلام! من <b style="color:var(--teal)">دیابوت</b>م 🤖<br>با آگاهی از قند، تغذیه، انسولین، ورزش و آزمایش‌هایت، هرچی خواستی بپرس.</div>`; }
   else renderChatMessages(c);
+  // پیشنهادهای آخرین پاسخ را (اگر ذخیره شده) دوباره نشان بده
+  const lastAi=[...c.messages].reverse().find(m=>m.role==='assistant');
+  chatRenderSuggestions(lastAi&&lastAi.suggest);
 }
 // ── پیوست‌ها ─────────────────────────────────────────
 let _chatAttach=[];      // [{kind:'image', mediaType,b64,dataURL} | {kind:'file', name, text}]
@@ -9959,6 +10143,7 @@ async function chatSend(){
   if(imgs.length) umsg.images=imgs.map(im=>({dataURL:im.dataURL}));
   if(files.length) umsg.files=files.map(f=>({name:f.name}));
   c.messages.push(umsg);
+  chatRenderSuggestions([]);   // پیشنهادهای قبلی را پاک کن
   if(!c.title||c.title==='گفتگوی جدید') c.title=(txt||'گفتگوی تصویری').slice(0,26);
   chatSave(o); inp.value=''; chatAutoGrow(inp); _chatAttach=[]; chatRenderAttach();
   renderChatMessages(c);
@@ -9972,9 +10157,11 @@ async function chatSend(){
   let acc='';                       // متن هدف (هرچه تا کنون رسیده)
   let _shown=0, _streamDone=false, _revealResolve=null;
   const _revealDone=new Promise(res=>{ _revealResolve=res; });
+  // خطِ «@@SUGGEST@@» را از نمایش حذف کن (حتی وقتی نیمه‌کاره استریم می‌شود)
+  const stripSug=s=>String(s).replace(/@@SUGGEST@@[\s\S]*$/,'').replace(/\n*@[@A-Z]*$/,'');
   const paintReveal=()=>{ const b=bubble(); if(!b) return;
     const cur=(_shown<acc.length || !_streamDone)?'<span class="chat-cur"></span>':'';
-    b.innerHTML=labAiFmt(acc.slice(0,_shown))+cur; if(mb) mb.scrollTop=mb.scrollHeight; };
+    b.innerHTML=labAiFmt(stripSug(acc.slice(0,_shown)))+cur; if(mb) mb.scrollTop=mb.scrollHeight; };
   const _ticker=setInterval(()=>{
     if(_chatAbort) _shown=acc.length;
     if(_shown<acc.length){
@@ -9992,16 +10179,20 @@ async function chatSend(){
     const onDelta=chunk=>{ if(_chatAbort) return; acc+=chunk; };   // فقط بافر؛ نمایش با تیکر
     const reply=await aiFallbackChain(prov, (p,k)=>callAIChatStream(p,k,sys,hist,{speed:c.speed,maxTok:1500},onDelta),
       {onProv:(p,sw)=>{ if(sw){ acc=''; _shown=0; const b=bubble(); if(b) b.innerHTML='<span style="color:var(--muted);font-size:11.5px">سهمیه پر بود؛ تلاش با «'+escVision(PROVIDER_NAMES[p]||p)+'»…</span><span class="chat-cur"></span>'; } }});
-    const clean=String(reply||acc||'').trim()||'پاسخی دریافت نشد.';
-    acc=clean; _streamDone=true;          // اطمینان از نمایش کاملِ متن نهایی
+    const rawReply=String(reply||acc||'').trim()||'پاسخی دریافت نشد.';
+    const parsed=chatParseSuggestions(rawReply);
+    const clean=parsed.text||rawReply;
+    acc=clean; _streamDone=true;          // اطمینان از نمایش کاملِ متن نهایی (بدون خطِ پیشنهاد)
     await _revealDone;                     // صبر تا تایپ‌رایتر همه‌ی متن را آشکار کند
-    c.messages.push({role:'assistant',content:clean,ts:Date.now()});
+    c.messages.push({role:'assistant',content:clean,ts:Date.now(),suggest:parsed.suggestions});
     chatSave(o); renderChatMessages(c);
+    chatRenderSuggestions(parsed.suggestions);
     if(_chatLiveOn) chatSpeak(clean);
   }catch(e){
     _streamDone=true; clearInterval(_ticker); if(_revealResolve){ _revealResolve(); _revealResolve=null; }
     if(acc){ // چیزی استریم شده بود؛ همان را ذخیره کن
-      c.messages.push({role:'assistant',content:acc.trim(),ts:Date.now()}); chatSave(o); renderChatMessages(c);
+      const p2=chatParseSuggestions(acc.trim());
+      c.messages.push({role:'assistant',content:p2.text||acc.trim(),ts:Date.now()}); chatSave(o); renderChatMessages(c);
     } else {
       const ei=aiErrorInfo(e); const r=document.getElementById(rowId);
       const html=`<div class="chat-b">${aiMsgBox(ei.emoji,ei.title,ei.text,'err',String((e&&e.message)||e))}</div>`;
@@ -10209,6 +10400,7 @@ function HEALTH_AI_PROMPT(scope, snap){
   "Return ONLY a JSON object (no markdown fences, no text before/after) with EXACTLY this shape:\n"+
   '{"score": <integer 0-100 overall diabetes/metabolic control based on the data>,'+
   '"scoreLabel":"<2-3 word Persian label e.g. عالی/خوب/نیاز به توجه/بحرانی>",'+
+  '"scoreReason":"<Persian, 1-2 short sentences: WHY this score — name what LOWERED it (e.g. high glucose, no exercise, missing logs, high carbs) AND what the user should follow to get a good score>",'+
   '"headline":"<one strong, motivating Persian sentence, max 14 words>",'+
   '"cards":['+
   '{"k":"diet","items":[{"t":"<short actionable Persian line>","d":"<1-2 sentence fuller explanation: why & how>"}]},'+
@@ -10311,6 +10503,11 @@ function ensureAiAdvCss(){
   .aiadv-ring::after{content:'';position:absolute;inset:5px;border-radius:50%;background:var(--panel)}
   .aiadv-scnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1;font-weight:800;font-size:20px;line-height:1}
   .aiadv-sclbl{font-size:8px;color:var(--muted);font-weight:700;margin-top:1px}
+  .aiadv-why{display:flex;gap:9px;align-items:flex-start;margin:0 0 13px;padding:11px 13px;border-radius:12px;background:rgba(127,127,127,.08);border:1px solid var(--line)}
+  .aiadv-why{background:color-mix(in srgb,var(--cc) 12%,transparent);border-color:color-mix(in srgb,var(--cc) 35%,var(--line))}
+  .aiadv-why-ic{flex:0 0 auto;font-size:16px;line-height:1.5}
+  .aiadv-why div{flex:1;font-size:12.4px;line-height:1.85;color:var(--ink)}
+  .aiadv-why b{color:var(--cc)}
   .aiadv-ts{font-size:10.5px;color:var(--muted);margin-bottom:11px;line-height:1.6}
   .aiadv-ts b{color:var(--teal);font-weight:700}
   .aiadv-cards{display:flex;flex-direction:column;gap:9px}
@@ -10341,7 +10538,10 @@ function renderAiCards(data){
       +(hasScore&&data.scoreLabel?`<span class="aiadv-chip" style="background:${col}22;color:${col}">${esc(data.scoreLabel)}</span>`:'')+
       `</div>`;
   if(hasScore) h+=`<div class="aiadv-score"><div class="aiadv-ring" style="background:conic-gradient(${col} ${score*3.6}deg, rgba(255,255,255,.08) 0)"></div><div class="aiadv-scnum"><span style="color:${col}">${faDigits(score)}</span><span class="aiadv-sclbl">امتیاز</span></div></div>`;
-  h+=`</div><div class="aiadv-cards">`;
+  h+=`</div>`;
+  if(data.scoreReason && String(data.scoreReason).trim())
+    h+=`<div class="aiadv-why" style="--cc:${col}"><span class="aiadv-why-ic">${score>=70?'🎯':'💡'}</span><div><b>چرا این امتیاز؟</b> ${esc(data.scoreReason)}</div></div>`;
+  h+=`<div class="aiadv-cards">`;
   (data.cards||[]).forEach(cd=>{
     if(!cd) return; const meta=CARD_META[cd.k]||{t:cd.t||cd.k||'نکته',icon:'•',c:'#3fb9a3'};
     const items=(cd.items||[]).filter(Boolean);
