@@ -1866,7 +1866,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۶.۴</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۶.۵</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -10244,69 +10244,121 @@ function aiHistDelete(id){ if(!confirm('این تحلیل از تاریخچه ح
 
 /* ===== چت با هوش مصنوعی (با آگاهی از داده‌های متابولیک) ===== */
 const AI_CHAT_KEY='ai_chats_v1';
-function chatLoad(){ try{ const o=JSON.parse(localStorage.getItem(AI_CHAT_KEY)||'{}'); if(!Array.isArray(o.chats))o.chats=[]; return o; }catch(e){ return {chats:[],activeId:null}; } }
+function chatLoad(){ try{ const o=JSON.parse(localStorage.getItem(AI_CHAT_KEY)||'{}'); if(!Array.isArray(o.chats))o.chats=[];
+  // مهاجرت: فولدرهای نسخه‌ی قبل → پروژه‌ها
+  if(o.folders && !o.projects){ o.projects=o.folders; o.chats.forEach(x=>{ if(x.folderId){ x.projectId=x.projectId||x.folderId; delete x.folderId; } }); delete o.folders; delete o.folderCollapse; try{ localStorage.setItem(AI_CHAT_KEY, JSON.stringify(o)); }catch(e){} }
+  return o; }catch(e){ return {chats:[],activeId:null}; } }
 function chatSave(o){ try{ localStorage.setItem(AI_CHAT_KEY, JSON.stringify(o)); }catch(e){} }
 function chatActive(o){ o=o||chatLoad(); let c=o.chats.find(x=>x.id===o.activeId); if(!c){ c=o.chats[0]; if(c)o.activeId=c.id; } return c; }
 function chatNew(){ const o=chatLoad(); const c={id:'c'+Date.now().toString(36), title:'گفتگوی جدید', ts:Date.now(), provider:sectionProvider('chat'), speed:'smart', messages:[]}; o.chats.unshift(c); o.activeId=c.id; chatSave(o); renderChatTab(); }
 function chatDelete(id){ if(!confirm('این گفتگو حذف شود؟')) return; const o=chatLoad(); o.chats=o.chats.filter(x=>x.id!==id); if(o.activeId===id)o.activeId=(o.chats[0]||{}).id||null; chatSave(o); renderChatTab(); }
 function chatSelect(id){ const o=chatLoad(); o.activeId=id; chatSave(o); renderChatTab(); }
-// ── فولدرها/گروه‌های چت ─────────────────────────────
+// ── پروژه‌ها + منوی نگه‌داشتنِ چت (مثل کلاد) ─────────────
 const FOLDER_COLORS=['#3fb9a3','#e0685f','#9a86e0','#5b8fd6','#e0a355','#6fd39a','#e0699b','#7e9cff','#54c7c0','#b5622a'];
-function chatFolders(o){ o=o||chatLoad(); return Array.isArray(o.folders)?o.folders:[]; }
+function chatProjects(o){ o=o||chatLoad(); return Array.isArray(o.projects)?o.projects:[]; }
 function chatDrawerRefresh(){ const el=document.getElementById('chatDrawerList'); if(el) el.innerHTML=chatDrawerListHTML(); }
+function chatDrawerTab(tab){ const o=chatLoad(); o.drawerTab=(tab==='projects'?'projects':'chats'); if(tab!=='projects') o.projOpen=null; chatSave(o);
+  const tabs=document.querySelectorAll('#chatDrawer .cxtab'); if(tabs[0])tabs[0].classList.toggle('on',o.drawerTab==='chats'); if(tabs[1])tabs[1].classList.toggle('on',o.drawerTab==='projects'); chatDrawerRefresh(); }
+function chatOpenProject(pid){ const o=chatLoad(); o.projOpen=pid||null; o.drawerTab='projects'; chatSave(o); chatDrawerRefresh(); }
+function chatRowHTML(x,activeId){
+  return `<div class="chatx-litem ${x.id===activeId?'on':''}"
+     onclick="if(!window._chatSuppressClick){chatSelect('${x.id}');closeChatDrawer();}"
+     oncontextmenu="event.preventDefault();chatCtxMenu('${x.id}',event)"
+     ontouchstart="chatPressStart('${x.id}',event)" ontouchend="chatPressEnd()" ontouchmove="chatPressEnd()" ontouchcancel="chatPressEnd()">
+      <span class="ci">${x.star?'⭐':'💬'}</span>
+      <div class="ct"><div class="cn">${escVision(x.title||'گفتگو')}</div><div class="cd">${aiTimeStr(x.ts)}</div></div>
+      <button type="button" class="cx" onclick="event.stopPropagation();chatCtxMenu('${x.id}',event)" title="گزینه‌ها">⋯</button>
+    </div>`;
+}
 function chatDrawerListHTML(o,c){
   o=o||chatLoad(); c=c||chatActive(o);
-  const folders=chatFolders(o); const collapse=o.folderCollapse||{};
-  const activeId=c&&c.id;
-  const row=x=>`<div class="chatx-litem ${x.id===activeId?'on':''}" onclick="chatSelect('${x.id}');closeChatDrawer()">
-      <span class="ci">💬</span>
-      <div class="ct"><div class="cn">${escVision(x.title||'گفتگو')}</div><div class="cd">${aiTimeStr(x.ts)}</div></div>
-      <button type="button" class="cx" onclick="event.stopPropagation();chatMoveMenu('${x.id}')" title="انتقال به فولدر">📁</button>
-      <button type="button" class="cx" onclick="event.stopPropagation();chatDelete('${x.id}')" title="حذف">🗑</button>
-    </div>`;
-  let h='';
-  folders.forEach(f=>{
-    const col=f.color||FOLDER_COLORS[0];
-    const items=o.chats.filter(x=>x.folderId===f.id);
-    const open=!collapse[f.id];
-    h+=`<div class="chatx-folder">
-      <div class="chatx-fhead" onclick="chatToggleFolder('${f.id}')">
-        <span class="fchev">${open?'▾':'◂'}</span>
-        <span class="ffolder" style="color:${col}">📁</span>
-        <span class="fname">${escVision(f.name)}</span>
-        <span class="fcount">${faDigits(String(items.length))}</span>
-        <span class="fsp"></span>
-        <button type="button" class="cx" onclick="event.stopPropagation();chatFolderColor('${f.id}')" title="رنگ فولدر">🎨</button>
-        <button type="button" class="cx" onclick="event.stopPropagation();chatFolderRename('${f.id}')" title="تغییر نام">✏️</button>
-        <button type="button" class="cx" onclick="event.stopPropagation();chatFolderDelete('${f.id}')" title="حذف فولدر">🗑</button>
+  const activeId=c&&c.id; const projects=chatProjects(o); let h='';
+  if(o.drawerTab==='projects'){
+    if(o.projOpen){
+      const p=projects.find(x=>x.id===o.projOpen);
+      if(!p){ return chatDrawerListHTML(Object.assign(chatLoad(),{projOpen:null}),c); }
+      const items=o.chats.filter(x=>x.projectId===p.id);
+      h+=`<div class="cxproj-head">
+        <button type="button" class="cxback" onclick="chatOpenProject(null)">‹</button>
+        <span class="ffolder" style="color:${p.color||FOLDER_COLORS[0]}">📁</span>
+        <b class="fname">${escVision(p.name)}</b><span class="fsp"></span>
+        <button type="button" class="cx" onclick="chatProjColor('${p.id}')" title="رنگ">🎨</button>
+        <button type="button" class="cx" onclick="chatProjRename('${p.id}')" title="نام">✏️</button>
+        <button type="button" class="cx" onclick="chatProjDelete('${p.id}')" title="حذف">🗑</button>
       </div>`;
-    if(open){ h+=`<div class="chatx-fbody">`; if(items.length){ items.forEach(x=>{ h+=row(x); }); } else { h+=`<div class="chatx-fempty">خالی — یک گفتگو را با 📁 به اینجا بیاور</div>`; } h+=`</div>`; }
-    h+=`</div>`;
-  });
-  const ung=o.chats.filter(x=>!x.folderId || !folders.some(f=>f.id===x.folderId));
-  if(folders.length){ h+=`<div class="chatx-fhead plain"><span class="fchev" style="opacity:0">▾</span><span class="ffolder">🗂</span><span class="fname">بدون فولدر</span><span class="fcount">${faDigits(String(ung.length))}</span><span class="fsp"></span></div>`; }
-  ung.forEach(x=>{ h+=row(x); });
+      if(items.length) items.forEach(x=>{ h+=chatRowHTML(x,activeId); });
+      else h+=`<div class="chatx-fempty">هنوز گفتگویی در این پروژه نیست.<br>از منوی هر چت (نگه‌داشتن یا ⋯) «افزودن به پروژه» را بزن.</div>`;
+      return h;
+    }
+    h+=`<button type="button" class="cxproj-new" onclick="chatProjNew()">➕ پروژه‌ی جدید</button>`;
+    if(!projects.length){ h+=`<div class="chatx-fempty">هنوز پروژه‌ای نساخته‌ای. با دکمه‌ی بالا بساز و چت‌هایت را داخلش آرشیو کن.</div>`; }
+    projects.forEach(p=>{ const n=o.chats.filter(x=>x.projectId===p.id).length; const col=p.color||FOLDER_COLORS[0];
+      h+=`<div class="cxproj-card" onclick="chatOpenProject('${p.id}')">
+        <span class="cxproj-ic" style="background:${col}22;color:${col}">📁</span>
+        <div class="ct"><div class="cn">${escVision(p.name)}</div><div class="cd">${faDigits(String(n))} گفتگو</div></div>
+        <button type="button" class="cx" onclick="event.stopPropagation();chatProjColor('${p.id}')" title="رنگ">🎨</button>
+        <button type="button" class="cx" onclick="event.stopPropagation();chatProjRename('${p.id}')" title="نام">✏️</button>
+      </div>`;
+    });
+    return h;
+  }
+  // تبِ چت‌ها
+  const starred=o.chats.filter(x=>x.star);
+  const rest=o.chats.filter(x=>!x.star);
+  if(starred.length){ h+=`<div class="cxsec">⭐ ستاره‌دار</div>`; starred.forEach(x=>{ h+=chatRowHTML(x,activeId); }); h+=`<div class="cxsec">همه‌ی گفتگوها</div>`; }
+  if(!rest.length && !starred.length) h+=`<div class="chatx-fempty">هنوز گفتگویی نداری.</div>`;
+  rest.forEach(x=>{ h+=chatRowHTML(x,activeId); });
   return h;
 }
-function chatToggleFolder(id){ const o=chatLoad(); o.folderCollapse=o.folderCollapse||{}; o.folderCollapse[id]=!o.folderCollapse[id]; chatSave(o); chatDrawerRefresh(); }
-function chatFolderNew(){ chatPrompt('📁 نام فولدر جدید','',name=>{ const o=chatLoad(); if(!Array.isArray(o.folders))o.folders=[]; o.folders.push({id:'f'+Date.now().toString(36),name,color:FOLDER_COLORS[o.folders.length%FOLDER_COLORS.length]}); chatSave(o); chatDrawerRefresh(); }); }
-function chatFolderRename(id){ const o=chatLoad(); const f=chatFolders(o).find(x=>x.id===id); if(!f) return; chatPrompt('✏️ نام جدید فولدر',f.name,name=>{ const o2=chatLoad(); const f2=chatFolders(o2).find(x=>x.id===id); if(f2){ f2.name=name; chatSave(o2); chatDrawerRefresh(); } }); }
-function chatFolderDelete(id){ if(!confirm('این فولدر حذف شود؟ گفتگوهایش حذف نمی‌شوند و به «بدون فولدر» برمی‌گردند.')) return; const o=chatLoad(); o.folders=chatFolders(o).filter(x=>x.id!==id); o.chats.forEach(x=>{ if(x.folderId===id) delete x.folderId; }); chatSave(o); chatDrawerRefresh(); }
-function chatFolderColor(id){ const o=chatLoad(); const f=chatFolders(o).find(x=>x.id===id); if(!f) return; chatCloseRename();
+// نگه‌داشتنِ انگشت → منوی گزینه‌ها
+let _chatPressTimer=null; window._chatSuppressClick=false;
+function chatPressStart(id,ev){ let x=0,y=0; try{ const t=ev&&ev.touches&&ev.touches[0]; if(t){ x=t.clientX; y=t.clientY; } }catch(_){}
+  clearTimeout(_chatPressTimer);
+  _chatPressTimer=setTimeout(()=>{ _chatPressTimer=null; window._chatSuppressClick=true; setTimeout(()=>{ window._chatSuppressClick=false; },550);
+    try{ if(navigator.vibrate) navigator.vibrate(12); }catch(_){}
+    chatCtxMenu(id,{clientX:x,clientY:y}); }, 460);
+}
+function chatPressEnd(){ if(_chatPressTimer){ clearTimeout(_chatPressTimer); _chatPressTimer=null; } }
+function chatCtxMenu(chatId, ev){ chatCtxClose();
+  const o=chatLoad(); const ch=o.chats.find(x=>x.id===chatId); if(!ch) return;
+  let x=window.innerWidth/2, y=window.innerHeight/2;
+  try{ if(ev){ if(ev.touches&&ev.touches[0]){ x=ev.touches[0].clientX; y=ev.touches[0].clientY; } else if(ev.changedTouches&&ev.changedTouches[0]){ x=ev.changedTouches[0].clientX; y=ev.changedTouches[0].clientY; } else if(ev.clientX!=null){ x=ev.clientX; y=ev.clientY; } } }catch(_){}
+  const scrim=document.createElement('div'); scrim.className='chat-ctx-scrim'; scrim.id='chatCtxScrim'; scrim.onclick=chatCtxClose;
+  const menu=document.createElement('div'); menu.className='chat-ctx'; menu.id='chatCtxMenu';
+  menu.innerHTML=`<div class="cctx-ttl">${escVision((ch.title||'گفتگو').slice(0,28))}</div>
+    <button type="button" onclick="chatAddToProjectMenu('${chatId}')"><span class="ci">📁</span>افزودن به پروژه</button>
+    <button type="button" onclick="chatToggleStar('${chatId}')"><span class="ci">${ch.star?'★':'☆'}</span>${ch.star?'برداشتن ستاره':'ستاره‌دار کن'}</button>
+    <button type="button" onclick="chatRenameById('${chatId}')"><span class="ci">✏️</span>تغییر نام</button>
+    <button type="button" class="danger" onclick="chatCtxClose();chatDelete('${chatId}')"><span class="ci">🗑</span>حذف</button>`;
+  document.body.appendChild(scrim); document.body.appendChild(menu);
+  const mw=menu.offsetWidth||220, mh=menu.offsetHeight||210;
+  const px=Math.min(Math.max(8,x-mw/2), window.innerWidth-mw-8);
+  const py=Math.min(Math.max(8,y-10), window.innerHeight-mh-8);
+  menu.style.left=px+'px'; menu.style.top=py+'px';
+}
+function chatCtxClose(){ ['chatCtxMenu','chatCtxScrim'].forEach(id=>{ const e=document.getElementById(id); if(e) e.remove(); }); }
+function chatToggleStar(chatId){ chatCtxClose(); const o=chatLoad(); const ch=o.chats.find(x=>x.id===chatId); if(ch){ ch.star=!ch.star; chatSave(o); } chatDrawerRefresh(); }
+function chatRenameById(chatId){ chatCtxClose(); const o=chatLoad(); const ch=o.chats.find(x=>x.id===chatId); if(!ch) return;
+  chatPrompt('✏️ تغییر نام گفتگو', ch.title||'', name=>{ const o2=chatLoad(); const c2=o2.chats.find(x=>x.id===chatId); if(c2){ c2.title=name; chatSave(o2); } chatDrawerRefresh();
+    if(o2.activeId===chatId){ const t=document.querySelector('#chatDrawer'); if(typeof renderChatTab==='function'){ const tt=document.querySelector('.cxa-ttl'); if(tt) tt.textContent=name; } } }); }
+function chatAddToProjectMenu(chatId){ chatCtxClose(); const o=chatLoad(); const projects=chatProjects(o); const ch=o.chats.find(x=>x.id===chatId); if(!ch) return;
+  const opts=[{ic:!ch.projectId?'🟢':'🗂',label:'بدون پروژه',on:!ch.projectId,act:()=>chatSetProject(chatId,null)}];
+  projects.forEach(p=>opts.push({ic:ch.projectId===p.id?'🟢':'📁',label:p.name,on:ch.projectId===p.id,act:()=>chatSetProject(chatId,p.id)}));
+  opts.push({ic:'➕',label:'پروژه‌ی جدید…',on:false,act:()=>chatProjNewFor(chatId)});
+  chatSheet('افزودن گفتگو به پروژه', opts);
+}
+function chatSetProject(chatId,pid){ const o=chatLoad(); const ch=o.chats.find(x=>x.id===chatId); if(ch){ if(pid) ch.projectId=pid; else delete ch.projectId; chatSave(o); } uiToast(pid?'✓ به پروژه اضافه شد':'✓ از پروژه خارج شد'); chatDrawerRefresh(); }
+function chatProjNew(){ chatPrompt('📁 نام پروژه‌ی جدید','',name=>{ const o=chatLoad(); if(!Array.isArray(o.projects))o.projects=[]; o.projects.push({id:'p'+Date.now().toString(36),name,color:FOLDER_COLORS[o.projects.length%FOLDER_COLORS.length]}); chatSave(o); chatDrawerRefresh(); }); }
+function chatProjNewFor(chatId){ chatPrompt('📁 نام پروژه‌ی جدید','',name=>{ const o=chatLoad(); if(!Array.isArray(o.projects))o.projects=[]; const id='p'+Date.now().toString(36); o.projects.push({id,name,color:FOLDER_COLORS[o.projects.length%FOLDER_COLORS.length]}); const ch=o.chats.find(x=>x.id===chatId); if(ch) ch.projectId=id; chatSave(o); uiToast('✓ پروژه ساخته و چت اضافه شد'); chatDrawerRefresh(); }); }
+function chatProjRename(id){ const o=chatLoad(); const p=chatProjects(o).find(x=>x.id===id); if(!p) return; chatPrompt('✏️ نام جدید پروژه',p.name,name=>{ const o2=chatLoad(); const p2=chatProjects(o2).find(x=>x.id===id); if(p2){ p2.name=name; chatSave(o2); chatDrawerRefresh(); } }); }
+function chatProjDelete(id){ if(!confirm('این پروژه حذف شود؟ گفتگوهایش حذف نمی‌شوند و به حالت بدون پروژه برمی‌گردند.')) return; const o=chatLoad(); o.projects=chatProjects(o).filter(x=>x.id!==id); o.chats.forEach(x=>{ if(x.projectId===id) delete x.projectId; }); if(o.projOpen===id) o.projOpen=null; chatSave(o); chatDrawerRefresh(); }
+function chatProjColor(id){ const o=chatLoad(); const p=chatProjects(o).find(x=>x.id===id); if(!p) return; chatCloseRename();
   const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='chatRenameBg'; bg.onclick=e=>{ if(e.target===bg) chatCloseRename(); };
-  bg.innerHTML=`<div class="chat-rename" role="dialog"><h4>🎨 رنگ فولدر «${escVision(f.name)}»</h4>
-    <div class="chat-colorgrid">${FOLDER_COLORS.map(col=>`<button type="button" class="chat-csw${col===(f.color||'')?' on':''}" style="background:${col}" onclick="chatFolderSetColor('${id}','${col}')" aria-label="رنگ"></button>`).join('')}</div></div>`;
+  bg.innerHTML=`<div class="chat-rename" role="dialog"><h4>🎨 رنگ پروژه‌ی «${escVision(p.name)}»</h4>
+    <div class="chat-colorgrid">${FOLDER_COLORS.map(col=>`<button type="button" class="chat-csw${col===(p.color||'')?' on':''}" style="background:${col}" onclick="chatProjSetColor('${id}','${col}')" aria-label="رنگ"></button>`).join('')}</div></div>`;
   document.body.appendChild(bg);
 }
-function chatFolderSetColor(id,col){ const o=chatLoad(); const f=chatFolders(o).find(x=>x.id===id); if(f){ f.color=col; chatSave(o); } chatCloseRename(); chatDrawerRefresh(); }
-function chatMoveMenu(chatId){ const o=chatLoad(); const folders=chatFolders(o); const ch=o.chats.find(x=>x.id===chatId); if(!ch) return;
-  const opts=[{ic:!ch.folderId?'🟢':'🗂',label:'بدون فولدر',on:!ch.folderId,act:()=>chatSetFolder(chatId,null)}];
-  folders.forEach(f=>opts.push({ic:ch.folderId===f.id?'🟢':'📁',label:f.name,on:ch.folderId===f.id,act:()=>chatSetFolder(chatId,f.id)}));
-  opts.push({ic:'➕',label:'فولدر جدید…',on:false,act:()=>chatFolderNewFor(chatId)});
-  chatSheet('انتقال گفتگو به فولدر', opts);
-}
-function chatSetFolder(chatId,fid){ const o=chatLoad(); const ch=o.chats.find(x=>x.id===chatId); if(ch){ if(fid) ch.folderId=fid; else delete ch.folderId; chatSave(o); } chatDrawerRefresh(); }
-function chatFolderNewFor(chatId){ chatPrompt('📁 نام فولدر جدید','',name=>{ const o=chatLoad(); if(!Array.isArray(o.folders))o.folders=[]; const id='f'+Date.now().toString(36); o.folders.push({id,name,color:FOLDER_COLORS[o.folders.length%FOLDER_COLORS.length]}); const ch=o.chats.find(x=>x.id===chatId); if(ch) ch.folderId=id; chatSave(o); chatDrawerRefresh(); }); }
+function chatProjSetColor(id,col){ const o=chatLoad(); const p=chatProjects(o).find(x=>x.id===id); if(p){ p.color=col; chatSave(o); } chatCloseRename(); chatDrawerRefresh(); }
 // پاپ‌آپ ورودی متن عمومی (بازاستفاده از استایلِ تغییر نام)
 function chatPrompt(title, initial, onOk){ chatCloseRename();
   const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='chatRenameBg'; bg.onclick=e=>{ if(e.target===bg) chatCloseRename(); };
@@ -10514,6 +10566,29 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .chat-colorgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:6px 0 2px}
   .chat-csw{width:100%;aspect-ratio:1;border-radius:50%;border:2px solid transparent;cursor:pointer}
   .chat-csw.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--ink)}
+  .chatx-tabs{display:flex;gap:6px;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:3px;margin-bottom:10px}
+  .cxtab{flex:1;background:transparent;border:none;color:var(--muted);font-family:inherit;font-weight:800;font-size:12.5px;padding:8px 6px;border-radius:9px;cursor:pointer;transition:.15s}
+  .cxtab.on{background:var(--panel);color:var(--teal);box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  .cxsec{font-size:10.5px;font-weight:800;color:var(--muted);margin:8px 4px 5px;letter-spacing:.2px}
+  .cxproj-new{width:100%;background:var(--field);border:1px dashed var(--teal-dim);color:var(--teal);border-radius:12px;padding:11px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer;margin-bottom:10px}
+  .cxproj-card{display:flex;align-items:center;gap:10px;padding:11px 10px;border-radius:13px;cursor:pointer;margin-bottom:7px;border:1px solid var(--line);background:var(--field)}
+  .cxproj-card:hover{border-color:var(--teal-dim)}
+  .cxproj-card .ct{flex:1;min-width:0}
+  .cxproj-card .cn{font-size:12.8px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cxproj-card .cd{font-size:10px;color:var(--muted);margin-top:2px}
+  .cxproj-card .cx{flex:0 0 auto;background:transparent;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:4px}
+  .cxproj-ic{flex:0 0 auto;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px}
+  .cxproj-head{display:flex;align-items:center;gap:8px;padding:6px 4px 10px;border-bottom:1px solid var(--line);margin-bottom:8px}
+  .cxproj-head .fname{font-size:13.5px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
+  .cxproj-head .cx{background:transparent;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:4px}
+  .cxback{background:var(--field);border:1px solid var(--line);color:var(--teal);border-radius:9px;width:28px;height:28px;font-size:16px;cursor:pointer;flex:0 0 auto}
+  .chat-ctx-scrim{position:fixed;inset:0;z-index:159}
+  .chat-ctx{position:fixed;z-index:160;min-width:210px;background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:6px;box-shadow:0 16px 44px rgba(0,0,0,.6);animation:chatFade .13s}
+  .chat-ctx .cctx-ttl{font-size:10.5px;color:var(--muted);padding:6px 10px 8px;border-bottom:1px solid var(--line);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chat-ctx button{display:flex;align-items:center;gap:11px;width:100%;background:transparent;border:none;color:var(--ink);font-family:inherit;font-size:13.5px;font-weight:600;padding:11px 12px;border-radius:10px;cursor:pointer;text-align:right}
+  .chat-ctx button:hover{background:var(--field)}
+  .chat-ctx button .ci{font-size:16px;width:20px;text-align:center}
+  .chat-ctx button.danger{color:var(--red)}
   .chat-sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150;display:flex;align-items:flex-end;justify-content:center;animation:chatFade .18s}
   @keyframes chatFade{from{opacity:0}}
   .chat-sheet{width:100%;max-width:520px;background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px 20px 0 0;padding:14px 14px 20px;box-shadow:0 -8px 30px rgba(0,0,0,.5);animation:chatUp .22s cubic-bezier(.4,0,.2,1)}
@@ -10636,11 +10711,15 @@ function renderChatTab(){
     <input type="file" id="chatFileDoc" accept=".txt,.md,.csv,.json,.log,text/*" style="display:none" onchange="chatOnPickFile(this)">
   </div>`;
   // کشوی گفتگوها (سمت چپ)
+  const dtab=(o.drawerTab==='projects')?'projects':'chats';
   h+=`<div class="chatx-scrim" id="chatScrim" onclick="closeChatDrawer()"></div>
     <div class="chatx-drawer" id="chatDrawer">
-      <div class="chatx-dhead"><b>💬 گفتگوها</b><span style="flex:1"></span>
-        <button type="button" class="chatx-newbtn ghost" onclick="chatFolderNew()" title="فولدر جدید">📁﹢</button>
+      <div class="chatx-dhead"><b>✦ دیابوت</b><span style="flex:1"></span>
         <button type="button" class="chatx-newbtn" onclick="chatNew();closeChatDrawer()">➕ جدید</button></div>
+      <div class="chatx-tabs">
+        <button type="button" class="cxtab ${dtab==='chats'?'on':''}" onclick="chatDrawerTab('chats')">💬 چت‌ها</button>
+        <button type="button" class="cxtab ${dtab==='projects'?'on':''}" onclick="chatDrawerTab('projects')">📁 پروژه‌ها</button>
+      </div>
       <div id="chatDrawerList">${chatDrawerListHTML(o,c)}</div>`;
   h+=`</div>`;
   box.innerHTML=h;
