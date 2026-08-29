@@ -1839,7 +1839,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۵.۰</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۵.۱</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -9865,6 +9865,15 @@ function chatUseSuggestion(btn){
   if(inp){ inp.value=t; chatAutoGrow(inp); inp.focus(); }
   const box=document.getElementById('chatSuggestions'); if(box){ box.innerHTML=''; box.style.display='none'; }
 }
+// فالبکِ سبک: اگر مدل خطِ پیشنهاد را نگذاشت، با یک تماسِ کوتاه ۳ سوالِ بعدی بگیر
+async function chatFetchSuggestions(prov, question, answer){
+  try{
+    const key=getVisionKey(prov)||''; if(!key) return [];
+    const prompt='کاربر پرسید: «'+String(question||'').slice(0,300)+'»\nدستیارِ دیابت پاسخ داد: «'+String(answer||'').slice(0,700)+'»\n\nحالا دقیقاً سه سوالِ کوتاهِ بعدی که همین کاربر احتمالاً می‌پرسد را از زبانِ خودِ کاربر (اول‌شخص، فارسی، هرکدام کمتر از ۷ کلمه) بنویس. فقط سه سوال، هرکدام در یک خط جدا، بدون شماره و بدون هیچ توضیح.';
+    const txt=await callAIText(prov,key,prompt,300,0);
+    return String(txt||'').split(/\n+/).map(s=>s.replace(/^[\s\-–—•*.\d،)ـ«»"]+/,'').replace(/[«»"]+$/,'').trim()).filter(s=>s.length>1&&s.length<64).slice(0,3);
+  }catch(e){ return []; }
+}
 let _chatCssDone=false;
 function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=document.createElement('style'); s.textContent=`
   #page-chat .chat-card{display:flex;flex-direction:column;height:calc(100dvh - 118px);min-height:400px;margin-bottom:0;overflow:hidden}
@@ -10177,7 +10186,7 @@ async function chatSend(){
     const sys=buildChatSystemPrompt();
     const hist=c.messages.slice(-14).map(m=>{ const mm={role:m.role,content:m.content}; if(m===umsg && imgs.length) mm.images=imgs; return mm; });
     const onDelta=chunk=>{ if(_chatAbort) return; acc+=chunk; };   // فقط بافر؛ نمایش با تیکر
-    const reply=await aiFallbackChain(prov, (p,k)=>callAIChatStream(p,k,sys,hist,{speed:c.speed,maxTok:1500},onDelta),
+    const reply=await aiFallbackChain(prov, (p,k)=>callAIChatStream(p,k,sys,hist,{speed:c.speed,maxTok:4096},onDelta),
       {onProv:(p,sw)=>{ if(sw){ acc=''; _shown=0; const b=bubble(); if(b) b.innerHTML='<span style="color:var(--muted);font-size:11.5px">سهمیه پر بود؛ تلاش با «'+escVision(PROVIDER_NAMES[p]||p)+'»…</span><span class="chat-cur"></span>'; } }});
     const rawReply=String(reply||acc||'').trim()||'پاسخی دریافت نشد.';
     const parsed=chatParseSuggestions(rawReply);
@@ -10188,6 +10197,14 @@ async function chatSend(){
     chatSave(o); renderChatMessages(c);
     chatRenderSuggestions(parsed.suggestions);
     if(_chatLiveOn) chatSpeak(clean);
+    // اگر پیشنهادها نیامد ولی روشن است، جداگانه و سبک بگیر (تا کاربر بی‌پیشنهاد نماند)
+    if(chatSuggestOn() && (!parsed.suggestions||!parsed.suggestions.length) && navigator.onLine){
+      chatFetchSuggestions(prov, umsg.content, clean).then(list=>{
+        if(!list||!list.length) return;
+        try{ const oo=chatLoad(); const cc=chatActive(oo); const lm=cc&&cc.messages[cc.messages.length-1]; if(lm&&lm.role==='assistant'){ lm.suggest=list; chatSave(oo); } }catch(e){}
+        chatRenderSuggestions(list);
+      });
+    }
   }catch(e){
     _streamDone=true; clearInterval(_ticker); if(_revealResolve){ _revealResolve(); _revealResolve=null; }
     if(acc){ // چیزی استریم شده بود؛ همان را ذخیره کن
