@@ -15,6 +15,32 @@
   --ink:#e8eef5;--muted:#8fa1b6;--teal:#3fb9a3;--teal-dim:#1f5c52;
   --amber:#e0a355;--red:#e0685f;--blue:#5b8fd6;--violet:#9a86e0;
 }
+/* ===== تم‌های نرم‌افزار (پیش‌فرض «اقیانوس» = همان :root بالا) ===== */
+:root[data-theme="ruby"]{
+  --bg:#150f14;--panel:#241823;--panel-2:#2d1e29;--field:#1b1219;--line:#3e2a37;
+  --ink:#f4e9ef;--muted:#bd97a9;--teal:#e0688a;--teal-dim:#7a2f48;
+  --amber:#e0a355;--red:#e0685f;--blue:#c47bb0;--violet:#c98fd8;
+}
+:root[data-theme="violet"]{
+  --bg:#0f1020;--panel:#191b31;--panel-2:#212440;--field:#14152a;--line:#30345a;
+  --ink:#eaeaf7;--muted:#9d9ec8;--teal:#8f86e6;--teal-dim:#443f8a;
+  --amber:#e0a355;--red:#e0685f;--blue:#6f9be6;--violet:#b3a6ff;
+}
+:root[data-theme="forest"]{
+  --bg:#0d1510;--panel:#16241b;--panel-2:#1c2f22;--field:#111c15;--line:#284136;
+  --ink:#e9f3eb;--muted:#93b19d;--teal:#57b979;--teal-dim:#276241;
+  --amber:#e0a355;--red:#e0685f;--blue:#5faf9a;--violet:#9ad0a2;
+}
+:root[data-theme="sunset"]{
+  --bg:#171009;--panel:#271b11;--panel-2:#302113;--field:#1c130a;--line:#43311e;
+  --ink:#f6ecdd;--muted:#c4a888;--teal:#e0a355;--teal-dim:#805524;
+  --amber:#e6c15a;--red:#e0685f;--blue:#d89a5a;--violet:#e0b06a;
+}
+:root[data-theme="light"]{
+  --bg:#eef2f6;--panel:#ffffff;--panel-2:#f3f7fb;--field:#ffffff;--line:#d4dee8;
+  --ink:#1b2733;--muted:#5c6b7b;--teal:#1f9e88;--teal-dim:#0f5d51;
+  --amber:#c8842f;--red:#d0524a;--blue:#3f74c0;--violet:#7a63cf;
+}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Vazirmatn',sans-serif;background:var(--bg);color:var(--ink);line-height:1.85;padding:24px 14px 70px;font-size:15.5px}
 .wrap{max-width:760px;margin:0 auto}
@@ -39,6 +65,17 @@ h1{font-size:25px;font-weight:800;line-height:1.3;letter-spacing:-.3px}
 /* نمایش/پنهان بر اساس حالت منو */
 body.nav-top .bottomnav{display:none}
 body.nav-bottom .tabs{display:none}
+/* ===== حالت چت: هدر کوچک تا چت تمام‌صفحه به نظر برسد ===== */
+body.chat-active{padding-top:10px}
+body.chat-active header{margin-bottom:10px;padding:9px 14px}
+body.chat-active header::before,body.chat-active header::after{display:none}
+body.chat-active header .brand-mark{width:34px;height:34px;border-radius:10px}
+body.chat-active header .brand-mark svg{width:19px;height:19px}
+body.chat-active header h1{font-size:16px}
+body.chat-active header .tagline{display:none}
+body.chat-active .tabs{margin-bottom:10px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+body.chat-active .tabs::-webkit-scrollbar{display:none}
+body.chat-active .tabs .tab{flex:0 0 auto;min-width:auto}
 body.nav-bottom{padding-bottom:100px}
 /* ===== نوار ناوبری پایین + دکمه‌ی وسط ===== */
 .bottomnav{position:fixed;left:0;right:0;bottom:0;z-index:80;display:flex;align-items:flex-end;justify-content:space-around;gap:2px;background:rgba(20,30,42,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:9px 6px calc(9px + env(safe-area-inset-bottom));box-shadow:0 -6px 22px rgba(0,0,0,.35)}
@@ -105,6 +142,18 @@ body.nav-bottom{padding-bottom:100px}
 .navmode-seg{display:flex;gap:8px;background:var(--field);border:1px solid var(--line);border-radius:13px;padding:5px}
 .navmode-seg button{flex:1;background:transparent;border:none;color:var(--muted);border-radius:10px;padding:12px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s}
 .navmode-seg button.on{background:linear-gradient(160deg,var(--teal),var(--teal-dim));color:#fff;box-shadow:0 3px 10px rgba(63,185,163,.28)}
+.navmode-seg.col{flex-direction:column}
+.navmode-seg.col button{text-align:right;padding:11px 13px;display:flex;flex-direction:column;gap:3px;align-items:flex-start}
+.navmode-seg.col button small{font-weight:600;font-size:10.5px;color:var(--muted);opacity:.9}
+.navmode-seg.col button.on small{color:rgba(255,255,255,.85)}
+/* ===== گرید انتخاب تم ===== */
+.theme-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.theme-chip{position:relative;display:flex;align-items:center;gap:9px;background:var(--field);border:1.5px solid var(--line);border-radius:14px;padding:10px 11px;cursor:pointer;font-family:inherit;transition:all .15s}
+.theme-chip:active{transform:scale(.97)}
+.theme-chip.on{border-color:var(--teal);box-shadow:0 0 0 2px rgba(63,185,163,.2)}
+.theme-sw{flex:0 0 auto;width:30px;height:30px;border-radius:9px;border:1px solid rgba(255,255,255,.15);box-shadow:inset 0 1px 3px rgba(0,0,0,.3)}
+.theme-nm{flex:1;font-size:12.5px;font-weight:700;color:var(--ink);text-align:right;line-height:1.4}
+.theme-ck{flex:0 0 auto;color:var(--teal);font-weight:900;font-size:14px}
 /* ===== داشبورد خانه ===== */
 .dash-hero{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:22px;margin-bottom:16px;text-align:center;position:relative;overflow:hidden}
 .dash-hero::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--teal),transparent)}
@@ -1555,6 +1604,24 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <div id="navModeSetting"></div>
   </div>
 </div>
+<div class="card" id="c-profile-theme">
+  <h2><span>🎨 تم کلی نرم‌افزار</span></h2>
+  <div class="card-body">
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:12px">
+      رنگ‌بندی کل برنامه را انتخاب کن. حالت <b style="color:var(--teal)">اقیانوس</b> پیش‌فرض است. یک «روز روشن» هم برای محیط‌های پرنور داریم. انتخابت روی همین دستگاه ذخیره می‌شود.
+    </div>
+    <div id="themeSetting"></div>
+  </div>
+</div>
+<div class="card" id="c-profile-chatlayout">
+  <h2><span>💬 چیدمان چت هوشمند</span></h2>
+  <div class="card-body">
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:12px">
+      ظاهر تب چت را انتخاب کن: <b style="color:var(--teal)">حباب‌دار</b> (همین حالت فعلی)، <b style="color:var(--teal)">مثل کلود</b> (پاسخ‌ها تمام‌عرض و ساده)، یا <b style="color:var(--teal)">مثل ChatGPT</b> (ردیف‌های تمام‌عرض).
+    </div>
+    <div id="chatLayoutSetting"></div>
+  </div>
+</div>
 <div class="card" id="c-profile-zoom">
   <h2><span>🔍 بزرگ‌نمایی (زوم)</span></h2>
   <div class="card-body">
@@ -1751,7 +1818,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۳.۰</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۴.۰</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -2645,6 +2712,48 @@ const DB = {
     "شیربرنج":{ "کاسه":40 },
     "حریره بادام":{ "کاسه":30 }
   },
+  "رژیمی و بدون قند":{
+    "پولکی رژیمی (بدون قند)":{ "عدد":3,"کف دست":12 },
+    "پولکی زعفرانی بدون قند":{ "عدد":3,"کف دست":12 },
+    "شیرینی رژیمی (بدون قند افزوده)":{ "عدد":8 },
+    "شیرینی نخودچی رژیمی":{ "عدد":5 },
+    "شیرینی کشمشی رژیمی":{ "عدد":7 },
+    "قرابیه رژیمی":{ "عدد":8 },
+    "کلوچه رژیمی":{ "عدد":16 },
+    "کیک رژیمی (بدون قند)":{ "برش":18 },
+    "کیک اسفنجی رژیمی":{ "برش":16 },
+    "بیسکویت رژیمی سبوس‌دار":{ "عدد":4,"بسته":16 },
+    "کراکر رژیمی":{ "عدد":3 },
+    "ویفر رژیمی بدون قند":{ "عدد":7 },
+    "کوکی جو دوسر رژیمی":{ "عدد":12 },
+    "کوکی جو و موز (بدون شکر)":{ "عدد":18 },
+    "شکلات تلخ بدون قند":{ "مربع کوچک":2,"قطعه":5 },
+    "شکلات شیری بدون قند":{ "مربع کوچک":3 },
+    "شکلات صبحانه بدون قند":{ "قاشق غذاخوری":4 },
+    "پاستیل رژیمی (بدون قند)":{ "عدد":3,"کف دست":12 },
+    "ژله رژیمی (بدون قند)":{ "کاسه":3 },
+    "آبنبات بدون قند":{ "عدد":2 },
+    "گز بدون قند":{ "قطعه":4 },
+    "سوهان بدون قند":{ "قطعه":5 },
+    "باسلوق بدون قند":{ "قطعه":5 },
+    "راحت‌الحلقوم بدون قند":{ "قطعه":5 },
+    "لوز نارگیل بدون قند":{ "عدد":5 },
+    "حلوا ارده بدون قند":{ "قاشق غذاخوری":4 },
+    "کره بادام‌زمینی بدون قند":{ "قاشق غذاخوری":3 },
+    "مربای رژیمی (بدون قند)":{ "قاشق چای‌خوری":1,"قاشق غذاخوری":3 },
+    "لواشک بدون قند افزوده":{ "برگ":8,"کف دست":7 },
+    "چیپس میوه بدون قند افزوده":{ "کف دست":14 },
+    "بستنی رژیمی (بدون قند افزوده)":{ "اسکوپ":6,"عدد":8 },
+    "پروتئین بار کم‌قند":{ "عدد":20 },
+    "دسر چیا (بدون شکر)":{ "کاسه":10 },
+    "ماست یونانی با استویا":{ "کاسه":8 },
+    "نان رژیمی سبوس‌دار":{ "برش":10 },
+    "شربت رژیمی (بدون قند)":{ "لیوان":1 },
+    "نوشیدنی رژیمی (زیرو)":{ "قوطی":0,"لیوان":0 },
+    "شیرین‌کننده استویا":{ "ساشه":0,"قاشق چای‌خوری":0 },
+    "شیرین‌کننده اریتریتول":{ "قاشق چای‌خوری":0,"قاشق غذاخوری":0 },
+    "شکر رژیمی (سوکرالوز)":{ "ساشه":0,"قاشق چای‌خوری":0 }
+  },
   "دستی":{
     "کربوهیدرات دستی":{ "گرم":1 }
   }
@@ -2662,7 +2771,7 @@ const UNIT_WEIGHT={
   "قطعه":50,"تکه":40,"مربع کوچک":10,"مربع":10,"عدد":80,"عدد کوچک":50,"عدد متوسط":80,"عدد بزرگ":120,
   "سیخ":90,"پرس":200,"وعده":250,"رول":150,"قوطی":330,"بطری کوچک":250,"اسکوپ":60,"حلقه":40,
   "دانه":8,"لنگه":5,"حبه":4,"برگ":15,"خوشه کوچک":120,"نوار":15,"سینه کامل":250,"ران":120,"فیله":120,
-  "نصف":40,"لیتر":1000,"میلی‌لیتر":1
+  "نصف":40,"لیتر":1000,"میلی‌لیتر":1,"ساشه":2
 };
 
 // دسته‌های مایع → واحد میلی‌لیتر و لیتر بگیرند
@@ -3691,6 +3800,7 @@ function switchTab(name,btn){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.getAttribute('data-tab')===name));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const pg=document.getElementById('page-'+name); if(pg) pg.classList.add('active');
+  document.body.classList.toggle('chat-active', name==='chat');
   window.scrollTo({top:0,behavior:'auto'});
   if(name==='home'){ renderDashboard(); }
   if(name==='daily'){ renderDailyReport(); }
@@ -3882,6 +3992,61 @@ function renderNavSetting(){
   </div>`;
 }
 
+/* ====== تم کلی نرم‌افزار ====== */
+const THEME_KEY='app_theme_v1';
+const THEMES=[
+  {id:'ocean', name:'اقیانوس (پیش‌فرض)', sw:['#0e1621','#3fb9a3']},
+  {id:'ruby',  name:'یاقوت شب',          sw:['#150f14','#e0688a']},
+  {id:'violet',name:'بنفشه',             sw:['#0f1020','#8f86e6']},
+  {id:'forest',name:'جنگل',              sw:['#0d1510','#57b979']},
+  {id:'sunset',name:'غروب کهربایی',      sw:['#171009','#e0a355']},
+  {id:'light', name:'روز روشن',          sw:['#eef2f6','#1f9e88']}
+];
+function getTheme(){ try{ return localStorage.getItem(THEME_KEY)||'ocean'; }catch(e){ return 'ocean'; } }
+function applyTheme(){
+  const t=getTheme();
+  if(t && t!=='ocean') document.documentElement.setAttribute('data-theme', t);
+  else document.documentElement.removeAttribute('data-theme');
+}
+function setTheme(id){
+  try{ localStorage.setItem(THEME_KEY, id); }catch(e){}
+  applyTheme(); renderThemeSetting();
+  const th=THEMES.find(x=>x.id===id); uiToast('تم «'+((th&&th.name)||id)+'» فعال شد');
+}
+function renderThemeSetting(){
+  const box=document.getElementById('themeSetting'); if(!box) return;
+  const cur=getTheme();
+  box.innerHTML=`<div class="theme-grid">`+THEMES.map(t=>
+    `<button type="button" class="theme-chip ${t.id===cur?'on':''}" onclick="setTheme('${t.id}')">
+       <span class="theme-sw" style="background:linear-gradient(135deg,${t.sw[0]} 0 55%,${t.sw[1]} 55% 100%)"></span>
+       <span class="theme-nm">${t.name}</span>
+       ${t.id===cur?'<span class="theme-ck">✓</span>':''}
+     </button>`).join('')+`</div>`;
+}
+
+/* ====== چیدمان تب چت (فعلی / مثل کلود / مثل ChatGPT) ====== */
+const CHATLAYOUT_KEY='chat_layout_v1';
+const CHAT_LAYOUTS=[
+  {id:'classic', name:'حباب‌دار (پیش‌فرض)', desc:'همین حالت فعلی با حباب‌های دوطرفه'},
+  {id:'claude',  name:'مثل کلود',            desc:'پاسخ تمام‌عرض و ساده، پیام تو در حباب'},
+  {id:'gpt',     name:'مثل ChatGPT',         desc:'ردیف‌های تمام‌عرض با پس‌زمینه‌ی متفاوت'}
+];
+function getChatLayout(){ try{ const v=localStorage.getItem(CHATLAYOUT_KEY)||'classic'; return CHAT_LAYOUTS.some(x=>x.id===v)?v:'classic'; }catch(e){ return 'classic'; } }
+function setChatLayout(id){
+  try{ localStorage.setItem(CHATLAYOUT_KEY, id); }catch(e){}
+  renderChatLayoutSetting();
+  if(typeof renderChatTab==='function' && document.getElementById('chatRoot')) renderChatTab();
+  const l=CHAT_LAYOUTS.find(x=>x.id===id); uiToast('چیدمان چت: '+((l&&l.name)||id));
+}
+function renderChatLayoutSetting(){
+  const box=document.getElementById('chatLayoutSetting'); if(!box) return;
+  const cur=getChatLayout();
+  box.innerHTML=`<div class="navmode-seg col">`+CHAT_LAYOUTS.map(l=>
+    `<button type="button" class="${l.id===cur?'on':''}" onclick="setChatLayout('${l.id}')">
+       <b>${l.name}</b><small>${l.desc}</small>
+     </button>`).join('')+`</div>`;
+}
+
 // ===== بزرگ‌نمایی دستی فقط برای محتوای وسط (هدر/نوارها ثابت) =====
 const ZOOM_KEY='zoom_enabled_v1';
 let _zScale=1, _pinchDist=0, _pinchStartScale=1, _lastTap=0;
@@ -3991,12 +4156,14 @@ async function loadProfile(){
 // کلیدهای localStorage که در بکاپ گنجانده می‌شوند (نقشه‌ی داده‌ی کاربر).
 // از مقادیر رشته‌ای مستقیم استفاده می‌شود چون بعضی از این const‌ها (CGMKEY, BGKEY, ...)
 // پایین‌تر در فایل تعریف شده‌اند و ارجاع به خودِ متغیر اینجا TDZ می‌دهد.
-const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','custom_foods_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1'];
+const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','custom_foods_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','app_theme_v1','chat_layout_v1'];
 
 async function renderProfileTab(){
   // فرم پروفایل (c-profile) حالا خودش داخل این تب است و وضعیت ذخیره‌شده را نشان می‌دهد.
   // اینجا فقط شمارش داده‌ها و تنظیم حالت منو را تازه می‌کنیم.
   renderNavSetting();
+  renderThemeSetting();
+  renderChatLayoutSetting();
   renderZoomSetting();
   renderVisionSetting();
   renderDataStats();
@@ -4128,7 +4295,7 @@ const CAT_EMOJI={
   "نوشیدنی":"🥤","فست‌فود":"🍔","تنقلات و چیپس":"🍿","صبحانه":"🍳","صبحانه‌ی فرنگی":"🥞",
   "غذای بین‌المللی":"🍱","کیک و دسر":"🍰","شیرینی و قند":"🍬","سس‌ها و چاشنی‌ها":"🥫",
   "آبمیوه و اسموتی":"🧃","صبحانه‌ی کامل":"🍽️","دستی":"✏️","محصولات من":"🧾",
-  "خوراکی بسته‌بندی (سوپرمارکتی)":"🛒","📷 از روی عکس":"📷"
+  "خوراکی بسته‌بندی (سوپرمارکتی)":"🛒","رژیمی و بدون قند":"🌿","📷 از روی عکس":"📷"
 };
 // ایموجی خاص بعضی آیتم‌ها بر اساس کلمه‌ی کلیدی
 const ITEM_EMOJI=[
@@ -4325,6 +4492,7 @@ const MACRO_BY_CAT={
   "سس‌ها و چاشنی‌ها":[1,9],
   "آبمیوه و اسموتی":[1,1],
   "صبحانه‌ی کامل":[8,9],
+  "رژیمی و بدون قند":[3,7],
   "دستی":[0,0],
   "📷 از روی عکس":[4,4]
 };
@@ -4361,6 +4529,7 @@ const NUTR_BY_CAT={
   "سس‌ها و چاشنی‌ها":{fiberG:0.5,satR:0.3,unsatR:0.7,omega3:0,sugarR:0.4,tags:[]},
   "آبمیوه و اسموتی":{fiberG:0.5,satR:0.2,unsatR:0.8,omega3:0,sugarR:0.85,tags:['قند بالا','ویتامین C']},
   "صبحانه‌ی کامل":{fiberG:1.5,satR:0.4,unsatR:0.6,omega3:0,sugarR:0.15,tags:[]},
+  "رژیمی و بدون قند":{fiberG:2,satR:0.4,unsatR:0.6,omega3:0,sugarR:0.12,tags:['کم‌قند','مناسب دیابت']},
   "دستی":{fiberG:1,satR:0.35,unsatR:0.65,omega3:0,sugarR:0.2,tags:[]},
   "📷 از روی عکس":{fiberG:1,satR:0.4,unsatR:0.6,omega3:0,sugarR:0.3,tags:[]}
 };
@@ -9529,7 +9698,7 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .chatx-burger{flex:0 0 auto;width:40px;height:40px;border-radius:13px;border:1px solid var(--line);background:linear-gradient(160deg,rgba(63,185,163,.14),var(--field));color:var(--teal);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
   .chatx-burger:active{transform:scale(.92)}
   .chatx-tt{flex:1;min-width:0;display:flex;align-items:center;gap:6px;cursor:pointer;overflow:hidden}
-  .chatx-tt b{font-size:14.5px;font-weight:800;color:#eafffb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chatx-tt b{font-size:14.5px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .chatx-tt .pen{flex:0 0 auto;color:var(--muted);font-size:11px;opacity:.7}
   .chatx-title-inp{flex:1;min-width:0;background:var(--field);border:1.5px solid var(--teal);border-radius:10px;padding:8px 11px;font-family:inherit;font-size:13.5px;color:var(--ink)}
   .chat-msgs{flex:1 1 auto;min-height:120px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:14px;padding:6px 2px 4px}
@@ -9538,7 +9707,7 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .chat-row.ai{align-self:flex-end;align-items:flex-end}
   .chat-b{padding:11px 15px;border-radius:19px;font-size:13.5px;line-height:2;word-break:break-word;box-shadow:0 2px 10px rgba(0,0,0,.18);position:relative}
   .chat-row.me .chat-b{background:linear-gradient(150deg,var(--teal),var(--teal-dim));color:#fff;border-bottom-right-radius:6px}
-  .chat-row.ai .chat-b{background:linear-gradient(160deg,#1e2c3b,#18222e);border:1px solid var(--line);color:var(--ink);border-bottom-left-radius:6px}
+  .chat-row.ai .chat-b{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);color:var(--ink);border-bottom-left-radius:6px}
   .chat-b .cimg{display:block;max-width:190px;max-height:190px;border-radius:12px;margin:0 0 7px;border:1px solid rgba(255,255,255,.14)}
   .chat-b .cfile{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border-radius:9px;padding:5px 9px;font-size:11.5px;margin:0 0 6px}
   .chat-cur{display:inline-block;width:7px;height:14px;background:var(--teal);border-radius:2px;vertical-align:-2px;animation:chatBlink 1s steps(2) infinite;margin-inline-start:2px}
@@ -9570,7 +9739,7 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .chat-pill.spd{gap:4px}
   .chat-pill.spd .dot{width:6px;height:6px;border-radius:50%;background:var(--teal)}
   .chat-pill.spd.fast .dot{background:var(--amber)}
-  .chatx-drawer{position:fixed;top:0;bottom:0;left:0;width:82%;max-width:340px;background:linear-gradient(180deg,#16212d,#111a24);border-right:1px solid var(--line);z-index:140;transform:translateX(-102%);transition:transform .26s cubic-bezier(.4,0,.2,1);overflow-y:auto;padding:16px 14px;box-shadow:8px 0 30px rgba(0,0,0,.5)}
+  .chatx-drawer{position:fixed;top:0;bottom:0;left:0;width:82%;max-width:340px;background:linear-gradient(180deg,var(--panel),var(--bg));border-right:1px solid var(--line);z-index:140;transform:translateX(-102%);transition:transform .26s cubic-bezier(.4,0,.2,1);overflow-y:auto;padding:16px 14px;box-shadow:8px 0 30px rgba(0,0,0,.5)}
   .chatx-drawer.open{transform:translateX(0)}
   .chatx-scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:139;opacity:0;pointer-events:none;transition:opacity .26s;backdrop-filter:blur(2px)}
   .chatx-scrim.open{opacity:1;pointer-events:auto}
@@ -9587,7 +9756,7 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .chatx-litem .cx{flex:0 0 auto;background:transparent;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:4px}
   .chat-sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150;display:flex;align-items:flex-end;justify-content:center;animation:chatFade .18s}
   @keyframes chatFade{from{opacity:0}}
-  .chat-sheet{width:100%;max-width:520px;background:linear-gradient(180deg,#1a2531,#141d27);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:14px 14px 20px;box-shadow:0 -8px 30px rgba(0,0,0,.5);animation:chatUp .22s cubic-bezier(.4,0,.2,1)}
+  .chat-sheet{width:100%;max-width:520px;background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px 20px 0 0;padding:14px 14px 20px;box-shadow:0 -8px 30px rgba(0,0,0,.5);animation:chatUp .22s cubic-bezier(.4,0,.2,1)}
   @keyframes chatUp{from{transform:translateY(40px);opacity:.4}}
   .chat-sheet h4{margin:2px 0 12px;font-size:13.5px;color:var(--teal);text-align:center}
   .chat-sheet .opt{display:flex;align-items:center;gap:10px;padding:12px 13px;border-radius:13px;border:1px solid var(--line);background:var(--field);margin-bottom:8px;cursor:pointer;font-size:13px;font-weight:700;color:var(--ink);transition:.13s}
@@ -9599,6 +9768,20 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   @keyframes chatOrb{0%,100%{box-shadow:0 0 0 0 rgba(63,185,163,.45);transform:scale(1)}50%{box-shadow:0 0 0 22px rgba(63,185,163,0);transform:scale(1.05)}}
   .chat-live .st{font-size:13px;color:var(--ink);font-weight:700;min-height:20px;text-align:center}
   .chat-live .tx{font-size:11.5px;color:var(--muted);text-align:center;min-height:16px;max-width:280px}
+  /* ===== چیدمان «مثل کلود»: پاسخ تمام‌عرض بدون حباب، پیام کاربر در حباب ===== */
+  .chatx.lay-claude .chat-msgs{gap:20px}
+  .chatx.lay-claude .chat-row.ai{align-self:stretch;max-width:100%;align-items:stretch}
+  .chatx.lay-claude .chat-row.ai .chat-b{background:none;border:none;box-shadow:none;padding:2px 2px;border-radius:0;line-height:2.05}
+  .chatx.lay-claude .chat-row.me{max-width:85%}
+  .chatx.lay-claude .chat-row.me .chat-b{border-radius:16px;border-bottom-right-radius:6px}
+  /* ===== چیدمان «مثل ChatGPT»: ردیف‌های تمام‌عرض با پس‌زمینه‌ی متفاوت هر نقش ===== */
+  .chatx.lay-gpt .chat-msgs{gap:0;padding:0}
+  .chatx.lay-gpt .chat-row{max-width:100%;align-self:stretch;align-items:stretch;padding:14px 12px;border-bottom:1px solid var(--line)}
+  .chatx.lay-gpt .chat-row.ai{background:linear-gradient(160deg,var(--panel-2),var(--panel))}
+  .chatx.lay-gpt .chat-row.me{background:transparent}
+  .chatx.lay-gpt .chat-b{background:none!important;border:none!important;box-shadow:none!important;padding:0!important;color:var(--ink)!important;border-radius:0!important;max-width:100%}
+  .chatx.lay-gpt .chat-b .cimg{margin-top:6px}
+  .chatx.lay-gpt .chat-acts{margin-top:8px}
   `; document.head.appendChild(s);
 }
 function chatBubble(m,idx){ const me=m.role==='user';
@@ -9635,7 +9818,8 @@ function renderChatTab(){
   const hasKey=!!getVisionKey(prov);
   const provOpts=(withKeys.length?withKeys:VISION_PROVIDERS).map(p=>`<option value="${p}" ${p===prov?'selected':''}>${PROVIDER_NAMES[p]}</option>`).join('');
   const spd=c.speed==='fast'?'fast':'smart';
-  let h=`<div class="chatx">
+  const lay=getChatLayout();
+  let h=`<div class="chatx lay-${lay}">
     <div class="chatx-top">
       <button type="button" class="chatx-burger" onclick="openChatDrawer()" title="گفتگوها">☰</button>
       <div class="chatx-tt" id="chatTitleWrap" onclick="chatEditTitle()"><b>${escVision(c.title||'گفتگوی جدید')}</b><span class="pen">✏️</span></div>
@@ -9758,18 +9942,38 @@ async function chatSend(){
   if(mb){ mb.insertAdjacentHTML('beforeend',`<div class="chat-row ai" id="${rowId}"><div class="chat-b"><span class="chat-cur"></span></div></div>`); mb.scrollTop=mb.scrollHeight; }
   const bubble=()=>{ const r=document.getElementById(rowId); return r?r.querySelector('.chat-b'):null; };
   chatSetBusy(true);
-  let acc='';
+  // ── نمایش تدریجی «کلمه‌کلمه» (تایپ‌رایتر): حتی اگر پاسخ یکجا برسد، روان آشکار می‌شود ──
+  let acc='';                       // متن هدف (هرچه تا کنون رسیده)
+  let _shown=0, _streamDone=false, _revealResolve=null;
+  const _revealDone=new Promise(res=>{ _revealResolve=res; });
+  const paintReveal=()=>{ const b=bubble(); if(!b) return;
+    const cur=(_shown<acc.length || !_streamDone)?'<span class="chat-cur"></span>':'';
+    b.innerHTML=labAiFmt(acc.slice(0,_shown))+cur; if(mb) mb.scrollTop=mb.scrollHeight; };
+  const _ticker=setInterval(()=>{
+    if(_chatAbort) _shown=acc.length;
+    if(_shown<acc.length){
+      const remain=acc.length-_shown;
+      const step=Math.max(2, Math.ceil(remain/18));   // روان؛ نزدیک انتها آرام‌تر
+      _shown=Math.min(acc.length, _shown+step); paintReveal();
+    } else if(_streamDone){
+      clearInterval(_ticker); paintReveal();
+      if(_revealResolve){ _revealResolve(); _revealResolve=null; }
+    }
+  }, 24);
   try{
     const sys=buildChatSystemPrompt();
     const hist=c.messages.slice(-14).map(m=>{ const mm={role:m.role,content:m.content}; if(m===umsg && imgs.length) mm.images=imgs; return mm; });
-    const onDelta=chunk=>{ if(_chatAbort) return; acc+=chunk; const b=bubble(); if(b){ b.innerHTML=labAiFmt(acc)+'<span class="chat-cur"></span>'; if(mb) mb.scrollTop=mb.scrollHeight; } };
+    const onDelta=chunk=>{ if(_chatAbort) return; acc+=chunk; };   // فقط بافر؛ نمایش با تیکر
     const reply=await aiFallbackChain(prov, (p,k)=>callAIChatStream(p,k,sys,hist,{speed:c.speed,maxTok:1500},onDelta),
-      {onProv:(p,sw)=>{ if(sw){ acc=''; const b=bubble(); if(b) b.innerHTML='<span style="color:var(--muted);font-size:11.5px">سهمیه پر بود؛ تلاش با «'+escVision(PROVIDER_NAMES[p]||p)+'»…</span><span class="chat-cur"></span>'; } }});
+      {onProv:(p,sw)=>{ if(sw){ acc=''; _shown=0; const b=bubble(); if(b) b.innerHTML='<span style="color:var(--muted);font-size:11.5px">سهمیه پر بود؛ تلاش با «'+escVision(PROVIDER_NAMES[p]||p)+'»…</span><span class="chat-cur"></span>'; } }});
     const clean=String(reply||acc||'').trim()||'پاسخی دریافت نشد.';
+    acc=clean; _streamDone=true;          // اطمینان از نمایش کاملِ متن نهایی
+    await _revealDone;                     // صبر تا تایپ‌رایتر همه‌ی متن را آشکار کند
     c.messages.push({role:'assistant',content:clean,ts:Date.now()});
     chatSave(o); renderChatMessages(c);
     if(_chatLiveOn) chatSpeak(clean);
   }catch(e){
+    _streamDone=true; clearInterval(_ticker); if(_revealResolve){ _revealResolve(); _revealResolve=null; }
     if(acc){ // چیزی استریم شده بود؛ همان را ذخیره کن
       c.messages.push({role:'assistant',content:acc.trim(),ts:Date.now()}); chatSave(o); renderChatMessages(c);
     } else {
@@ -9777,7 +9981,7 @@ async function chatSend(){
       const html=`<div class="chat-b">${aiMsgBox(ei.emoji,ei.title,ei.text,'err',String((e&&e.message)||e))}</div>`;
       if(r) r.innerHTML=html; else if(mb) mb.insertAdjacentHTML('beforeend','<div class="chat-row ai">'+html+'</div>');
     }
-  } finally { chatSetBusy(false); _chatAbort=false; }
+  } finally { clearInterval(_ticker); chatSetBusy(false); _chatAbort=false; }
 }
 function chatSetBusy(b){ _chatBusy=b; const btn=document.getElementById('chatSendBtn'); if(btn){ btn.classList.toggle('stop',b); btn.innerHTML=b?'■':'➤'; } }
 // ── اکشن پیام‌ها ──────────────────────────────────────
@@ -11176,6 +11380,7 @@ function restoreCollState(){
 
 applyCustomFoods();   // محصولات شخصی را ادغام و شاخص جستجو را می‌سازد
 if(!restoreCalcState()) addFoodRow();   // بازیابی خوراکی‌های واردشده بعد از رفرش
+applyTheme();
 applyNavMode();
 (async()=>{
   await loadProfile();
