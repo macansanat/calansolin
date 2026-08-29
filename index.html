@@ -1866,7 +1866,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۶.۲</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۶.۳</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -6724,38 +6724,60 @@ function analyzeCGM(rows){
 }
 /* ===== ذخیره و ادغام دائم داده‌های CGM ===== */
 const CGMKEY='cgm_data_v1', CGMFILESKEY='cgm_files_v1';
+/* فرمت فشرده‌ی CGM: آرایه‌ای از [دقیقه‌ی یونیکس, قند] — نسبت به فرمت قدیمی {time,glu} حدود ۳ برابر کوچک‌تر
+   تا چند سنسور کنار هم در حافظه‌ی محدودِ گوشی جا شوند. */
+function cgmEpochMin(timeStr){ const t=parseLogTime(timeStr); return t? Math.round(t.dateObj.getTime()/60000):null; }
+function cgmPartsFromEpochMin(em){
+  const d=new Date(em*60000); const p=n=>String(n).padStart(2,'0');
+  return {y:d.getFullYear(),mo:d.getMonth()+1,d:d.getDate(),h:d.getHours(),min:d.getMinutes(),hhmm:p(d.getHours())+':'+p(d.getMinutes()),dateObj:d};
+}
+function cgmReadStored(){ let s=[]; try{ s=JSON.parse(localStorage.getItem(CGMKEY)||'[]'); }catch(e){} return Array.isArray(s)?s:[]; }
+// تبدیل داده‌ی ذخیره‌شده (هر دو فرمت جدید فشرده و قدیمی) به نگاشت {دقیقه: قند}
+function cgmToMap(stored){
+  const map={}; let legacy=false;
+  stored.forEach(r=>{
+    if(Array.isArray(r)){ if(r.length>=2) map[r[0]]=r[1]; }
+    else if(r&&r.time!=null){ legacy=true; const em=cgmEpochMin(r.time); if(em!=null) map[em]=Math.round(r.glu); }
+  });
+  return {map,legacy};
+}
+function cgmSaveMap(map){
+  const merged=Object.keys(map).map(em=>[+em,map[em]]).sort((a,b)=>a[0]-b[0]);
+  localStorage.setItem(CGMKEY,JSON.stringify(merged)); // ممکن است خطای حجم بدهد (توسط صداکننده مدیریت می‌شود)
+  return merged.length;
+}
 function mergeCGMData(newReadings){
-  // بارگذاری داده‌ی خام قبلی
-  let stored=[];
-  try{ stored=JSON.parse(localStorage.getItem(CGMKEY)||'[]'); }catch(e){}
-  // نگاشت با کلید زمان (رشته‌ی خام) برای حذف تکراری
-  const map={};
-  stored.forEach(r=>{ map[r.time]=r.glu; });
-  let added=0;
-  newReadings.forEach(r=>{ if(!(r.time in map)){ added++; } map[r.time]=r.glu; });
-  const merged=Object.keys(map).map(t=>({time:t,glu:map[t]}));
-  // ذخیره
-  try{ localStorage.setItem(CGMKEY,JSON.stringify(merged)); }catch(e){ alert('حجم داده زیاد شد؛ برخی فایل‌های قدیمی را پاک کن.'); }
-  // ثبت رکورد فایل واردشده
-  const parsed=newReadings.map(r=>parseLogTime(r.time)).filter(Boolean).map(t=>t.dateObj);
-  if(parsed.length){
-    parsed.sort((a,b)=>a-b);
+  // نگاشت قبلی (با پشتیبانی از فرمت قدیمی)
+  const {map}=cgmToMap(cgmReadStored());
+  let added=0; const emList=[];
+  newReadings.forEach(r=>{ const em=cgmEpochMin(r.time); if(em==null) return; const g=Math.round(r.glu);
+    if(!(em in map)) added++; map[em]=g; emList.push(em); });
+  // ذخیره‌ی فشرده — فقط اگر واقعاً ذخیره شد، رکورد فایل را ثبت کن
+  let saved=false;
+  try{ cgmSaveMap(map); saved=true; }
+  catch(e){ alert('⚠️ حافظه‌ی این دستگاه پر شد و این سنسور ذخیره نشد.\nیک فایل CGM قدیمی‌تر را حذف کن (یا از پروفایل، چت‌ها/عکس‌های قدیمی را پاک کن)، سپس دوباره وارد کن.'); }
+  if(saved && emList.length){
+    emList.sort((a,b)=>a-b);
     const files=loadCGMFiles();
-    const fmt=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-    files.push({ imported:new Date().toISOString(), from:fmt(parsed[0]), to:fmt(parsed[parsed.length-1]),
+    const fmt=em=>{ const d=new Date(em*60000); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; };
+    files.push({ imported:new Date().toISOString(), from:fmt(emList[0]), to:fmt(emList[emList.length-1]),
       count:newReadings.length, added });
     try{ localStorage.setItem(CGMFILESKEY,JSON.stringify(files)); }catch(e){}
   }
   // بارگذاری در حافظه‌ی زنده
   loadCGMFromStorage();
+  return saved;
 }
 function loadCGMFiles(){
   try{ return JSON.parse(localStorage.getItem(CGMFILESKEY)||'[]'); }catch(e){ return []; }
 }
 function loadCGMFromStorage(){
-  let stored=[];
-  try{ stored=JSON.parse(localStorage.getItem(CGMKEY)||'[]'); }catch(e){}
-  window._cgmReadings = stored.map(r=>({t:parseLogTime(r.time),glu:r.glu})).filter(r=>r.t);
+  const stored=cgmReadStored();
+  const {map,legacy}=cgmToMap(stored);
+  const ems=Object.keys(map).map(Number).sort((a,b)=>a-b);
+  window._cgmReadings = ems.map(em=>({t:cgmPartsFromEpochMin(em),glu:map[em]}));
+  // مهاجرت یک‌باره: اگر داده به فرمت قدیمیِ حجیم بود، فشرده‌اش کن تا جا باز شود
+  if(legacy){ try{ cgmSaveMap(map); }catch(e){} }
   return window._cgmReadings.length;
 }
 function runCGMAnalysis(){
@@ -12047,15 +12069,14 @@ function deleteCGMFile(idx){
   const files=loadCGMFiles();
   const f=files[idx]; if(!f) return;
   if(!confirm(`فایل بازه‌ی ${f.from} تا ${f.to} حذف شود؟\nتوجه: داده‌های قندی که فقط از این فایل آمده‌اند حذف می‌شوند.`)) return;
-  // حذف داده‌های این بازه از داده‌ی خام
+  // حذف داده‌های این بازه از داده‌ی خام (فرمت فشرده)
   const [fd,fm,fy]=f.from.split('/').map(Number);
   const [td,tm,ty]=f.to.split('/').map(Number);
-  const start=new Date(fy,fm-1,fd,0,0,0).getTime();
-  const end=new Date(ty,tm-1,td,23,59,59).getTime();
-  let stored=[];
-  try{ stored=JSON.parse(localStorage.getItem(CGMKEY)||'[]'); }catch(e){}
-  const kept=stored.filter(r=>{ const t=parseLogTime(r.time); if(!t) return true; const ms=t.dateObj.getTime(); return ms<start||ms>end; });
-  try{ localStorage.setItem(CGMKEY,JSON.stringify(kept)); }catch(e){}
+  const start=Math.floor(new Date(fy,fm-1,fd,0,0,0).getTime()/60000);
+  const end=Math.floor(new Date(ty,tm-1,td,23,59,59).getTime()/60000);
+  const {map}=cgmToMap(cgmReadStored());
+  Object.keys(map).forEach(k=>{ const em=+k; if(em>=start&&em<=end) delete map[k]; });
+  try{ cgmSaveMap(map); }catch(e){}
   files.splice(idx,1);
   try{ localStorage.setItem(CGMFILESKEY,JSON.stringify(files)); }catch(e){}
   // بارگذاری مجدد و تحلیل
