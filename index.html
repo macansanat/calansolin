@@ -1839,7 +1839,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۵.۵</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۵.۶</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -9937,9 +9937,9 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .chat-act:hover{color:var(--teal);border-color:var(--teal-dim)}
   /* ── داک پایین: بدون پس‌زمینه/نوار؛ کادرِ ورودی مستقیم روی پیام‌ها شناور است ── */
   .chat-dock{position:absolute;bottom:0;left:0;right:0;z-index:6;width:100%;padding:9px 12px calc(10px + env(safe-area-inset-bottom));background:transparent;border-top:none}
-  /* کپسول ورودی: عادی شیشه‌ای و بدون سطحِ جدا؛ با فوکوس مات می‌شود تا متن خوانا شود */
-  .chat-capsule{max-width:840px;margin:0 auto;background:transparent;border:1px solid var(--line);border-radius:26px;padding:8px 8px 7px;transition:background .16s,border-color .16s,box-shadow .16s}
-  .chat-capsule:focus-within{background:var(--field);border-color:var(--teal);box-shadow:0 6px 20px rgba(0,0,0,.16)}
+  /* کپسول ورودی: مات و پررنگ (کادرِ توپُرِ شناور مثل کلود) */
+  .chat-capsule{max-width:840px;margin:0 auto;background:var(--field);border:1.5px solid var(--line);border-radius:26px;padding:8px 8px 7px;box-shadow:0 6px 22px rgba(0,0,0,.20);transition:border-color .16s,box-shadow .16s}
+  .chat-capsule:focus-within{border-color:var(--teal);box-shadow:0 8px 26px rgba(0,0,0,.26)}
   .chat-capsule-row{display:flex;align-items:center;gap:5px;padding:2px 2px 0}
   /* چیپ‌های پیشنهادِ سوال بعدی (مثل کلود) — با دکمه‌ی بستن در گوشه‌ی راست‌بالا */
   .chat-sugs{position:relative;max-width:840px;margin:0 auto 9px;padding-top:2px}
