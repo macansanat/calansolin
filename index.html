@@ -1839,7 +1839,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۵.۴</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۵.۵</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -9935,8 +9935,8 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .chat-act{background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:8px;width:28px;height:28px;font-size:12.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.13s}
   .chat-act:active{transform:scale(.9)}
   .chat-act:hover{color:var(--teal);border-color:var(--teal-dim)}
-  /* ── داک پایینِ شیشه‌ای؛ پیام‌ها از زیرش (مات/شیشه‌ای) رد می‌شوند مثل کلود ── */
-  .chat-dock{position:absolute;bottom:0;left:0;right:0;z-index:6;width:100%;padding:9px 12px calc(10px + env(safe-area-inset-bottom));background:var(--glass);backdrop-filter:blur(22px) saturate(1.7);-webkit-backdrop-filter:blur(22px) saturate(1.7);border-top:1px solid var(--glass-brd)}
+  /* ── داک پایین: بدون پس‌زمینه/نوار؛ کادرِ ورودی مستقیم روی پیام‌ها شناور است ── */
+  .chat-dock{position:absolute;bottom:0;left:0;right:0;z-index:6;width:100%;padding:9px 12px calc(10px + env(safe-area-inset-bottom));background:transparent;border-top:none}
   /* کپسول ورودی: عادی شیشه‌ای و بدون سطحِ جدا؛ با فوکوس مات می‌شود تا متن خوانا شود */
   .chat-capsule{max-width:840px;margin:0 auto;background:transparent;border:1px solid var(--line);border-radius:26px;padding:8px 8px 7px;transition:background .16s,border-color .16s,box-shadow .16s}
   .chat-capsule:focus-within{background:var(--field);border-color:var(--teal);box-shadow:0 6px 20px rgba(0,0,0,.16)}
