@@ -40,7 +40,7 @@
 :root[data-theme="light"]{
   --bg:#eef2f6;--panel:#ffffff;--panel-2:#f3f7fb;--field:#ffffff;--line:#d4dee8;
   --ink:#1b2733;--muted:#5c6b7b;--teal:#1f9e88;--teal-dim:#0f5d51;
-  --amber:#c8842f;--red:#d0524a;--blue:#3f74c0;--violet:#7a63cf;--glass:rgba(255,255,255,.72);--glass-brd:rgba(0,0,0,.06);
+  --amber:#c8842f;--red:#d0524a;--blue:#3f74c0;--violet:#7a63cf;--glass:rgba(247,250,253,.62);--glass-brd:rgba(0,0,0,.06);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Vazirmatn',sans-serif;background:var(--bg);color:var(--ink);line-height:1.85;padding:24px 14px 70px;font-size:15.5px}
@@ -1839,7 +1839,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۵.۳</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۵.۴</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -9854,19 +9854,39 @@ function chatParseSuggestions(raw){
   const text=s.replace(/\n?@@SUGGEST@@[^\n]*/,'').trim();
   return {text, suggestions:list};
 }
+let _chatTopSug='';
 function chatRenderSuggestions(list){
   const box=document.getElementById('chatSuggestions'); if(!box) return;
-  if(!chatSuggestOn() || !list || !list.length){ box.innerHTML=''; box.style.display='none'; return; }
-  box.style.display='flex';
+  if(!chatSuggestOn() || !list || !list.length){ box.innerHTML=''; box.style.display='none'; _chatTopSug=''; chatUpdateGhost(); chatSyncInsets(); return; }
+  box.style.display='block';
   box.innerHTML=`<button type="button" class="chat-sug-x" onclick="chatCloseSuggestions()" title="بستن پیشنهادها" aria-label="بستن">×</button>`
-    +list.map(q=>`<button type="button" class="chat-sug" onclick="chatUseSuggestion(this)">${escVision(q)}</button>`).join('');
+    +`<div class="chat-sug-list">`+list.map(q=>`<button type="button" class="chat-sug" onclick="chatUseSuggestion(this)">${escVision(q)}</button>`).join('')+`</div>`;
+  _chatTopSug=String(list[0]||'');   // مهم‌ترین پیشنهاد → داخل کادر هم نشان داده می‌شود
+  chatUpdateGhost(); chatSyncInsets();
 }
-function chatCloseSuggestions(){ const box=document.getElementById('chatSuggestions'); if(box){ box.innerHTML=''; box.style.display='none'; } }
+function chatCloseSuggestions(){ const box=document.getElementById('chatSuggestions'); if(box){ box.innerHTML=''; box.style.display='none'; } _chatTopSug=''; chatUpdateGhost(); chatSyncInsets(); }
 function chatUseSuggestion(btn){
   const t=btn.textContent||''; const inp=document.getElementById('chatInput');
   if(inp){ inp.value=t; chatAutoGrow(inp); inp.focus(); }
-  const box=document.getElementById('chatSuggestions'); if(box){ box.innerHTML=''; box.style.display='none'; }
+  chatCloseSuggestions();
 }
+// پیشنهادِ مهم داخلِ کادر (ghost) — مثل کلود؛ «درج» فقط تایپ می‌کند، ارسال نمی‌کند
+function chatUpdateGhost(){
+  const g=document.getElementById('chatGhost'), gt=document.getElementById('chatGhostTxt'), inp=document.getElementById('chatInput');
+  if(!g||!inp) return;
+  const show = chatSuggestOn() && _chatTopSug && !(inp.value||'').trim();
+  if(show){ if(gt) gt.textContent=_chatTopSug; g.hidden=false; inp.placeholder=''; }
+  else { g.hidden=true; inp.placeholder='از دیابوت بپرس…'; }
+}
+function chatGhostInsert(){ const inp=document.getElementById('chatInput'); if(inp&&_chatTopSug){ inp.value=_chatTopSug; chatAutoGrow(inp); inp.focus(); } chatUpdateGhost(); chatSyncInsets(); }
+// ارتفاعِ نوار بالا/داکِ پایین را اندازه می‌گیرد تا پیام‌ها درست از زیرشان رد شوند
+function chatSyncInsets(){
+  const cx=document.querySelector('.chatx'); if(!cx) return;
+  const ab=cx.querySelector('.chatx-appbar'), dk=cx.querySelector('.chat-dock');
+  if(ab) cx.style.setProperty('--cx-top', ab.offsetHeight+'px');
+  if(dk) cx.style.setProperty('--cx-bot', dk.offsetHeight+'px');
+}
+window.addEventListener('resize', ()=>{ try{ chatSyncInsets(); }catch(e){} });
 // فالبکِ سبک: اگر مدل خطِ پیشنهاد را نگذاشت، با یک تماسِ کوتاه ۳ سوالِ بعدی بگیر
 async function chatFetchSuggestions(prov, question, answer){
   try{
@@ -9883,7 +9903,7 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   #page-chat #chatRoot{flex:1;min-height:0;display:flex}
   .chatx{position:relative;display:flex;flex-direction:column;flex:1;min-height:0;width:100%}
   /* ── نوار بالای شیشه‌ای (مثل کلود) ── */
-  .chatx-appbar{position:sticky;top:0;z-index:6;flex:0 0 auto;direction:ltr;display:flex;align-items:center;gap:6px;padding:calc(8px + env(safe-area-inset-top)) 10px 8px;background:var(--glass);backdrop-filter:blur(22px) saturate(1.7);-webkit-backdrop-filter:blur(22px) saturate(1.7);border-bottom:1px solid var(--glass-brd);box-shadow:0 2px 14px rgba(0,0,0,.10)}
+  .chatx-appbar{position:absolute;top:0;left:0;right:0;z-index:6;flex:0 0 auto;direction:ltr;display:flex;align-items:center;gap:6px;padding:calc(8px + env(safe-area-inset-top)) 10px 8px;background:var(--glass);backdrop-filter:blur(22px) saturate(1.7);-webkit-backdrop-filter:blur(22px) saturate(1.7);border-bottom:1px solid var(--glass-brd);box-shadow:0 2px 14px rgba(0,0,0,.08)}
   .cxa-btn{flex:0 0 auto;width:38px;height:38px;border-radius:11px;border:none;background:transparent;color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.14s;-webkit-tap-highlight-color:transparent}
   .cxa-btn:hover{background:rgba(127,127,127,.12)}
   .cxa-btn:active{transform:scale(.88)}
@@ -9899,7 +9919,7 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .cxa-pen{flex:0 0 auto;color:var(--muted);font-size:10px;opacity:.55}
   .chatx-title-inp{flex:1;min-width:0;background:var(--field);border:1.5px solid var(--teal);border-radius:10px;padding:8px 11px;font-family:inherit;font-size:13.5px;color:var(--ink);text-align:center;direction:rtl}
   /* ── ناحیه‌ی پیام‌ها (اسکرول) ── */
-  .chat-msgs{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:15px;padding:16px 14px 12px;width:100%;max-width:840px;margin:0 auto}
+  .chat-msgs{position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:15px;padding:calc(var(--cx-top,64px) + 10px) 14px calc(var(--cx-bot,116px) + 8px);width:100%}
   .chat-row{display:flex;flex-direction:column;max-width:90%}
   .chat-row.me{align-self:flex-start;align-items:flex-start}
   .chat-row.ai{align-self:flex-end;align-items:flex-end}
@@ -9915,21 +9935,31 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .chat-act{background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:8px;width:28px;height:28px;font-size:12.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.13s}
   .chat-act:active{transform:scale(.9)}
   .chat-act:hover{color:var(--teal);border-color:var(--teal-dim)}
-  /* ── داک پایینِ شیشه‌ای (همیشه چسبیده به پایین) ── */
-  .chat-dock{flex:0 0 auto;position:sticky;bottom:0;z-index:6;width:100%;padding:9px 12px calc(10px + env(safe-area-inset-bottom));background:var(--glass);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);border-top:1px solid var(--glass-brd)}
+  /* ── داک پایینِ شیشه‌ای؛ پیام‌ها از زیرش (مات/شیشه‌ای) رد می‌شوند مثل کلود ── */
+  .chat-dock{position:absolute;bottom:0;left:0;right:0;z-index:6;width:100%;padding:9px 12px calc(10px + env(safe-area-inset-bottom));background:var(--glass);backdrop-filter:blur(22px) saturate(1.7);-webkit-backdrop-filter:blur(22px) saturate(1.7);border-top:1px solid var(--glass-brd)}
   /* کپسول ورودی: عادی شیشه‌ای و بدون سطحِ جدا؛ با فوکوس مات می‌شود تا متن خوانا شود */
   .chat-capsule{max-width:840px;margin:0 auto;background:transparent;border:1px solid var(--line);border-radius:26px;padding:8px 8px 7px;transition:background .16s,border-color .16s,box-shadow .16s}
   .chat-capsule:focus-within{background:var(--field);border-color:var(--teal);box-shadow:0 6px 20px rgba(0,0,0,.16)}
   .chat-capsule-row{display:flex;align-items:center;gap:5px;padding:2px 2px 0}
-  /* چیپ‌های پیشنهادِ سوال بعدی (مثل کلود) */
-  .chat-sugs{display:flex;flex-wrap:wrap;gap:7px;max-width:840px;margin:0 auto 9px;justify-content:flex-end}
+  /* چیپ‌های پیشنهادِ سوال بعدی (مثل کلود) — با دکمه‌ی بستن در گوشه‌ی راست‌بالا */
+  .chat-sugs{position:relative;max-width:840px;margin:0 auto 9px;padding-top:2px}
+  .chat-sug-list{display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-end;padding-right:32px}
   .chat-sug{background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:16px;padding:7px 13px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:.14s;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
   .chat-sug:hover{border-color:var(--teal);color:var(--teal)}
   .chat-sug:active{transform:scale(.96)}
   .chat-sug::before{content:'✨ ';opacity:.7}
-  .chat-sug-x{flex:0 0 auto;order:99;width:30px;height:30px;border-radius:50%;background:var(--field);border:1px solid var(--line);color:var(--muted);font-size:17px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.14s;align-self:center}
+  .chat-sug-x{position:absolute;top:-2px;right:0;z-index:3;width:28px;height:28px;border-radius:50%;background:var(--field);border:1px solid var(--line);color:var(--muted);font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.14s;box-shadow:0 2px 8px rgba(0,0,0,.18)}
   .chat-sug-x:hover{color:var(--red);border-color:var(--red)}
   .chat-sug-x:active{transform:scale(.9)}
+  /* پیشنهادِ مهم داخل کادر (مثل کلود): کلیدِ «درج» فقط تایپ می‌کند، ارسال نمی‌کند */
+  .chat-inline{position:relative}
+  .chat-ghost{position:absolute;inset:0;display:flex;align-items:center;gap:8px;padding:0 12px;pointer-events:none}
+  .chat-ghost[hidden]{display:none}
+  .cg-txt{flex:1;min-width:0;color:var(--muted);opacity:.72;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cg-txt::before{content:'✨ ';opacity:.8}
+  .cg-key{pointer-events:auto;flex:0 0 auto;background:rgba(63,185,163,.15);border:1px solid var(--teal-dim);color:var(--teal);border-radius:11px;padding:5px 11px;font-family:inherit;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;transition:.14s}
+  .cg-key:hover{background:var(--teal);color:#fff}
+  .cg-key:active{transform:scale(.94)}
   /* پاپ‌آپ تغییر نام گفتگو */
   .chat-rename-bg{position:fixed;inset:0;z-index:160;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:22px;animation:chatFade .16s}
   .chat-rename{width:100%;max-width:380px;background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:20px 18px 16px;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:chatUp .2s cubic-bezier(.4,0,.2,1)}
@@ -10023,7 +10053,7 @@ function chatBubble(m,idx){ const me=m.role==='user';
     : `<button class="chat-act" onclick="chatCopyMsg(${idx})" title="کپی">📋</button><button class="chat-act" onclick="chatReadMsg(${idx},this)" title="خواندن">🔊</button><button class="chat-act" onclick="chatDeleteMsg(${idx})" title="حذف">🗑</button>`;
   return `<div class="chat-row ${me?'me':'ai'}"><div class="chat-b">${att}${body||'<span style="color:var(--muted)">…</span>'}</div><div class="chat-acts">${acts}</div></div>`;
 }
-function chatAutoGrow(t){ t.style.height='auto'; t.style.height=Math.min(130,t.scrollHeight)+'px'; }
+function chatAutoGrow(t){ t.style.height='auto'; t.style.height=Math.min(130,t.scrollHeight)+'px'; chatUpdateGhost(); chatSyncInsets(); }
 function renderChatMessages(c){ const mb=document.getElementById('chatMsgs'); if(!mb)return; mb.innerHTML=c.messages.map((m,i)=>chatBubble(m,i)).join(''); mb.scrollTop=mb.scrollHeight; }
 let _lastNonChatTab='home';
 function chatGoBack(){ switchTab(_lastNonChatTab||'home'); }
@@ -10082,6 +10112,7 @@ function renderChatTab(){
       <div class="chat-capsule">
         <div class="chat-inline">
           <textarea id="chatInput" rows="1" placeholder="از دیابوت بپرس…" oninput="chatAutoGrow(this)"></textarea>
+          <div class="chat-ghost" id="chatGhost" hidden><span class="cg-txt" id="chatGhostTxt"></span><button type="button" class="cg-key" onclick="chatGhostInsert()" title="درج در کادر">درج ↵</button></div>
         </div>
         <div class="chat-capsule-row">
           <button type="button" class="chat-tool" onclick="chatAttachMenu()" title="پیوست">+</button>
@@ -10118,16 +10149,19 @@ function renderChatTab(){
   // پیشنهادهای آخرین پاسخ را (اگر ذخیره شده) دوباره نشان بده
   const lastAi=[...c.messages].reverse().find(m=>m.role==='assistant');
   chatRenderSuggestions(lastAi&&lastAi.suggest);
+  chatUpdateGhost();
+  requestAnimationFrame(()=>{ chatSyncInsets(); const m=document.getElementById('chatMsgs'); if(m) m.scrollTop=m.scrollHeight; });
 }
 // ── پیوست‌ها ─────────────────────────────────────────
 let _chatAttach=[];      // [{kind:'image', mediaType,b64,dataURL} | {kind:'file', name, text}]
 let _chatBusy=false, _chatAbort=false;
 function chatRenderAttach(){ const box=document.getElementById('chatAttachPrev'); if(!box) return;
-  if(!_chatAttach.length){ box.style.display='none'; box.innerHTML=''; return; }
+  if(!_chatAttach.length){ box.style.display='none'; box.innerHTML=''; chatSyncInsets(); return; }
   box.style.display='flex';
   box.innerHTML=_chatAttach.map((a,i)=>a.kind==='image'
     ? `<div class="ap"><img src="${a.dataURL}" alt=""><span>عکس</span><button class="rm" onclick="chatRmAttach(${i})">×</button></div>`
     : `<div class="ap">📎 <span>${escVision(a.name||'فایل')}</span><button class="rm" onclick="chatRmAttach(${i})">×</button></div>`).join('');
+  chatSyncInsets();
 }
 function chatRmAttach(i){ _chatAttach.splice(i,1); chatRenderAttach(); }
 function chatAttachMenu(){
