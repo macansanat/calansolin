@@ -14,32 +14,33 @@
   --bg:#0e1621;--panel:#16212e;--panel-2:#1b2938;--field:#101a26;--line:#26374a;
   --ink:#e8eef5;--muted:#8fa1b6;--teal:#3fb9a3;--teal-dim:#1f5c52;
   --amber:#e0a355;--red:#e0685f;--blue:#5b8fd6;--violet:#9a86e0;
+  --fg:var(--ink);--glass:rgba(18,27,38,.72);--glass-brd:rgba(255,255,255,.06);
 }
 /* ===== تم‌های نرم‌افزار (پیش‌فرض «اقیانوس» = همان :root بالا) ===== */
 :root[data-theme="ruby"]{
   --bg:#150f14;--panel:#241823;--panel-2:#2d1e29;--field:#1b1219;--line:#3e2a37;
   --ink:#f4e9ef;--muted:#bd97a9;--teal:#e0688a;--teal-dim:#7a2f48;
-  --amber:#e0a355;--red:#e0685f;--blue:#c47bb0;--violet:#c98fd8;
+  --amber:#e0a355;--red:#e0685f;--blue:#c47bb0;--violet:#c98fd8;--glass:rgba(33,24,31,.74);
 }
 :root[data-theme="violet"]{
   --bg:#0f1020;--panel:#191b31;--panel-2:#212440;--field:#14152a;--line:#30345a;
   --ink:#eaeaf7;--muted:#9d9ec8;--teal:#8f86e6;--teal-dim:#443f8a;
-  --amber:#e0a355;--red:#e0685f;--blue:#6f9be6;--violet:#b3a6ff;
+  --amber:#e0a355;--red:#e0685f;--blue:#6f9be6;--violet:#b3a6ff;--glass:rgba(23,25,45,.74);
 }
 :root[data-theme="forest"]{
   --bg:#0d1510;--panel:#16241b;--panel-2:#1c2f22;--field:#111c15;--line:#284136;
   --ink:#e9f3eb;--muted:#93b19d;--teal:#57b979;--teal-dim:#276241;
-  --amber:#e0a355;--red:#e0685f;--blue:#5faf9a;--violet:#9ad0a2;
+  --amber:#e0a355;--red:#e0685f;--blue:#5faf9a;--violet:#9ad0a2;--glass:rgba(20,34,25,.74);
 }
 :root[data-theme="sunset"]{
   --bg:#171009;--panel:#271b11;--panel-2:#302113;--field:#1c130a;--line:#43311e;
   --ink:#f6ecdd;--muted:#c4a888;--teal:#e0a355;--teal-dim:#805524;
-  --amber:#e6c15a;--red:#e0685f;--blue:#d89a5a;--violet:#e0b06a;
+  --amber:#e6c15a;--red:#e0685f;--blue:#d89a5a;--violet:#e0b06a;--glass:rgba(36,25,15,.74);
 }
 :root[data-theme="light"]{
   --bg:#eef2f6;--panel:#ffffff;--panel-2:#f3f7fb;--field:#ffffff;--line:#d4dee8;
   --ink:#1b2733;--muted:#5c6b7b;--teal:#1f9e88;--teal-dim:#0f5d51;
-  --amber:#c8842f;--red:#d0524a;--blue:#3f74c0;--violet:#7a63cf;
+  --amber:#c8842f;--red:#d0524a;--blue:#3f74c0;--violet:#7a63cf;--glass:rgba(255,255,255,.72);--glass-brd:rgba(0,0,0,.06);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Vazirmatn',sans-serif;background:var(--bg);color:var(--ink);line-height:1.85;padding:24px 14px 70px;font-size:15.5px}
@@ -65,20 +66,16 @@ h1{font-size:25px;font-weight:800;line-height:1.3;letter-spacing:-.3px}
 /* نمایش/پنهان بر اساس حالت منو */
 body.nav-top .bottomnav{display:none}
 body.nav-bottom .tabs{display:none}
-/* ===== حالت چت: هدر کوچک تا چت تمام‌صفحه به نظر برسد ===== */
-body.chat-active{padding-top:10px}
-body.chat-active header{margin-bottom:10px;padding:9px 14px}
-body.chat-active header::before,body.chat-active header::after{display:none}
-body.chat-active header .brand-mark{width:34px;height:34px;border-radius:10px}
-body.chat-active header .brand-mark svg{width:19px;height:19px}
-body.chat-active header h1{font-size:16px}
-body.chat-active header .tagline{display:none}
-body.chat-active .tabs{margin-bottom:10px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-body.chat-active .tabs::-webkit-scrollbar{display:none}
-body.chat-active .tabs .tab{flex:0 0 auto;min-width:auto}
+/* ===== حالت چت تمام‌صفحه (مثل کلود): چرمِ اپ پنهان، چت روی کل صفحه ===== */
+body.chat-active{overflow:hidden}
+body.chat-active header,body.chat-active .tabs,body.chat-active .bottomnav{display:none!important}
+body.chat-active #page-chat.active{position:fixed;inset:0;z-index:70;margin:0;display:flex;background:var(--bg)}
+body.chat-active #page-chat .chat-card{flex:1;min-height:0;display:flex;margin:0;border:none;border-radius:0;padding:0;background:transparent;height:auto;overflow:visible}
+body.chat-active #page-chat .card-body{flex:1;min-height:0;display:flex;padding:0!important}
+body.chat-active #page-chat #chatRoot{flex:1;min-height:0;display:flex}
 body.nav-bottom{padding-bottom:100px}
 /* ===== نوار ناوبری پایین + دکمه‌ی وسط ===== */
-.bottomnav{position:fixed;left:0;right:0;bottom:0;z-index:80;display:flex;align-items:flex-end;justify-content:space-around;gap:2px;background:rgba(20,30,42,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:9px 6px calc(9px + env(safe-area-inset-bottom));box-shadow:0 -6px 22px rgba(0,0,0,.35)}
+.bottomnav{position:fixed;left:0;right:0;bottom:0;z-index:80;display:flex;align-items:flex-end;justify-content:space-around;gap:2px;background:var(--glass);backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);border-top:1px solid var(--line);padding:9px 6px calc(9px + env(safe-area-inset-bottom));box-shadow:0 -6px 22px rgba(0,0,0,.35)}
 .tab.bnav{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;background:transparent;border:none;color:var(--muted);font-family:inherit;cursor:pointer;padding:2px;border-radius:10px;transition:color .18s;-webkit-tap-highlight-color:transparent}
 .tab.bnav .bn-ico{width:46px;height:27px;display:flex;align-items:center;justify-content:center;border-radius:20px;transition:background .2s}
 .tab.bnav .bn-ico svg{width:21px;height:21px;display:block}
@@ -1161,7 +1158,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <button type="button" class="quick-btn" style="background:rgba(63,185,163,.14);border-color:var(--teal-dim)" onclick="startPlatePhoto()">📷 تشخیص غذا از عکس بشقاب</button>
   </div>
   <input type="file" id="platePhoto" accept="image/*" style="display:none" onchange="handlePlatePhoto(this)">
-  <div id="visionStatus" style="display:none;margin-top:10px;font-size:12.5px;line-height:1.8;padding:11px 13px;border-radius:12px;background:linear-gradient(135deg,#16212e,#1b2938);border:1px solid var(--teal-dim);color:var(--fg)"></div>
+  <div id="visionStatus" style="display:none;margin-top:10px;font-size:12.5px;line-height:1.8;padding:11px 13px;border-radius:12px;background:linear-gradient(135deg,var(--panel),var(--panel-2));border:1px solid var(--teal-dim);color:var(--ink)"></div>
   <div id="frequentPanelCalc" style="display:none;margin-top:10px">
     <div id="frequentMealsBoxCalc" class="frequent-box"></div>
   </div>
@@ -1818,7 +1815,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۴.۰</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۴.۱</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3798,6 +3795,7 @@ function renderOverview(){
 function switchTab(name,btn){
   // هماهنگ‌سازی وضعیت فعال در هر دو نوار (بالا و پایین) بر اساس data-tab
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.getAttribute('data-tab')===name));
+  if(name!=='chat') _lastNonChatTab=name;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const pg=document.getElementById('page-'+name); if(pg) pg.classList.add('active');
   document.body.classList.toggle('chat-active', name==='chat');
@@ -5110,7 +5108,7 @@ function renderMacroDetail(){
   const omega3Label = m.omega3>=1.3?'زیاد 🐟':m.omega3>=0.5?'متوسط':'کم';
   let h='';
   // ---- بخش ۱: ارزش غذایی اصلی (کارت‌های رنگی) ----
-  h+=`<div style="background:linear-gradient(135deg,#16212e,#1b2938);border:1px solid var(--teal-dim);border-radius:12px;padding:14px;margin-bottom:10px">
+  h+=`<div style="background:linear-gradient(135deg,var(--panel),var(--panel-2));border:1px solid var(--teal-dim);border-radius:12px;padding:14px;margin-bottom:10px">
     <div style="font-weight:800;color:var(--teal);font-size:13.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px">🍎 ارزش غذایی این وعده</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
       ${nutrCell('کربوهیدرات کل',fmt(m.carb),'گ','#5b8fd6')}
@@ -5121,7 +5119,7 @@ function renderMacroDetail(){
     <div style="font-size:10.5px;color:var(--muted);margin-top:8px;line-height:1.7">کربوهیدرات خالص (کل منهای فیبر) بیشترین اثر را روی قند دارد. فیبر بیشتر = جذب قند کندتر.</div>
   </div>`;
   // ---- بخش ۲: چربی‌ها ----
-  h+=`<div style="background:linear-gradient(135deg,#16212e,#1b2938);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px">
+  h+=`<div style="background:linear-gradient(135deg,var(--panel),var(--panel-2));border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px">
     <div style="font-weight:800;color:var(--teal);font-size:13.5px;margin-bottom:10px">🥑 انواع چربی</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
       ${nutrCell('چربی کل',fmt(m.fat),'گ','#9a86e0')}
@@ -5139,7 +5137,7 @@ function renderMacroDetail(){
     // مواد معدنی
     const minRows=Object.keys(MIN_INFO).filter(k=>m.micro.min[k]>0);
     if(minRows.length){
-      h+=`<div style="background:linear-gradient(135deg,#16212e,#1b2938);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px">
+      h+=`<div style="background:linear-gradient(135deg,var(--panel),var(--panel-2));border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px">
         <div style="font-weight:800;color:var(--teal);font-size:13.5px;margin-bottom:10px">⛏️ مواد معدنی</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">`;
       minRows.forEach(k=>{ h+=miniRow(MIN_INFO[k][0],fmt(m.micro.min[k]),MIN_INFO[k][1]); });
@@ -5148,7 +5146,7 @@ function renderMacroDetail(){
     // ویتامین‌ها
     const vitRows=Object.keys(VIT_INFO).filter(k=>m.micro.vit[k]>0);
     if(vitRows.length){
-      h+=`<div style="background:linear-gradient(135deg,#16212e,#1b2938);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px">
+      h+=`<div style="background:linear-gradient(135deg,var(--panel),var(--panel-2));border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px">
         <div style="font-weight:800;color:var(--teal);font-size:13.5px;margin-bottom:10px">💊 ویتامین‌ها</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">`;
       vitRows.forEach(k=>{ h+=miniRow(VIT_INFO[k][0],fmt(m.micro.vit[k]),VIT_INFO[k][1]); });
@@ -5160,7 +5158,7 @@ function renderMacroDetail(){
     <b style="color:var(--teal)">🩸 ارتباط با آزمایش خون:</b> HDL و تری‌گلیسیرید مستقیماً از چربی غذا نمی‌آیند — بدن آن‌ها را می‌سازد. نکته‌ی مهم: <b style="color:var(--ink)">تری‌گلیسیرید بیشتر از قند و کربوهیدرات اضافی بالا می‌رود</b> تا از چربی. پس برای تری‌گلیسیرید پایین‌تر، کم کردن قند مهم‌تر از کم کردن چربی است.</div>`;
   // ---- بخش ۶: برچسب‌ها ----
   if(m.tags && m.tags.length){
-    h+=`<div style="background:linear-gradient(135deg,#16212e,#1b2938);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:6px">
+    h+=`<div style="background:linear-gradient(135deg,var(--panel),var(--panel-2));border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:6px">
       <div style="font-weight:800;color:var(--teal);font-size:13.5px;margin-bottom:8px">✅ منبع خوبی است از:</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px">`;
     m.tags.slice(0,8).forEach(t=>{ h+=`<span style="background:var(--teal-dim);color:#cdeee6;border-radius:20px;padding:5px 12px;font-size:11.5px;font-weight:600">${t}</span>`; });
@@ -9518,13 +9516,18 @@ function LAB_AI_ANALYSIS_PROMPT(ctx){
 }
 function labAiFmt(text){
   const esc=s=>String(s).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+  // قالب‌بندی درون‌خطی: **پررنگ** و `کد` (بدون lookbehind برای سازگاری iOS)
+  const inl=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`([^`]+?)`/g,'<code style="background:rgba(127,127,127,.14);padding:1px 5px;border-radius:5px;font-size:.92em">$1</code>');
   const lines=String(text||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
   return lines.map(l=>{
+    // سرتیتر markdown (### ...)
+    const hd=l.match(/^#{1,4}\s+(.+)$/);
+    if(hd) return `<div style="font-weight:800;color:var(--teal);font-size:13px;margin:11px 0 3px">${inl(hd[1])}</div>`;
     if(/^(🔎|⚠️|✅|🩺|📊|🧪|🍽️|🏃|📌|💡)/.test(l))
-      return `<div style="font-weight:800;color:var(--teal);font-size:12.8px;margin:11px 0 3px">${esc(l)}</div>`;
+      return `<div style="font-weight:800;color:var(--teal);font-size:12.8px;margin:11px 0 3px">${inl(l)}</div>`;
     if(/^[•\-]/.test(l))
-      return `<div style="margin:3px 0;padding-right:2px">${esc(l)}</div>`;
-    return `<div style="margin:3px 0">${esc(l)}</div>`;
+      return `<div style="margin:3px 0;padding-right:2px">${inl(l)}</div>`;
+    return `<div style="margin:3px 0">${inl(l)}</div>`;
   }).join('');
 }
 function renderLabAiPanel(){
@@ -9544,7 +9547,7 @@ function renderLabAiPanel(){
   const last=aiLastGet('labs');
   const stale=(last && last.hash && last.hash!==curHash);
   const hasKey=hasAnyKey(sectionProvider('labanalysis'));
-  let h=`<div style="margin-top:16px;padding:13px;border:1px solid var(--teal-dim);border-radius:12px;background:linear-gradient(135deg,#16212e,#1b2938)">
+  let h=`<div style="margin-top:16px;padding:13px;border:1px solid var(--teal-dim);border-radius:12px;background:linear-gradient(135deg,var(--panel),var(--panel-2))">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px">
       <div style="font-weight:800;color:var(--teal);font-size:13px">🤖 تحلیل هوش مصنوعی <span style="color:var(--muted);font-weight:600;font-size:10.5px">· ${faDigits(ctx.date||'')}</span></div>
       <div style="display:flex;gap:6px">
@@ -9636,7 +9639,7 @@ function renderAiHistoryTab(){
   let h='';
   // کارتِ «حافظه‌ی دستیار» — چیزهایی که با گذر زمان یاد گرفته
   if(mem.length){
-    h+=`<div style="border:1px solid var(--teal-dim);border-radius:13px;padding:12px 13px;margin-bottom:12px;background:linear-gradient(135deg,#16212e,#1b2938)">
+    h+=`<div style="border:1px solid var(--teal-dim);border-radius:13px;padding:12px 13px;margin-bottom:12px;background:linear-gradient(135deg,var(--panel),var(--panel-2))">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <div style="font-weight:800;color:var(--teal);font-size:13px">🧠 حافظه‌ی دستیار <span style="color:var(--muted);font-weight:600;font-size:10px">(${faDigits(mem.length)} نکته)</span></div>
         <button type="button" class="mini-btn" onclick="aiMemoryClear()">پاک‌کردن</button>
@@ -9694,14 +9697,20 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   #page-chat .chat-card>.card-body{flex:1;min-height:0;display:flex}
   #page-chat #chatRoot{flex:1;min-height:0;display:flex}
   .chatx{position:relative;display:flex;flex-direction:column;flex:1;min-height:0;width:100%}
-  .chatx-top{display:flex;align-items:center;gap:9px;padding-bottom:11px;border-bottom:1px solid var(--line);margin-bottom:12px}
-  .chatx-burger{flex:0 0 auto;width:40px;height:40px;border-radius:13px;border:1px solid var(--line);background:linear-gradient(160deg,rgba(63,185,163,.14),var(--field));color:var(--teal);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
-  .chatx-burger:active{transform:scale(.92)}
-  .chatx-tt{flex:1;min-width:0;display:flex;align-items:center;gap:6px;cursor:pointer;overflow:hidden}
-  .chatx-tt b{font-size:14.5px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .chatx-tt .pen{flex:0 0 auto;color:var(--muted);font-size:11px;opacity:.7}
-  .chatx-title-inp{flex:1;min-width:0;background:var(--field);border:1.5px solid var(--teal);border-radius:10px;padding:8px 11px;font-family:inherit;font-size:13.5px;color:var(--ink)}
-  .chat-msgs{flex:1 1 auto;min-height:120px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:14px;padding:6px 2px 4px}
+  /* ── نوار بالای شیشه‌ای (مثل کلود) ── */
+  .chatx-appbar{position:sticky;top:0;z-index:6;flex:0 0 auto;direction:ltr;display:flex;align-items:center;gap:6px;padding:calc(8px + env(safe-area-inset-top)) 10px 8px;background:var(--glass);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);border-bottom:1px solid var(--glass-brd)}
+  .cxa-btn{flex:0 0 auto;width:38px;height:38px;border-radius:11px;border:none;background:transparent;color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.14s;-webkit-tap-highlight-color:transparent}
+  .cxa-btn:hover{background:rgba(127,127,127,.12)}
+  .cxa-btn:active{transform:scale(.88)}
+  .cxa-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .cxa-center{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;overflow:hidden;padding:0 4px}
+  .cxa-logo{flex:0 0 auto;width:26px;height:26px;border-radius:8px;background:linear-gradient(145deg,var(--teal),var(--teal-dim));display:flex;align-items:center;justify-content:center;box-shadow:0 3px 9px rgba(63,185,163,.3)}
+  .cxa-logo svg{width:16px;height:16px;display:block}
+  .cxa-ttl{min-width:0;font-size:13.5px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cxa-pen{flex:0 0 auto;color:var(--muted);font-size:10px;opacity:.55}
+  .chatx-title-inp{flex:1;min-width:0;background:var(--field);border:1.5px solid var(--teal);border-radius:10px;padding:8px 11px;font-family:inherit;font-size:13.5px;color:var(--ink);text-align:center;direction:rtl}
+  /* ── ناحیه‌ی پیام‌ها (اسکرول) ── */
+  .chat-msgs{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:15px;padding:16px 14px 12px;width:100%;max-width:840px;margin:0 auto}
   .chat-row{display:flex;flex-direction:column;max-width:90%}
   .chat-row.me{align-self:flex-start;align-items:flex-start}
   .chat-row.ai{align-self:flex-end;align-items:flex-end}
@@ -9717,26 +9726,31 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .chat-act{background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:8px;width:28px;height:28px;font-size:12.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.13s}
   .chat-act:active{transform:scale(.9)}
   .chat-act:hover{color:var(--teal);border-color:var(--teal-dim)}
-  .chat-dock{flex:0 0 auto;margin-top:12px;background:linear-gradient(180deg,rgba(255,255,255,.02),transparent);border:1px solid var(--line);border-radius:22px;padding:9px 9px 8px;box-shadow:0 6px 22px rgba(0,0,0,.22)}
+  /* ── داک پایینِ شیشه‌ای (همیشه چسبیده به پایین) ── */
+  .chat-dock{flex:0 0 auto;position:sticky;bottom:0;z-index:6;width:100%;padding:9px 12px calc(10px + env(safe-area-inset-bottom));background:var(--glass);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);border-top:1px solid var(--glass-brd)}
+  .chat-capsule{max-width:840px;margin:0 auto;background:var(--field);border:1px solid var(--line);border-radius:26px;padding:8px 8px 7px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+  .chat-capsule-row{display:flex;align-items:center;gap:5px;padding:2px 2px 0}
   .chat-attach-preview{display:flex;gap:7px;flex-wrap:wrap;padding:2px 4px 8px}
   .chat-attach-preview .ap{position:relative;background:var(--field);border:1px solid var(--line);border-radius:11px;padding:5px 26px 5px 9px;font-size:11px;color:var(--ink);display:flex;align-items:center;gap:6px}
   .chat-attach-preview .ap img{width:26px;height:26px;border-radius:6px;object-fit:cover}
   .chat-attach-preview .ap .rm{position:absolute;top:2px;left:3px;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:13px;line-height:1}
-  .chat-inline{display:flex;gap:9px;align-items:flex-end}
-  .chat-inline textarea{flex:1;resize:none;background:transparent;border:none;padding:8px 10px;font-family:inherit;font-size:14px;color:var(--ink);line-height:1.7;max-height:130px;outline:none}
-  .chat-send{flex:0 0 auto;width:44px;height:44px;border-radius:50%;border:none;background:linear-gradient(145deg,var(--teal),var(--teal-dim));color:#fff;font-size:19px;cursor:pointer;box-shadow:0 4px 14px rgba(63,185,163,.45);transition:.14s}
+  .chat-inline textarea{width:100%;resize:none;background:transparent;border:none;padding:9px 12px 6px;font-family:inherit;font-size:15px;color:var(--ink);line-height:1.7;max-height:140px;outline:none}
+  .chat-inline textarea::placeholder{color:var(--muted);opacity:.8}
+  .chat-send{flex:0 0 auto;width:38px;height:38px;border-radius:50%;border:none;background:linear-gradient(145deg,var(--teal),var(--teal-dim));color:#fff;font-size:17px;cursor:pointer;box-shadow:0 3px 11px rgba(63,185,163,.4);transition:.14s;display:flex;align-items:center;justify-content:center}
   .chat-send:active{transform:scale(.9)}
-  .chat-send.stop{background:linear-gradient(145deg,#e06666,#c0504d);box-shadow:0 4px 14px rgba(224,102,102,.45)}
-  .chat-tools{display:flex;align-items:center;gap:5px;padding:8px 4px 2px;flex-wrap:wrap}
-  .chat-tool{flex:0 0 auto;width:36px;height:36px;border-radius:11px;border:1px solid var(--line);background:var(--field);color:var(--teal);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.14s}
+  .chat-send.stop{background:linear-gradient(145deg,#e06666,#c0504d);box-shadow:0 3px 11px rgba(224,102,102,.4)}
+  /* دکمه‌های ابزار: مینیمال و شیک مثل کلود */
+  .chat-tool{flex:0 0 auto;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.14s;-webkit-tap-highlight-color:transparent}
+  .chat-tool:hover{background:rgba(127,127,127,.1);border-color:var(--muted)}
   .chat-tool:active{transform:scale(.9)}
   .chat-tool.on{background:linear-gradient(145deg,var(--teal),var(--teal-dim));color:#fff;border-color:transparent;animation:chatPulse 1.4s infinite}
   @keyframes chatPulse{0%,100%{box-shadow:0 0 0 0 rgba(63,185,163,.5)}50%{box-shadow:0 0 0 7px rgba(63,185,163,0)}}
-  .chat-seg{flex:1 1 auto;display:flex;justify-content:flex-end;gap:6px;min-width:0}
-  .chat-pill{display:inline-flex;align-items:center;gap:5px;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:6px 11px;font-size:11.5px;font-weight:700;color:var(--ink);cursor:pointer;transition:.14s;white-space:nowrap}
+  .chat-spring{flex:1 1 auto}
+  .chat-pill{display:inline-flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--line);border-radius:16px;padding:6px 12px;font-size:11.5px;font-weight:700;color:var(--ink);cursor:pointer;transition:.14s;white-space:nowrap}
+  .chat-pill:hover{background:rgba(127,127,127,.08)}
   .chat-pill:active{transform:scale(.96)}
   .chat-pill .cap{color:var(--muted);font-weight:600;font-size:10px}
-  .chat-pill.spd{gap:4px}
+  .chat-pill.spd{gap:5px}
   .chat-pill.spd .dot{width:6px;height:6px;border-radius:50%;background:var(--teal)}
   .chat-pill.spd.fast .dot{background:var(--amber)}
   .chatx-drawer{position:fixed;top:0;bottom:0;left:0;width:82%;max-width:340px;background:linear-gradient(180deg,var(--panel),var(--bg));border-right:1px solid var(--line);z-index:140;transform:translateX(-102%);transition:transform .26s cubic-bezier(.4,0,.2,1);overflow-y:auto;padding:16px 14px;box-shadow:8px 0 30px rgba(0,0,0,.5)}
@@ -9768,17 +9782,22 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   @keyframes chatOrb{0%,100%{box-shadow:0 0 0 0 rgba(63,185,163,.45);transform:scale(1)}50%{box-shadow:0 0 0 22px rgba(63,185,163,0);transform:scale(1.05)}}
   .chat-live .st{font-size:13px;color:var(--ink);font-weight:700;min-height:20px;text-align:center}
   .chat-live .tx{font-size:11.5px;color:var(--muted);text-align:center;min-height:16px;max-width:280px}
-  /* ===== چیدمان «مثل کلود»: پاسخ تمام‌عرض بدون حباب، پیام کاربر در حباب ===== */
-  .chatx.lay-claude .chat-msgs{gap:20px}
+  /* ===== چیدمان «مثل کلود»: پاسخ تمام‌عرض و ساده با برچسب، پیام کاربر در حباب نرم ===== */
+  .chatx.lay-claude .chat-msgs{gap:22px;max-width:760px}
   .chatx.lay-claude .chat-row.ai{align-self:stretch;max-width:100%;align-items:stretch}
-  .chatx.lay-claude .chat-row.ai .chat-b{background:none;border:none;box-shadow:none;padding:2px 2px;border-radius:0;line-height:2.05}
-  .chatx.lay-claude .chat-row.me{max-width:85%}
-  .chatx.lay-claude .chat-row.me .chat-b{border-radius:16px;border-bottom-right-radius:6px}
-  /* ===== چیدمان «مثل ChatGPT»: ردیف‌های تمام‌عرض با پس‌زمینه‌ی متفاوت هر نقش ===== */
-  .chatx.lay-gpt .chat-msgs{gap:0;padding:0}
-  .chatx.lay-gpt .chat-row{max-width:100%;align-self:stretch;align-items:stretch;padding:14px 12px;border-bottom:1px solid var(--line)}
+  .chatx.lay-claude .chat-row.ai::before{content:'✦ دیابوت';display:block;font-size:10.5px;font-weight:800;color:var(--teal);margin-bottom:7px;letter-spacing:.3px}
+  .chatx.lay-claude .chat-row.ai .chat-b{background:none;border:none;box-shadow:none;padding:0;border-radius:0;line-height:2.1;font-size:14px}
+  .chatx.lay-claude .chat-row.me{max-width:86%}
+  .chatx.lay-claude .chat-row.me .chat-b{background:var(--field);color:var(--ink);border:1px solid var(--line);border-radius:18px;border-bottom-right-radius:6px;box-shadow:none}
+  /* ===== چیدمان «مثل ChatGPT»: ردیف‌های تمام‌عرض با پس‌زمینه و برچسبِ نقش ===== */
+  .chatx.lay-gpt .chat-msgs{gap:0;padding:0;max-width:100%}
+  .chatx.lay-gpt .chat-row{max-width:100%;align-self:stretch;align-items:stretch;padding:16px 16px}
+  .chatx.lay-gpt .chat-row+.chat-row{border-top:1px solid var(--line)}
   .chatx.lay-gpt .chat-row.ai{background:linear-gradient(160deg,var(--panel-2),var(--panel))}
   .chatx.lay-gpt .chat-row.me{background:transparent}
+  .chatx.lay-gpt .chat-row::before{display:block;font-size:11px;font-weight:800;margin-bottom:7px;letter-spacing:.2px}
+  .chatx.lay-gpt .chat-row.me::before{content:'🧑 تو';color:var(--muted)}
+  .chatx.lay-gpt .chat-row.ai::before{content:'🤖 دیابوت';color:var(--teal)}
   .chatx.lay-gpt .chat-b{background:none!important;border:none!important;box-shadow:none!important;padding:0!important;color:var(--ink)!important;border-radius:0!important;max-width:100%}
   .chatx.lay-gpt .chat-b .cimg{margin-top:6px}
   .chatx.lay-gpt .chat-acts{margin-top:8px}
@@ -9796,6 +9815,8 @@ function chatBubble(m,idx){ const me=m.role==='user';
 }
 function chatAutoGrow(t){ t.style.height='auto'; t.style.height=Math.min(130,t.scrollHeight)+'px'; }
 function renderChatMessages(c){ const mb=document.getElementById('chatMsgs'); if(!mb)return; mb.innerHTML=c.messages.map((m,i)=>chatBubble(m,i)).join(''); mb.scrollTop=mb.scrollHeight; }
+let _lastNonChatTab='home';
+function chatGoBack(){ switchTab(_lastNonChatTab||'home'); }
 function openChatDrawer(){ const d=document.getElementById('chatDrawer'),s=document.getElementById('chatScrim'); if(d)d.classList.add('open'); if(s)s.classList.add('open'); }
 function closeChatDrawer(){ const d=document.getElementById('chatDrawer'),s=document.getElementById('chatScrim'); if(d)d.classList.remove('open'); if(s)s.classList.remove('open'); }
 function chatEditTitle(){
@@ -9820,26 +9841,31 @@ function renderChatTab(){
   const spd=c.speed==='fast'?'fast':'smart';
   const lay=getChatLayout();
   let h=`<div class="chatx lay-${lay}">
-    <div class="chatx-top">
-      <button type="button" class="chatx-burger" onclick="openChatDrawer()" title="گفتگوها">☰</button>
-      <div class="chatx-tt" id="chatTitleWrap" onclick="chatEditTitle()"><b>${escVision(c.title||'گفتگوی جدید')}</b><span class="pen">✏️</span></div>
-      <button type="button" class="chatx-burger" onclick="chatNew()" title="گفتگوی جدید" style="font-size:20px">＋</button>
+    <div class="chatx-appbar">
+      <button type="button" class="cxa-btn" onclick="openChatDrawer()" title="گفتگوها" aria-label="گفتگوها"><svg viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/></svg></button>
+      <div class="cxa-center" id="chatTitleWrap" onclick="chatEditTitle()">
+        <span class="cxa-logo"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 2.4S4.8 9.7 4.8 14.8a7.2 7.2 0 1 0 14.4 0C19.2 9.7 12 2.4 12 2.4Z" fill="#fff"/></svg></span>
+        <span class="cxa-ttl">${escVision(c.title||'گفتگوی جدید')}</span><span class="cxa-pen">✏️</span>
+      </div>
+      <button type="button" class="cxa-btn" onclick="chatNew()" title="گفتگوی جدید" aria-label="گفتگوی جدید"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
+      <button type="button" class="cxa-btn" onclick="chatGoBack()" title="بازگشت به برنامه" aria-label="بازگشت به برنامه"><svg viewBox="0 0 24 24"><path d="M3 11.4 12 4l9 7.4"/><path d="M5.5 10v9.5h13V10"/></svg></button>
     </div>`;
-  if(!hasKey) h+=`<div style="color:var(--amber);font-size:12px;margin:0 2px 8px">⚠️ برای «${escVision(PROVIDER_NAMES[prov]||prov)}» کلید نداری — <b onclick="gotoVisionSettings()" style="cursor:pointer;text-decoration:underline">تنظیمات</b> یا سرویس را عوض کن.</div>`;
+  if(!hasKey) h+=`<div style="color:var(--amber);font-size:12px;padding:9px 14px 0;max-width:840px;margin:0 auto">⚠️ برای «${escVision(PROVIDER_NAMES[prov]||prov)}» کلید نداری — <b onclick="gotoVisionSettings()" style="cursor:pointer;text-decoration:underline">تنظیمات</b> یا سرویس را عوض کن.</div>`;
   h+=`<div class="chat-msgs" id="chatMsgs"></div>
     <div class="chat-dock">
       <div class="chat-attach-preview" id="chatAttachPrev" style="display:none"></div>
-      <div class="chat-inline">
-        <textarea id="chatInput" rows="1" placeholder="از دیابوت بپرس…" oninput="chatAutoGrow(this)"></textarea>
-        <button type="button" class="chat-send" id="chatSendBtn" onclick="chatSend()">➤</button>
-      </div>
-      <div class="chat-tools">
-        <button type="button" class="chat-tool" onclick="chatAttachMenu()" title="پیوست">＋</button>
-        <button type="button" class="chat-tool" id="chatMicBtn" onclick="chatVoiceInput()" title="گفتار به متن">🎙️</button>
-        <button type="button" class="chat-tool" onclick="chatLiveOpen()" title="گفتگوی صوتی زنده">📞</button>
-        <div class="chat-seg">
-          <button type="button" class="chat-pill" onclick="chatProviderMenu()" title="سرویس"><span class="cap">سرویس</span><b>${escVision(PROVIDER_NAMES[prov]||prov)}</b></button>
+      <div class="chat-capsule">
+        <div class="chat-inline">
+          <textarea id="chatInput" rows="1" placeholder="از دیابوت بپرس…" oninput="chatAutoGrow(this)"></textarea>
+        </div>
+        <div class="chat-capsule-row">
+          <button type="button" class="chat-tool" onclick="chatAttachMenu()" title="پیوست">+</button>
+          <button type="button" class="chat-pill" onclick="chatProviderMenu()" title="سرویس"><b>${escVision(PROVIDER_NAMES[prov]||prov)}</b></button>
           <button type="button" class="chat-pill spd ${spd==='fast'?'fast':''}" onclick="chatToggleSpeed()" title="حالت"><span class="dot"></span><b>${spd==='fast'?'سریع':'دقیق'}</b></button>
+          <span class="chat-spring"></span>
+          <button type="button" class="chat-tool" id="chatMicBtn" onclick="chatVoiceInput()" title="گفتار به متن">🎙️</button>
+          <button type="button" class="chat-tool" onclick="chatLiveOpen()" title="گفتگوی صوتی زنده">📞</button>
+          <button type="button" class="chat-send" id="chatSendBtn" onclick="chatSend()">➤</button>
         </div>
       </div>
     </div>
@@ -10277,12 +10303,12 @@ function ensureAiAdvCss(){
   .aiadv-hero{display:flex;align-items:center;gap:11px;padding:4px 2px 12px;border-bottom:1px solid var(--line);margin-bottom:12px}
   .aiadv-robot{width:54px;height:54px;flex:0 0 auto;filter:drop-shadow(0 5px 14px rgba(63,185,163,.5))}
   .aiadv-htext{flex:1;min-width:0}
-  .aiadv-headline{font-weight:800;font-size:14px;line-height:1.5;color:#eafffb;letter-spacing:-.2px}
+  .aiadv-headline{font-weight:800;font-size:14px;line-height:1.5;color:var(--ink);letter-spacing:-.2px}
   .aiadv-sub{font-size:10px;color:var(--muted);margin-top:3px;font-weight:700}
   .aiadv-chip{display:inline-block;margin-top:7px;font-size:11px;font-weight:800;padding:3px 11px;border-radius:20px}
   .aiadv-score{flex:0 0 auto;width:58px;height:58px;position:relative}
   .aiadv-ring{width:100%;height:100%;border-radius:50%}
-  .aiadv-ring::after{content:'';position:absolute;inset:5px;border-radius:50%;background:#16212e}
+  .aiadv-ring::after{content:'';position:absolute;inset:5px;border-radius:50%;background:var(--panel)}
   .aiadv-scnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1;font-weight:800;font-size:20px;line-height:1}
   .aiadv-sclbl{font-size:8px;color:var(--muted);font-weight:700;margin-top:1px}
   .aiadv-ts{font-size:10.5px;color:var(--muted);margin-bottom:11px;line-height:1.6}
@@ -10351,9 +10377,9 @@ function renderHealthAiPanel(scope){
   const box=document.getElementById(meta.mount); if(!box) return;
   ensureAiAdvCss();
   if(!aiAdvOn(scope)){
-    box.innerHTML=`<div style="margin-top:14px;padding:13px;border:1px solid var(--teal-dim);border-radius:14px;background:linear-gradient(135deg,#16212e,#1b2938)">
+    box.innerHTML=`<div style="margin-top:14px;padding:13px;border:1px solid var(--teal-dim);border-radius:14px;background:linear-gradient(135deg,var(--panel),var(--panel-2))">
       <div class="aiadv-empty"><div class="aiadv-robot">${aiRobotSVG()}</div>
-        <div style="flex:1"><div style="font-weight:800;font-size:13.5px;color:#eafffb">${escVision(meta.title)}</div>
+        <div style="flex:1"><div style="font-weight:800;font-size:13.5px;color:var(--ink)">${escVision(meta.title)}</div>
         <div style="color:var(--muted);font-size:11.3px;line-height:1.75;margin-top:3px">تحلیلِ همه‌ی داده‌هایت (قند، تغذیه، انسولین، دارو، ورزش، آزمایش) با امتیاز کنترل و توصیه‌های عملی. اختیاری، دستی و کش‌شده تا توکن هدر نرود.</div></div>
       </div>
       <button type="button" class="quick-btn" style="margin-top:10px;width:100%" onclick="setAiAdv('${scope}',true);renderHealthAiPanel('${scope}')">✨ فعال‌کردن دستیار</button>
@@ -10365,7 +10391,7 @@ function renderHealthAiPanel(scope){
   const last=aiLastGet(scopeKey(scope));
   const stale=(last && curHash && last.hash && last.hash!==curHash);
   const hasKey=hasAnyKey(sectionProvider(scope));
-  let h=`<div style="margin-top:14px;padding:13px;border:1px solid var(--teal-dim);border-radius:14px;background:linear-gradient(135deg,#16212e,#1b2938)">
+  let h=`<div style="margin-top:14px;padding:13px;border:1px solid var(--teal-dim);border-radius:14px;background:linear-gradient(135deg,var(--panel),var(--panel-2))">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px">
       <div style="font-weight:800;color:var(--teal);font-size:13px">🤖 ${escVision(meta.title)} <span style="color:var(--muted);font-weight:600;font-size:10.5px">· ${escVision(snap.label)}</span></div>
       <div style="display:flex;gap:6px">
