@@ -1866,7 +1866,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۶.۳</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۶.۴</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4695,7 +4695,7 @@ async function loadProfile(){
 // کلیدهای localStorage که در بکاپ گنجانده می‌شوند (نقشه‌ی داده‌ی کاربر).
 // از مقادیر رشته‌ای مستقیم استفاده می‌شود چون بعضی از این const‌ها (CGMKEY, BGKEY, ...)
 // پایین‌تر در فایل تعریف شده‌اند و ارجاع به خودِ متغیر اینجا TDZ می‌دهد.
-const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','custom_foods_v1','custom_meds_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1'];
+const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','custom_foods_v1','custom_meds_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1'];
 
 async function renderProfileTab(){
   // فرم پروفایل (c-profile) حالا خودش داخل این تب است و وضعیت ذخیره‌شده را نشان می‌دهد.
@@ -7645,6 +7645,11 @@ function removeVisionKeyAt(prov,i){ const a=getVisionKeys(prov); if(i>=0&&i<a.le
 function getVisionKeyBackup(prov){ return getVisionKeys(prov)[1]||''; }   // سازگاری با کدهای قدیمی
 function setVisionKeyBackup(prov,key){ if(key) addVisionKey(prov,key); }
 function hasAnyKey(prov){ return getVisionKeys(prov).length>0; }
+// فریزِ سرویس: کلید ذخیره می‌ماند ولی این سرویس هرگز صدا زده نمی‌شود (نه در فالبک، نه خودکار) تا توکن الکی مصرف نشود
+const AI_FROZEN_KEY='ai_frozen_v1';
+function aiFrozen(prov){ try{ const o=JSON.parse(localStorage.getItem(AI_FROZEN_KEY)||'{}'); return !!o[prov]; }catch(e){ return false; } }
+function setAiFrozen(prov,val){ try{ const o=JSON.parse(localStorage.getItem(AI_FROZEN_KEY)||'{}'); if(val) o[prov]=1; else delete o[prov]; localStorage.setItem(AI_FROZEN_KEY,JSON.stringify(o)); }catch(e){} }
+function toggleVisionFreeze(prov){ setAiFrozen(prov,!aiFrozen(prov)); if(typeof renderVisionSetting==='function') renderVisionSetting(); }
 // نشانِ مسدودیِ جغرافیایی در همین سشن (برای اینکه بعد از اولین خطای لوکیشن، دیگر بی‌جهت درخواست نفرستد)
 window._aiGeoBlock=window._aiGeoBlock||{};
 function aiGeoBlocked(prov){ return !!window._aiGeoBlock[prov]; }
@@ -7683,7 +7688,7 @@ async function aiFallbackChain(primary, makeCall, opts){
     if(code===401||code===403||/invalid.*key|api[_ ]?key/i.test(m)) return 'کلید نامعتبر';
     return code?('خطای '+faDigits(String(code))):'خطا'; };
   for(const p of order){
-    if(tried[p] || !hasAnyKey(p) || aiGeoBlocked(p) || (vision && !PROVIDER_VISION[p])) continue;
+    if(tried[p] || !hasAnyKey(p) || aiFrozen(p) || aiGeoBlocked(p) || (vision && !PROVIDER_VISION[p])) continue;
     tried[p]=1; nTried++;
     if(onProv){ try{ onProv(p, !first); }catch(_){} }
     first=false;
@@ -7709,7 +7714,7 @@ const AI_SECTION_KEY='ai_section_provider_v1';
 function sectionProvider(section){ try{ const o=JSON.parse(localStorage.getItem(AI_SECTION_KEY)||'{}'); const p=o[section]; return VISION_PROVIDERS.includes(p)?p:getVisionProvider(); }catch(e){ return getVisionProvider(); } }
 function setSectionProvider(section,prov){ try{ const o=JSON.parse(localStorage.getItem(AI_SECTION_KEY)||'{}'); if(prov) o[section]=prov; else delete o[section]; localStorage.setItem(AI_SECTION_KEY, JSON.stringify(o)); }catch(e){} }
 // سرویس بخش را برمی‌گرداند؛ اگر بخش تصویری است و سرویس عکس ندارد، به یک سرویسِ عکس‌دار برمی‌گردد
-function sectionProviderVision(section){ let p=sectionProvider(section); if(!PROVIDER_VISION[p]){ p=['gemini','claude','openai'].find(x=>hasAnyKey(x))||'gemini'; } return p; }
+function sectionProviderVision(section){ let p=sectionProvider(section); if(!PROVIDER_VISION[p]||aiFrozen(p)){ p=['gemini','claude','openai'].find(x=>hasAnyKey(x)&&!aiFrozen(x)&&PROVIDER_VISION[x])||p; } return p; }
 function escVision(s){ return String(s==null?'':s).replace(/[<>"'&]/g,c=>({'<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','&':'&amp;'}[c])); }
 // خطاهای خام سرویس‌های هوش مصنوعی → پیام فارسیِ واضح و کاربرپسند (برای همه‌ی بخش‌ها)
 function aiErrorInfo(e){
@@ -8225,9 +8230,9 @@ function renderVisionSetting(){
   let h=`<div style="font-weight:800;font-size:12.5px;color:var(--teal);margin-bottom:4px">۱) کلیدهای API</div>
     <div style="font-size:10.5px;color:var(--muted);line-height:1.7;margin-bottom:8px">برای هر سرویس می‌توانی <b>هر تعداد کلید</b> بگذاری. به‌ترتیب امتحان می‌شوند؛ هر کلید که به لیمیت بخورد خودکار می‌رود سراغ کلید بعدی، و اگر سهمیه‌ی کل یک سرویس پر شود سرِ همه‌ی برنامه به سرویس بعدیِ دارای کلید سوییچ می‌کند.</div>`;
   VISION_PROVIDERS.forEach(p=>{
-    const keys=getVisionKeys(p); const n=keys.length; const has=n>0;
-    h+=`<div style="border:1px solid ${has?'var(--teal-dim)':'var(--line)'};border-radius:11px;padding:9px 10px;margin-bottom:8px;background:${has?'rgba(63,185,163,.07)':'transparent'}">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><b style="font-size:12.5px;color:${has?'var(--teal)':'var(--fg)'}">${PROVIDER_NAMES[p]}</b>${has?`<span style="font-size:10.5px;color:var(--teal)">✓ ${faDigits(String(n))} کلید</span>`:''}${!PROVIDER_VISION[p]?'<span style="font-size:9.5px;color:var(--muted)">(بدون عکس)</span>':''}<span style="flex:1"></span><span style="font-size:9.5px;color:var(--muted)">${PROVIDER_HINTS[p]}</span></div>`;
+    const keys=getVisionKeys(p); const n=keys.length; const has=n>0; const frozen=aiFrozen(p);
+    h+=`<div style="border:1px solid ${frozen?'var(--amber)':has?'var(--teal-dim)':'var(--line)'};border-radius:11px;padding:9px 10px;margin-bottom:8px;background:${frozen?'rgba(224,163,85,.08)':has?'rgba(63,185,163,.07)':'transparent'}">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><b style="font-size:12.5px;color:${frozen?'var(--amber)':has?'var(--teal)':'var(--fg)'}">${PROVIDER_NAMES[p]}</b>${has?`<span style="font-size:10.5px;color:var(--teal)">✓ ${faDigits(String(n))} کلید</span>`:''}${frozen?'<span style="font-size:10px;color:var(--amber);font-weight:700">🧊 فریز</span>':''}${!PROVIDER_VISION[p]?'<span style="font-size:9.5px;color:var(--muted)">(بدون عکس)</span>':''}<span style="flex:1"></span>${has?`<button type="button" class="mini-btn" onclick="toggleVisionFreeze('${p}')" title="${frozen?'خارج کردن از فریز':'فریز: کلید بماند ولی استفاده نشود'}" style="${frozen?'border-color:var(--amber);color:var(--amber)':''}">${frozen?'▶️ فعال‌سازی':'🧊 فریز'}</button>`:''}</div>${frozen?'<div style="font-size:10px;color:var(--amber);line-height:1.7;margin-bottom:6px">این سرویس فریز است: کلیدش محفوظ می‌ماند ولی نه به‌عنوان فالبک صدا زده می‌شود و نه توکنی مصرف می‌کند.</div>':''}`;
     keys.forEach((k,i)=>{
       const mask=k.length>=4?('●●●●●●●● '+k.slice(-4)):('●●●● '+k);
       h+=`<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:11.5px">
@@ -10245,6 +10250,76 @@ function chatActive(o){ o=o||chatLoad(); let c=o.chats.find(x=>x.id===o.activeId
 function chatNew(){ const o=chatLoad(); const c={id:'c'+Date.now().toString(36), title:'گفتگوی جدید', ts:Date.now(), provider:sectionProvider('chat'), speed:'smart', messages:[]}; o.chats.unshift(c); o.activeId=c.id; chatSave(o); renderChatTab(); }
 function chatDelete(id){ if(!confirm('این گفتگو حذف شود؟')) return; const o=chatLoad(); o.chats=o.chats.filter(x=>x.id!==id); if(o.activeId===id)o.activeId=(o.chats[0]||{}).id||null; chatSave(o); renderChatTab(); }
 function chatSelect(id){ const o=chatLoad(); o.activeId=id; chatSave(o); renderChatTab(); }
+// ── فولدرها/گروه‌های چت ─────────────────────────────
+const FOLDER_COLORS=['#3fb9a3','#e0685f','#9a86e0','#5b8fd6','#e0a355','#6fd39a','#e0699b','#7e9cff','#54c7c0','#b5622a'];
+function chatFolders(o){ o=o||chatLoad(); return Array.isArray(o.folders)?o.folders:[]; }
+function chatDrawerRefresh(){ const el=document.getElementById('chatDrawerList'); if(el) el.innerHTML=chatDrawerListHTML(); }
+function chatDrawerListHTML(o,c){
+  o=o||chatLoad(); c=c||chatActive(o);
+  const folders=chatFolders(o); const collapse=o.folderCollapse||{};
+  const activeId=c&&c.id;
+  const row=x=>`<div class="chatx-litem ${x.id===activeId?'on':''}" onclick="chatSelect('${x.id}');closeChatDrawer()">
+      <span class="ci">💬</span>
+      <div class="ct"><div class="cn">${escVision(x.title||'گفتگو')}</div><div class="cd">${aiTimeStr(x.ts)}</div></div>
+      <button type="button" class="cx" onclick="event.stopPropagation();chatMoveMenu('${x.id}')" title="انتقال به فولدر">📁</button>
+      <button type="button" class="cx" onclick="event.stopPropagation();chatDelete('${x.id}')" title="حذف">🗑</button>
+    </div>`;
+  let h='';
+  folders.forEach(f=>{
+    const col=f.color||FOLDER_COLORS[0];
+    const items=o.chats.filter(x=>x.folderId===f.id);
+    const open=!collapse[f.id];
+    h+=`<div class="chatx-folder">
+      <div class="chatx-fhead" onclick="chatToggleFolder('${f.id}')">
+        <span class="fchev">${open?'▾':'◂'}</span>
+        <span class="ffolder" style="color:${col}">📁</span>
+        <span class="fname">${escVision(f.name)}</span>
+        <span class="fcount">${faDigits(String(items.length))}</span>
+        <span class="fsp"></span>
+        <button type="button" class="cx" onclick="event.stopPropagation();chatFolderColor('${f.id}')" title="رنگ فولدر">🎨</button>
+        <button type="button" class="cx" onclick="event.stopPropagation();chatFolderRename('${f.id}')" title="تغییر نام">✏️</button>
+        <button type="button" class="cx" onclick="event.stopPropagation();chatFolderDelete('${f.id}')" title="حذف فولدر">🗑</button>
+      </div>`;
+    if(open){ h+=`<div class="chatx-fbody">`; if(items.length){ items.forEach(x=>{ h+=row(x); }); } else { h+=`<div class="chatx-fempty">خالی — یک گفتگو را با 📁 به اینجا بیاور</div>`; } h+=`</div>`; }
+    h+=`</div>`;
+  });
+  const ung=o.chats.filter(x=>!x.folderId || !folders.some(f=>f.id===x.folderId));
+  if(folders.length){ h+=`<div class="chatx-fhead plain"><span class="fchev" style="opacity:0">▾</span><span class="ffolder">🗂</span><span class="fname">بدون فولدر</span><span class="fcount">${faDigits(String(ung.length))}</span><span class="fsp"></span></div>`; }
+  ung.forEach(x=>{ h+=row(x); });
+  return h;
+}
+function chatToggleFolder(id){ const o=chatLoad(); o.folderCollapse=o.folderCollapse||{}; o.folderCollapse[id]=!o.folderCollapse[id]; chatSave(o); chatDrawerRefresh(); }
+function chatFolderNew(){ chatPrompt('📁 نام فولدر جدید','',name=>{ const o=chatLoad(); if(!Array.isArray(o.folders))o.folders=[]; o.folders.push({id:'f'+Date.now().toString(36),name,color:FOLDER_COLORS[o.folders.length%FOLDER_COLORS.length]}); chatSave(o); chatDrawerRefresh(); }); }
+function chatFolderRename(id){ const o=chatLoad(); const f=chatFolders(o).find(x=>x.id===id); if(!f) return; chatPrompt('✏️ نام جدید فولدر',f.name,name=>{ const o2=chatLoad(); const f2=chatFolders(o2).find(x=>x.id===id); if(f2){ f2.name=name; chatSave(o2); chatDrawerRefresh(); } }); }
+function chatFolderDelete(id){ if(!confirm('این فولدر حذف شود؟ گفتگوهایش حذف نمی‌شوند و به «بدون فولدر» برمی‌گردند.')) return; const o=chatLoad(); o.folders=chatFolders(o).filter(x=>x.id!==id); o.chats.forEach(x=>{ if(x.folderId===id) delete x.folderId; }); chatSave(o); chatDrawerRefresh(); }
+function chatFolderColor(id){ const o=chatLoad(); const f=chatFolders(o).find(x=>x.id===id); if(!f) return; chatCloseRename();
+  const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='chatRenameBg'; bg.onclick=e=>{ if(e.target===bg) chatCloseRename(); };
+  bg.innerHTML=`<div class="chat-rename" role="dialog"><h4>🎨 رنگ فولدر «${escVision(f.name)}»</h4>
+    <div class="chat-colorgrid">${FOLDER_COLORS.map(col=>`<button type="button" class="chat-csw${col===(f.color||'')?' on':''}" style="background:${col}" onclick="chatFolderSetColor('${id}','${col}')" aria-label="رنگ"></button>`).join('')}</div></div>`;
+  document.body.appendChild(bg);
+}
+function chatFolderSetColor(id,col){ const o=chatLoad(); const f=chatFolders(o).find(x=>x.id===id); if(f){ f.color=col; chatSave(o); } chatCloseRename(); chatDrawerRefresh(); }
+function chatMoveMenu(chatId){ const o=chatLoad(); const folders=chatFolders(o); const ch=o.chats.find(x=>x.id===chatId); if(!ch) return;
+  const opts=[{ic:!ch.folderId?'🟢':'🗂',label:'بدون فولدر',on:!ch.folderId,act:()=>chatSetFolder(chatId,null)}];
+  folders.forEach(f=>opts.push({ic:ch.folderId===f.id?'🟢':'📁',label:f.name,on:ch.folderId===f.id,act:()=>chatSetFolder(chatId,f.id)}));
+  opts.push({ic:'➕',label:'فولدر جدید…',on:false,act:()=>chatFolderNewFor(chatId)});
+  chatSheet('انتقال گفتگو به فولدر', opts);
+}
+function chatSetFolder(chatId,fid){ const o=chatLoad(); const ch=o.chats.find(x=>x.id===chatId); if(ch){ if(fid) ch.folderId=fid; else delete ch.folderId; chatSave(o); } chatDrawerRefresh(); }
+function chatFolderNewFor(chatId){ chatPrompt('📁 نام فولدر جدید','',name=>{ const o=chatLoad(); if(!Array.isArray(o.folders))o.folders=[]; const id='f'+Date.now().toString(36); o.folders.push({id,name,color:FOLDER_COLORS[o.folders.length%FOLDER_COLORS.length]}); const ch=o.chats.find(x=>x.id===chatId); if(ch) ch.folderId=id; chatSave(o); chatDrawerRefresh(); }); }
+// پاپ‌آپ ورودی متن عمومی (بازاستفاده از استایلِ تغییر نام)
+function chatPrompt(title, initial, onOk){ chatCloseRename();
+  const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='chatRenameBg'; bg.onclick=e=>{ if(e.target===bg) chatCloseRename(); };
+  bg.innerHTML=`<div class="chat-rename" role="dialog" aria-modal="true"><h4>${escVision(title)}</h4>
+    <input id="chatPromptInp" class="chat-rename-inp" type="text" maxlength="40" placeholder="نام…">
+    <div class="chat-rename-btns"><button type="button" class="crn-btn crn-cancel" onclick="chatCloseRename()">انصراف</button><button type="button" class="crn-btn crn-ok" id="chatPromptOk">ذخیره</button></div></div>`;
+  document.body.appendChild(bg);
+  const inp=document.getElementById('chatPromptInp'); inp.value=initial||'';
+  const ok=()=>{ const v=(inp.value||'').trim(); chatCloseRename(); if(v) onOk(v); };
+  document.getElementById('chatPromptOk').onclick=ok;
+  inp.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); ok(); } else if(e.key==='Escape'){ chatCloseRename(); } };
+  setTimeout(()=>{ inp.focus(); inp.select(); },60);
+}
 function chatSetProvider(sel){ const o=chatLoad(); const c=chatActive(o); if(c){ c.provider=sel.value; chatSave(o); } }
 function chatSetSpeed(sel){ const o=chatLoad(); const c=chatActive(o); if(c){ c.speed=sel.value; chatSave(o); } }
 function buildChatSystemPrompt(){
@@ -10423,6 +10498,22 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .chatx-litem .cn{font-size:12.7px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .chatx-litem .cd{font-size:10px;color:var(--muted);margin-top:2px}
   .chatx-litem .cx{flex:0 0 auto;background:transparent;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:4px}
+  .chatx-newbtn.ghost{background:var(--field);color:var(--teal);border:1px solid var(--teal-dim);padding:9px 11px}
+  .chatx-folder{margin-bottom:4px}
+  .chatx-fhead{display:flex;align-items:center;gap:7px;padding:8px 8px;border-radius:11px;cursor:pointer;user-select:none}
+  .chatx-fhead:hover{background:rgba(255,255,255,.03)}
+  .chatx-fhead.plain{cursor:default;margin-top:6px}
+  .chatx-fhead .fchev{flex:0 0 auto;font-size:11px;color:var(--muted);width:12px}
+  .chatx-fhead .ffolder{flex:0 0 auto;font-size:15px}
+  .chatx-fhead .fname{font-size:12.7px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+  .chatx-fhead .fcount{flex:0 0 auto;font-size:10px;color:var(--muted);background:var(--field);border-radius:20px;padding:1px 7px;min-width:18px;text-align:center}
+  .chatx-fhead .fsp{flex:1}
+  .chatx-fhead .cx{flex:0 0 auto;background:transparent;border:none;color:var(--muted);font-size:12.5px;cursor:pointer;padding:3px}
+  .chatx-fbody{padding-right:10px;border-right:2px solid var(--line);margin:2px 4px 6px 0}
+  .chatx-fempty{font-size:10.5px;color:var(--muted);padding:8px 6px}
+  .chat-colorgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:6px 0 2px}
+  .chat-csw{width:100%;aspect-ratio:1;border-radius:50%;border:2px solid transparent;cursor:pointer}
+  .chat-csw.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--ink)}
   .chat-sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150;display:flex;align-items:flex-end;justify-content:center;animation:chatFade .18s}
   @keyframes chatFade{from{opacity:0}}
   .chat-sheet{width:100%;max-width:520px;background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px 20px 0 0;padding:14px 14px 20px;box-shadow:0 -8px 30px rgba(0,0,0,.5);animation:chatUp .22s cubic-bezier(.4,0,.2,1)}
@@ -10547,14 +10638,10 @@ function renderChatTab(){
   // کشوی گفتگوها (سمت چپ)
   h+=`<div class="chatx-scrim" id="chatScrim" onclick="closeChatDrawer()"></div>
     <div class="chatx-drawer" id="chatDrawer">
-      <div class="chatx-dhead"><b>💬 گفتگوها</b><button type="button" class="chatx-newbtn" onclick="chatNew();closeChatDrawer()">➕ جدید</button></div>`;
-  o.chats.forEach(x=>{
-    h+=`<div class="chatx-litem ${x.id===c.id?'on':''}" onclick="chatSelect('${x.id}');closeChatDrawer()">
-      <span class="ci">💬</span>
-      <div class="ct"><div class="cn">${escVision(x.title||'گفتگو')}</div><div class="cd">${aiTimeStr(x.ts)}</div></div>
-      <button type="button" class="cx" onclick="event.stopPropagation();chatDelete('${x.id}')" title="حذف">🗑</button>
-    </div>`;
-  });
+      <div class="chatx-dhead"><b>💬 گفتگوها</b><span style="flex:1"></span>
+        <button type="button" class="chatx-newbtn ghost" onclick="chatFolderNew()" title="فولدر جدید">📁﹢</button>
+        <button type="button" class="chatx-newbtn" onclick="chatNew();closeChatDrawer()">➕ جدید</button></div>
+      <div id="chatDrawerList">${chatDrawerListHTML(o,c)}</div>`;
   h+=`</div>`;
   box.innerHTML=h;
   _chatAttach=[]; chatRenderAttach();
@@ -10602,7 +10689,7 @@ function chatProviderMenu(){ const o=chatLoad(); const c=chatActive(o); if(!c) r
   const withKeys=VISION_PROVIDERS.filter(p=>hasAnyKey(p));
   const list=(withKeys.length?withKeys:VISION_PROVIDERS);
   chatSheet('انتخاب سرویس هوش مصنوعی', list.map(p=>({
-    ic:p===cur?'🟢':'⚪', label:PROVIDER_NAMES[p], sub:(hasAnyKey(p)?'کلید موجود':'بدون کلید')+(PROVIDER_VISION[p]?' · پشتیبانی عکس':''), on:p===cur,
+    ic:aiFrozen(p)?'🧊':(p===cur?'🟢':'⚪'), label:PROVIDER_NAMES[p]+(aiFrozen(p)?' (فریز)':''), sub:(aiFrozen(p)?'فریز — از تنظیمات فعال کن':(hasAnyKey(p)?'کلید موجود':'بدون کلید'))+(PROVIDER_VISION[p]?' · پشتیبانی عکس':''), on:p===cur,
     act:()=>{ c.provider=p; chatSave(o); renderChatTab(); }
   })));
 }
@@ -10627,6 +10714,7 @@ async function chatSend(){
   const o=chatLoad(); const c=chatActive(o); if(!c) return;
   const prov=c.provider||sectionProvider('chat');
   if(!hasAnyKey(prov)){ uiToast('برای این سرویس کلید نداری'); return; }
+  if(aiFrozen(prov)){ uiToast('«'+(PROVIDER_NAMES[prov]||prov)+'» فریز است؛ از تنظیمات فعالش کن یا سرویس دیگری انتخاب کن'); return; }
   if(!navigator.onLine){ uiToast('آفلاین هستی'); return; }
   const imgs=_chatAttach.filter(a=>a.kind==='image').map(a=>({mediaType:a.mediaType,b64:a.b64,dataURL:a.dataURL}));
   const files=_chatAttach.filter(a=>a.kind==='file');
