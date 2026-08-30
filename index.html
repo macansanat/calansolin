@@ -1865,7 +1865,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۷.۱</b> · انتشار: ۱۴۰۵/۰۶/۰۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۷.۲</b> · انتشار: ۱۴۰۵/۰۶/۰۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4560,6 +4560,7 @@ const CHEF_SYS="تو یک سرآشپزِ حرفه‌ای و متخصصِ تغذ�
 const COACH_SYS="تو یک مربیِ ورزشیِ حرفه‌ای و قهرمانِ المپیک هستی که با ورزش، متابولیسم و حساسیت به انسولینِ بیمارانِ دیابتی کاملاً آشناست. برنامه‌ی ورزشیِ واقع‌بینانه و مرحله‌به‌مرحله برای بهبودِ متابولیسم و کنترلِ قندِ کاربر بده (متناسب با شرایط و سطحِ او). سخت‌گیر و پیگیر باش: هدف‌های هفتگیِ روشن بگذار و نقشِ ناظر داشته باش که هفته‌ی بعد از کاربر حساب می‌کشد که ورزش‌ها را انجام داده یا نه. ایمنی: پیش از ورزشِ سنگین—به‌ویژه با قندِ خیلی بالا/پایین یا عارضه‌ی قلبی/چشمی—هشدار بده و به پزشک ارجاع بده.\n"
   +"وقتی برنامه‌ی نهایی آماده و موردِ تأییدِ کاربر شد، در «آخرین خطِ» پاسخ دقیقاً این نشانه را بگذار (اعدادِ داخلِ JSON انگلیسی، بدونِ توضیح، در یک خط): @@WORKOUT@@ {\"title\":\"نام برنامه\",\"exercises\":[{\"n\":\"نام حرکت\",\"pose\":\"یکی از این‌ها: walk/march/squat/chair/pushup/plank/heel/stretch/leg_raise/breath/neck\",\"set\":\"مثل ۳ ست × ۱۰ یا ۱۰ دقیقه\",\"desc\":\"روشِ انجامِ کوتاه\",\"benefit\":\"فایده برای متابولیسم/قند\"}]} — برای «pose» نزدیک‌ترین حرکت را از همان فهرست انتخاب کن. این خط را هیچ‌وقت توضیح نده و تا نهایی‌نشدن نگذار.";
 const CHAT_ROLES=[
+  {id:'gp',     name:'پزشک عمومی',                   emoji:'🩹', cat:'doc', desc:'اول با او؛ می‌گوید به کدام متخصص بروی', sys:'تو یک «پزشکِ عمومیِ» باتجربه و به‌روز هستی. کارِ تو این است که «پیش از مراجعه به متخصص‌ها» با بیمار صحبت کنی: شرح‌حال، علائم و داده‌هایش را بسنجی، اقدام‌های اولیه و آزمایش‌های لازم را بگویی، و مهم‌تر از همه راهنمایی کنی که برای این مشکل باید به کدام پزشکِ متخصص (یا چند متخصص) مراجعه کند و با چه اولویتی. علائمِ خطر و موارد اورژانسی را صریح مشخص کن. '+CHAT_MASTERY+' آموزشی بمان و تشخیص و تجویزِ نهایی را به پزشکِ معالج بسپار.'},
   {id:'endo',   name:'متخصص غدد و داخلی',            emoji:'🩺', cat:'doc', desc:'دیابت، تیروئید، هورمون، انسولین', sys:docSys('غدد و داخلی','مدیریتِ انسولین و قندِ خون، مقاومت به انسولین، تیروئید و هورمون‌ها، تنظیمِ داروهای دیابت.')},
   {id:'cardio', name:'متخصص قلب و عروق',              emoji:'🫀', cat:'doc', desc:'فشار، چربی، خطر قلبی', sys:docSys('قلب و عروق','فشارِ خون، چربیِ خون، خطرِ قلبی‌عروقیِ دیابت، داروهای قلبی و تداخل‌ها، پیشگیری از سکته.')},
   {id:'hepato', name:'متخصص کبد (هپاتولوژی)',        emoji:'🫄', cat:'doc', desc:'کبد چرب، آنزیم کبدی', sys:docSys('کبد (هپاتولوژی)','کبدِ چربِ دیابتی (NAFLD/NASH)، آنزیم‌های کبدی، اثرِ داروها بر کبد.')},
@@ -4573,13 +4574,22 @@ const CHAT_ROLES=[
   {id:'pulmo',  name:'متخصص ریه',                    emoji:'🫁', cat:'doc', desc:'تنفس، آپنه خواب', sys:docSys('ریه','بیماری‌های تنفسی، آپنه‌ی خواب و عفونتِ ریه در دیابت.')},
   {id:'psych',  name:'روانپزشک',                     emoji:'🧩', cat:'doc', desc:'افسردگی، اضطراب، خواب', sys:docSys('روانپزشکی','افسردگی و اضطرابِ همراهِ دیابت، دیسترسِ دیابت، خواب و انگیزه.')},
   {id:'neonat', name:'متخصص نوزادان',                emoji:'👶', cat:'doc', desc:'نوزاد و بارداری دیابتی', sys:docSys('نوزادان','اثرِ دیابتِ بارداری بر نوزاد، هیپوگلیسمیِ نوزاد و مراقبت‌های اولیه.')},
+  {id:'allspec',name:'پزشک متخصص کل',                emoji:'🧬', cat:'doc', desc:'دانشِ همه‌ی تخصص‌ها یک‌جا', sys:'تو یک «پزشکِ فوقِ حرفه‌ایِ چندتخصصی» در تراز جهانی هستی که دانشِ همه‌ی تخصص‌ها را یک‌جا داری: غدد و داخلی، قلب و عروق، کلیه، کبد، چشم، اعصاب و مغز و اعصاب، خون، ریه، روان، اورولوژی، گوش‌وحلق‌وبینی و نوزادان. هر سوالِ پزشکیِ مرتبط با دیابت و عوارضش را از همه‌ی زاویه‌ها و به‌صورت یکپارچه پاسخ می‌دهی، تداخل‌ها و اثرِ متقابلِ سیستم‌ها را در نظر می‌گیری، به‌روز با ADA/WHO/EASD، دقیق، سخت‌گیر و بی‌خطا. '+CHAT_MASTERY+' اگر موضوعی نیاز به معاینه یا اقدامِ حضوریِ یک تخصصِ خاص دارد، آن را هم بگو. آموزشی بمان؛ دوزِ قطعیِ شخصی نده و تصمیمِ نهایی را به پزشکِ معالج بسپار.'},
+  {id:'planner',name:'برنامه‌ریزِ مسیرِ درمان',      emoji:'🗺️', cat:'flow', desc:'ترتیب مراجعه/کنفرانس را چارت می‌کند', sys:''/*در ادامه ست می‌شود*/},
   {id:'chef',   name:'سرآشپز حرفه‌ای',               emoji:'👨‍🍳', cat:'life', desc:'وعده‌ی رژیمی/کم‌کالری بساز', sys:CHEF_SYS},
   {id:'coach',  name:'مربی ورزش حرفه‌ای',            emoji:'🏅', cat:'life', desc:'برنامه‌ی ورزشی و پیگیریِ سخت‌گیرانه', sys:COACH_SYS},
   {id:'consultant', name:'مشاور دیابت',              emoji:'🧭', cat:'gen', desc:'راهنمای کلیِ متعادل', sys:'تو یک مشاورِ دیابتِ آرام، متعادل و عملگرا هستی: توضیحِ روشن، گام‌های کوچکِ عملی و بدونِ قضاوت. آموزشی بمان و برای تصمیمِ درمانی به پزشک ارجاع بده.'},
   {id:'strict', name:'ناظرِ سختگیر',                 emoji:'💪', cat:'gen', desc:'رُک و پاسخگو نگه‌دار', sys:'لحنِ تو سختگیر و پرتوقع است: رُک و بی‌تعارف؛ کوتاهی‌ها (ورزش‌نکردن، پرخوری، ثبت‌نکردن) را صریح تذکر بده و کاربر را پاسخگو نگه دار، ولی هرگز تحقیر نکن و همیشه یک قدمِ عملیِ جبران بده. آموزشی بمان.'},
   {id:'friend', name:'رفیق مهربان',                  emoji:'🤗', cat:'gen', desc:'روزهای سخت: حمایتگر', sys:'تو یک رفیقِ مهربان و امیدبخشی: گرم، همدل و حمایتگر. اول احساسِ کاربر را به رسمیت بشناس، از تلاش‌هایش تعریف کن، بعد یک قدمِ کوچک و شدنی پیشنهاد بده. آموزشی بمان.'}
 ];
-const CHAT_ROLE_CATS=[['doc','🩺 پزشکانِ متخصص'],['life','🌿 سبکِ زندگی'],['gen','🧭 عمومی']];
+const CHAT_ROLE_CATS=[['doc','🩺 پزشکان'],['flow','🗺️ برنامه‌ریزی و مسیر'],['life','🌿 سبکِ زندگی'],['gen','🧭 عمومی']];
+// سیستم‌پرامپتِ «برنامه‌ریزِ مسیرِ درمان» — بعد از تعریفِ CHAT_ROLES ست می‌شود (به شناسه‌ها نیاز دارد)
+(function(){ const p=CHAT_ROLES.find(r=>r.id==='planner'); if(!p) return;
+  const list=CHAT_ROLES.filter(r=>r.id!=='planner').map(r=>r.id+' ('+r.name+')').join('، ');
+  p.sys="تو «برنامه‌ریزِ مسیرِ درمان» هستی. کارِ تو «فقط» این است: با توجه به مشکلی که بیمار می‌گوید، خیلی سریع برنامه‌ریزی کنی که برای حلِ آن به چه کسانی و با چه «ترتیبی» مراجعه کند، کجا «کنفرانسِ» چندنفره لازم است، و «نتیجه/نظرِ» هر مرحله را باید نزدِ چه کسی ببرد. خودت تشخیص یا درمان یا تجویز نده؛ فقط مسیر، ترتیب و هماهنگی را بچین و کوتاه توضیح بده.\n"
+    +"نقش‌های در دسترس (حتماً از همین شناسه‌های انگلیسی استفاده کن): "+list+".\n"
+    +"در «آخرین خطِ» پاسخ دقیقاً این نشانه را بگذار (اعدادِ انگلیسی، یک خط، بدونِ توضیح): @@PLAN@@ {\"title\":\"موضوعِ بیمار\",\"steps\":[{\"role\":\"یک شناسه برای مرحله‌ی تک‌نفره\",\"roles\":[\"شناسه۱\",\"شناسه۲\"],\"why\":\"چرا این مرحله\",\"carry\":\"چه نتیجه/برگه‌ای را از مرحله‌ی قبل نزدِ این ببرد\"}]} — برای مرحله‌ی تک‌نفره فقط \"role\" و برای کنفرانس فقط \"roles\" را بگذار. این خط را هیچ‌وقت توضیح نده.";
+})();
 function chatRoleById(id){ return CHAT_ROLES.find(r=>r.id===id)||null; }
 function chatRolesOf(c){ c=c||chatActive(); const ids=(c&&Array.isArray(c.roles))?c.roles.filter(id=>chatRoleById(id)):[]; return ids; }
 // خلاصه‌ی نمایشیِ نقش(ها)ی یک گفتگو
@@ -10473,6 +10483,8 @@ function chatParseActions(text){
   if(meal&&meal.obj){ action={kind:'meal',data:meal.obj}; t=(t.slice(0,meal.start)+t.slice(meal.endAbs)).trim(); }
   const work=chatExtractMarker(t,'@@WORKOUT@@');
   if(work&&work.obj){ action={kind:'workout',data:work.obj}; t=(t.slice(0,work.start)+t.slice(work.endAbs)).trim(); }
+  const plan=chatExtractMarker(t,'@@PLAN@@');
+  if(plan&&plan.obj){ action={kind:'plan',data:plan.obj}; t=(t.slice(0,plan.start)+t.slice(plan.endAbs)).trim(); }
   return {text:t, action};
 }
 // کارتِ اقدام زیر پیامِ دستیار
@@ -10492,7 +10504,41 @@ function chatActionCard(m,idx){
     return `<div class="cact"><div class="cact-h">🏅 ${escVision(d.title||'برنامه‌ی ورزشی')} <span style="color:var(--muted);font-weight:600">(${faDigits(String(exs.length))} حرکت)</span></div>${lst?`<div class="cact-items">${lst}</div>`:''}
       <div class="cact-btns"><button type="button" class="cact-b" onclick="chatWorkoutAdd(${idx})">➕ افزودن به برنامه‌ی ورزشی من</button></div></div>`;
   }
+  if(a.kind==='plan'){ return chatPlanCard(m,idx); }
   return '';
+}
+// چارتِ مسیرِ درمان (برنامه‌ریز)
+function chatPlanCard(m,idx){
+  const d=(m&&m.action&&m.action.data)||{}; const steps=Array.isArray(d.steps)?d.steps:[];
+  let h=`<div class="cplan"><div class="cplan-h">🗺️ ${escVision(d.title||'مسیرِ پیشنهادیِ مراجعه')}</div>`;
+  steps.forEach((s,i)=>{
+    let ids=Array.isArray(s.roles)&&s.roles.length?s.roles:(s.role?[s.role]:[]); ids=ids.filter(id=>chatRoleById(id));
+    const conf=ids.length>1;
+    const icons=ids.map(id=>chatRoleById(id).emoji).join(' ');
+    const names=ids.map(id=>chatRoleById(id).name).join(' + ')||'—';
+    const last=i===steps.length-1;
+    h+=`<div class="cplan-step">
+      <div class="cplan-rail"><div class="cplan-num">${faDigits(String(i+1))}</div>${last?'':'<div class="cplan-line"></div>'}</div>
+      <div class="cplan-body">
+        <div class="cplan-role">${icons} ${escVision(names)}${conf?' <span class="cplan-tag">کنفرانس</span>':''}</div>
+        ${s.why?`<div class="cplan-why">${escVision(s.why)}</div>`:''}
+        ${s.carry?`<div class="cplan-carry">📎 ${escVision(s.carry)}</div>`:''}
+        ${ids.length?`<button type="button" class="cplan-btn" onclick="chatStartStep(${idx},${i})">شروعِ این مرحله ←</button>`:''}
+      </div></div>`;
+  });
+  h+=`</div>`; return h;
+}
+function chatStartStep(idx, si){
+  const c=chatActive(); const m=c&&c.messages&&c.messages[idx]; const d=m&&m.action&&m.action.data; if(!d) return;
+  const step=(d.steps||[])[si]; if(!step) return;
+  let ids=Array.isArray(step.roles)&&step.roles.length?step.roles:(step.role?[step.role]:[]); ids=ids.filter(id=>chatRoleById(id));
+  if(!ids.length){ uiToast('نقشِ نامعتبر'); return; }
+  const o=chatLoad(); const nid='c'+Date.now().toString(36);
+  const lead=ids.length>1?'کنفرانس':chatRoleById(ids[0]).name;
+  const title=(lead+(d.title?(' — '+d.title):'')).slice(0,50);
+  o.chats.unshift({id:nid,title,ts:Date.now(),provider:sectionProvider('chat'),speed:'smart',roles:ids,messages:[]});
+  o.activeId=nid; chatSave(o); window._roleAsked=nid; renderChatTab();
+  uiToast('✓ گفتگو با «'+lead+'» باز شد');
 }
 function chatMealAdd(idx,dest){
   const c=chatActive(); const m=c&&c.messages&&c.messages[idx]; const d=m&&m.action&&m.action.data; if(!d){ return; }
@@ -10725,6 +10771,19 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .cact-btns{display:flex;flex-wrap:wrap;gap:7px}
   .cact-b{background:linear-gradient(145deg,var(--teal),var(--teal-dim));border:none;color:#fff;border-radius:11px;padding:9px 13px;font-family:inherit;font-weight:800;font-size:12px;cursor:pointer}
   .cact-b.alt{background:var(--panel);color:var(--teal);border:1px solid var(--teal-dim)}
+  .cplan{margin-top:10px;background:var(--field);border:1px solid var(--teal-dim);border-radius:14px;padding:12px 12px 6px}
+  .cplan-h{font-size:13px;font-weight:800;color:var(--teal);margin-bottom:10px}
+  .cplan-step{display:flex;gap:10px}
+  .cplan-rail{display:flex;flex-direction:column;align-items:center;flex:0 0 auto}
+  .cplan-num{width:26px;height:26px;border-radius:50%;background:linear-gradient(145deg,var(--teal),var(--teal-dim));color:#fff;font-weight:800;font-size:12.5px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .cplan-line{width:2px;flex:1;background:var(--teal-dim);margin:2px 0;min-height:14px}
+  .cplan-body{flex:1;min-width:0;padding-bottom:12px}
+  .cplan-role{font-size:13px;font-weight:800;color:var(--ink);line-height:1.5}
+  .cplan-tag{font-size:9.5px;background:var(--violet);color:#fff;border-radius:20px;padding:1px 7px;font-weight:700;vertical-align:middle}
+  .cplan-why{font-size:11.5px;color:var(--muted);line-height:1.7;margin-top:3px}
+  .cplan-carry{font-size:11px;color:var(--amber);line-height:1.7;margin-top:4px;background:rgba(224,163,85,.1);border-radius:8px;padding:4px 8px}
+  .cplan-btn{margin-top:7px;background:var(--panel);border:1px solid var(--teal-dim);color:var(--teal);border-radius:10px;padding:7px 12px;font-family:inherit;font-weight:800;font-size:11.5px;cursor:pointer}
+  .cplan-btn:hover{background:var(--teal-dim);color:#fff}
   .chat-pill.role{background:rgba(63,185,163,.14);border-color:var(--teal-dim);max-width:180px}
   .chat-pill.role b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block;max-width:160px;vertical-align:bottom}
   .chat-welcome{max-width:520px;margin:16px auto;text-align:center;padding:26px 18px}
@@ -10992,7 +11051,7 @@ async function chatSend(){
   let _shown=0, _streamDone=false, _revealResolve=null;
   const _revealDone=new Promise(res=>{ _revealResolve=res; });
   // خطِ «@@SUGGEST@@» را از نمایش حذف کن (حتی وقتی نیمه‌کاره استریم می‌شود)
-  const stripSug=s=>String(s).replace(/@@(SUGGEST|MEAL|WORKOUT)@@[\s\S]*$/,'').replace(/\n*@[@A-Z]*$/,'');
+  const stripSug=s=>String(s).replace(/@@(SUGGEST|MEAL|WORKOUT|PLAN)@@[\s\S]*$/,'').replace(/\n*@[@A-Z]*$/,'');
   const paintReveal=()=>{ const b=bubble(); if(!b) return;
     const cur=(_shown<acc.length || !_streamDone)?'<span class="chat-cur"></span>':'';
     b.innerHTML=labAiFmt(stripSug(acc.slice(0,_shown)))+cur; if(mb) mb.scrollTop=mb.scrollHeight; };
