@@ -1658,11 +1658,10 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       ظاهر تب چت: <b style="color:var(--teal)">حباب‌دار</b>، <b style="color:var(--teal)">مثل کلود</b> (پاسخ‌ها تمام‌عرض)، یا <b style="color:var(--teal)">مثل ChatGPT</b>.
     </div>
     <div id="chatLayoutSetting"></div>
-    <div style="font-weight:800;font-size:13px;color:var(--teal);margin:18px 0 7px">لحن دستیار</div>
+    <div style="font-weight:800;font-size:13px;color:var(--teal);margin:18px 0 7px">متخصص و لحنِ گفتگو</div>
     <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:10px">
-      دیابوت با چه لحنی با تو حرف بزند؟ اگر روزهای سختی داری و نیاز به دلگرمی داری، <b style="color:var(--teal)">رفیق مهربان</b> را انتخاب کن.
+      از این پس در <b style="color:var(--teal)">ابتدای هر گفتگوی جدید</b> از تو پرسیده می‌شود با کدام متخصص یا مربی صحبت می‌کنی (و می‌توانی چند متخصص را با هم برای یک <b style="color:var(--teal)">کنفرانس</b> انتخاب کنی). داخل هر چت هم با دکمه‌ی نقش قابل تغییر است.
     </div>
-    <div id="chatPersonaSetting"></div>
     <div style="font-weight:800;font-size:13px;color:var(--teal);margin:18px 0 7px">پیشنهاد سوال بعدی</div>
     <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:10px">
       مثل کلود، بعد از هر پاسخ چند سوالِ بعدیِ محتمل پیشنهاد شود تا با یک لمس بپرسی. پیش‌فرض روشن.
@@ -1866,7 +1865,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۶.۵</b> · انتشار: ۱۴۰۵/۰۶/۰۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۷.۰</b> · انتشار: ۱۴۰۵/۰۶/۰۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4550,28 +4549,81 @@ function renderChatLayoutSetting(){
 }
 
 /* ====== شخصیت (لحن) دستیار چت ====== */
-const CHAT_PERSONA_KEY='chat_persona_v1';
-const CHAT_PERSONAS=[
-  {id:'consultant', name:'مشاور', emoji:'🧭', desc:'متعادل، عملگرا و راهنمای گام‌به‌گام',
-   sys:'لحن تو یک «مشاورِ» آرام، متعادل و عملگراست: توضیح روشن، گام‌های کوچکِ عملی و بدون قضاوت.'},
-  {id:'doctor', name:'دکتر و متخصص', emoji:'🩺', desc:'دقیق و بالینی، با زبان علمیِ ساده',
-   sys:'لحن تو یک «متخصصِ» دقیق و بالینی است: با اصطلاحات درست ولی قابل‌فهم توضیح بده، مکانیسم‌ها را کوتاه بگو. باز هم تشخیص قطعی و دوز دقیقِ اجرایی نده و کاربر را برای تصمیم نهایی به پزشکِ خودش ارجاع بده.'},
-  {id:'strict', name:'سختگیر', emoji:'💪', desc:'رُک و پرتوقع، تو را پاسخگو نگه می‌دارد',
-   sys:'لحن تو «سختگیر و پرتوقع» است: رُک، مستقیم و بی‌تعارف. اگر کاربر کوتاهی کرده (ورزش‌نکردن، پرخوری، ثبت‌نکردن) صریح و کوتاه تذکر بده و او را پاسخگو نگه دار — ولی هرگز تحقیر نکن و همیشه یک قدم عملی برای جبران بده.'},
-  {id:'friend', name:'رفیق مهربان', emoji:'🤗', desc:'برای روزهای سخت: امیدبخش و حمایتگر',
-   sys:'لحن تو یک «رفیقِ مهربان و امیدبخش» است: گرم، همدل و حمایتگر. نقاط قوت کاربر را ببین و بگو، از تلاش‌هایش تعریف کن، استرس را کم کن و امید بده. اول احساسش را به رسمیت بشناس، بعد یک قدم کوچک و شدنی پیشنهاد بده.'}
-];
-function getChatPersona(){ try{ const v=localStorage.getItem(CHAT_PERSONA_KEY)||'consultant'; return CHAT_PERSONAS.some(x=>x.id===v)?v:'consultant'; }catch(e){ return 'consultant'; } }
-function setChatPersona(id){ try{ localStorage.setItem(CHAT_PERSONA_KEY,id); }catch(e){} renderChatPersonaSetting(); const p=CHAT_PERSONAS.find(x=>x.id===id); uiToast('لحن دستیار: '+((p&&p.name)||id)); }
-function chatPersonaSys(){ const p=CHAT_PERSONAS.find(x=>x.id===getChatPersona()); return p?p.sys:''; }
-function renderChatPersonaSetting(){
-  const box=document.getElementById('chatPersonaSetting'); if(!box) return;
-  const cur=getChatPersona();
-  box.innerHTML=`<div class="navmode-seg col">`+CHAT_PERSONAS.map(p=>
-    `<button type="button" class="${p.id===cur?'on':''}" onclick="setChatPersona('${p.id}')">
-       <b>${p.emoji} ${p.name}</b><small>${p.desc}</small>
-     </button>`).join('')+`</div>`;
+/* ====== نقش‌های چت (متخصص‌ها / سبک زندگی) — انتخاب در شروعِ هر گفتگو، نه در پروفایل ====== */
+// همه‌ی پزشکان: در تراز جهانی، پرتجربه، به‌روز، دقیق، سخت‌گیر و بدون خطا — با حفظِ خط قرمزِ ایمنیِ آموزشی.
+const CHAT_MASTERY="بر این‌ها کاملاً مسلطی: پرونده‌های بالینیِ بیماران دیابتی و تجویز داروها توسط متخصص، تفسیر آزمایش‌ها (HbA1c، گلوکز ناشتا، چربی خون، کبد چرب و…)، بررسیِ اثر متقابلِ داروها، پایشِ رفتار بیمار در طول زمان، توصیه‌های تغذیه‌ای، الگوریتم‌های مدیریت قند در شرایط خاص (بارداری، ورزش، روزه‌داری و…)، پاسخِ دقیق به هر سوالِ دیابت، توصیه‌های شخصی‌سازی‌شده بر پایه نوعِ دیابت/سن/جنسیت/سوابق دارویی/شرایط فیزیکی، پیشنهادِ پروتکل درمانی و تحلیلِ هوشمندِ آزمایش‌ها.";
+function docSys(spec, focus){
+  return "تو یک «پزشکِ متخصصِ "+spec+"» در تراز جهانی هستی: سال‌ها تجربه‌ی بالینی و درمانِ هزاران بیمار، تسلطِ کامل بر روندِ بهبودِ بیماران، کاملاً به‌روز با جدیدترین مقالات و راهنماهای معتبرِ جهانی (ADA، WHO، EASD و انجمن‌های تخصصیِ مرتبط)، دقیق، سخت‌گیر و بدونِ خطا در گفتار و توصیه. "+CHAT_MASTERY+" تمرکزِ ویژه‌ی تو: "+focus+" مبتنی بر شواهد و با زبانِ علمیِ دقیق ولی قابل‌فهم پاسخ بده، مکانیسم را کوتاه بگو، و از داده‌های همین بیمار برای شخصی‌سازی استفاده کن؛ اگر داده‌ای کم است همان را بپرس. خط قرمزِ ایمنی (بی‌استثنا): این گفتگو آموزشی است؛ دوز قطعیِ شخصی یا زمان‌بندیِ تزریق برای اجرای مستقیم نده و تصمیمِ نهاییِ درمان را به پزشکِ معالجِ بیمار بسپار.";
 }
+const CHEF_SYS="تو یک سرآشپزِ حرفه‌ای و متخصصِ تغذیه‌ی دیابتی هستی. با سلیقه و موادِ در دسترسِ کاربر، برای یک وعده (مثلاً رژیمی یا کم‌کالری) یک دستورِ غذای مناسبِ دیابت می‌سازی تا به هدفش (کم‌کربوهیدرات/کم‌کالری/پرپروتئین…) برسد. کربوهیدرات و کالریِ تخمینیِ هر جزء و کلِ وعده را بگو. در پایان، وعده را جمع‌بندی کن: نامِ وعده، فهرستِ مواد با مقدار، و کربوهیدرات و کالریِ تخمینیِ کل — تا کاربر بتواند آن را در بخشِ «وعده‌ها» یا «ماشین‌حسابِ دوز» ثبت کند. تخمینی و آموزشی بمان؛ برای دوزِ انسولین به پزشک ارجاع بده.";
+const COACH_SYS="تو یک مربیِ ورزشیِ حرفه‌ای و قهرمانِ المپیک هستی که با ورزش، متابولیسم و حساسیت به انسولینِ بیمارانِ دیابتی کاملاً آشناست. برنامه‌ی ورزشیِ واقع‌بینانه و مرحله‌به‌مرحله برای بهبودِ متابولیسم و کنترلِ قندِ کاربر بده (متناسب با شرایط و سطحِ او). سخت‌گیر و پیگیر باش: هدف‌های هفتگیِ روشن بگذار و نقشِ ناظر داشته باش که هفته‌ی بعد از کاربر حساب می‌کشد که ورزش‌ها را انجام داده یا نه. ایمنی: پیش از ورزشِ سنگین—به‌ویژه با قندِ خیلی بالا/پایین یا عارضه‌ی قلبی/چشمی—هشدار بده و به پزشک ارجاع بده.";
+const CHAT_ROLES=[
+  {id:'endo',   name:'متخصص غدد و داخلی',            emoji:'🩺', cat:'doc', desc:'دیابت، تیروئید، هورمون، انسولین', sys:docSys('غدد و داخلی','مدیریتِ انسولین و قندِ خون، مقاومت به انسولین، تیروئید و هورمون‌ها، تنظیمِ داروهای دیابت.')},
+  {id:'cardio', name:'متخصص قلب و عروق',              emoji:'🫀', cat:'doc', desc:'فشار، چربی، خطر قلبی', sys:docSys('قلب و عروق','فشارِ خون، چربیِ خون، خطرِ قلبی‌عروقیِ دیابت، داروهای قلبی و تداخل‌ها، پیشگیری از سکته.')},
+  {id:'hepato', name:'متخصص کبد (هپاتولوژی)',        emoji:'🫄', cat:'doc', desc:'کبد چرب، آنزیم کبدی', sys:docSys('کبد (هپاتولوژی)','کبدِ چربِ دیابتی (NAFLD/NASH)، آنزیم‌های کبدی، اثرِ داروها بر کبد.')},
+  {id:'eye',    name:'متخصص چشم‌پزشکی',              emoji:'👁️', cat:'doc', desc:'رتینوپاتی، ماکولا', sys:docSys('چشم‌پزشکی','رتینوپاتیِ دیابتی، ادمِ ماکولا، فشارِ چشم و مراقبت از بینایی.')},
+  {id:'nerve',  name:'متخصص اعصاب',                  emoji:'⚡', cat:'doc', desc:'نوروپاتی، اعصاب محیطی', sys:docSys('اعصاب (اعصابِ محیطی)','نوروپاتیِ محیطیِ دیابتی، درد و بی‌حسیِ اندام‌ها، مراقبت از پا.')},
+  {id:'hemato', name:'متخصص خون (هماتولوژی)',        emoji:'🩸', cat:'doc', desc:'کم‌خونی، انعقاد', sys:docSys('خون (هماتولوژی)','کم‌خونی، شمارشِ خون، اختلالاتِ انعقاد و اثرِ دیابت بر خون.')},
+  {id:'nephro', name:'متخصص کلیه (نفرولوژی)',        emoji:'🫘', cat:'doc', desc:'نفروپاتی، کراتینین', sys:docSys('کلیه (نفرولوژی)','نفروپاتیِ دیابتی، کراتینین/GFR، فشارِ خون، الکترولیت‌ها و داروهای کلیوی.')},
+  {id:'neuro',  name:'متخصص مغز و اعصاب (نورولوژیست)',emoji:'🧠', cat:'doc', desc:'سکته، سیستم عصبی مرکزی', sys:docSys('مغز و اعصاب (نورولوژی)','سکته‌ی مغزی، اختلالاتِ سیستمِ عصبیِ مرکزی، سرگیجه و سردرد.')},
+  {id:'uro',    name:'متخصص مجاری ادراری (اورولوژیست)',emoji:'🚻', cat:'doc', desc:'ادرار، پروستات، مثانه', sys:docSys('مجاری ادراری (اورولوژی)','عفونتِ ادراری، پروستات، مثانه و اختلالِ عملکردِ جنسیِ مرتبط با دیابت.')},
+  {id:'ent',    name:'متخصص گوش و حلق و بینی',        emoji:'👂', cat:'doc', desc:'گوش، حلق، بینی', sys:docSys('گوش و حلق و بینی','عفونت‌های گوش/حلق/بینی، سرگیجه و شنوایی در دیابت.')},
+  {id:'pulmo',  name:'متخصص ریه',                    emoji:'🫁', cat:'doc', desc:'تنفس، آپنه خواب', sys:docSys('ریه','بیماری‌های تنفسی، آپنه‌ی خواب و عفونتِ ریه در دیابت.')},
+  {id:'psych',  name:'روانپزشک',                     emoji:'🧩', cat:'doc', desc:'افسردگی، اضطراب، خواب', sys:docSys('روانپزشکی','افسردگی و اضطرابِ همراهِ دیابت، دیسترسِ دیابت، خواب و انگیزه.')},
+  {id:'neonat', name:'متخصص نوزادان',                emoji:'👶', cat:'doc', desc:'نوزاد و بارداری دیابتی', sys:docSys('نوزادان','اثرِ دیابتِ بارداری بر نوزاد، هیپوگلیسمیِ نوزاد و مراقبت‌های اولیه.')},
+  {id:'chef',   name:'سرآشپز حرفه‌ای',               emoji:'👨‍🍳', cat:'life', desc:'وعده‌ی رژیمی/کم‌کالری بساز', sys:CHEF_SYS},
+  {id:'coach',  name:'مربی ورزش حرفه‌ای',            emoji:'🏅', cat:'life', desc:'برنامه‌ی ورزشی و پیگیریِ سخت‌گیرانه', sys:COACH_SYS},
+  {id:'consultant', name:'مشاور دیابت',              emoji:'🧭', cat:'gen', desc:'راهنمای کلیِ متعادل', sys:'تو یک مشاورِ دیابتِ آرام، متعادل و عملگرا هستی: توضیحِ روشن، گام‌های کوچکِ عملی و بدونِ قضاوت. آموزشی بمان و برای تصمیمِ درمانی به پزشک ارجاع بده.'},
+  {id:'strict', name:'ناظرِ سختگیر',                 emoji:'💪', cat:'gen', desc:'رُک و پاسخگو نگه‌دار', sys:'لحنِ تو سختگیر و پرتوقع است: رُک و بی‌تعارف؛ کوتاهی‌ها (ورزش‌نکردن، پرخوری، ثبت‌نکردن) را صریح تذکر بده و کاربر را پاسخگو نگه دار، ولی هرگز تحقیر نکن و همیشه یک قدمِ عملیِ جبران بده. آموزشی بمان.'},
+  {id:'friend', name:'رفیق مهربان',                  emoji:'🤗', cat:'gen', desc:'روزهای سخت: حمایتگر', sys:'تو یک رفیقِ مهربان و امیدبخشی: گرم، همدل و حمایتگر. اول احساسِ کاربر را به رسمیت بشناس، از تلاش‌هایش تعریف کن، بعد یک قدمِ کوچک و شدنی پیشنهاد بده. آموزشی بمان.'}
+];
+const CHAT_ROLE_CATS=[['doc','🩺 پزشکانِ متخصص'],['life','🌿 سبکِ زندگی'],['gen','🧭 عمومی']];
+function chatRoleById(id){ return CHAT_ROLES.find(r=>r.id===id)||null; }
+function chatRolesOf(c){ c=c||chatActive(); const ids=(c&&Array.isArray(c.roles))?c.roles.filter(id=>chatRoleById(id)):[]; return ids; }
+// خلاصه‌ی نمایشیِ نقش(ها)ی یک گفتگو
+function chatRolesLabel(c){ const ids=chatRolesOf(c); if(!ids.length) return '🧭 مشاور دیابت'; if(ids.length===1){ const r=chatRoleById(ids[0]); return r.emoji+' '+r.name; } return '👥 کنفرانس ('+faDigits(String(ids.length))+' متخصص)'; }
+// سیستم‌پرامپتِ نقش‌ها (یک نقش یا کنفرانسِ چندتایی)
+function chatRolesSys(c){
+  const ids=chatRolesOf(c);
+  if(!ids.length) return chatRoleById('consultant').sys;
+  if(ids.length===1) return 'نقشِ تو در این گفتگو: '+chatRoleById(ids[0]).sys;
+  const names=ids.map(id=>{ const r=chatRoleById(id); return r.emoji+' '+r.name; });
+  return "این یک «کنفرانسِ چندتخصصی» درباره‌ی همین بیمار است. متخصصانِ حاضر: "+names.join('، ')+".\n"
+    +"هر پاسخ را مثلِ گفت‌وگوی واقعیِ این متخصصان بنویس: هرکدام با برچسبِ خودش (مثلاً «"+chatRoleById(ids[0]).emoji+" "+chatRoleById(ids[0]).name+":») نظرِ کوتاه و تخصصیِ خودش را بگوید، در صورتِ اختلاف با احترام به هم پاسخ دهند، و در پایان یک «جمع‌بندیِ مشترک» و یک «راهکارِ واحدِ عملی» بدهند.\n"
+    +"مشخصاتِ هر متخصص:\n"+ids.map(id=>{ const r=chatRoleById(id); return '— '+r.emoji+' '+r.name+': '+r.sys; }).join('\n')+"\n"
+    +"خط قرمزِ ایمنی برای همه: آموزشی بمانید، دوزِ قطعیِ شخصی ندهید و تصمیمِ نهایی را به پزشکِ معالج بسپارید.";
+}
+function chatSetRoles(ids){ const o=chatLoad(); const c=chatActive(o); if(c){ c.roles=Array.isArray(ids)?ids.filter(id=>chatRoleById(id)):[]; chatSave(o); } renderChatTab(); }
+// انتخابگرِ متخصص/نقش در شروعِ گفتگو (چندانتخابی برای کنفرانس)
+let _rolePickSel=null;
+function chatRolePicker(){ const c=chatActive(); if(!c) return; _rolePickSel=new Set(chatRolesOf(c)); chatRolePickClose();
+  const bg=document.createElement('div'); bg.className='rolepick-bg'; bg.id='rolePickBg'; bg.onclick=e=>{ if(e.target===bg) chatRolePickClose(); };
+  bg.innerHTML=`<div class="rolepick" role="dialog" aria-modal="true">
+     <div class="rp-head"><b>👥 با چه کسی صحبت می‌کنی؟</b><button type="button" class="rp-x" onclick="chatRolePickClose()" aria-label="بستن">✕</button></div>
+     <div class="rp-hint">می‌توانی چند پزشک را با هم انتخاب کنی تا مثلِ یک کنفرانس دربارهٔ تو مشورت کنند.</div>
+     <div class="rp-body" id="rolePickBody">${chatRolePickBodyHTML()}</div>
+     <div class="rp-foot"><span id="rolePickCount"></span><span style="flex:1"></span>
+       <button type="button" class="rp-cancel" onclick="chatRolePickClose()">انصراف</button>
+       <button type="button" class="rp-ok" onclick="chatRolePickConfirm()">شروع گفتگو</button></div>
+   </div>`;
+  document.body.appendChild(bg); chatRolePickCount();
+}
+function chatRolePickBodyHTML(){ let h='';
+  CHAT_ROLE_CATS.forEach(cc=>{ const cat=cc[0], label=cc[1]; const items=CHAT_ROLES.filter(r=>r.cat===cat);
+    h+=`<div class="rp-cat">${label}</div><div class="rp-grid">`;
+    items.forEach(r=>{ const on=_rolePickSel.has(r.id);
+      h+=`<button type="button" class="rp-chip${on?' on':''}" onclick="chatRolePickToggle('${r.id}')">
+        <span class="rp-ic">${r.emoji}</span><span class="rp-nm">${escVision(r.name)}</span><span class="rp-ds">${escVision(r.desc)}</span>
+        <span class="rp-ck">${on?'✓':''}</span></button>`; });
+    h+=`</div>`; });
+  return h;
+}
+function chatRolePickToggle(id){ if(!_rolePickSel) return; if(_rolePickSel.has(id)) _rolePickSel.delete(id); else _rolePickSel.add(id);
+  const body=document.getElementById('rolePickBody'); if(body) body.innerHTML=chatRolePickBodyHTML(); chatRolePickCount(); }
+function chatRolePickCount(){ const el=document.getElementById('rolePickCount'); if(!el||!_rolePickSel) return; const n=_rolePickSel.size;
+  el.textContent=n===0?'هیچ‌کدام (پیش‌فرض: مشاور)':(n===1?'۱ متخصص':'کنفرانسِ '+faDigits(String(n))+' متخصص'); el.style.color=n>1?'var(--teal)':'var(--muted)'; el.style.fontWeight=n>1?'800':'600'; }
+function chatRolePickConfirm(){ const ids=_rolePickSel?Array.from(_rolePickSel):[]; chatRolePickClose(); if(chatActive()) window._roleAsked=chatActive().id; chatSetRoles(ids); if(ids.length) uiToast('✓ '+chatRolesLabel(chatActive())); }
+function chatRolePickClose(){ const b=document.getElementById('rolePickBg'); if(b) b.remove(); }
 
 /* ====== پیشنهاد سوال بعدی در چت (مثل کلود) ====== */
 const CHAT_SUGGEST_KEY='chat_suggest_v1';
@@ -4703,7 +4755,6 @@ async function renderProfileTab(){
   renderNavSetting();
   renderThemeSetting();
   renderChatLayoutSetting();
-  renderChatPersonaSetting();
   renderChatSuggestSetting();
   renderZoomSetting();
   renderVisionSetting();
@@ -10377,7 +10428,7 @@ function chatSetSpeed(sel){ const o=chatLoad(); const c=chatActive(o); if(c){ c.
 function buildChatSystemPrompt(){
   let snap; try{ snap=buildHealthSnapshot('overview'); }catch(e){ snap={text:''}; }
   let extra=''; try{ const p=JSON.parse(localStorage.getItem(PKEY)||'{}'); if(p.gender) extra='جنسیت: '+(p.gender==='male'?'مرد':p.gender==='female'?'زن':p.gender)+'\n'; }catch(e){}
-  let persona=''; try{ persona='لحن و نقشِ تو در این گفتگو: '+chatPersonaSys()+'\n'; }catch(e){}
+  let persona=''; try{ persona=chatRolesSys(chatActive())+'\n'; }catch(e){}
   let suggest=''; try{ if(chatSuggestOn()) suggest='\nدر پایانِ هر پاسخ، دقیقاً یک خطِ جدا با این قالب بگذار (برای پیشنهادِ سوال بعدی به کاربر): «@@SUGGEST@@ سوال۱ || سوال۲ || سوال۳» — دو یا سه سوالِ کوتاهِ فارسی (هرکدام کمتر از ۷ کلمه) که کاربر احتمالاً بعد از این می‌پرسد، از زبانِ خودِ کاربر (اول‌شخص). این خط را هیچ‌وقت توضیح نده.\n'; }catch(e){}
   return "تو «دیابوت» هستی؛ یک دستیار هوشمند، همدل و عملگرای دیابت که همه‌ی اطلاعات متابولیک این کاربر را می‌داند. همیشه فارسی، کوتاه، دقیق و کاربردی جواب بده و از داده‌های کاربر برای شخصی‌سازی استفاده کن.\n"+
   persona+
@@ -10589,6 +10640,33 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .chat-ctx button:hover{background:var(--field)}
   .chat-ctx button .ci{font-size:16px;width:20px;text-align:center}
   .chat-ctx button.danger{color:var(--red)}
+  .chat-pill.role{background:rgba(63,185,163,.14);border-color:var(--teal-dim);max-width:180px}
+  .chat-pill.role b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block;max-width:160px;vertical-align:bottom}
+  .chat-welcome{max-width:520px;margin:16px auto;text-align:center;padding:26px 18px}
+  .chat-welcome .cw-emoji{font-size:40px;line-height:1;margin-bottom:12px}
+  .chat-welcome .cw-t{font-size:16px;font-weight:800;color:var(--ink);margin-bottom:8px}
+  .chat-welcome .cw-s{font-size:12.5px;color:var(--muted);line-height:2}
+  .chat-welcome .cw-btn{margin-top:16px;background:linear-gradient(145deg,var(--teal),var(--teal-dim));border:none;color:#fff;border-radius:14px;padding:12px 22px;font-family:inherit;font-weight:800;font-size:13.5px;cursor:pointer}
+  .rolepick-bg{position:fixed;inset:0;z-index:170;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);animation:chatFade .18s}
+  .rolepick{width:100%;max-width:560px;max-height:88vh;display:flex;flex-direction:column;background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:22px 22px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.55);animation:chatUp .24s cubic-bezier(.4,0,.2,1)}
+  .rp-head{display:flex;align-items:center;padding:16px 16px 6px}
+  .rp-head b{font-size:15px;color:var(--teal);font-weight:800;flex:1}
+  .rp-x{background:var(--field);border:1px solid var(--line);color:var(--muted);width:30px;height:30px;border-radius:50%;font-size:14px;cursor:pointer}
+  .rp-hint{font-size:11.5px;color:var(--muted);padding:0 16px 8px;line-height:1.8}
+  .rp-body{overflow-y:auto;padding:4px 14px 8px;-webkit-overflow-scrolling:touch}
+  .rp-cat{font-size:12px;font-weight:800;color:var(--ink);margin:12px 4px 8px}
+  .rp-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .rp-chip{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:right;background:var(--field);border:1.5px solid var(--line);border-radius:14px;padding:11px 12px;cursor:pointer;font-family:inherit;transition:.13s}
+  .rp-chip:hover{border-color:var(--teal-dim)}
+  .rp-chip.on{border-color:var(--teal);background:rgba(63,185,163,.12);box-shadow:0 2px 10px rgba(63,185,163,.15)}
+  .rp-chip .rp-ic{font-size:20px}
+  .rp-chip .rp-nm{font-size:12.5px;font-weight:800;color:var(--ink);line-height:1.4}
+  .rp-chip .rp-ds{font-size:10px;color:var(--muted);line-height:1.5}
+  .rp-chip .rp-ck{position:absolute;top:8px;left:9px;color:var(--teal);font-weight:900;font-size:13px}
+  .rp-foot{display:flex;align-items:center;gap:9px;padding:12px 16px;border-top:1px solid var(--line);background:var(--panel)}
+  .rp-foot #rolePickCount{font-size:12px}
+  .rp-cancel{background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:10px 16px;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
+  .rp-ok{background:linear-gradient(145deg,var(--teal),var(--teal-dim));border:none;color:#fff;border-radius:12px;padding:10px 20px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer}
   .chat-sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150;display:flex;align-items:flex-end;justify-content:center;animation:chatFade .18s}
   @keyframes chatFade{from{opacity:0}}
   .chat-sheet{width:100%;max-width:520px;background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px 20px 0 0;padding:14px 14px 20px;box-shadow:0 -8px 30px rgba(0,0,0,.5);animation:chatUp .22s cubic-bezier(.4,0,.2,1)}
@@ -10697,6 +10775,7 @@ function renderChatTab(){
         </div>
         <div class="chat-capsule-row">
           <button type="button" class="chat-tool" onclick="chatAttachMenu()" title="پیوست">+</button>
+          <button type="button" class="chat-pill role" onclick="chatRolePicker()" title="انتخاب متخصص/نقش"><b>${escVision(chatRolesLabel(c))}</b></button>
           <button type="button" class="chat-pill" onclick="chatProviderMenu()" title="سرویس"><b>${escVision(PROVIDER_NAMES[prov]||prov)}</b></button>
           <button type="button" class="chat-pill spd ${spd==='fast'?'fast':''}" onclick="chatToggleSpeed()" title="حالت"><span class="dot"></span><b>${spd==='fast'?'سریع':'دقیق'}</b></button>
           <span class="chat-spring"></span>
@@ -10725,8 +10804,17 @@ function renderChatTab(){
   box.innerHTML=h;
   _chatAttach=[]; chatRenderAttach();
   const mb=document.getElementById('chatMsgs');
-  if(!c.messages.length){ mb.innerHTML=`<div style="text-align:center;color:var(--muted);font-size:12.5px;padding:26px 12px;line-height:2">سلام! من <b style="color:var(--teal)">دیابوت</b>م 🤖<br>با آگاهی از قند، تغذیه، انسولین، ورزش و آزمایش‌هایت، هرچی خواستی بپرس.</div>`; }
+  const roleIds=chatRolesOf(c);
+  if(!c.messages.length){
+    if(!roleIds.length){
+      mb.innerHTML=`<div class="chat-welcome"><div class="cw-emoji">🩺</div><div class="cw-t">با کدام متخصص صحبت می‌کنی؟</div><div class="cw-s">یک متخصص یا مربی انتخاب کن — یا چند پزشک را با هم برای یک <b>کنفرانس</b> دربارهٔ خودت.</div><button type="button" class="cw-btn" onclick="chatRolePicker()">👥 انتخاب متخصص</button></div>`;
+    } else {
+      mb.innerHTML=`<div class="chat-welcome"><div class="cw-emoji">${escVision((chatRoleById(roleIds[0])||{}).emoji||'🤖')}</div><div class="cw-t">${escVision(chatRolesLabel(c))}</div><div class="cw-s">با آگاهی از قند، تغذیه، انسولین، ورزش و آزمایش‌هایت آماده‌ام — بپرس. <span onclick="chatRolePicker()" style="color:var(--teal);cursor:pointer;text-decoration:underline">تغییر متخصص</span></div></div>`;
+    }
+  }
   else renderChatMessages(c);
+  // شروعِ گفتگوی جدید بدون نقش → پرسیدنِ متخصص (یک‌بار برای هر گفتگو)
+  if(!c.messages.length && !roleIds.length && window._roleAsked!==c.id){ window._roleAsked=c.id; setTimeout(()=>{ if(!document.getElementById('rolePickBg')) chatRolePicker(); },280); }
   // پیشنهادهای آخرین پاسخ را (اگر ذخیره شده) دوباره نشان بده
   const lastAi=[...c.messages].reverse().find(m=>m.role==='assistant');
   chatRenderSuggestions(lastAi&&lastAi.suggest);
