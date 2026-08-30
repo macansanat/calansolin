@@ -1865,7 +1865,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۷.۰</b> · انتشار: ۱۴۰۵/۰۶/۰۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۷.۱</b> · انتشار: ۱۴۰۵/۰۶/۰۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4555,8 +4555,10 @@ const CHAT_MASTERY="بر این‌ها کاملاً مسلطی: پرونده‌�
 function docSys(spec, focus){
   return "تو یک «پزشکِ متخصصِ "+spec+"» در تراز جهانی هستی: سال‌ها تجربه‌ی بالینی و درمانِ هزاران بیمار، تسلطِ کامل بر روندِ بهبودِ بیماران، کاملاً به‌روز با جدیدترین مقالات و راهنماهای معتبرِ جهانی (ADA، WHO، EASD و انجمن‌های تخصصیِ مرتبط)، دقیق، سخت‌گیر و بدونِ خطا در گفتار و توصیه. "+CHAT_MASTERY+" تمرکزِ ویژه‌ی تو: "+focus+" مبتنی بر شواهد و با زبانِ علمیِ دقیق ولی قابل‌فهم پاسخ بده، مکانیسم را کوتاه بگو، و از داده‌های همین بیمار برای شخصی‌سازی استفاده کن؛ اگر داده‌ای کم است همان را بپرس. خط قرمزِ ایمنی (بی‌استثنا): این گفتگو آموزشی است؛ دوز قطعیِ شخصی یا زمان‌بندیِ تزریق برای اجرای مستقیم نده و تصمیمِ نهاییِ درمان را به پزشکِ معالجِ بیمار بسپار.";
 }
-const CHEF_SYS="تو یک سرآشپزِ حرفه‌ای و متخصصِ تغذیه‌ی دیابتی هستی. با سلیقه و موادِ در دسترسِ کاربر، برای یک وعده (مثلاً رژیمی یا کم‌کالری) یک دستورِ غذای مناسبِ دیابت می‌سازی تا به هدفش (کم‌کربوهیدرات/کم‌کالری/پرپروتئین…) برسد. کربوهیدرات و کالریِ تخمینیِ هر جزء و کلِ وعده را بگو. در پایان، وعده را جمع‌بندی کن: نامِ وعده، فهرستِ مواد با مقدار، و کربوهیدرات و کالریِ تخمینیِ کل — تا کاربر بتواند آن را در بخشِ «وعده‌ها» یا «ماشین‌حسابِ دوز» ثبت کند. تخمینی و آموزشی بمان؛ برای دوزِ انسولین به پزشک ارجاع بده.";
-const COACH_SYS="تو یک مربیِ ورزشیِ حرفه‌ای و قهرمانِ المپیک هستی که با ورزش، متابولیسم و حساسیت به انسولینِ بیمارانِ دیابتی کاملاً آشناست. برنامه‌ی ورزشیِ واقع‌بینانه و مرحله‌به‌مرحله برای بهبودِ متابولیسم و کنترلِ قندِ کاربر بده (متناسب با شرایط و سطحِ او). سخت‌گیر و پیگیر باش: هدف‌های هفتگیِ روشن بگذار و نقشِ ناظر داشته باش که هفته‌ی بعد از کاربر حساب می‌کشد که ورزش‌ها را انجام داده یا نه. ایمنی: پیش از ورزشِ سنگین—به‌ویژه با قندِ خیلی بالا/پایین یا عارضه‌ی قلبی/چشمی—هشدار بده و به پزشک ارجاع بده.";
+const CHEF_SYS="تو یک سرآشپزِ حرفه‌ای و متخصصِ تغذیه‌ی دیابتی هستی. با سلیقه و موادِ در دسترسِ کاربر، برای یک وعده (مثلاً رژیمی یا کم‌کالری) یک دستورِ غذای مناسبِ دیابت می‌سازی تا به هدفش (کم‌کربوهیدرات/کم‌کالری/پرپروتئین…) برسد. کربوهیدرات و کالریِ تخمینیِ هر جزء و کلِ وعده را بگو. تخمینی و آموزشی بمان؛ برای دوزِ انسولین به پزشک ارجاع بده.\n"
+  +"وقتی وعده‌ی نهایی آماده و موردِ تأییدِ کاربر شد، در «آخرین خطِ» پاسخ دقیقاً این نشانه را بگذار (اعدادِ داخلِ JSON انگلیسی، بدونِ هیچ توضیحی، در یک خط): @@MEAL@@ {\"name\":\"نام وعده\",\"carb\":<گرم کربوهیدرات عدد>,\"cal\":<کالری عدد>,\"items\":[{\"n\":\"نام خوراکی\",\"q\":\"مقدار مثل ۲ برش\"}]} — این خط را هیچ‌وقت توضیح نده. تا وقتی کاربر وعده را نهایی نکرده، این خط را نگذار.";
+const COACH_SYS="تو یک مربیِ ورزشیِ حرفه‌ای و قهرمانِ المپیک هستی که با ورزش، متابولیسم و حساسیت به انسولینِ بیمارانِ دیابتی کاملاً آشناست. برنامه‌ی ورزشیِ واقع‌بینانه و مرحله‌به‌مرحله برای بهبودِ متابولیسم و کنترلِ قندِ کاربر بده (متناسب با شرایط و سطحِ او). سخت‌گیر و پیگیر باش: هدف‌های هفتگیِ روشن بگذار و نقشِ ناظر داشته باش که هفته‌ی بعد از کاربر حساب می‌کشد که ورزش‌ها را انجام داده یا نه. ایمنی: پیش از ورزشِ سنگین—به‌ویژه با قندِ خیلی بالا/پایین یا عارضه‌ی قلبی/چشمی—هشدار بده و به پزشک ارجاع بده.\n"
+  +"وقتی برنامه‌ی نهایی آماده و موردِ تأییدِ کاربر شد، در «آخرین خطِ» پاسخ دقیقاً این نشانه را بگذار (اعدادِ داخلِ JSON انگلیسی، بدونِ توضیح، در یک خط): @@WORKOUT@@ {\"title\":\"نام برنامه\",\"exercises\":[{\"n\":\"نام حرکت\",\"pose\":\"یکی از این‌ها: walk/march/squat/chair/pushup/plank/heel/stretch/leg_raise/breath/neck\",\"set\":\"مثل ۳ ست × ۱۰ یا ۱۰ دقیقه\",\"desc\":\"روشِ انجامِ کوتاه\",\"benefit\":\"فایده برای متابولیسم/قند\"}]} — برای «pose» نزدیک‌ترین حرکت را از همان فهرست انتخاب کن. این خط را هیچ‌وقت توضیح نده و تا نهایی‌نشدن نگذار.";
 const CHAT_ROLES=[
   {id:'endo',   name:'متخصص غدد و داخلی',            emoji:'🩺', cat:'doc', desc:'دیابت، تیروئید، هورمون، انسولین', sys:docSys('غدد و داخلی','مدیریتِ انسولین و قندِ خون، مقاومت به انسولین، تیروئید و هورمون‌ها، تنظیمِ داروهای دیابت.')},
   {id:'cardio', name:'متخصص قلب و عروق',              emoji:'🫀', cat:'doc', desc:'فشار، چربی، خطر قلبی', sys:docSys('قلب و عروق','فشارِ خون، چربیِ خون، خطرِ قلبی‌عروقیِ دیابت، داروهای قلبی و تداخل‌ها، پیشگیری از سکته.')},
@@ -4747,7 +4749,7 @@ async function loadProfile(){
 // کلیدهای localStorage که در بکاپ گنجانده می‌شوند (نقشه‌ی داده‌ی کاربر).
 // از مقادیر رشته‌ای مستقیم استفاده می‌شود چون بعضی از این const‌ها (CGMKEY, BGKEY, ...)
 // پایین‌تر در فایل تعریف شده‌اند و ارجاع به خودِ متغیر اینجا TDZ می‌دهد.
-const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','custom_foods_v1','custom_meds_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1'];
+const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','custom_foods_v1','custom_meds_v1','custom_exercises_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1'];
 
 async function renderProfileTab(){
   // فرم پروفایل (c-profile) حالا خودش داخل این تب است و وضعیت ذخیره‌شده را نشان می‌دهد.
@@ -8489,6 +8491,14 @@ const EX_KEY='exercise_log_v1';
 function loadExLog(){ try{return JSON.parse(localStorage.getItem(EX_KEY)||'{"entries":[]}');}catch(e){return {entries:[]};} }
 function saveExLog(d){ localStorage.setItem(EX_KEY,JSON.stringify(d)); }
 function findEx(id){ for(const g in EX_LIBRARY){ const it=EX_LIBRARY[g].items.find(x=>x.id===id); if(it) return it; } return null; }
+// حرکت‌های دلخواه/ساختِ مربی — به کتابخانه‌ی ورزش اضافه می‌شوند (با آدمک/راهنما/ست)
+const CUSTOM_EX_KEY='custom_exercises_v1';
+const EX_POSES=['walk','march','squat','chair','pushup','plank','heel','stretch','leg_raise','breath','neck'];
+function loadCustomEx(){ try{ const a=JSON.parse(localStorage.getItem(CUSTOM_EX_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function saveCustomEx(a){ try{ localStorage.setItem(CUSTOM_EX_KEY,JSON.stringify(a)); }catch(e){} }
+function applyCustomExercises(){ const a=loadCustomEx(); if(a.length){ EX_LIBRARY._coach={cat:'🏅 برنامه‌ی مربی من',items:a}; } else { delete EX_LIBRARY._coach; }
+  try{ if(document.getElementById('exLibrary')) renderExLibrary(); }catch(e){} }
+function delCustomEx(id){ if(!confirm('این حرکت از برنامه‌ی مربی حذف شود؟')) return; saveCustomEx(loadCustomEx().filter(x=>x.id!==id)); applyCustomExercises(); }
 function renderExSafety(){
   const box=document.getElementById('exSafety'); if(!box) return;
   box.innerHTML=`<div style="background:linear-gradient(135deg,#3a2f14,#2a2410);border:1px solid var(--amber);border-radius:12px;padding:13px 15px;font-size:12px;color:#f0c674;line-height:2">
@@ -8531,10 +8541,10 @@ function exCardHTML(ex){
   return `<div style="display:flex;gap:11px;background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:11px;margin-bottom:7px;align-items:flex-start;box-shadow:0 1px 3px rgba(0,0,0,0.2)">
     <div style="flex-shrink:0;background:radial-gradient(circle at 50% 40%,#1e3a34,var(--panel));border-radius:10px;padding:5px;border:1px solid var(--teal-dim)">${stickFigure(ex.pose)}</div>
     <div style="flex:1">
-      <div style="font-weight:700;font-size:13.5px">${ex.name}</div>
+      <div style="font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:6px">${ex.name}${(ex.id&&String(ex.id).indexOf('cx')===0)?`<button onclick="delCustomEx('${ex.id}')" title="حذف" style="margin-right:auto;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:13px">🗑</button>`:''}</div>
       <div style="display:inline-block;font-size:11px;color:var(--teal);background:var(--teal-dim);border-radius:12px;padding:2px 10px;margin:4px 0">${ex.set}</div>
       <div style="font-size:11.5px;color:var(--ink);line-height:1.75">${ex.desc}</div>
-      <div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:4px;border-right:2px solid var(--teal-dim);padding-right:7px">💡 ${ex.benefit}</div>
+      ${ex.benefit?`<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:4px;border-right:2px solid var(--teal-dim);padding-right:7px">💡 ${ex.benefit}</div>`:''}
     </div></div>`;
 }
 function renderExLibrary(){
@@ -10447,6 +10457,73 @@ function chatParseSuggestions(raw){
   const text=s.replace(/\n?@@SUGGEST@@[^\n]*/,'').trim();
   return {text, suggestions:list};
 }
+// جدا کردنِ اقدام‌ها (@@MEAL@@ / @@WORKOUT@@) از متن؛ خروجی: {text, action}
+function chatExtractMarker(text, marker){
+  const idx=text.indexOf(marker); if(idx<0) return null;
+  const after=text.slice(idx+marker.length); const s=after.indexOf('{'); if(s<0) return null;
+  let depth=0,end=-1; for(let i=s;i<after.length;i++){ const ch=after[i]; if(ch==='{')depth++; else if(ch==='}'){ depth--; if(depth===0){ end=i; break; } } }
+  if(end<0) return null;
+  const jsonStr=after.slice(s,end+1); let obj=null;
+  try{ obj=JSON.parse(faToEnDigits(jsonStr)); }catch(e){ try{ obj=JSON.parse(jsonStr); }catch(_){ return null; } }
+  return {obj, start:idx, endAbs:idx+marker.length+end+1};
+}
+function chatParseActions(text){
+  let t=String(text||''); let action=null;
+  const meal=chatExtractMarker(t,'@@MEAL@@');
+  if(meal&&meal.obj){ action={kind:'meal',data:meal.obj}; t=(t.slice(0,meal.start)+t.slice(meal.endAbs)).trim(); }
+  const work=chatExtractMarker(t,'@@WORKOUT@@');
+  if(work&&work.obj){ action={kind:'workout',data:work.obj}; t=(t.slice(0,work.start)+t.slice(work.endAbs)).trim(); }
+  return {text:t, action};
+}
+// کارتِ اقدام زیر پیامِ دستیار
+function chatActionCard(m,idx){
+  if(!m||!m.action) return '';
+  const a=m.action, d=a.data||{};
+  if(a.kind==='meal'){
+    const items=Array.isArray(d.items)?d.items:[];
+    const lst=items.map(it=>`<span class="cact-chip">${escVision((it.n||it.name||'')+(it.q||it.qty?(' · '+(it.q||it.qty)):''))}</span>`).join('');
+    const meta=[d.carb!=null?('کربوهیدرات ~'+escVision(String(d.carb))+' گ'):'', d.cal!=null?(escVision(String(d.cal))+' کالری'):''].filter(Boolean).join(' · ');
+    return `<div class="cact"><div class="cact-h">🍽️ ${escVision(d.name||'وعده‌ی پیشنهادی')}</div>${meta?`<div class="cact-m">${meta}</div>`:''}${lst?`<div class="cact-items">${lst}</div>`:''}
+      <div class="cact-btns"><button type="button" class="cact-b" onclick="chatMealAdd(${idx},'meals')">➕ افزودن به وعده‌ها</button><button type="button" class="cact-b alt" onclick="chatMealAdd(${idx},'calc')">🧮 ماشین‌حساب دوز</button></div></div>`;
+  }
+  if(a.kind==='workout'){
+    const exs=Array.isArray(d.exercises)?d.exercises:[];
+    const lst=exs.map(e=>`<span class="cact-chip">${escVision((e.n||e.name||'')+(e.set?(' · '+e.set):''))}</span>`).join('');
+    return `<div class="cact"><div class="cact-h">🏅 ${escVision(d.title||'برنامه‌ی ورزشی')} <span style="color:var(--muted);font-weight:600">(${faDigits(String(exs.length))} حرکت)</span></div>${lst?`<div class="cact-items">${lst}</div>`:''}
+      <div class="cact-btns"><button type="button" class="cact-b" onclick="chatWorkoutAdd(${idx})">➕ افزودن به برنامه‌ی ورزشی من</button></div></div>`;
+  }
+  return '';
+}
+function chatMealAdd(idx,dest){
+  const c=chatActive(); const m=c&&c.messages&&c.messages[idx]; const d=m&&m.action&&m.action.data; if(!d){ return; }
+  const items=Array.isArray(d.items)?d.items:[];
+  const noteText=items.map(it=>(it.n||it.name||'')+(it.q||it.qty?(' '+(it.q||it.qty)):'')).join('، ');
+  if(dest==='calc'){
+    let added=0; try{ const res=matchNoteFoods(noteText); (res.items||[]).forEach(it=>{ if(it.unmatched) return; try{ addFoodToCalcRows(it.cat,it.item,it.qty||1,it.unit||Object.keys(DB[it.cat][it.item])[0]); added++; }catch(e){} }); }catch(e){}
+    uiToast(added?('✓ '+faDigits(String(added))+' خوراکی به ماشین‌حساب اضافه شد'):'خوراکیِ قابل‌تشخیص نبود؛ در ماشین‌حساب دستی اضافه کن');
+    chatGoBack(); switchTab('calc');
+  } else {
+    try{
+      const pk=dayKey(new Date()); if(!Array.isArray(planData[pk])) planData[pk]=[];
+      const p=n=>String(n).padStart(2,'0'); const now=new Date();
+      const foods=items.map(it=>'🍽️ '+((it.n||it.name||'')+(it.q||it.qty?(' ('+(it.q||it.qty)+')'):'')));
+      planData[pk].push({type:(d.name||'وعده‌ی سرآشپز'),time:p(now.getHours())+':'+p(now.getMinutes()),insType:'',insDose:'',carb:(d.carb!=null?String(d.carb):''),bgBefore:'',bgAfter:'',peak:'',trough:'',foods,id:Date.now()});
+      if(typeof savePlan==='function') savePlan();
+      uiToast('✓ به وعده‌های امروز اضافه شد');
+    }catch(e){ uiToast('خطا در افزودن وعده'); }
+  }
+}
+function chatWorkoutAdd(idx){
+  const c=chatActive(); const m=c&&c.messages&&c.messages[idx]; const d=m&&m.action&&m.action.data; if(!d){ return; }
+  const exs=Array.isArray(d.exercises)?d.exercises:[]; if(!exs.length){ uiToast('حرکتی در برنامه نبود'); return; }
+  const arr=loadCustomEx(); let n=0;
+  exs.forEach(e=>{ const name=(e.n||e.name||'').trim(); if(!name) return;
+    const pose=EX_POSES.indexOf(e.pose)>=0?e.pose:'walk';
+    arr.push({id:'cx'+Date.now().toString(36)+(n++), name, pose, set:(e.set||'۳ ست × ۱۰'), desc:(e.desc||''), benefit:(e.benefit||'')+(d.title?(' — برنامه: '+d.title):'')});
+  });
+  saveCustomEx(arr); applyCustomExercises();
+  uiToast('✓ '+faDigits(String(n))+' حرکت به «برنامه‌ی مربی من» اضافه شد (تب ورزش)');
+}
 let _chatTopSug='';
 function chatRenderSuggestions(list){
   const box=document.getElementById('chatSuggestions'); if(!box) return;
@@ -10640,6 +10717,14 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .chat-ctx button:hover{background:var(--field)}
   .chat-ctx button .ci{font-size:16px;width:20px;text-align:center}
   .chat-ctx button.danger{color:var(--red)}
+  .cact{margin-top:10px;background:var(--field);border:1px solid var(--teal-dim);border-radius:14px;padding:11px 12px}
+  .cact-h{font-size:13px;font-weight:800;color:var(--teal);margin-bottom:4px}
+  .cact-m{font-size:11px;color:var(--muted);margin-bottom:7px}
+  .cact-items{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px}
+  .cact-chip{font-size:10.5px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:3px 9px;color:var(--ink)}
+  .cact-btns{display:flex;flex-wrap:wrap;gap:7px}
+  .cact-b{background:linear-gradient(145deg,var(--teal),var(--teal-dim));border:none;color:#fff;border-radius:11px;padding:9px 13px;font-family:inherit;font-weight:800;font-size:12px;cursor:pointer}
+  .cact-b.alt{background:var(--panel);color:var(--teal);border:1px solid var(--teal-dim)}
   .chat-pill.role{background:rgba(63,185,163,.14);border-color:var(--teal-dim);max-width:180px}
   .chat-pill.role b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block;max-width:160px;vertical-align:bottom}
   .chat-welcome{max-width:520px;margin:16px auto;text-align:center;padding:26px 18px}
@@ -10710,7 +10795,8 @@ function chatBubble(m,idx){ const me=m.role==='user';
   const acts=me
     ? `<button class="chat-act" onclick="chatCopyMsg(${idx})" title="کپی">📋</button><button class="chat-act" onclick="chatEditMsg(${idx})" title="ویرایش">✏️</button><button class="chat-act" onclick="chatDeleteMsg(${idx})" title="حذف">🗑</button>`
     : `<button class="chat-act" onclick="chatCopyMsg(${idx})" title="کپی">📋</button><button class="chat-act" onclick="chatReadMsg(${idx},this)" title="خواندن">🔊</button><button class="chat-act" onclick="chatDeleteMsg(${idx})" title="حذف">🗑</button>`;
-  return `<div class="chat-row ${me?'me':'ai'}"><div class="chat-b">${att}${body||'<span style="color:var(--muted)">…</span>'}</div><div class="chat-acts">${acts}</div></div>`;
+  const actCard=(!me&&m.action)?chatActionCard(m,idx):'';
+  return `<div class="chat-row ${me?'me':'ai'}"><div class="chat-b">${att}${body||'<span style="color:var(--muted)">…</span>'}${actCard}</div><div class="chat-acts">${acts}</div></div>`;
 }
 function chatAutoGrow(t){ t.style.height='auto'; t.style.height=Math.min(130,t.scrollHeight)+'px'; chatUpdateGhost(); chatSyncInsets(); }
 function renderChatMessages(c){ const mb=document.getElementById('chatMsgs'); if(!mb)return; mb.innerHTML=c.messages.map((m,i)=>chatBubble(m,i)).join(''); mb.scrollTop=mb.scrollHeight; }
@@ -10906,7 +10992,7 @@ async function chatSend(){
   let _shown=0, _streamDone=false, _revealResolve=null;
   const _revealDone=new Promise(res=>{ _revealResolve=res; });
   // خطِ «@@SUGGEST@@» را از نمایش حذف کن (حتی وقتی نیمه‌کاره استریم می‌شود)
-  const stripSug=s=>String(s).replace(/@@SUGGEST@@[\s\S]*$/,'').replace(/\n*@[@A-Z]*$/,'');
+  const stripSug=s=>String(s).replace(/@@(SUGGEST|MEAL|WORKOUT)@@[\s\S]*$/,'').replace(/\n*@[@A-Z]*$/,'');
   const paintReveal=()=>{ const b=bubble(); if(!b) return;
     const cur=(_shown<acc.length || !_streamDone)?'<span class="chat-cur"></span>':'';
     b.innerHTML=labAiFmt(stripSug(acc.slice(0,_shown)))+cur; if(mb) mb.scrollTop=mb.scrollHeight; };
@@ -10929,10 +11015,12 @@ async function chatSend(){
       {onProv:(p,sw)=>{ if(sw){ acc=''; _shown=0; const b=bubble(); if(b) b.innerHTML='<span style="color:var(--muted);font-size:11.5px">سهمیه پر بود؛ تلاش با «'+escVision(PROVIDER_NAMES[p]||p)+'»…</span><span class="chat-cur"></span>'; } }});
     const rawReply=String(reply||acc||'').trim()||'پاسخی دریافت نشد.';
     const parsed=chatParseSuggestions(rawReply);
-    const clean=parsed.text||rawReply;
-    acc=clean; _streamDone=true;          // اطمینان از نمایش کاملِ متن نهایی (بدون خطِ پیشنهاد)
+    const act=chatParseActions(parsed.text||rawReply);
+    const clean=act.text||parsed.text||rawReply;
+    acc=clean; _streamDone=true;          // اطمینان از نمایش کاملِ متن نهایی (بدون خطِ پیشنهاد/اقدام)
     await _revealDone;                     // صبر تا تایپ‌رایتر همه‌ی متن را آشکار کند
-    c.messages.push({role:'assistant',content:clean,ts:Date.now(),suggest:parsed.suggestions});
+    const amsg={role:'assistant',content:clean,ts:Date.now(),suggest:parsed.suggestions}; if(act.action) amsg.action=act.action;
+    c.messages.push(amsg);
     chatSave(o); renderChatMessages(c);
     chatRenderSuggestions(parsed.suggestions);
     if(_chatLiveOn) chatSpeak(clean);
@@ -12364,6 +12452,7 @@ function restoreCollState(){
 
 applyCustomFoods();   // محصولات شخصی را ادغام و شاخص جستجو را می‌سازد
 buildMedIndex();      // شاخص جست‌وجوی کتابخانه‌ی داروها
+applyCustomExercises(); // حرکت‌های ساختِ مربی را به کتابخانه‌ی ورزش اضافه کن
 if(!restoreCalcState()) addFoodRow();   // بازیابی خوراکی‌های واردشده بعد از رفرش
 applyTheme();
 applyNavMode();
