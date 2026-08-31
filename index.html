@@ -1865,7 +1865,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۸.۰</b> · انتشار: ۱۴۰۵/۰۶/۰۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۸.۱</b> · انتشار: ۱۴۰۵/۰۶/۰۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -10859,7 +10859,12 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .chat-tool.on{background:linear-gradient(145deg,var(--teal),var(--teal-dim));color:#fff;border-color:transparent;animation:chatPulse 1.4s infinite}
   @keyframes chatPulse{0%,100%{box-shadow:0 0 0 0 rgba(63,185,163,.5)}50%{box-shadow:0 0 0 7px rgba(63,185,163,0)}}
   .chat-spring{flex:1 1 auto}
-  .chat-pill{display:inline-flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--line);border-radius:16px;padding:6px 12px;font-size:11.5px;font-weight:700;color:var(--ink);cursor:pointer;transition:.14s;white-space:nowrap}
+  /* ردیفِ پیل‌ها: در عرضِ کم به‌جای بیرون‌زدن، افقی اسکرول می‌شود تا دکمه‌ی ارسال همیشه روی صفحه بماند */
+  .chat-pills{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:5px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .chat-pills::-webkit-scrollbar{display:none}
+  .chat-pill{flex:0 0 auto;max-width:100%;display:inline-flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--line);border-radius:16px;padding:6px 12px;font-size:11.5px;font-weight:700;color:var(--ink);cursor:pointer;transition:.14s;white-space:nowrap}
+  .chat-pill.role{min-width:0}
+  .chat-pill.role b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
   .chat-pill:hover{background:rgba(127,127,127,.08)}
   .chat-pill:active{transform:scale(.96)}
   .chat-pill .cap{color:var(--muted);font-weight:600;font-size:10px}
@@ -11105,10 +11110,11 @@ function renderChatTab(){
         </div>
         <div class="chat-capsule-row">
           <button type="button" class="chat-tool" onclick="chatAttachMenu()" title="پیوست">+</button>
-          <button type="button" class="chat-pill role" onclick="chatRolePicker()" title="انتخاب متخصص/نقش"><b>${escVision(chatRolesLabel(c))}</b></button>
-          <button type="button" class="chat-pill" onclick="chatProviderMenu()" title="سرویس"><b>${escVision(PROVIDER_NAMES[prov]||prov)}</b></button>
-          <button type="button" class="chat-pill spd ${spd==='fast'?'fast':''}" onclick="chatToggleSpeed()" title="حالت"><span class="dot"></span><b>${spd==='fast'?'سریع':'دقیق'}</b></button>
-          <span class="chat-spring"></span>
+          <div class="chat-pills">
+            <button type="button" class="chat-pill role" onclick="chatRolePicker()" title="انتخاب متخصص/نقش"><b>${escVision(chatRolesLabel(c))}</b></button>
+            <button type="button" class="chat-pill" onclick="chatProviderMenu()" title="سرویس"><b>${escVision(PROVIDER_NAMES[prov]||prov)}</b></button>
+            <button type="button" class="chat-pill spd ${spd==='fast'?'fast':''}" onclick="chatToggleSpeed()" title="حالت"><span class="dot"></span><b>${spd==='fast'?'سریع':'دقیق'}</b></button>
+          </div>
           <button type="button" class="chat-tool" id="chatMicBtn" onclick="chatVoiceInput()" title="گفتار به متن">🎙️</button>
           <button type="button" class="chat-tool" onclick="chatLiveOpen()" title="گفتگوی صوتی زنده">📞</button>
           <button type="button" class="chat-send" id="chatSendBtn" onclick="chatSend()">➤</button>
