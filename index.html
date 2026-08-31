@@ -1865,7 +1865,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۷.۲</b> · انتشار: ۱۴۰۵/۰۶/۰۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۸.۰</b> · انتشار: ۱۴۰۵/۰۶/۰۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3119,6 +3119,26 @@ function renderWatchdogCard(){
     ${body}
   </div>`;
 }
+function chatOpenJourneys(){ try{ const o=chatLoad(); o.drawerTab='journeys'; chatSave(o); }catch(e){} switchTab('chat'); if(typeof renderChatTab==='function') renderChatTab(); setTimeout(()=>{ if(typeof openChatDrawer==='function') openChatDrawer(); },220); }
+function dashAiDoctorCard(){
+  const js=(typeof jrLoad==='function')?jrLoad():[];
+  const active=js.filter(j=>j.status!=='done');
+  let inner='';
+  if(active.length){ const j=active[0]; const done=jrStepDone(j),n=(j.steps||[]).length; const pct=n?Math.round(done/n*100):0;
+    inner=`<div onclick="chatOpenJourney('${j.id}')" style="background:var(--field);border:1px solid var(--teal-dim);border-radius:12px;padding:10px 12px;margin:10px 0;cursor:pointer">
+      <div style="font-weight:800;font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">🧭 ${escVision(j.goal)}</div>
+      <div style="font-size:11px;color:var(--muted);margin:3px 0 6px">⏳ در جریان · ${faDigits(String(done))}/${faDigits(String(n))} مرحله</div>
+      <div style="height:4px;border-radius:4px;background:var(--line);overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--teal)"></div></div>
+    </div>`;
+  } else {
+    inner=`<div style="font-size:11.5px;color:var(--muted);line-height:1.9;margin:8px 0 10px">مشکلت را بگو تا «برنامه‌ریزِ مسیریاب» ترتیبِ مراجعه به پزشکان را بچیند و روندت را از شروع تا نتیجه مرتب نگه دارد.</div>`;
+  }
+  return `<div class="dash-hero" style="background:linear-gradient(135deg,rgba(63,185,163,.14),var(--panel));border:1px solid var(--teal-dim);text-align:right">
+    <div style="display:flex;align-items:center;gap:8px"><span style="font-size:22px">🩺</span><b style="font-size:15px;color:var(--teal)">پزشک هوش مصنوعی</b>${active.length?`<span style="margin-right:auto;font-size:10.5px;color:var(--teal);background:var(--teal-dim);border-radius:20px;padding:2px 9px">${faDigits(String(active.length))} روندِ فعال</span>`:'<span style="flex:1"></span>'}</div>
+    ${inner}
+    <div style="display:flex;gap:8px"><button class="dash-btn" style="flex:1;margin:0" onclick="chatStartJourneyNew()">🚀 شروعِ روند</button><button class="dash-btn" style="flex:1;margin:0;background:var(--panel);color:var(--teal);border:1px solid var(--teal-dim)" onclick="chatOpenJourneys()">🧭 روندهای من</button></div>
+  </div>`;
+}
 function renderDashboard(){
   const box=document.getElementById('dashboard'); if(!box) return;
   // آخرین قند: در حالت خودکار جدیدترین منبع؛ در حالت صریح همان منبع
@@ -3162,6 +3182,7 @@ function renderDashboard(){
       <button class="dash-btn" onclick="openQuickBG()">🩸 ثبت قند خون</button>
     </div>`;
   }
+  h+=dashAiDoctorCard();
   // کاشی‌های خلاصه‌ی قند بر اساس منبع
   if(src==='cgm'){
     const s=window._cgmStats;
@@ -4560,6 +4581,7 @@ const CHEF_SYS="تو یک سرآشپزِ حرفه‌ای و متخصصِ تغذ�
 const COACH_SYS="تو یک مربیِ ورزشیِ حرفه‌ای و قهرمانِ المپیک هستی که با ورزش، متابولیسم و حساسیت به انسولینِ بیمارانِ دیابتی کاملاً آشناست. برنامه‌ی ورزشیِ واقع‌بینانه و مرحله‌به‌مرحله برای بهبودِ متابولیسم و کنترلِ قندِ کاربر بده (متناسب با شرایط و سطحِ او). سخت‌گیر و پیگیر باش: هدف‌های هفتگیِ روشن بگذار و نقشِ ناظر داشته باش که هفته‌ی بعد از کاربر حساب می‌کشد که ورزش‌ها را انجام داده یا نه. ایمنی: پیش از ورزشِ سنگین—به‌ویژه با قندِ خیلی بالا/پایین یا عارضه‌ی قلبی/چشمی—هشدار بده و به پزشک ارجاع بده.\n"
   +"وقتی برنامه‌ی نهایی آماده و موردِ تأییدِ کاربر شد، در «آخرین خطِ» پاسخ دقیقاً این نشانه را بگذار (اعدادِ داخلِ JSON انگلیسی، بدونِ توضیح، در یک خط): @@WORKOUT@@ {\"title\":\"نام برنامه\",\"exercises\":[{\"n\":\"نام حرکت\",\"pose\":\"یکی از این‌ها: walk/march/squat/chair/pushup/plank/heel/stretch/leg_raise/breath/neck\",\"set\":\"مثل ۳ ست × ۱۰ یا ۱۰ دقیقه\",\"desc\":\"روشِ انجامِ کوتاه\",\"benefit\":\"فایده برای متابولیسم/قند\"}]} — برای «pose» نزدیک‌ترین حرکت را از همان فهرست انتخاب کن. این خط را هیچ‌وقت توضیح نده و تا نهایی‌نشدن نگذار.";
 const CHAT_ROLES=[
+  {id:'planner',name:'برنامه‌ریزِ مسیرِ درمان',      emoji:'🗺️', cat:'flow', desc:'⭐ شروع از اینجا — مسیرِ مراجعه را می‌چیند', sys:''/*با IIFE پایین ست می‌شود*/},
   {id:'gp',     name:'پزشک عمومی',                   emoji:'🩹', cat:'doc', desc:'اول با او؛ می‌گوید به کدام متخصص بروی', sys:'تو یک «پزشکِ عمومیِ» باتجربه و به‌روز هستی. کارِ تو این است که «پیش از مراجعه به متخصص‌ها» با بیمار صحبت کنی: شرح‌حال، علائم و داده‌هایش را بسنجی، اقدام‌های اولیه و آزمایش‌های لازم را بگویی، و مهم‌تر از همه راهنمایی کنی که برای این مشکل باید به کدام پزشکِ متخصص (یا چند متخصص) مراجعه کند و با چه اولویتی. علائمِ خطر و موارد اورژانسی را صریح مشخص کن. '+CHAT_MASTERY+' آموزشی بمان و تشخیص و تجویزِ نهایی را به پزشکِ معالج بسپار.'},
   {id:'endo',   name:'متخصص غدد و داخلی',            emoji:'🩺', cat:'doc', desc:'دیابت، تیروئید، هورمون، انسولین', sys:docSys('غدد و داخلی','مدیریتِ انسولین و قندِ خون، مقاومت به انسولین، تیروئید و هورمون‌ها، تنظیمِ داروهای دیابت.')},
   {id:'cardio', name:'متخصص قلب و عروق',              emoji:'🫀', cat:'doc', desc:'فشار، چربی، خطر قلبی', sys:docSys('قلب و عروق','فشارِ خون، چربیِ خون، خطرِ قلبی‌عروقیِ دیابت، داروهای قلبی و تداخل‌ها، پیشگیری از سکته.')},
@@ -4575,14 +4597,13 @@ const CHAT_ROLES=[
   {id:'psych',  name:'روانپزشک',                     emoji:'🧩', cat:'doc', desc:'افسردگی، اضطراب، خواب', sys:docSys('روانپزشکی','افسردگی و اضطرابِ همراهِ دیابت، دیسترسِ دیابت، خواب و انگیزه.')},
   {id:'neonat', name:'متخصص نوزادان',                emoji:'👶', cat:'doc', desc:'نوزاد و بارداری دیابتی', sys:docSys('نوزادان','اثرِ دیابتِ بارداری بر نوزاد، هیپوگلیسمیِ نوزاد و مراقبت‌های اولیه.')},
   {id:'allspec',name:'پزشک متخصص کل',                emoji:'🧬', cat:'doc', desc:'دانشِ همه‌ی تخصص‌ها یک‌جا', sys:'تو یک «پزشکِ فوقِ حرفه‌ایِ چندتخصصی» در تراز جهانی هستی که دانشِ همه‌ی تخصص‌ها را یک‌جا داری: غدد و داخلی، قلب و عروق، کلیه، کبد، چشم، اعصاب و مغز و اعصاب، خون، ریه، روان، اورولوژی، گوش‌وحلق‌وبینی و نوزادان. هر سوالِ پزشکیِ مرتبط با دیابت و عوارضش را از همه‌ی زاویه‌ها و به‌صورت یکپارچه پاسخ می‌دهی، تداخل‌ها و اثرِ متقابلِ سیستم‌ها را در نظر می‌گیری، به‌روز با ADA/WHO/EASD، دقیق، سخت‌گیر و بی‌خطا. '+CHAT_MASTERY+' اگر موضوعی نیاز به معاینه یا اقدامِ حضوریِ یک تخصصِ خاص دارد، آن را هم بگو. آموزشی بمان؛ دوزِ قطعیِ شخصی نده و تصمیمِ نهایی را به پزشکِ معالج بسپار.'},
-  {id:'planner',name:'برنامه‌ریزِ مسیرِ درمان',      emoji:'🗺️', cat:'flow', desc:'ترتیب مراجعه/کنفرانس را چارت می‌کند', sys:''/*در ادامه ست می‌شود*/},
   {id:'chef',   name:'سرآشپز حرفه‌ای',               emoji:'👨‍🍳', cat:'life', desc:'وعده‌ی رژیمی/کم‌کالری بساز', sys:CHEF_SYS},
   {id:'coach',  name:'مربی ورزش حرفه‌ای',            emoji:'🏅', cat:'life', desc:'برنامه‌ی ورزشی و پیگیریِ سخت‌گیرانه', sys:COACH_SYS},
   {id:'consultant', name:'مشاور دیابت',              emoji:'🧭', cat:'gen', desc:'راهنمای کلیِ متعادل', sys:'تو یک مشاورِ دیابتِ آرام، متعادل و عملگرا هستی: توضیحِ روشن، گام‌های کوچکِ عملی و بدونِ قضاوت. آموزشی بمان و برای تصمیمِ درمانی به پزشک ارجاع بده.'},
   {id:'strict', name:'ناظرِ سختگیر',                 emoji:'💪', cat:'gen', desc:'رُک و پاسخگو نگه‌دار', sys:'لحنِ تو سختگیر و پرتوقع است: رُک و بی‌تعارف؛ کوتاهی‌ها (ورزش‌نکردن، پرخوری، ثبت‌نکردن) را صریح تذکر بده و کاربر را پاسخگو نگه دار، ولی هرگز تحقیر نکن و همیشه یک قدمِ عملیِ جبران بده. آموزشی بمان.'},
   {id:'friend', name:'رفیق مهربان',                  emoji:'🤗', cat:'gen', desc:'روزهای سخت: حمایتگر', sys:'تو یک رفیقِ مهربان و امیدبخشی: گرم، همدل و حمایتگر. اول احساسِ کاربر را به رسمیت بشناس، از تلاش‌هایش تعریف کن، بعد یک قدمِ کوچک و شدنی پیشنهاد بده. آموزشی بمان.'}
 ];
-const CHAT_ROLE_CATS=[['doc','🩺 پزشکان'],['flow','🗺️ برنامه‌ریزی و مسیر'],['life','🌿 سبکِ زندگی'],['gen','🧭 عمومی']];
+const CHAT_ROLE_CATS=[['flow','🗺️ شروعِ روند (برنامه‌ریز)'],['doc','🩺 پزشکان'],['life','🌿 سبکِ زندگی'],['gen','🧭 عمومی']];
 // سیستم‌پرامپتِ «برنامه‌ریزِ مسیرِ درمان» — بعد از تعریفِ CHAT_ROLES ست می‌شود (به شناسه‌ها نیاز دارد)
 (function(){ const p=CHAT_ROLES.find(r=>r.id==='planner'); if(!p) return;
   const list=CHAT_ROLES.filter(r=>r.id!=='planner').map(r=>r.id+' ('+r.name+')').join('، ');
@@ -4759,7 +4780,7 @@ async function loadProfile(){
 // کلیدهای localStorage که در بکاپ گنجانده می‌شوند (نقشه‌ی داده‌ی کاربر).
 // از مقادیر رشته‌ای مستقیم استفاده می‌شود چون بعضی از این const‌ها (CGMKEY, BGKEY, ...)
 // پایین‌تر در فایل تعریف شده‌اند و ارجاع به خودِ متغیر اینجا TDZ می‌دهد.
-const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','custom_foods_v1','custom_meds_v1','custom_exercises_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1'];
+const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','custom_foods_v1','custom_meds_v1','custom_exercises_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','journeys_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1'];
 
 async function renderProfileTab(){
   // فرم پروفایل (c-profile) حالا خودش داخل این تب است و وضعیت ذخیره‌شده را نشان می‌دهد.
@@ -10328,8 +10349,8 @@ function chatSelect(id){ const o=chatLoad(); o.activeId=id; chatSave(o); renderC
 const FOLDER_COLORS=['#3fb9a3','#e0685f','#9a86e0','#5b8fd6','#e0a355','#6fd39a','#e0699b','#7e9cff','#54c7c0','#b5622a'];
 function chatProjects(o){ o=o||chatLoad(); return Array.isArray(o.projects)?o.projects:[]; }
 function chatDrawerRefresh(){ const el=document.getElementById('chatDrawerList'); if(el) el.innerHTML=chatDrawerListHTML(); }
-function chatDrawerTab(tab){ const o=chatLoad(); o.drawerTab=(tab==='projects'?'projects':'chats'); if(tab!=='projects') o.projOpen=null; chatSave(o);
-  const tabs=document.querySelectorAll('#chatDrawer .cxtab'); if(tabs[0])tabs[0].classList.toggle('on',o.drawerTab==='chats'); if(tabs[1])tabs[1].classList.toggle('on',o.drawerTab==='projects'); chatDrawerRefresh(); }
+function chatDrawerTab(tab){ const o=chatLoad(); o.drawerTab=['projects','journeys'].indexOf(tab)>=0?tab:'chats'; if(tab!=='projects') o.projOpen=null; chatSave(o);
+  const tabs=document.querySelectorAll('#chatDrawer .cxtab'); const order=['chats','projects','journeys']; tabs.forEach((t,i)=>t.classList.toggle('on',o.drawerTab===order[i])); chatDrawerRefresh(); }
 function chatOpenProject(pid){ const o=chatLoad(); o.projOpen=pid||null; o.drawerTab='projects'; chatSave(o); chatDrawerRefresh(); }
 function chatRowHTML(x,activeId){
   return `<div class="chatx-litem ${x.id===activeId?'on':''}"
@@ -10344,6 +10365,19 @@ function chatRowHTML(x,activeId){
 function chatDrawerListHTML(o,c){
   o=o||chatLoad(); c=c||chatActive(o);
   const activeId=c&&c.id; const projects=chatProjects(o); let h='';
+  if(o.drawerTab==='journeys'){
+    const js=jrLoad();
+    h+=`<button type="button" class="cxproj-new" onclick="chatStartJourneyNew()">🚀 شروعِ روندِ درمانِ جدید</button>`;
+    if(!js.length){ h+=`<div class="chatx-fempty">هنوز روندی نساخته‌ای.<br>«برنامه‌ریزِ مسیریاب» مشکلت را می‌گیرد و مسیرِ مراجعه را می‌چیند.</div>`; }
+    js.forEach(j=>{ const done=jrStepDone(j),n=(j.steps||[]).length; const pct=n?Math.round(done/n*100):0;
+      h+=`<div class="cxproj-card" onclick="chatOpenJourney('${j.id}')">
+        <span class="cxproj-ic" style="background:rgba(63,185,163,.14);color:var(--teal)">🧭</span>
+        <div class="ct"><div class="cn">${escVision(j.goal)}</div>
+          <div class="cd">${j.status==='done'?'✅ پایان':'⏳ در جریان'} · ${faDigits(String(done))}/${faDigits(String(n))} مرحله</div>
+          <div class="jr-progmini"><i style="width:${pct}%"></i></div></div>
+      </div>`; });
+    return h;
+  }
   if(o.drawerTab==='projects'){
     if(o.projOpen){
       const p=projects.find(x=>x.id===o.projOpen);
@@ -10507,16 +10541,25 @@ function chatActionCard(m,idx){
   if(a.kind==='plan'){ return chatPlanCard(m,idx); }
   return '';
 }
-// چارتِ مسیرِ درمان (برنامه‌ریز)
+// ====== روندِ درمان (Journey) ======
+const JOURNEY_KEY='journeys_v1';
+function jrLoad(){ try{ const a=JSON.parse(localStorage.getItem(JOURNEY_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function jrSaveAll(a){ try{ localStorage.setItem(JOURNEY_KEY,JSON.stringify(a)); }catch(e){} }
+function jrById(id){ return jrLoad().find(j=>j.id===id)||null; }
+function jrUpdate(id,fn){ const a=jrLoad(); const j=a.find(x=>x.id===id); if(j){ fn(j); jrSaveAll(a); } return j; }
+function jrStepDone(j){ return ((j&&j.steps)||[]).filter(s=>s.done).length; }
+function jrRolesNames(ids){ return (ids||[]).map(id=>{ const r=chatRoleById(id); return r?r.name:''; }).filter(Boolean).join(' + '); }
+function jrRolesIcons(ids){ return (ids||[]).map(id=>{ const r=chatRoleById(id); return r?r.emoji:''; }).filter(Boolean).join(' '); }
+function jrDate(ts){ try{ const d=new Date(ts); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); return jDateStr(j[0],j[1],j[2]); }catch(e){ return ''; } }
+function jrNormSteps(planSteps){ return (planSteps||[]).map(s=>{ let ids=Array.isArray(s.roles)&&s.roles.length?s.roles:(s.role?[s.role]:[]); ids=ids.filter(id=>chatRoleById(id)); return {roles:ids, why:s.why||'', carry:s.carry||'', chatId:null, outcome:'', done:false, ts:0}; }).filter(s=>s.roles.length); }
+// چارتِ مسیرِ درمان (برنامه‌ریز) — با دکمه‌ی ساخت/گزارشِ روند
 function chatPlanCard(m,idx){
   const d=(m&&m.action&&m.action.data)||{}; const steps=Array.isArray(d.steps)?d.steps:[];
+  const c=chatActive(); const j=(c&&c.journeyId)?jrById(c.journeyId):null;
   let h=`<div class="cplan"><div class="cplan-h">🗺️ ${escVision(d.title||'مسیرِ پیشنهادیِ مراجعه')}</div>`;
   steps.forEach((s,i)=>{
     let ids=Array.isArray(s.roles)&&s.roles.length?s.roles:(s.role?[s.role]:[]); ids=ids.filter(id=>chatRoleById(id));
-    const conf=ids.length>1;
-    const icons=ids.map(id=>chatRoleById(id).emoji).join(' ');
-    const names=ids.map(id=>chatRoleById(id).name).join(' + ')||'—';
-    const last=i===steps.length-1;
+    const conf=ids.length>1; const icons=jrRolesIcons(ids); const names=jrRolesNames(ids)||'—'; const last=i===steps.length-1;
     h+=`<div class="cplan-step">
       <div class="cplan-rail"><div class="cplan-num">${faDigits(String(i+1))}</div>${last?'':'<div class="cplan-line"></div>'}</div>
       <div class="cplan-body">
@@ -10526,19 +10569,133 @@ function chatPlanCard(m,idx){
         ${ids.length?`<button type="button" class="cplan-btn" onclick="chatStartStep(${idx},${i})">شروعِ این مرحله ←</button>`:''}
       </div></div>`;
   });
-  h+=`</div>`; return h;
+  h+=`<div class="cplan-foot">`;
+  if(j) h+=`<button type="button" class="cact-b" onclick="chatOpenJourney('${j.id}')">📋 گزارشِ روند</button>`;
+  else h+=`<button type="button" class="cact-b" onclick="chatBuildJourney(${idx})">🚀 ساختِ روندِ درمان از این مسیر</button>`;
+  h+=`</div></div>`; return h;
+}
+// ساختِ روند از پلن: پوشه + رکورد روند + اتصالِ چتِ برنامه‌ریز
+function chatBuildJourney(idx, silent){
+  const c=chatActive(); const m=c&&c.messages&&c.messages[idx]; const d=m&&m.action&&m.action.data; if(!d) return null;
+  if(c.journeyId && jrById(c.journeyId)){ if(!silent) chatOpenJourney(c.journeyId); return c.journeyId; }
+  const steps=jrNormSteps(d.steps); if(!steps.length){ if(!silent) uiToast('مرحله‌ای برای روند نبود'); return null; }
+  const goal=(d.title||'روندِ درمان').slice(0,60);
+  const o=chatLoad(); if(!Array.isArray(o.projects)) o.projects=[];
+  const pid='p'+Date.now().toString(36); o.projects.unshift({id:pid,name:'🩺 '+goal,color:'#3fb9a3'});
+  const jid='j'+Date.now().toString(36);
+  const pc=o.chats.find(x=>x.id===c.id); if(pc){ pc.projectId=pid; pc.journeyId=jid; }
+  chatSave(o);
+  const arr=jrLoad(); arr.unshift({id:jid, goal, createdTs:Date.now(), status:'active', projectId:pid, plannerChatId:c.id, steps, result:''}); jrSaveAll(arr);
+  if(!silent){ uiToast('✓ روندِ درمان ساخته شد'); renderChatTab(); chatOpenJourney(jid); }
+  return jid;
 }
 function chatStartStep(idx, si){
   const c=chatActive(); const m=c&&c.messages&&c.messages[idx]; const d=m&&m.action&&m.action.data; if(!d) return;
   const step=(d.steps||[])[si]; if(!step) return;
   let ids=Array.isArray(step.roles)&&step.roles.length?step.roles:(step.role?[step.role]:[]); ids=ids.filter(id=>chatRoleById(id));
   if(!ids.length){ uiToast('نقشِ نامعتبر'); return; }
+  const jid=chatBuildJourney(idx, true);   // اطمینان از وجودِ روند (گروه‌بندیِ خودکار در پوشه)
+  const j=jid?jrById(jid):null;
   const o=chatLoad(); const nid='c'+Date.now().toString(36);
   const lead=ids.length>1?'کنفرانس':chatRoleById(ids[0]).name;
   const title=(lead+(d.title?(' — '+d.title):'')).slice(0,50);
-  o.chats.unshift({id:nid,title,ts:Date.now(),provider:sectionProvider('chat'),speed:'smart',roles:ids,messages:[]});
-  o.activeId=nid; chatSave(o); window._roleAsked=nid; renderChatTab();
+  const chat={id:nid,title,ts:Date.now(),provider:sectionProvider('chat'),speed:'smart',roles:ids,messages:[]};
+  if(j){ chat.projectId=j.projectId; chat.journeyId=j.id; chat.stepIndex=si; }
+  o.chats.unshift(chat); o.activeId=nid; chatSave(o);
+  if(j) jrUpdate(j.id, jj=>{ if(jj.steps[si]) jj.steps[si].chatId=nid; });
+  window._roleAsked=nid; renderChatTab();
   uiToast('✓ گفتگو با «'+lead+'» باز شد');
+}
+// شروعِ روندِ جدید (چتِ برنامه‌ریز)
+function chatStartJourneyNew(){ const o=chatLoad(); const nid='c'+Date.now().toString(36);
+  o.chats.unshift({id:nid,title:'روندِ درمانِ جدید',ts:Date.now(),provider:sectionProvider('chat'),speed:'smart',roles:['planner'],messages:[]});
+  o.activeId=nid; chatSave(o); window._roleAsked=nid; if(typeof closeChatDrawer==='function') closeChatDrawer(); switchTab('chat'); renderChatTab();
+  setTimeout(()=>{ const inp=document.getElementById('chatInput'); if(inp){ inp.focus(); } },320);
+}
+// ── گزارشِ روند ──
+function chatJourneyClose(){ const b=document.getElementById('journeyBg'); if(b) b.remove(); }
+function chatOpenJourney(id){ const j=jrById(id); if(!j) return; try{ ensureChatCss(); }catch(e){} chatJourneyClose();
+  const bg=document.createElement('div'); bg.className='rolepick-bg'; bg.id='journeyBg'; bg.onclick=e=>{ if(e.target===bg) chatJourneyClose(); };
+  bg.innerHTML=`<div class="rolepick jreport">${jrReportHTML(j)}</div>`;
+  document.body.appendChild(bg);
+}
+function jrReportHTML(j){
+  const done=jrStepDone(j), n=(j.steps||[]).length; const pct=n?Math.round(done/n*100):0;
+  let h=`<div class="rp-head"><b>🧭 گزارشِ روند</b><button type="button" class="rp-x" onclick="chatJourneyClose()" aria-label="بستن">✕</button></div>
+    <div class="jr-goal">🎯 ${escVision(j.goal)}</div>
+    <div class="jr-meta">شروع: ${faDigits(jrDate(j.createdTs))} · ${j.status==='done'?'✅ پایان‌یافته':'⏳ در جریان'} · ${faDigits(String(done))}/${faDigits(String(n))} مرحله</div>
+    <div class="jr-prog"><div class="jr-progbar" style="width:${pct}%"></div></div>
+    <div class="rp-body">`;
+  (j.steps||[]).forEach((s,i)=>{
+    const last=i===n-1;
+    h+=`<div class="jr-step${s.done?' done':''}">
+      <div class="cplan-rail"><div class="jr-num${s.done?' done':''}">${s.done?'✓':faDigits(String(i+1))}</div>${last?'':'<div class="cplan-line"></div>'}</div>
+      <div class="jr-body">
+        <div class="jr-role">${jrRolesIcons(s.roles)} ${escVision(jrRolesNames(s.roles)||'—')}${s.roles.length>1?' <span class="cplan-tag">کنفرانس</span>':''}</div>
+        ${s.why?`<div class="jr-why">${escVision(s.why)}</div>`:''}
+        ${s.outcome?`<div class="jr-out">📝 ${escVision(s.outcome)}</div>`:`<div class="jr-wait">هنوز نتیجه‌ای ثبت نشده</div>`}
+        <div class="jr-acts">
+          ${s.chatId?`<button type="button" class="jr-a" onclick="chatJourneyClose();chatSelect('${s.chatId}')">باز کردن گفتگو</button>`:`<button type="button" class="jr-a" onclick="chatJourneyStartStep('${j.id}',${i})">شروعِ این مرحله</button>`}
+          <button type="button" class="jr-a alt" onclick="chatJourneyEditOutcome('${j.id}',${i})">${s.done?'ویرایش نتیجه':'ثبتِ نتیجه'}</button>
+        </div>
+      </div></div>`;
+  });
+  h+=`</div>`;
+  h+=`<div class="jr-foot">
+    <div class="jr-flabel">✅ نتیجه‌ی نهاییِ روند</div>
+    <textarea id="jrResult" class="jr-final" placeholder="جمع‌بندیِ نهاییِ روند…">${escVision(j.result||'')}</textarea>
+    <div class="jr-fbtns">
+      <button type="button" class="rp-cancel" onclick="chatJourneyClose()">بستن</button>
+      <button type="button" class="cact-b alt" onclick="chatJourneyGoPlanner('${j.id}')">↩︎ ادامه با برنامه‌ریز</button>
+      <button type="button" class="rp-ok" onclick="chatJourneySaveResult('${j.id}')">${j.status==='done'?'💾 ذخیره':'🏁 پایانِ روند'}</button>
+    </div></div>`;
+  return h;
+}
+function chatJourneyStartStep(jid,i){ const j=jrById(jid); if(!j) return; const step=(j.steps||[])[i]; if(!step||!step.roles.length) return;
+  const o=chatLoad(); const nid='c'+Date.now().toString(36); const lead=step.roles.length>1?'کنفرانس':chatRoleById(step.roles[0]).name;
+  o.chats.unshift({id:nid,title:(lead+' — '+j.goal).slice(0,50),ts:Date.now(),provider:sectionProvider('chat'),speed:'smart',roles:step.roles.slice(),projectId:j.projectId,journeyId:j.id,stepIndex:i,messages:[]});
+  o.activeId=nid; chatSave(o); jrUpdate(jid,jj=>{ if(jj.steps[i]) jj.steps[i].chatId=nid; }); window._roleAsked=nid;
+  chatJourneyClose(); switchTab('chat'); renderChatTab(); uiToast('✓ گفتگو با «'+lead+'» باز شد'); }
+function chatJourneyGoPlanner(jid){ const j=jrById(jid); if(!j) return; const o=chatLoad(); const pc=o.chats.find(x=>x.id===j.plannerChatId);
+  if(!pc){ uiToast('چتِ برنامه‌ریز پیدا نشد'); return; } o.activeId=j.plannerChatId; chatSave(o); chatJourneyClose(); switchTab('chat'); renderChatTab(); }
+function chatJourneySaveResult(jid){ const ta=document.getElementById('jrResult'); const v=ta?ta.value.trim():'';
+  jrUpdate(jid,j=>{ j.result=v; if(v) j.status='done'; });
+  chatJourneyClose(); renderChatTab(); uiToast(v?'✓ روند پایان یافت':'✓ ذخیره شد'); }
+// ثبت/ویرایشِ نتیجه‌ی مرحله (پاپ‌آپ) — با خلاصه‌ی AI و ویرایشِ دستی
+function chatFinishStep(){ const c=chatActive(); if(!c||!c.journeyId) return; const j=jrById(c.journeyId); if(!j) return; if(typeof c.stepIndex!=='number') return; chatJourneyEditOutcome(j.id, c.stepIndex, {returnPlanner:true}); }
+function chatJourneyEditOutcome(jid,i,opts){ opts=opts||{}; const j=jrById(jid); if(!j) return; const s=(j.steps||[])[i]; if(!s) return; try{ ensureChatCss(); }catch(e){} chatJourneyClose();
+  const b0=document.getElementById('jrOutBg'); if(b0) b0.remove();
+  const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='jrOutBg'; bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
+  bg.innerHTML=`<div class="chat-rename" role="dialog" aria-modal="true" style="max-width:470px">
+    <h4>📝 نتیجه‌ی مرحله — ${escVision(jrRolesNames(s.roles)||'')}</h4>
+    <textarea id="jrOutTxt" class="qbg-in" style="min-height:120px;line-height:1.9;resize:vertical" placeholder="تجویز/جمع‌بندیِ این مرحله…">${escVision(s.outcome||'')}</textarea>
+    <div style="margin-top:8px"><button type="button" class="crn-btn" id="jrSumBtn" style="background:var(--field);border:1px solid var(--teal-dim);color:var(--teal);width:100%">✨ خلاصه‌ی خودکار از گفتگو</button></div>
+    <div class="chat-rename-btns" style="margin-top:10px"><button type="button" class="crn-btn crn-cancel" onclick="document.getElementById('jrOutBg').remove()">انصراف</button>
+      <button type="button" class="crn-btn crn-ok" id="jrOutSave">${opts.returnPlanner?'ثبت و بازگشت به برنامه‌ریز':'ذخیره'}</button></div></div>`;
+  document.body.appendChild(bg);
+  const sb=document.getElementById('jrSumBtn'); sb.onclick=()=>jrSummarizeInto(s.chatId);
+  document.getElementById('jrOutSave').onclick=()=>{ const v=(document.getElementById('jrOutTxt').value||'').trim();
+    jrUpdate(jid,jj=>{ if(jj.steps[i]){ jj.steps[i].outcome=v; jj.steps[i].done=!!v; jj.steps[i].ts=Date.now(); } });
+    const bb=document.getElementById('jrOutBg'); if(bb) bb.remove(); uiToast('✓ نتیجه ثبت شد');
+    if(opts.returnPlanner) jrReturnToPlanner(jid,i,v); else renderChatTab(); };
+  setTimeout(()=>{ const t=document.getElementById('jrOutTxt'); if(t) t.focus(); },60);
+}
+function jrSummarizeInto(chatId){ const ta=document.getElementById('jrOutTxt'); if(!ta) return;
+  const c=chatLoad().chats.find(x=>x.id===chatId); if(!c||!c.messages||!c.messages.length){ uiToast('گفتگویی برای خلاصه نیست'); return; }
+  const prov=c.provider||sectionProvider('chat'); const key=getVisionKey(prov);
+  if(!key||!navigator.onLine){ uiToast('برای خلاصه، آنلاین بودن و کلید لازم است'); return; }
+  const sb=document.getElementById('jrSumBtn'); if(sb){ sb.textContent='… در حال خلاصه‌کردن'; sb.disabled=true; }
+  const transcript=c.messages.slice(-12).map(m=>(m.role==='user'?'بیمار: ':'پزشک: ')+String(m.content||'').slice(0,600)).join('\n');
+  const prompt='این گفتگوی بیمار با پزشکِ متخصص است. «جمع‌بندی و تجویزِ نهاییِ این مرحله» را در حداکثر ۳ خطِ کوتاهِ فارسی بنویس (توصیه‌ها، داروها و اقدامِ بعدی). فقط خلاصه، بدون مقدمه:\n\n'+transcript;
+  callAIText(prov,key,prompt,400,0).then(txt=>{ if(txt) ta.value=String(txt).trim(); const b=document.getElementById('jrSumBtn'); if(b){ b.textContent='✨ خلاصه‌ی خودکار از گفتگو'; b.disabled=false; } })
+    .catch(()=>{ const b=document.getElementById('jrSumBtn'); if(b){ b.textContent='✨ خلاصه‌ی خودکار از گفتگو'; b.disabled=false; } uiToast('خطا در خلاصه'); });
+}
+function jrReturnToPlanner(jid,i,outcome){ const j=jrById(jid); if(!j) return; const o=chatLoad(); const pc=o.chats.find(x=>x.id===j.plannerChatId);
+  if(!pc){ uiToast('چتِ برنامه‌ریز پیدا نشد'); return; }
+  o.activeId=j.plannerChatId; chatSave(o); switchTab('chat'); renderChatTab();
+  const roleNm=jrRolesNames((j.steps[i]||{}).roles||[]);
+  const msg='نتیجه‌ی مرحله‌ی '+faDigits(String(i+1))+' ('+roleNm+'): '+(outcome||'—')+'\nحالا مرحله‌ی بعدی را بگو و در صورت لزوم مسیر را به‌روزرسانی کن.';
+  setTimeout(()=>{ const inp=document.getElementById('chatInput'); if(inp){ inp.value=msg; if(typeof chatAutoGrow==='function') chatAutoGrow(inp); } if(typeof chatSend==='function') chatSend(); },420);
 }
 function chatMealAdd(idx,dest){
   const c=chatActive(); const m=c&&c.messages&&c.messages[idx]; const d=m&&m.action&&m.action.data; if(!d){ return; }
@@ -10784,6 +10941,34 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .cplan-carry{font-size:11px;color:var(--amber);line-height:1.7;margin-top:4px;background:rgba(224,163,85,.1);border-radius:8px;padding:4px 8px}
   .cplan-btn{margin-top:7px;background:var(--panel);border:1px solid var(--teal-dim);color:var(--teal);border-radius:10px;padding:7px 12px;font-family:inherit;font-weight:800;font-size:11.5px;cursor:pointer}
   .cplan-btn:hover{background:var(--teal-dim);color:#fff}
+  .cplan-foot{margin-top:8px;border-top:1px dashed var(--teal-dim);padding-top:9px}
+  .chat-jbar{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(63,185,163,.16),rgba(63,185,163,.06));border:1px solid var(--teal-dim);border-radius:12px;padding:8px 11px;margin-bottom:10px}
+  .chat-jbar .jb-goal{flex:1;min-width:0;font-size:12px;font-weight:800;color:var(--teal);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+  .chat-jbar .jb-btn{flex:0 0 auto;background:var(--teal);border:none;color:#fff;border-radius:9px;padding:7px 11px;font-family:inherit;font-weight:800;font-size:11px;cursor:pointer}
+  .chat-jbar .jb-btn.alt{background:var(--panel);color:var(--teal);border:1px solid var(--teal-dim);padding:7px 9px}
+  .chat-jbar .jb-btn.done{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
+  .jr-progmini{height:4px;border-radius:4px;background:var(--line);margin-top:5px;overflow:hidden}
+  .jr-progmini>i{display:block;height:100%;background:var(--teal)}
+  .rolepick.jreport{max-height:90vh}
+  .jr-goal{font-size:15px;font-weight:800;color:var(--ink);padding:2px 16px 2px}
+  .jr-meta{font-size:11px;color:var(--muted);padding:4px 16px 8px}
+  .jr-prog{height:6px;border-radius:6px;background:var(--field);margin:0 16px 8px;overflow:hidden}
+  .jr-progbar{height:100%;background:linear-gradient(90deg,var(--teal),var(--teal-dim));transition:width .3s}
+  .jr-step{display:flex;gap:10px;padding:0 4px}
+  .jr-num{width:26px;height:26px;border-radius:50%;background:var(--field);border:2px solid var(--teal-dim);color:var(--teal);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .jr-num.done{background:var(--teal);border-color:var(--teal);color:#fff}
+  .jr-body{flex:1;min-width:0;padding-bottom:14px}
+  .jr-role{font-size:13px;font-weight:800;color:var(--ink)}
+  .jr-why{font-size:11.5px;color:var(--muted);line-height:1.7;margin-top:3px}
+  .jr-out{font-size:11.5px;color:var(--ink);line-height:1.8;margin-top:5px;background:rgba(63,185,163,.1);border-radius:9px;padding:6px 9px;border-right:2px solid var(--teal)}
+  .jr-wait{font-size:11px;color:var(--muted);margin-top:5px;font-style:italic}
+  .jr-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+  .jr-a{background:var(--teal);border:none;color:#fff;border-radius:9px;padding:6px 11px;font-family:inherit;font-weight:800;font-size:11px;cursor:pointer}
+  .jr-a.alt{background:var(--panel);color:var(--teal);border:1px solid var(--teal-dim)}
+  .jr-foot{border-top:1px solid var(--line);padding:12px 16px;background:var(--panel)}
+  .jr-flabel{font-size:12px;font-weight:800;color:var(--teal);margin-bottom:6px}
+  .jr-final{width:100%;min-height:60px;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:9px;font-family:inherit;font-size:12.5px;color:var(--ink);line-height:1.8;resize:vertical}
+  .jr-fbtns{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px;justify-content:flex-end}
   .chat-pill.role{background:rgba(63,185,163,.14);border-color:var(--teal-dim);max-width:180px}
   .chat-pill.role b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block;max-width:160px;vertical-align:bottom}
   .chat-welcome{max-width:520px;margin:16px auto;text-align:center;padding:26px 18px}
@@ -10935,7 +11120,7 @@ function renderChatTab(){
     <input type="file" id="chatFileDoc" accept=".txt,.md,.csv,.json,.log,text/*" style="display:none" onchange="chatOnPickFile(this)">
   </div>`;
   // کشوی گفتگوها (سمت چپ)
-  const dtab=(o.drawerTab==='projects')?'projects':'chats';
+  const dtab=['projects','journeys'].indexOf(o.drawerTab)>=0?o.drawerTab:'chats';
   h+=`<div class="chatx-scrim" id="chatScrim" onclick="closeChatDrawer()"></div>
     <div class="chatx-drawer" id="chatDrawer">
       <div class="chatx-dhead"><b>✦ دیابوت</b><span style="flex:1"></span>
@@ -10943,6 +11128,7 @@ function renderChatTab(){
       <div class="chatx-tabs">
         <button type="button" class="cxtab ${dtab==='chats'?'on':''}" onclick="chatDrawerTab('chats')">💬 چت‌ها</button>
         <button type="button" class="cxtab ${dtab==='projects'?'on':''}" onclick="chatDrawerTab('projects')">📁 پروژه‌ها</button>
+        <button type="button" class="cxtab ${dtab==='journeys'?'on':''}" onclick="chatDrawerTab('journeys')">🧭 روندها</button>
       </div>
       <div id="chatDrawerList">${chatDrawerListHTML(o,c)}</div>`;
   h+=`</div>`;
@@ -10958,6 +11144,18 @@ function renderChatTab(){
     }
   }
   else renderChatMessages(c);
+  // نوارِ روندِ درمان (اگر این گفتگو بخشی از یک روند است)
+  const jr=c.journeyId?jrById(c.journeyId):null;
+  if(jr){
+    const isPlanner=jr.plannerChatId===c.id;
+    const si=(typeof c.stepIndex==='number')?c.stepIndex:-1;
+    const stepDone=(si>=0 && jr.steps[si] && jr.steps[si].done);
+    const label=isPlanner?('🧭 برنامه‌ریزِ روند: '+escVision(jr.goal)):('🧭 '+escVision(jr.goal)+' · مرحله '+faDigits(String(si+1))+' از '+faDigits(String(jr.steps.length)));
+    const bar=`<div class="chat-jbar"><span class="jb-goal" onclick="chatOpenJourney('${jr.id}')">${label}</span>`
+      +((!isPlanner&&si>=0)?`<button type="button" class="jb-btn${stepDone?' done':''}" onclick="chatFinishStep()">${stepDone?'✓ ثبت‌شده':'✔ ثبت نتیجه و بازگشت'}</button>`:'')
+      +`<button type="button" class="jb-btn alt" onclick="chatOpenJourney('${jr.id}')" title="گزارش روند">📋</button></div>`;
+    if(mb) mb.insertAdjacentHTML('afterbegin', bar);
+  }
   // شروعِ گفتگوی جدید بدون نقش → پرسیدنِ متخصص (یک‌بار برای هر گفتگو)
   if(!c.messages.length && !roleIds.length && window._roleAsked!==c.id){ window._roleAsked=c.id; setTimeout(()=>{ if(!document.getElementById('rolePickBg')) chatRolePicker(); },280); }
   // پیشنهادهای آخرین پاسخ را (اگر ذخیره شده) دوباره نشان بده
