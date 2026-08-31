@@ -127,6 +127,23 @@ body.nav-bottom{padding-bottom:100px}
 .qseg{display:flex;gap:8px;margin-bottom:14px}
 .qseg button{flex:1;background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:11px;padding:12px 6px;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer;transition:all .15s}
 .qseg button.on{background:var(--teal-dim);border-color:var(--teal);color:#eafff8}
+/* چیپ‌های چندانتخابیِ دفترچه */
+.qtags{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+.qtags button{background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:16px;padding:8px 12px;font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.qtags button.on{background:var(--teal-dim);border-color:var(--teal);color:#eafff8}
+.qtags button:active{transform:scale(.95)}
+.qbg-doc{width:100%;background:rgba(224,163,85,.10);border:1.5px solid rgba(224,163,85,.5);border-radius:12px;padding:12px 13px;font-family:inherit;font-size:14px;color:var(--ink);outline:none;box-sizing:border-box}
+.qbg-doc::placeholder{color:var(--muted);opacity:.8}
+.qbg-ta{width:100%;min-height:64px;resize:vertical;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:11px 13px;font-family:inherit;font-size:14px;color:var(--ink);outline:none;line-height:1.7;box-sizing:border-box}
+.qbg-ta:focus{border-color:var(--teal)}
+/* کارت دفترچه در نمای روزانه */
+.jrn-card{background:linear-gradient(135deg,rgba(224,163,85,.10),var(--panel));border:1px solid rgba(224,163,85,.4);border-radius:14px;padding:13px 14px;margin:10px 0}
+.jrn-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.jrn-rating{font-size:13px;font-weight:800;color:var(--ink)}
+.jrn-tags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.jrn-tag{background:var(--field);border:1px solid var(--line);border-radius:14px;padding:4px 10px;font-size:11px;font-weight:700;color:var(--ink)}
+.jrn-note{font-size:12.5px;color:var(--muted);line-height:1.85;margin-top:6px;white-space:pre-wrap}
+.jrn-doc{margin-top:8px;background:rgba(224,163,85,.14);border-right:3px solid #e9b877;border-radius:8px;padding:8px 11px;font-size:12.5px;color:var(--ink);line-height:1.8}
 .qmood-row{display:flex;gap:7px;margin-bottom:16px}
 .qmood-row button{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:12px;padding:11px 3px;font-family:inherit;font-weight:700;font-size:10.5px;cursor:pointer;transition:all .15s}
 .qmood-row button span{font-size:23px;line-height:1}
@@ -923,17 +940,20 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <button class="qa-item" onclick="quickAdd('med')"><span class="qa-ico" style="background:rgba(154,134,224,.18);color:#c3b4f0">💊</span>دارو</button>
       <button class="qa-item" onclick="quickAdd('sleep')"><span class="qa-ico" style="background:rgba(91,143,214,.18);color:#9fc0f0">😴</span>خواب</button>
       <button class="qa-item" onclick="quickAdd('mood')"><span class="qa-ico" style="background:rgba(224,163,85,.16);color:#e9b877">🙂</span>حالت روحی</button>
+      <button class="qa-item" onclick="quickAdd('vitals')"><span class="qa-ico" style="background:rgba(224,104,95,.16);color:#f0a29b">❤️</span>فشار و ضربان</button>
+      <button class="qa-item" onclick="quickAdd('journal')"><span class="qa-ico" style="background:rgba(224,163,85,.14);color:#e9b877">📓</span>دفترچه</button>
     </div>
     <div class="qa-subt">هوش مصنوعی</div>
     <div class="qa-grid">
       <button class="qa-item" onclick="quickAdd('chat')"><span class="qa-ico" style="background:rgba(63,185,163,.18);color:#5fd3bd">💬</span>چت هوشمند</button>
+      <button class="qa-item" onclick="quickAdd('aidoctor')"><span class="qa-ico" style="background:rgba(63,185,163,.14);color:#5fd3bd">🩺</span>پزشک AI</button>
       <button class="qa-item" onclick="quickAdd('aihistory')"><span class="qa-ico" style="background:rgba(154,134,224,.18);color:#c3b4f0">🗂️</span>تاریخچه AI</button>
     </div>
     <div class="qa-subt">شروع و رفتن به بخش</div>
     <div class="qa-grid">
       <button class="qa-item" onclick="quickAdd('startworkout')"><span class="qa-ico" style="background:rgba(63,185,163,.18);color:#5fd3bd">🏃</span>شروع ورزش</button>
       <button class="qa-item" onclick="quickAdd('calc')"><span class="qa-ico" style="background:rgba(63,185,163,.14);color:#5fd3bd">🧮</span>حساب دوز</button>
-      <button class="qa-item" onclick="quickAdd('plan')"><span class="qa-ico" style="background:rgba(224,163,85,.14);color:#e9b877">📓</span>دفترچه</button>
+      <button class="qa-item" onclick="quickAdd('plan')"><span class="qa-ico" style="background:rgba(224,163,85,.14);color:#e9b877">📔</span>دفترچه روزانه</button>
       <button class="qa-item" onclick="quickAdd('lab')"><span class="qa-ico" style="background:rgba(154,134,224,.18);color:#c3b4f0">🧪</span>آزمایش</button>
       <button class="qa-item" onclick="quickAdd('cgmfile')"><span class="qa-ico" style="background:rgba(63,185,163,.14);color:#5fd3bd">📈</span>فایل CGM</button>
     </div>
@@ -1078,6 +1098,61 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <div><label class="qbg-lbl">ساعت</label><input type="time" id="qmoodTime" class="qbg-in"></div>
     </div>
     <div class="qbg-actions"><button class="qbg-cancel" onclick="closeQEntry('qmoodModal')">لغو</button><button class="qbg-save" onclick="saveQuickMood()">💾 ذخیره</button></div>
+  </div>
+</div>
+
+<!-- فرم سریع فشار و ضربان -->
+<div class="qbg-modal" id="qvitModal" onclick="if(event.target===this)closeQEntry('qvitModal')">
+  <div class="qbg-box">
+    <button class="qbg-x" onclick="closeQEntry('qvitModal')" title="بستن">✕</button>
+    <div class="qbg-head"><span class="qbg-badge" style="background:rgba(224,104,95,.18)">❤️</span><div><div class="qbg-title">فشار و ضربان</div><div class="qbg-sub">فشار خون و ضربان قلب — در گزارش‌ها و برای پزشک ثبت می‌شود.</div></div></div>
+    <div class="qbg-grid">
+      <div><label class="qbg-lbl">فشار ماکسیمم (سیستول)</label><input type="number" id="qvitSys" class="qbg-in" inputmode="numeric" placeholder="مثلاً ۱۲۰"></div>
+      <div><label class="qbg-lbl">فشار مینیمم (دیاستول)</label><input type="number" id="qvitDia" class="qbg-in" inputmode="numeric" placeholder="مثلاً ۸۰"></div>
+    </div>
+    <label class="qbg-lbl" style="margin-top:12px">ضربان قلب (در دقیقه)</label>
+    <input type="number" id="qvitHr" class="qbg-in" inputmode="numeric" placeholder="مثلاً ۷۲" style="margin-bottom:14px">
+    <div class="qbg-grid">
+      <div><label class="qbg-lbl">تاریخ (شمسی)</label><div id="qvitDateWrap"></div></div>
+      <div><label class="qbg-lbl">ساعت</label><input type="time" id="qvitTime" class="qbg-in"></div>
+    </div>
+    <div class="qbg-actions"><button class="qbg-cancel" onclick="closeQEntry('qvitModal')">لغو</button><button class="qbg-save" onclick="saveQuickVitals()">💾 ذخیره</button></div>
+  </div>
+</div>
+
+<!-- فرم سریع دفترچه‌ی روز -->
+<div class="qbg-modal" id="qjrnModal" onclick="if(event.target===this)closeQEntry('qjrnModal')">
+  <div class="qbg-box">
+    <button class="qbg-x" onclick="closeQEntry('qjrnModal')" title="بستن">✕</button>
+    <div class="qbg-head"><span class="qbg-badge" style="background:rgba(224,163,85,.18)">📓</span><div><div class="qbg-title">دفترچه‌ی روز</div><div class="qbg-sub">عملکرد، اتفاقات و مشاهدات امروز — خلاصه‌اش در گزارش‌ها و هنگام مراجعه به پزشک در دسترس است.</div></div></div>
+    <label class="qbg-lbl">امروز چطور بود؟</label>
+    <div class="qseg" id="qjrnRating">
+      <button type="button" data-v="great" onclick="qsegPick('qjrnRating',this)">😄 عالی</button>
+      <button type="button" data-v="good" onclick="qsegPick('qjrnRating',this)">🙂 خوب</button>
+      <button type="button" data-v="ok" onclick="qsegPick('qjrnRating',this)">😐 معمولی</button>
+      <button type="button" data-v="bad" onclick="qsegPick('qjrnRating',this)">😟 سخت</button>
+    </div>
+    <label class="qbg-lbl">اتفاقات مهم امروز (چندتا می‌تونی انتخاب کنی)</label>
+    <div class="qtags" id="qjrnTags">
+      <button type="button" data-v="قند خوب" onclick="qtagToggle(this)">✅ قند خوب</button>
+      <button type="button" data-v="قند بالا" onclick="qtagToggle(this)">🔺 قند بالا</button>
+      <button type="button" data-v="افت قند (هیپو)" onclick="qtagToggle(this)">🔻 افت قند</button>
+      <button type="button" data-v="خطای سنسور" onclick="qtagToggle(this)">📡 خطای سنسور</button>
+      <button type="button" data-v="وعده‌ی خوب" onclick="qtagToggle(this)">🥗 وعده‌ی خوب</button>
+      <button type="button" data-v="پرخوری" onclick="qtagToggle(this)">🍰 پرخوری</button>
+      <button type="button" data-v="فراموشی دارو" onclick="qtagToggle(this)">💊 فراموشی دارو</button>
+      <button type="button" data-v="فراموشی انسولین" onclick="qtagToggle(this)">💉 فراموشی انسولین</button>
+      <button type="button" data-v="ورزش کردم" onclick="qtagToggle(this)">🏃 ورزش کردم</button>
+      <button type="button" data-v="استرس" onclick="qtagToggle(this)">😣 استرس</button>
+      <button type="button" data-v="بیماری/سرماخوردگی" onclick="qtagToggle(this)">🤒 بیماری</button>
+      <button type="button" data-v="خواب بد" onclick="qtagToggle(this)">😴 خواب بد</button>
+    </div>
+    <label class="qbg-lbl">یادداشت و مشاهدات (اختیاری)</label>
+    <textarea id="qjrnNote" class="qbg-ta" placeholder="مثلاً: بعد از ناهار قندم بالا رفت و دیر پایین اومد…" style="margin-bottom:14px"></textarea>
+    <label class="qbg-lbl">📌 نکته برای پزشک (اختیاری)</label>
+    <input type="text" id="qjrnDoc" class="qbg-doc" placeholder="چیزی که باید سرِ ویزیت به پزشک بگی" style="margin-bottom:14px">
+    <label class="qbg-lbl">تاریخ (شمسی)</label><div id="qjrnDateWrap" style="margin-bottom:2px"></div>
+    <div class="qbg-actions" style="margin-top:14px"><button class="qbg-cancel" onclick="closeQEntry('qjrnModal')">لغو</button><button class="qbg-save" onclick="saveQuickJournal()">💾 ذخیره</button></div>
   </div>
 </div>
 
@@ -1865,7 +1940,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۱۸.۱</b> · انتشار: ۱۴۰۵/۰۶/۰۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۱۹.۰</b> · انتشار: ۱۴۰۵/۰۶/۰۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3246,6 +3321,8 @@ function dailyDataDaySet(){
   const jl=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'[]'); }catch(e){ return []; } };
   jl('med_log_v1').forEach(x=>x.iso&&add(x.iso));
   jl('mood_log_v1').forEach(x=>x.iso&&add(x.iso));
+  jl('vitals_v1').forEach(x=>x.iso&&add(x.iso));
+  jl('journal_v1').forEach(x=>x.iso&&add(x.iso));
   jl('sleep_log_v1').forEach(x=>{ const pj=parseJDate(x.date); if(pj){ const g=j2g(pj[0],pj[1],pj[2]); set.add(dayKey(new Date(g[0],g[1]-1,g[2]))); } });
   try{ (loadExLog().entries||[]).forEach(x=>{ if(x.ts) set.add(dayKey(new Date(x.ts))); }); }catch(e){}
   try{ loadExercise().forEach(x=>x.iso&&add(x.iso)); }catch(e){}
@@ -3296,9 +3373,12 @@ function renderDailyReport(){
   const jlog=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'[]'); }catch(e){ return []; } };
   jlog('med_log_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'💊', color:'#c3b4f0', title:'دارو', detail:x.name+(x.dose?' · '+x.dose:'')+(x.timing?' · '+x.timing:''), kind:'med', iso:x.iso}); } });
   jlog('mood_log_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🙂', color:'#e9b877', title:'حالت روحی', detail:x.mood+(x.note?' · '+x.note:''), kind:'mood', iso:x.iso}); } });
+  jlog('vitals_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'❤️', color:'#f0a29b', title:'فشار و ضربان', detail:vitalsFa(x), kind:'vitals', iso:x.iso}); } });
   try{ (loadExLog().entries||[]).forEach(x=>{ if(x.ts&&dayKey(new Date(x.ts))===key){ const d=new Date(x.ts); ev.push({sm:x.time?smFromT(x.time):hourMin(d), time:x.time?faDigits(x.time):fmtHM(d), ico:'🏃', color:'#9fc0f0', title:'ورزش', detail:(x.items||[]).map(it=>it.name).join('، '), kind:'exlog', ts:x.ts}); } }); }catch(e){}
   try{ loadExercise().forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🏃', color:'#9fc0f0', title:'ورزش', detail:(x.what||'')+(x.dur?' · '+faDigits(x.dur)+' دقیقه':''), kind:'exercise', iso:x.iso}); } }); }catch(e){}
   let sleepRec=null; jlog('sleep_log_v1').forEach(x=>{ const sd=parseJDate(x.date); if(sd&&sd[0]===j[0]&&sd[1]===j[1]&&sd[2]===j[2]) sleepRec=x; });
+  let jrnRec=null; jlog('journal_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key) jrnRec=x; });
+  let vitLast=null; jlog('vitals_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key) vitLast=x; });
   ev.sort((a,b)=>a.sm-b.sm);
   let cgmDay=null, sparkPts=[];
   if(window._cgmReadings&&window._cgmReadings.length){
@@ -3313,7 +3393,7 @@ function renderDailyReport(){
   let dayBGpts=[]; try{ loadBG().forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ dayBGpts.push({t:new Date(x.iso).getTime(), g:x.glu}); } }); }catch(e){} dayBGpts.sort((a,b)=>a.t-b.t);
   const daySrc=resolveBgSrc(!!cgmDay, dayBGpts.length>0);
   const dHasGlu=(window._cgmReadings&&window._cgmReadings.length)||loadBG().length>0;
-  const hasAny = ev.length||cgmDay||sleepRec;
+  const hasAny = ev.length||cgmDay||sleepRec||jrnRec;
   let h=`<div class="daily-navcard"><div class="daily-nav">
     <button onclick="dailyNav(-1)" class="dn-arrow">‹ قبل</button>
     <div class="dn-date" onclick="openDailyCal()" title="برای انتخاب تاریخ کلیک کن">
@@ -3336,7 +3416,16 @@ function renderDailyReport(){
   else if(dayBGpts.length) chips.push(['📈','میانگین قند', faDigits(Math.round(dayBGpts.reduce((s,p)=>s+p.g,0)/dayBGpts.length))]);
   if(bgCount>0) chips.push(['🩸','قند دستی', faDigits(bgCount)+' بار']);
   if(sleepRec) chips.push(['😴','خواب', faDigits(sleepRec.hours)+' ساعت']);
+  if(vitLast){ if(vitLast.sys!=null&&vitLast.dia!=null) chips.push(['❤️','فشار', faDigits(vitLast.sys)+'/'+faDigits(vitLast.dia)]); if(vitLast.hr!=null) chips.push(['💓','ضربان', faDigits(vitLast.hr)]); }
+  if(jrnRec&&jrnRec.rating) chips.push(['📓','حال روز', JRN_RATING[jrnRec.rating]||jrnRec.rating]);
   if(chips.length){ h+=`<div class="daily-chips">`+chips.map(c=>`<div class="daily-chip"><span class="dc-ico">${c[0]}</span><span class="dc-l">${c[1]}</span><b class="dc-v">${c[2]}</b></div>`).join('')+`</div>`; }
+  if(jrnRec&&(jrnRec.rating||(jrnRec.tags&&jrnRec.tags.length)||jrnRec.note||jrnRec.doctor)){
+    h+=`<div class="jrn-card"><div class="jrn-head"><span style="font-size:17px">📓</span><span class="jrn-rating">دفترچه‌ی روز${jrnRec.rating?' · '+(JRN_RATING[jrnRec.rating]||jrnRec.rating):''}</span></div>`;
+    if(jrnRec.tags&&jrnRec.tags.length) h+=`<div class="jrn-tags">`+jrnRec.tags.map(t=>`<span class="jrn-tag">${escVision(t)}</span>`).join('')+`</div>`;
+    if(jrnRec.note) h+=`<div class="jrn-note">${escVision(jrnRec.note)}</div>`;
+    if(jrnRec.doctor) h+=`<div class="jrn-doc">📌 برای پزشک: ${escVision(jrnRec.doctor)}</div>`;
+    h+=`</div>`;
+  }
   // تفکیک انسولین پایه/سریع (اسم و واحد)
   if(rapidIns.length || basalIns){
     const rapidTotal=rapidIns.reduce((s,r)=>s+r.dose,0);
@@ -3448,6 +3537,8 @@ function evOnclick(e,from){
   if(e.kind==='bg') return `openEventEditor('bg','${e.iso}',null,'${fr}')`;
   if(e.kind==='med') return `openEventEditor('med','${e.iso}',null,'${fr}')`;
   if(e.kind==='mood') return `openEventEditor('mood','${e.iso}',null,'${fr}')`;
+  if(e.kind==='vitals') return `openEventEditor('vitals','${e.iso}',null,'${fr}')`;
+  if(e.kind==='journal') return `openEventEditor('journal','${e.iso}',null,'${fr}')`;
   if(e.kind==='sleep') return `openEventEditor('sleep','${e.iso}',null,'${fr}')`;
   if(e.kind==='exlog') return `openEventEditor('exlog',${e.ts},null,'${fr}')`;
   if(e.kind==='exercise') return `openEventEditor('exercise','${e.iso}',null,'${fr}')`;
@@ -3462,6 +3553,8 @@ function openEventEditor(kind,a,b,from){
   else if(kind==='bg'){ _evEdit.iso=a; body=evBGForm(a); }
   else if(kind==='med'){ _evEdit.iso=a; body=evMedForm(a); }
   else if(kind==='mood'){ _evEdit.iso=a; body=evMoodForm(a); }
+  else if(kind==='vitals'){ _evEdit.iso=a; body=evVitForm(a); }
+  else if(kind==='journal'){ _evEdit.iso=a; body=evJrnForm(a); }
   else if(kind==='sleep'){ _evEdit.iso=a; body=evSleepForm(a); }
   else if(kind==='exlog'){ _evEdit.ts=a; body=evExForm(a,'exlog'); }
   else if(kind==='exercise'){ _evEdit.iso=a; body=evExForm(a,'exercise'); }
@@ -3655,6 +3748,71 @@ function saveEvMood(){
   jlogSet('mood_log_v1',arr); closeEvEdit(); uiToast('✓ ذخیره شد'); refreshAfterEdit();
 }
 function delEvMood(){ if(!_evEdit) return; if(!confirm('این حالت روحی حذف شود؟')) return; jlogSet('mood_log_v1', jlogGet('mood_log_v1').filter(r=>r.iso!==_evEdit.iso)); closeEvEdit(); uiToast('✓ حذف شد'); refreshAfterEdit(); }
+/* --- فرم فشار و ضربان --- */
+function evVitForm(iso){
+  const x=jlogGet('vitals_v1').find(r=>r.iso===iso); if(!x) return '';
+  const d=new Date(iso); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); const p=n=>String(n).padStart(2,'0');
+  const vv=v=>v==null?'':v;
+  return `<div class="ev-form">
+    <div class="ev-fh"><span class="ev-badge" style="background:rgba(240,162,155,.18)">❤️</span><div class="ev-ftitle">ویرایش فشار و ضربان</div></div>
+    <div class="qbg-grid">
+      <div><label class="qbg-lbl">فشار ماکسیمم (سیستول)</label><input type="number" id="evVitSys" class="qbg-in" inputmode="numeric" value="${vv(x.sys)}"></div>
+      <div><label class="qbg-lbl">فشار مینیمم (دیاستول)</label><input type="number" id="evVitDia" class="qbg-in" inputmode="numeric" value="${vv(x.dia)}"></div>
+    </div>
+    <label class="qbg-lbl">ضربان قلب</label>
+    <input type="number" id="evVitHr" class="qbg-in" inputmode="numeric" value="${vv(x.hr)}">
+    <div class="qbg-grid">
+      <div><label class="qbg-lbl">تاریخ (شمسی)</label>${jDateFieldHTML('evVitDate', jDateStr(j[0],j[1],j[2]))}</div>
+      <div><label class="qbg-lbl">ساعت</label><input type="time" id="evVitTime" class="qbg-in" value="${p(d.getHours())}:${p(d.getMinutes())}"></div>
+    </div>
+    <div class="ev-actions"><button class="qbg-save" onclick="saveEvVit()">💾 ذخیره</button><button class="ev-del" onclick="delEvVit()">🗑 حذف</button></div>
+  </div>`;
+}
+function saveEvVit(){
+  if(!_evEdit) return; const iso=_evEdit.iso; let arr=jlogGet('vitals_v1'); const x=arr.find(r=>r.iso===iso); if(!x){ closeEvEdit(); return; }
+  const iv=id=>{ const r=faToEnDigits((document.getElementById(id).value||'').trim()); return r===''?null:parseInt(r,10); };
+  const sys=iv('evVitSys'), dia=iv('evVitDia'), hr=iv('evVitHr');
+  if(sys==null&&dia==null&&hr==null){ alert('حداقل یکی از فشار یا ضربان را وارد کن.'); return; }
+  const pj=parseJDate((document.getElementById('evVitDate')||{}).value||''); if(!pj){ alert('تاریخ را انتخاب کن.'); return; }
+  const g=j2g(pj[0],pj[1],pj[2]); const tv=(document.getElementById('evVitTime').value||'00:00').split(':'); const hh=parseInt(tv[0],10)||0, mm=parseInt(tv[1],10)||0;
+  const dd=new Date(g[0],g[1]-1,g[2],hh,mm); const p=n=>String(n).padStart(2,'0');
+  x.sys=sys; x.dia=dia; x.hr=hr; x.iso=dd.toISOString(); x.time=`${jDateStr(pj[0],pj[1],pj[2])} ${p(hh)}:${p(mm)}`;
+  jlogSet('vitals_v1',arr); closeEvEdit(); uiToast('✓ ذخیره شد'); refreshAfterEdit();
+}
+function delEvVit(){ if(!_evEdit) return; if(!confirm('این رکورد فشار/ضربان حذف شود؟')) return; jlogSet('vitals_v1', jlogGet('vitals_v1').filter(r=>r.iso!==_evEdit.iso)); closeEvEdit(); uiToast('✓ حذف شد'); refreshAfterEdit(); }
+/* --- فرم دفترچه‌ی روز --- */
+function evJrnForm(iso){
+  const x=jlogGet('journal_v1').find(r=>r.iso===iso); if(!x) return '';
+  const d=new Date(iso); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate());
+  const rats=[['great','😄 عالی'],['good','🙂 خوب'],['ok','😐 معمولی'],['bad','😟 سخت']];
+  const tags=x.tags||[];
+  const allTags=['قند خوب','قند بالا','افت قند (هیپو)','خطای سنسور','وعده‌ی خوب','پرخوری','فراموشی دارو','فراموشی انسولین','ورزش کردم','استرس','بیماری/سرماخوردگی','خواب بد'];
+  const merged=allTags.concat(tags.filter(t=>!allTags.includes(t)));
+  return `<div class="ev-form">
+    <div class="ev-fh"><span class="ev-badge" style="background:rgba(233,184,119,.18)">📓</span><div class="ev-ftitle">ویرایش دفترچه‌ی روز</div></div>
+    <label class="qbg-lbl">امروز چطور بود؟</label>
+    <div class="qseg" id="evJrnRating">${rats.map(r=>`<button type="button" data-v="${r[0]}" class="${r[0]===x.rating?'on':''}" onclick="qsegPick('evJrnRating',this)">${r[1]}</button>`).join('')}</div>
+    <label class="qbg-lbl">اتفاقات مهم</label>
+    <div class="qtags" id="evJrnTags">${merged.map(t=>`<button type="button" data-v="${t.replace(/"/g,'&quot;')}" class="${tags.includes(t)?'on':''}" onclick="qtagToggle(this)">${t}</button>`).join('')}</div>
+    <label class="qbg-lbl">یادداشت و مشاهدات</label>
+    <textarea id="evJrnNote" class="qbg-ta">${(x.note||'').replace(/</g,'&lt;')}</textarea>
+    <label class="qbg-lbl" style="margin-top:12px">📌 نکته برای پزشک</label>
+    <input type="text" id="evJrnDoc" class="qbg-doc" value="${(x.doctor||'').replace(/"/g,'&quot;')}">
+    <label class="qbg-lbl" style="margin-top:12px">تاریخ (شمسی)</label>${jDateFieldHTML('evJrnDate', jDateStr(j[0],j[1],j[2]))}
+    <div class="ev-actions" style="margin-top:14px"><button class="qbg-save" onclick="saveEvJrn()">💾 ذخیره</button><button class="ev-del" onclick="delEvJrn()">🗑 حذف</button></div>
+  </div>`;
+}
+function saveEvJrn(){
+  if(!_evEdit) return; const iso=_evEdit.iso; let arr=jlogGet('journal_v1'); const x=arr.find(r=>r.iso===iso); if(!x){ closeEvEdit(); return; }
+  const pj=parseJDate((document.getElementById('evJrnDate')||{}).value||''); if(!pj){ alert('تاریخ را انتخاب کن.'); return; }
+  const g=j2g(pj[0],pj[1],pj[2]); const dd=new Date(g[0],g[1]-1,g[2], d0h(iso), d0m(iso)); const p=n=>String(n).padStart(2,'0');
+  x.rating=qSegVal('evJrnRating'); x.tags=qTagVals('evJrnTags'); x.note=(document.getElementById('evJrnNote').value||'').trim(); x.doctor=(document.getElementById('evJrnDoc').value||'').trim();
+  x.iso=dd.toISOString(); x.date=`${jDateStr(pj[0],pj[1],pj[2])} ${p(dd.getHours())}:${p(dd.getMinutes())}`;
+  jlogSet('journal_v1',arr); closeEvEdit(); uiToast('✓ ذخیره شد'); refreshAfterEdit();
+}
+function d0h(iso){ return new Date(iso).getHours(); }
+function d0m(iso){ return new Date(iso).getMinutes(); }
+function delEvJrn(){ if(!_evEdit) return; if(!confirm('این یادداشت دفترچه حذف شود؟')) return; jlogSet('journal_v1', jlogGet('journal_v1').filter(r=>r.iso!==_evEdit.iso)); closeEvEdit(); uiToast('✓ حذف شد'); refreshAfterEdit(); }
 /* --- فرم خواب --- */
 function evSleepForm(iso){
   const x=jlogGet('sleep_log_v1').find(r=>r.iso===iso); if(!x) return '';
@@ -3720,6 +3878,8 @@ function collectAllEvents(){
   jlogGet('med_log_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'💊', color:'#c3b4f0', title:'دارو', detail:x.name+(x.dose?' · '+x.dose:'')+(x.timing?' · '+x.timing:''), kind:'med', iso:x.iso}); });
   jlogGet('mood_log_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'🙂', color:'#e9b877', title:'حالت روحی', detail:x.mood+(x.note?' · '+x.note:''), kind:'mood', iso:x.iso}); });
   jlogGet('sleep_log_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:-1, time:'', ico:'😴', color:'#9fc0f0', title:'خواب', detail:faDigits(x.hours)+' ساعت'+(x.quality?' · '+x.quality:''), kind:'sleep', iso:x.iso}); });
+  jlogGet('vitals_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'❤️', color:'#f0a29b', title:'فشار و ضربان', detail:vitalsFa(x), kind:'vitals', iso:x.iso}); });
+  jlogGet('journal_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); const parts=[]; if(x.rating) parts.push(JRN_RATING[x.rating]||x.rating); if(x.tags&&x.tags.length) parts.push(x.tags.join('، ')); if(x.note) parts.push(x.note); if(x.doctor) parts.push('📌 پزشک: '+x.doctor); out.push({dateKey:dayKey(d), sm:-2, time:'', ico:'📓', color:'#e9b877', title:'دفترچه', detail:parts.join(' · '), kind:'journal', iso:x.iso}); });
   try{ (loadExLog().entries||[]).forEach(x=>{ if(!x.ts) return; const d=new Date(x.ts); out.push({dateKey:dayKey(d), sm:x.time?smFromT(x.time):(d.getHours()*60+d.getMinutes()), time:x.time?faDigits(x.time):hm(d), ico:'🏃', color:'#9fc0f0', title:'ورزش', detail:(x.items||[]).map(it=>it.name).join('، '), kind:'exlog', ts:x.ts}); }); }catch(e){}
   try{ loadExercise().forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'🏃', color:'#9fc0f0', title:'ورزش', detail:(x.what||'')+(x.dur?' · '+faDigits(x.dur)+' دقیقه':''), kind:'exercise', iso:x.iso}); }); }catch(e){}
   return out;
@@ -3999,6 +4159,39 @@ function quickAdd(type){
   else if(type==='med'){ openQEntry('qmedModal','qmedDateWrap','qmedTime',['qmedName','qmedDose','qmedTiming'],'qmedName'); const rb=document.getElementById('qmedResults'); if(rb){ rb.classList.remove('show'); rb.innerHTML=''; } }
   else if(type==='sleep') openQEntry('qsleepModal','qsleepDateWrap',null,['qsleepHours'],'qsleepHours','qsleepQual');
   else if(type==='mood') openQEntry('qmoodModal','qmoodDateWrap','qmoodTime',['qmoodNote'],null,'qmoodPick');
+  else if(type==='vitals') openQEntry('qvitModal','qvitDateWrap','qvitTime',['qvitSys','qvitDia','qvitHr'],'qvitSys');
+  else if(type==='journal') openJournalQuick();
+  else if(type==='aidoctor'){ if(typeof chatStartJourneyNew==='function') chatStartJourneyNew(); else switchTab('chat'); }
+}
+/* دفترچه‌ی روز: علاوه بر ریست فیلدها، تگ‌ها و یادداشتِ آزاد را هم پاک می‌کند */
+function openJournalQuick(){
+  openQEntry('qjrnModal','qjrnDateWrap',null,['qjrnDoc'],null,'qjrnRating');
+  const ta=document.getElementById('qjrnNote'); if(ta) ta.value='';
+  document.querySelectorAll('#qjrnTags button.on').forEach(b=>b.classList.remove('on'));
+}
+function qtagToggle(btn){ btn.classList.toggle('on'); uiDing&&uiDing(); }
+function qTagVals(id){ return [...document.querySelectorAll('#'+id+' button.on')].map(b=>b.getAttribute('data-v')); }
+const JRN_RATING={great:'😄 عالی',good:'🙂 خوب',ok:'😐 معمولی',bad:'😟 سخت'};
+function vitalsFa(x){ const p=[]; if(x.sys!=null&&x.dia!=null) p.push('فشار '+faDigits(x.sys)+'/'+faDigits(x.dia)); else if(x.sys!=null) p.push('سیستول '+faDigits(x.sys)); else if(x.dia!=null) p.push('دیاستول '+faDigits(x.dia)); if(x.hr!=null) p.push('ضربان '+faDigits(x.hr)); return p.join(' · '); }
+function saveQuickVitals(){
+  const iv=id=>{ const r=faToEnDigits((document.getElementById(id).value||'').trim()); return r===''?null:parseInt(r,10); };
+  const sys=iv('qvitSys'), dia=iv('qvitDia'), hr=iv('qvitHr');
+  if(sys==null&&dia==null&&hr==null){ alert('حداقل یکی از فشار یا ضربان را وارد کن.'); return; }
+  const bad=(v,lo,hi)=>v!=null&&(isNaN(v)||v<lo||v>hi);
+  if(bad(sys,50,300)||bad(dia,25,200)||bad(hr,25,250)){ alert('عددها منطقی نیستند؛ دوباره بررسی کن.'); return; }
+  const dt=qDateTimeISO('qvitDate','qvitTime'); if(!dt){ alert('تاریخ را انتخاب کن.'); return; }
+  qLogPush('vitals_v1',{iso:dt.iso, time:dt.sh, sys, dia, hr});
+  closeQEntry('qvitModal'); uiToast('✓ فشار/ضربان ثبت شد'); afterQuickLog();
+}
+function saveQuickJournal(){
+  const rating=qSegVal('qjrnRating');
+  const tags=qTagVals('qjrnTags');
+  const note=(document.getElementById('qjrnNote').value||'').trim();
+  const doc=(document.getElementById('qjrnDoc').value||'').trim();
+  if(!rating&&!tags.length&&!note&&!doc){ alert('حداقل یک مورد را پر کن (حال روز، اتفاق، یادداشت یا نکته‌ی پزشک).'); return; }
+  const dt=qDateTimeISO('qjrnDate',null); if(!dt){ alert('تاریخ را انتخاب کن.'); return; }
+  qLogPush('journal_v1',{iso:dt.iso, date:dt.sh, rating, tags, note, doctor:doc});
+  closeQEntry('qjrnModal'); uiToast('✓ دفترچه ثبت شد'); afterQuickLog();
 }
 /* ====== فرم‌های سریعِ عمومی (دارو/خواب/حالت روحی) ====== */
 function openQEntry(modalId,dateWrapId,timeId,clearIds,focusId,segId){
@@ -4495,7 +4688,7 @@ function uiToast(msg){
   t.textContent=msg; t.classList.add('show');
   clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
 }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeQuickAdd(); closeQuickBG(); closeBgSrc(); if(typeof closeWkTrack==='function')closeWkTrack(); closeQEntry('qmedModal'); closeQEntry('qsleepModal'); closeQEntry('qmoodModal'); closeQEntry('qinsModal'); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeQuickAdd(); closeQuickBG(); closeBgSrc(); if(typeof closeWkTrack==='function')closeWkTrack(); closeQEntry('qmedModal'); closeQEntry('qsleepModal'); closeQEntry('qmoodModal'); closeQEntry('qinsModal'); closeQEntry('qvitModal'); closeQEntry('qjrnModal'); } });
 /* ====== حالت چیدمان منو: بالا (قدیم) یا پایین (جدید) ====== */
 const NAVMODE_KEY='nav_mode';
 function getNavMode(){ try{ return localStorage.getItem(NAVMODE_KEY)||'top'; }catch(e){ return 'top'; } }
@@ -4780,7 +4973,7 @@ async function loadProfile(){
 // کلیدهای localStorage که در بکاپ گنجانده می‌شوند (نقشه‌ی داده‌ی کاربر).
 // از مقادیر رشته‌ای مستقیم استفاده می‌شود چون بعضی از این const‌ها (CGMKEY, BGKEY, ...)
 // پایین‌تر در فایل تعریف شده‌اند و ارجاع به خودِ متغیر اینجا TDZ می‌دهد.
-const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','custom_foods_v1','custom_meds_v1','custom_exercises_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','journeys_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1'];
+const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','vitals_v1','journal_v1','custom_foods_v1','custom_meds_v1','custom_exercises_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','journeys_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1'];
 
 async function renderProfileTab(){
   // فرم پروفایل (c-profile) حالا خودش داخل این تب است و وضعیت ذخیره‌شده را نشان می‌دهد.
@@ -11491,6 +11684,26 @@ function buildHealthSnapshot(scope){
   // خواب
   try{ const sl=jl('sleep_log_v1').filter(x=>{ const pj=parseJDate(x.date); if(!pj) return false; const g=j2g(pj[0],pj[1],pj[2]); return inWin(new Date(g[0],g[1]-1,g[2])); });
     if(sl.length){ const h=sl.reduce((a,b)=>a+(+b.hours||0),0)/sl.length; L.push('خواب: میانگین ~'+(Math.round(h*10)/10)+' ساعت'); } }catch(e){}
+  // فشار خون و ضربان
+  try{ const vt=jl('vitals_v1').filter(x=>{ const d=new Date(x.iso); if(inWin(d)){ seen(d); return true; } return false; });
+    if(vt.length){ const avg=a=>{ const v=vt.map(x=>x[a]).filter(n=>n!=null&&!isNaN(n)); return v.length?Math.round(v.reduce((s,b)=>s+b,0)/v.length):null; };
+      const mx=a=>{ const v=vt.map(x=>x[a]).filter(n=>n!=null&&!isNaN(n)); return v.length?Math.max.apply(0,v):null; };
+      const s=avg('sys'),d=avg('dia'),hr=avg('hr'); const parts=[];
+      if(s!=null&&d!=null) parts.push('فشار میانگین ~'+s+'/'+d+' (بیشترین سیستول '+mx('sys')+')');
+      if(hr!=null) parts.push('ضربان میانگین ~'+hr+' (بیشترین '+mx('hr')+')');
+      if(parts.length) L.push('فشار و ضربان: '+vt.length+' اندازه‌گیری — '+parts.join('، ')); }
+  }catch(e){}
+  // دفترچه‌ی روزانه (یادداشت‌های کاربر و نکته‌ها برای پزشک) — برای گزارش و مراجعه به پزشک بسیار مهم
+  try{ const jr=jl('journal_v1').filter(x=>{ const d=new Date(x.iso); if(inWin(d)){ seen(d); return true; } return false; });
+    if(jr.length){ const rc={great:0,good:0,ok:0,bad:0}; const tagF={};
+      jr.forEach(x=>{ if(x.rating&&rc[x.rating]!=null) rc[x.rating]++; (x.tags||[]).forEach(t=>{ tagF[t]=(tagF[t]||0)+1; }); });
+      const topTags=Object.keys(tagF).sort((a,b)=>tagF[b]-tagF[a]).slice(0,6).map(t=>t+'×'+tagF[t]);
+      L.push('دفترچه‌ی روزانه: '+jr.length+' یادداشت — روزهای خوب '+(rc.great+rc.good)+'، معمولی '+rc.ok+'، سخت '+rc.bad+(topTags.length?('؛ پرتکرارترین اتفاقات: '+topTags.join('، ')):''));
+      const docs=jr.filter(x=>x.doctor).slice(-6).map(x=>'«'+x.doctor+'» ('+(x.date||'').split(' ')[0]+')');
+      if(docs.length) L.push('📌 نکته‌ها برای گفتن به پزشک: '+docs.join(' ؛ '));
+      const notes=jr.filter(x=>x.note).slice(-4).map(x=>'«'+x.note.slice(0,90)+'» ('+(x.date||'').split(' ')[0]+')');
+      if(notes.length) L.push('مشاهدات اخیرِ کاربر در دفترچه: '+notes.join(' ؛ ')); }
+  }catch(e){}
   // آزمایش (آخرین برگه — همه‌ی مقادیرِ ثبت‌شده، نه فقط غیرطبیعی‌ها؛ غیرطبیعی‌ها اول)
   try{ const lc=buildLabAIContext(); if(lc){
     const isAbn=l=>/\[HIGH\]|\[LOW\]/.test(l);
