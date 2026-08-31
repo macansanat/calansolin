@@ -1980,7 +1980,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۰.۵</b> · انتشار: ۱۴۰۵/۰۶/۰۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۱.۰</b> · انتشار: ۱۴۰۵/۰۶/۰۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3352,7 +3352,7 @@ async function podcastGenerate(force){
     try{
       const prompt=podPrompt(mins); const prov=sectionProvider('podcast'); const maxTok=Math.min(4096, mins*300+400);
       // متنِ پادکست را با مدلِ ارزان بگیر (OpenAI → gpt-4o-mini) تا هزینه پایین بماند؛ پزشک/تحلیل جدا و باکیفیت‌تر می‌ماند
-      let out=await aiFallbackChain(prov,(pv,key)=>callAIText(pv,key,prompt,maxTok,0, pv==='openai'?'gpt-4o-mini':undefined),{onProv:(pv)=>{usedProv=pv;}});
+      let out=await aiSectionCall('podcast',(pv,key,model)=>callAIText(pv,key,prompt,maxTok,0, model),{onProv:(pv)=>{usedProv=pv;}});
       out=podCleanScript(out);
       if(out && podWordCount(out)>=60) script=out;
     }catch(e){ script=''; }
@@ -5430,7 +5430,7 @@ async function loadProfile(){
 // کلیدهای localStorage که در بکاپ گنجانده می‌شوند (نقشه‌ی داده‌ی کاربر).
 // از مقادیر رشته‌ای مستقیم استفاده می‌شود چون بعضی از این const‌ها (CGMKEY, BGKEY, ...)
 // پایین‌تر در فایل تعریف شده‌اند و ارجاع به خودِ متغیر اینجا TDZ می‌دهد.
-const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','vitals_v1','journal_v1','custom_foods_v1','custom_meds_v1','custom_exercises_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','journeys_v1','pod_cfg_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1'];
+const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','vitals_v1','journal_v1','custom_foods_v1','custom_meds_v1','custom_exercises_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','ai_model_frozen_v1','ai_section_model_v1','journeys_v1','pod_cfg_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1'];
 
 async function renderProfileTab(){
   // فرم پروفایل (c-profile) حالا خودش داخل این تب است و وضعیت ذخیره‌شده را نشان می‌دهد.
@@ -6248,9 +6248,9 @@ async function handleCustomFoodPhotoAI(inp){
     setNote('در حال آماده‌سازی عکس برای هوش مصنوعی…');
     const img=await imageToJpeg(file,1400,0.85);
     setNote('خواندن برچسب با هوش مصنوعی…');
-    const text=await aiVisionFallback(prov, (p,k)=>callVision(p,k,img,CF_AI_PROMPT,900,0),
-      n=>setNote('سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'),
-      p=>{ if(p!==prov) setNote('سهمیه‌ی «'+(PROVIDER_NAMES[prov]||prov)+'» پر بود؛ تلاش با «'+(PROVIDER_NAMES[p]||p)+'»…'); });
+    const text=await aiSectionCall('cffood', (p,k,model)=>callVision(p,k,img,CF_AI_PROMPT,900,0,model), {vision:true,
+      onRetry:n=>setNote('سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'),
+      onProv:p=>{ if(p!==prov) setNote('سهمیه‌ی «'+(PROVIDER_NAMES[prov]||prov)+'» پر بود؛ تلاش با «'+(PROVIDER_NAMES[p]||p)+'»…'); }});
     let o=null; try{ const t=String(text||''); const a=t.indexOf('{'),b=t.lastIndexOf('}'); if(a>=0&&b>a) o=JSON.parse(t.slice(a,b+1)); }catch(e){}
     if(!o){ setNote('نتوانستم برچسب را بخوانم. عکس واضح‌تر بده یا از «خواندن آفلاین» استفاده کن یا دستی وارد کن.'); inp.value=''; return; }
     const num=v=>{ const n=parseFloat(v); return isFinite(n)?n:null; };
@@ -8449,6 +8449,47 @@ function sectionProvider(section){ try{ const o=JSON.parse(localStorage.getItem(
 function setSectionProvider(section,prov){ try{ const o=JSON.parse(localStorage.getItem(AI_SECTION_KEY)||'{}'); if(prov) o[section]=prov; else delete o[section]; localStorage.setItem(AI_SECTION_KEY, JSON.stringify(o)); }catch(e){} }
 // سرویس بخش را برمی‌گرداند؛ اگر بخش تصویری است و سرویس عکس ندارد، به یک سرویسِ عکس‌دار برمی‌گردد
 function sectionProviderVision(section){ let p=sectionProvider(section); if(!PROVIDER_VISION[p]||aiFrozen(p)){ p=['gemini','claude','openai'].find(x=>hasAnyKey(x)&&!aiFrozen(x)&&PROVIDER_VISION[x])||p; } return p; }
+/* ===== انتخابِ مدلِ دقیق برای هر بخش + فریزِ per-model + قفلِ بدونِ فالبک ===== */
+// ترتیب مهم است: مدلِ اول = پیش‌فرضِ آن سرویس (برای حفظِ رفتارِ فعلی، مدلِ باکیفیت اول).
+const AI_MODELS=[
+  {id:'gpt-4o',        prov:'openai', label:'GPT-4o',        vision:true,  tier:'باکیفیت'},
+  {id:'gpt-4o-mini',   prov:'openai', label:'GPT-4o mini',  vision:true,  tier:'ارزان'},
+  {id:'gemini-flash',  prov:'gemini', label:'Gemini Flash', vision:true,  tier:'ارزان/رایگان', real:VISION_MODELS.gemini},
+  {id:'claude-opus-5', prov:'claude', label:'Claude Opus',  vision:true,  tier:'باکیفیت'},
+  {id:'claude-haiku-4-5', prov:'claude', label:'Claude Haiku', vision:true, tier:'ارزان'},
+  {id:'deepseek-chat', prov:'deepseek', label:'DeepSeek',   vision:false, tier:'ارزان'}
+];
+const AI_MODEL_FROZEN_KEY='ai_model_frozen_v1';
+const AI_SECTION_MODEL_KEY='ai_section_model_v1';
+const SEC_DEFAULT_MODEL={ podcast:'gpt-4o-mini' };   // پادکست پیش‌فرض ارزان
+function modelById(id){ return AI_MODELS.find(m=>m.id===id)||null; }
+function modelReal(id){ const m=modelById(id); return m?(m.real||m.id):(id||''); }
+function providerModels(prov,vision){ return AI_MODELS.filter(m=>m.prov===prov && (!vision||m.vision)); }
+function aiModelFrozen(id){ try{ return !!(JSON.parse(localStorage.getItem(AI_MODEL_FROZEN_KEY)||'{}')[id]); }catch(e){ return false; } }
+function setAiModelFrozen(id,v){ try{ const o=JSON.parse(localStorage.getItem(AI_MODEL_FROZEN_KEY)||'{}'); if(v)o[id]=1; else delete o[id]; localStorage.setItem(AI_MODEL_FROZEN_KEY,JSON.stringify(o)); }catch(e){} }
+function toggleAiModelFrozen(id){ setAiModelFrozen(id,!aiModelFrozen(id)); if(typeof renderVisionSetting==='function') renderVisionSetting(); }
+// مدلِ مؤثرِ یک سرویس (اولین مدلِ غیرفریز؛ وگرنه پیش‌فرضِ اپ)
+function provModelReal(prov,vision){ const list=providerModels(prov,vision).filter(m=>!aiModelFrozen(m.id)); return list.length?(list[0].real||list[0].id):VISION_MODELS[prov]; }
+function secCfg(section){ try{ return (JSON.parse(localStorage.getItem(AI_SECTION_MODEL_KEY)||'{}')[section])||{}; }catch(e){ return {}; } }
+function setSecCfg(section,patch){ try{ const o=JSON.parse(localStorage.getItem(AI_SECTION_MODEL_KEY)||'{}'); o[section]=Object.assign(o[section]||{},patch); localStorage.setItem(AI_SECTION_MODEL_KEY,JSON.stringify(o)); }catch(e){} }
+// انتخابِ سرویس/مدل برای یک بخش: مدلِ سنجاق‌شده → وگرنه سرویسِ بخش با مدلِ غیرفریز
+function aiResolve(section, opts){
+  const vision=!!(opts&&opts.vision); const cfg=secCfg(section);
+  const pin=cfg.model || SEC_DEFAULT_MODEL[section] || '';
+  const lock=!!cfg.lock;
+  const usable=id=>{ const m=modelById(id); return m&&!aiModelFrozen(id)&&!aiFrozen(m.prov)&&hasAnyKey(m.prov)&&(!vision||m.vision); };
+  if(pin && usable(pin)){ const m=modelById(pin); return {prov:m.prov, model:m.real||m.id, lock}; }
+  const prov=sectionProvider(section);
+  if(hasAnyKey(prov)&&!aiFrozen(prov)&&(!vision||PROVIDER_VISION[prov])) return {prov, model:provModelReal(prov,vision), lock:false};
+  return {prov:'', model:'', lock:false};   // اجازه‌ی فالبکِ کامل
+}
+// فراخوانِ بخش‌محور: makeCall(prov,key,realModel). اگر قفل باشد فقط همان سرویس/مدل (بدونِ رفتن سراغِ سرویس/مدلِ گران‌تر).
+function aiSectionCall(section, makeCall, opts){
+  opts=opts||{}; const r=aiResolve(section, opts);
+  if(r.prov && r.lock) return aiKeyFallback(r.prov, k=>makeCall(r.prov,k,r.model), opts.onRetry);
+  if(r.prov) return aiFallbackChain(r.prov, (pv,key)=>makeCall(pv,key, pv===r.prov? r.model : provModelReal(pv, opts.vision)), opts);
+  return aiFallbackChain(sectionProvider(section), (pv,key)=>makeCall(pv,key, provModelReal(pv, opts.vision)), opts);
+}
 function escVision(s){ return String(s==null?'':s).replace(/[<>"'&]/g,c=>({'<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','&':'&amp;'}[c])); }
 // خطاهای خام سرویس‌های هوش مصنوعی → پیام فارسیِ واضح و کاربرپسند (برای همه‌ی بخش‌ها)
 function aiErrorInfo(e){
@@ -8603,7 +8644,7 @@ const VISION_PROMPT=
 "- Names in Persian, numbers numeric. If nothing recognizable, return []. Output the JSON array only.";
 
 // تماس بینایی (با عکس). promptText اختیاری؛ maxTok/thinkBudget برای مدیریت توکن.
-async function callVision(prov, key, img, promptText, maxTok, thinkBudget){
+async function callVision(prov, key, img, promptText, maxTok, thinkBudget, modelOverride){
   const prompt=promptText||VISION_PROMPT; const mt=maxTok||1500;
   if(prov==='gemini'){
     return await _geminiGenerate(key, [ {text:prompt}, {inline_data:{mime_type:img.mediaType, data:img.b64}} ], mt, thinkBudget);
@@ -8612,7 +8653,7 @@ async function callVision(prov, key, img, promptText, maxTok, thinkBudget){
     const res=await fetch('https://api.openai.com/v1/chat/completions',{
       method:'POST',
       headers:{'content-type':'application/json','authorization':'Bearer '+key},
-      body:JSON.stringify({ model:VISION_MODELS.openai, max_tokens:mt,
+      body:JSON.stringify({ model:modelOverride||VISION_MODELS.openai, max_tokens:mt,
         messages:[{role:'user',content:[{type:'text',text:prompt},{type:'image_url',image_url:{url:img.dataURL}}]}] })
     });
     if(!res.ok){ throw new Error('OpenAI ('+res.status+'): '+(await res.text()).slice(0,800)); }
@@ -8623,7 +8664,7 @@ async function callVision(prov, key, img, promptText, maxTok, thinkBudget){
   const res=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
     headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({ model:VISION_MODELS.claude, max_tokens:mt,
+    body:JSON.stringify({ model:modelOverride||VISION_MODELS.claude, max_tokens:mt,
       messages:[{role:'user',content:[{type:'text',text:prompt},{type:'image',source:{type:'base64',media_type:img.mediaType,data:img.b64}}]}] })
   });
   if(!res.ok){ throw new Error('Claude ('+res.status+'): '+(await res.text()).slice(0,800)); }
@@ -8669,8 +8710,8 @@ async function callAIChat(prov, key, systemText, messages, opts){
   }
   if(prov==='openai' || prov==='deepseek'){
     const url = prov==='deepseek' ? 'https://api.deepseek.com/chat/completions' : 'https://api.openai.com/v1/chat/completions';
-    let model = prov==='deepseek' ? VISION_MODELS.deepseek : VISION_MODELS.openai;
-    if(prov==='deepseek' && opts.speed==='smart') model='deepseek-reasoner';
+    let model = opts.model || (prov==='deepseek' ? VISION_MODELS.deepseek : VISION_MODELS.openai);
+    if(prov==='deepseek' && !opts.model && opts.speed==='smart') model='deepseek-reasoner';
     const msgs=[]; if(systemText) msgs.push({role:'system',content:systemText}); messages.forEach(m=>msgs.push({role:m.role==='assistant'?'assistant':'user',content:String(m.content||'')}));
     const res=await fetch(url,{ method:'POST', headers:{'content-type':'application/json','authorization':'Bearer '+key},
       body:JSON.stringify({ model, max_tokens:mt, messages:msgs }) });
@@ -8680,7 +8721,7 @@ async function callAIChat(prov, key, systemText, messages, opts){
   }
   // Claude
   const msgs=messages.map(m=>({role:m.role==='assistant'?'assistant':'user',content:String(m.content||'')}));
-  const body={ model:VISION_MODELS.claude, max_tokens:mt, messages:msgs }; if(systemText) body.system=systemText;
+  const body={ model:opts.model||VISION_MODELS.claude, max_tokens:mt, messages:msgs }; if(systemText) body.system=systemText;
   const res=await fetch('https://api.anthropic.com/v1/messages',{ method:'POST',
     headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
     body:JSON.stringify(body) });
@@ -8720,8 +8761,8 @@ async function callAIChatStream(prov, key, systemText, messages, opts, onDelta){
   }
   if(prov==='openai' || prov==='deepseek'){
     const url = prov==='deepseek' ? 'https://api.deepseek.com/chat/completions' : 'https://api.openai.com/v1/chat/completions';
-    let model = prov==='deepseek' ? VISION_MODELS.deepseek : VISION_MODELS.openai;
-    if(prov==='deepseek' && opts.speed==='smart') model='deepseek-reasoner';
+    let model = opts.model || (prov==='deepseek' ? VISION_MODELS.deepseek : VISION_MODELS.openai);
+    if(prov==='deepseek' && !opts.model && opts.speed==='smart') model='deepseek-reasoner';
     const msgs=[]; if(systemText) msgs.push({role:'system',content:systemText});
     messages.forEach(m=>{ const role=m.role==='assistant'?'assistant':'user';
       if(hasImg(m) && prov==='openai'){ const arr=[{type:'text',text:String(m.content||'')}]; m.images.forEach(im=>arr.push({type:'image_url',image_url:{url:im.dataURL}})); msgs.push({role,content:arr}); }
@@ -8734,7 +8775,7 @@ async function callAIChatStream(prov, key, systemText, messages, opts, onDelta){
   const msgs=messages.map(m=>{ const role=m.role==='assistant'?'assistant':'user';
     if(hasImg(m)){ const arr=[{type:'text',text:String(m.content||'')}]; m.images.forEach(im=>arr.push({type:'image',source:{type:'base64',media_type:im.mediaType,data:im.b64}})); return {role,content:arr}; }
     return {role,content:String(m.content||'')}; });
-  const body={ model:VISION_MODELS.claude, max_tokens:mt, stream:true, messages:msgs }; if(systemText) body.system=systemText;
+  const body={ model:opts.model||VISION_MODELS.claude, max_tokens:mt, stream:true, messages:msgs }; if(systemText) body.system=systemText;
   const res=await fetch('https://api.anthropic.com/v1/messages',{ method:'POST',
     headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
     body:JSON.stringify(body) });
@@ -8902,7 +8943,7 @@ async function handlePlatePhoto(inp){
   try{
     const img=await imageToJpeg(file,1024,0.82);
     set(aiMsgBox('🔎','در حال تحلیل با هوش مصنوعی…','چند ثانیه طول می‌کشد.'));
-    const text=await aiVisionFallback(prov, (p,k)=>callVision(p,k,img,null,1500,0), n=>set(aiMsgBox('⏳','سرویس شلوغ است','تلاش دوباره ('+faDigits(String(n))+')… کمی صبر کن.')), (p,sw)=>{ if(sw) set(aiMsgBox('🔄','تغییر سرویس','سهمیه‌ی سرویس قبلی پر بود؛ تلاش با «'+(PROVIDER_NAMES[p]||p)+'»…')); });
+    const text=await aiSectionCall('food', (p,k,model)=>callVision(p,k,img,null,1500,0,model), {vision:true, onRetry:n=>set(aiMsgBox('⏳','سرویس شلوغ است','تلاش دوباره ('+faDigits(String(n))+')… کمی صبر کن.')), onProv:(p,sw)=>{ if(sw) set(aiMsgBox('🔄','تغییر سرویس','سهمیه‌ی سرویس قبلی پر بود؛ تلاش با «'+(PROVIDER_NAMES[p]||p)+'»…')); }});
     const items=parseVisionJSON(text);
     if(!items.length){ set(aiMsgBox('🤔','غذایی تشخیص داده نشد','عکس واضح‌تر و از بالای بشقاب بگیر، یا خوراکی‌ها را دستی وارد کن.','err')); return; }
     const plan=planVisionRows(items);
@@ -8956,7 +8997,8 @@ const AI_SECTIONS=[
   {id:'daily', label:'گزارش روزانه', icon:'📋', vision:false},
   {id:'overview', label:'گزارش کلی', icon:'📊', vision:false},
   {id:'home', label:'صفحه‌ی اول', icon:'🏠', vision:false},
-  {id:'chat', label:'چت هوشمند', icon:'💬', vision:false}
+  {id:'chat', label:'چت هوشمند', icon:'💬', vision:false},
+  {id:'podcast', label:'پادکست روزانه', icon:'🎧', vision:false}
 ];
 function renderVisionSetting(){
   const box=document.getElementById('visionSetting'); if(!box) return;
@@ -8982,27 +9024,42 @@ function renderVisionSetting(){
       </div>
     </div>`;
   });
-  // ۲) انتخاب سرویس برای هر بخش
-  const avail=VISION_PROVIDERS.filter(p=>hasAnyKey(p));
-  h+=`<div style="font-weight:800;font-size:12.5px;color:var(--teal);margin:14px 0 8px">۲) کدام بخش با کدام هوش مصنوعی؟</div>`;
-  if(!avail.length){ h+=`<div style="font-size:11.5px;color:var(--amber);line-height:1.8">اول حداقل یک کلید بالا را ذخیره کن تا اینجا بتوانی انتخاب کنی.</div>`; }
+  // ۲) فریزِ مدل‌ها (جدا از سرویس): مثلاً gpt-4o-mini فعال ولی gpt-4o فریز
+  const availP=VISION_PROVIDERS.filter(p=>hasAnyKey(p));
+  h+=`<div style="font-weight:800;font-size:12.5px;color:var(--teal);margin:16px 0 6px">۲) فریزِ مدل‌ها</div>
+    <div style="font-size:10.5px;color:var(--muted);line-height:1.7;margin-bottom:8px">مدلِ فریزشده هرگز استفاده نمی‌شود (نه پیش‌فرض، نه فالبک). مثلاً می‌توانی <b>GPT-4o mini</b> را روشن نگه داری ولی <b>GPT-4o</b> را فریز کنی تا توکنِ گران مصرف نشود.</div>`;
+  if(!availP.length){ h+=`<div style="font-size:11.5px;color:var(--amber)">اول یک کلید بالا ذخیره کن.</div>`; }
+  else{ h+=`<div style="display:flex;flex-wrap:wrap;gap:7px">`;
+    AI_MODELS.filter(m=>hasAnyKey(m.prov)).forEach(m=>{ const fz=aiModelFrozen(m.id);
+      h+=`<button type="button" onclick="toggleAiModelFrozen('${m.id}')" title="${fz?'خارج از فریز':'فریز این مدل'}" style="border:1px solid ${fz?'var(--amber)':'var(--line)'};background:${fz?'rgba(224,163,85,.10)':'var(--field)'};color:${fz?'var(--amber)':'var(--ink)'};border-radius:12px;padding:7px 10px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">${fz?'🧊 ':''}${escVision(m.label)} <span style="color:var(--muted);font-weight:600;font-size:9.5px">${escVision(PROVIDER_NAMES[m.prov])} · ${escVision(m.tier)}</span></button>`;
+    });
+    h+=`</div>`;
+  }
+  // ۳) انتخاب مدلِ دقیق + قفلِ هر بخش
+  h+=`<div style="font-weight:800;font-size:12.5px;color:var(--teal);margin:16px 0 6px">۳) مدلِ هر بخش + قفل</div>
+    <div style="font-size:10.5px;color:var(--muted);line-height:1.7;margin-bottom:8px">برای هر بخش دقیقاً یک مدل انتخاب کن. با 🔒 <b>قفل</b> کنی، آن بخش فقط با همان مدل کار می‌کند و در صورتِ خطا سراغِ مدل/سرویسِ گران‌ترِ دیگر نمی‌رود.</div>`;
+  if(!availP.length){ h+=`<div style="font-size:11.5px;color:var(--amber)">اول یک کلید بالا ذخیره کن.</div>`; }
   else{
     h+=`<div style="border:1px solid var(--line);border-radius:12px;overflow:hidden">`;
     AI_SECTIONS.forEach((sec,i)=>{
-      const opts=avail.filter(p=>!sec.vision || PROVIDER_VISION[p]);
-      const cur=sectionProvider(sec.id);
-      h+=`<div style="display:grid;grid-template-columns:1fr 118px;align-items:center;gap:10px;padding:9px 11px;${i?'border-top:1px solid var(--line)':''}">
+      const cfg=secCfg(sec.id); const curModel=cfg.model||SEC_DEFAULT_MODEL[sec.id]||''; const lock=!!cfg.lock;
+      const opts=AI_MODELS.filter(m=>hasAnyKey(m.prov)&&!aiModelFrozen(m.id)&&(!sec.vision||m.vision));
+      h+=`<div style="display:grid;grid-template-columns:1fr 128px 34px;align-items:center;gap:8px;padding:9px 11px;${i?'border-top:1px solid var(--line)':''}">
         <div style="min-width:0;display:flex;align-items:center;gap:7px;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="flex:0 0 auto">${sec.icon}</span><span style="overflow:hidden;text-overflow:ellipsis">${sec.label}</span></div>
-        <select onchange="setSectionProvider('${sec.id}',this.value)" style="width:100%;min-width:0;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:7px 6px;font-family:inherit;font-size:12px">
-          ${opts.map(p=>`<option value="${p}" ${p===cur?'selected':''}>${PROVIDER_NAMES[p]}</option>`).join('')}
+        <select onchange="setSecModel('${sec.id}',this.value)" style="width:100%;min-width:0;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:7px 5px;font-family:inherit;font-size:11.5px">
+          <option value="" ${!curModel?'selected':''}>خودکار</option>
+          ${opts.map(m=>`<option value="${m.id}" ${m.id===curModel?'selected':''}>${escVision(m.label)}</option>`).join('')}
         </select>
+        <button type="button" onclick="toggleSecLock('${sec.id}')" title="${lock?'قفل روشن: فقط همین مدل':'قفل خاموش: در صورت خطا مدلِ دیگر'}" style="width:34px;height:32px;border:1px solid ${lock?'var(--teal)':'var(--line)'};background:${lock?'var(--teal-dim)':'var(--field)'};color:${lock?'#eafff8':'var(--muted)'};border-radius:9px;cursor:pointer;font-size:13px">${lock?'🔒':'🔓'}</button>
       </div>`;
     });
     h+=`</div>`;
-    h+=`<div style="font-size:10.5px;color:var(--muted);line-height:1.8;margin-top:8px">مثلاً عکس‌ها با Gemini (رایگان)، تحلیل آزمایش با Claude، گزارش‌ها با OpenAI یا DeepSeek. دیپ‌سیک عکس ندارد.</div>`;
+    h+=`<div style="font-size:10.5px;color:var(--muted);line-height:1.8;margin-top:8px">مثال: پادکست → <b>GPT-4o mini</b> با قفلِ 🔒 (هرگز از مدلِ گران استفاده نکند)؛ پزشک/تحلیل → <b>GPT-4o</b> یا <b>Claude</b>؛ عکس‌ها → <b>Gemini</b> (رایگان). «خودکار» یعنی مدلِ پیش‌فرضِ سرویس.</div>`;
   }
   box.innerHTML=h;
 }
+function setSecModel(section, modelId){ const m=modelId?modelById(modelId):null; setSecCfg(section,{model:modelId||''}); if(m) setSectionProvider(section, m.prov); if(typeof renderVisionSetting==='function') renderVisionSetting(); }
+function toggleSecLock(section){ const cur=!!secCfg(section).lock; setSecCfg(section,{lock:!cur}); if(typeof renderVisionSetting==='function') renderVisionSetting(); }
 
 /* ===== تب ورزش: کتابخانه‌ی حرکت‌ها + برنامه + ثبت ===== */
 // آدمک SVG ساده برای هر حرکت (سبک و آفلاین)
@@ -10764,7 +10821,7 @@ async function extractFromImageAI(file,prog){
   if(prog) prog.textContent='آماده‌سازی عکس برای هوش مصنوعی…';
   const img=await imageToJpeg(file,1600,0.85);           // وضوح بیشتر برای متن ریز
   if(prog) prog.textContent='خواندن عکس با هوش مصنوعی…';
-  const text=await aiVisionFallback(prov, (p,k)=>callVision(p,k,img,LAB_OCR_PROMPT,1500,0), n=>{ if(prog) prog.textContent='سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'; }, (p,sw)=>{ if(sw&&prog) prog.textContent='سهمیه پر بود؛ تلاش با «'+(PROVIDER_NAMES[p]||p)+'»…'; });
+  const text=await aiSectionCall('labread', (p,k,model)=>callVision(p,k,img,LAB_OCR_PROMPT,1500,0,model), {vision:true, onRetry:n=>{ if(prog) prog.textContent='سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'; }, onProv:(p,sw)=>{ if(sw&&prog) prog.textContent='سهمیه پر بود؛ تلاش با «'+(PROVIDER_NAMES[p]||p)+'»…'; }});
   const lines=String(text||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
   window._lastOcrLines=(window._lastOcrLines||[]).concat(lines);
   return parseLabLines(lines);
@@ -10886,7 +10943,7 @@ async function runLabAiAnalysis(force){
   const hash=_hashStr((ctx.date||'')+'|'+ctx.lines.join('|'));
   box.innerHTML=aiEmptyState('⏳ در حال تحلیل… (چند ثانیه)');
   try{
-    const text=await aiFallbackChain(prov, (p,k)=>callAIText(p,k,LAB_JSON_PROMPT(ctx),4096,512), {onRetry:n=>{ box.innerHTML=aiEmptyState('⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'); }, onProv:(p,sw)=>{ if(sw) box.innerHTML=aiEmptyState('🔄 سهمیه پر بود؛ تلاش با «'+(PROVIDER_NAMES[p]||p)+'»…'); }});
+    const text=await aiSectionCall('labanalysis', (p,k,model)=>callAIText(p,k,LAB_JSON_PROMPT(ctx),4096,512,model), {onRetry:n=>{ box.innerHTML=aiEmptyState('⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'); }, onProv:(p,sw)=>{ if(sw) box.innerHTML=aiEmptyState('🔄 سهمیه پر بود؛ تلاش با «'+(PROVIDER_NAMES[p]||p)+'»…'); }});
     const clean=String(text||'').trim();
     if(!clean){ box.innerHTML=aiMsgBox('⚠️','پاسخی نیامد','دوباره امتحان کن.','err'); return; }
     aiLastSet('labs',{text:clean, ts:Date.now(), hash});
@@ -11924,8 +11981,14 @@ async function chatSend(){
     const sys=buildChatSystemPrompt();
     const hist=c.messages.slice(-14).map(m=>{ const mm={role:m.role,content:m.content}; if(m===umsg && imgs.length) mm.images=imgs; return mm; });
     const onDelta=chunk=>{ if(_chatAbort) return; acc+=chunk; };   // فقط بافر؛ نمایش با تیکر
-    const reply=await aiFallbackChain(prov, (p,k)=>callAIChatStream(p,k,sys,hist,{speed:c.speed,maxTok:4096},onDelta),
-      {onProv:(p,sw)=>{ if(sw){ acc=''; _shown=0; const b=bubble(); if(b) b.innerHTML='<span style="color:var(--muted);font-size:11.5px">سهمیه پر بود؛ تلاش با «'+escVision(PROVIDER_NAMES[p]||p)+'»…</span><span class="chat-cur"></span>'; } }});
+    // مدل/قفلِ بخشِ چت: سرویسِ چت همان چیزی که در پیل انتخاب شده می‌ماند؛ فقط مدل و قفل اعمال می‌شود
+    const _rc=aiResolve('chat',{}); const _cm=(_rc.prov===prov?_rc.model:provModelReal(prov)); const _clock=!!secCfg('chat').lock;
+    const _mdl=p=>p==='deepseek'?undefined:(p===prov?_cm:provModelReal(p));   // دیپ‌سیک منطقِ خودش (reasoner) را نگه دارد
+    const _streamCall=(p,k)=>callAIChatStream(p,k,sys,hist,{speed:c.speed,maxTok:4096,model:_mdl(p)},onDelta);
+    const reply = _clock
+      ? await aiKeyFallback(prov, k=>_streamCall(prov,k), null)
+      : await aiFallbackChain(prov, _streamCall,
+          {onProv:(p,sw)=>{ if(sw){ acc=''; _shown=0; const b=bubble(); if(b) b.innerHTML='<span style="color:var(--muted);font-size:11.5px">سهمیه پر بود؛ تلاش با «'+escVision(PROVIDER_NAMES[p]||p)+'»…</span><span class="chat-cur"></span>'; } }});
     const rawReply=String(reply||acc||'').trim()||'پاسخی دریافت نشد.';
     const parsed=chatParseSuggestions(rawReply);
     const act=chatParseActions(parsed.text||rawReply);
@@ -12399,7 +12462,7 @@ async function runHealthAi(scope, force){
   const hash=_hashStr(scope+'|'+snap.text);
   box.innerHTML=aiEmptyState('⏳ در حال تحلیل جامع… (چند ثانیه صبر کن)');
   try{
-    const text=await aiFallbackChain(prov, (p,k)=>callAIText(p,k,HEALTH_AI_PROMPT(scope,snap),4096,512), {onRetry:n=>{ box.innerHTML=aiEmptyState('⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'); }, onProv:(p,sw)=>{ if(sw) box.innerHTML=aiEmptyState('🔄 سهمیه پر بود؛ تلاش با «'+(PROVIDER_NAMES[p]||p)+'»…'); }});
+    const text=await aiSectionCall(scope, (p,k,model)=>callAIText(p,k,HEALTH_AI_PROMPT(scope,snap),4096,512,model), {onRetry:n=>{ box.innerHTML=aiEmptyState('⏳ سرویس شلوغ است، تلاش دوباره ('+faDigits(String(n))+')…'); }, onProv:(p,sw)=>{ if(sw) box.innerHTML=aiEmptyState('🔄 سهمیه پر بود؛ تلاش با «'+(PROVIDER_NAMES[p]||p)+'»…'); }});
     const clean=String(text||'').trim();
     if(!clean){ box.innerHTML=aiMsgBox('⚠️','پاسخی نیامد','دوباره امتحان کن.','err'); return; }
     const sk=scopeKey(scope);
