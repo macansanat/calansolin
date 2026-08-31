@@ -1980,7 +1980,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۰.۳</b> · انتشار: ۱۴۰۵/۰۶/۰۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۰.۴</b> · انتشار: ۱۴۰۵/۰۶/۰۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3516,28 +3516,53 @@ function podDecode(ctx, buf){ return new Promise((res,rej)=>{ let done=false; co
   try{ const p=ctx.decodeAudioData(buf, ok, no); if(p&&p.then) p.then(ok).catch(no); }catch(e){ no(e); } }); }
 // قطعه‌بندی — قطعهٔ اول کوتاه تا صدا سریع (ثانیهٔ دوم-سوم) شروع شود
 function podChunksForTTS(text){
-  const per=(_pod.ttsProv==='gemini')?520:1200;
+  // قطعاتِ بزرگ‌تر = درخواستِ کمتر به سرویس (مهم برای سقفِ نرخِ رایگانِ Gemini)
+  const per=(_pod.ttsProv==='gemini')?900:1600;
   const all=podSplit(text, per);
-  if(all.length && all[0].length>150){
+  if(all.length && all[0].length>160){   // قطعهٔ اول کوتاه تا صدا سریع شروع شود
     const m=all[0].match(/^[^.!?؟…]+[.!?؟…]?/);
     if(m && m[0].length<all[0].length){ const head=m[0].trim(), rest=all[0].slice(m[0].length).trim(); all[0]=rest; all.unshift(head); }
   }
   return all;
+}
+function podSleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+// دریافت + دیکودِ یک قطعه با تلاشِ مجدد (رفعِ خطای موقتِ نرخ/سرور)
+async function podFetchBuffer(text, tries){
+  const ctx=_wkAudioCtx; tries=tries||3;
+  for(let a=0;a<tries;a++){
+    if(_pod.mode==='idle') return null;
+    try{ const out=await podTTSFetch(text); return await podDecode(ctx, out.buf.slice(0)); }
+    catch(e){ const m=String(e&&e.message||e);
+      const retry=/429|408|409|425|500|502|503|504|overload|rate|quota|exceed|unavailable|timeout|network|decode|internal/i.test(m);
+      if(a<tries-1){ await podSleep(retry?1500*(a+1):600); continue; }
+      try{ console.warn('podcast chunk failed:', m); }catch(_){}
+      return null;
+    }
+  }
+  return null;
 }
 async function podCloudSpeak(full){
   const ctx=wkEnsureAudio(); if(!ctx) throw new Error('no audio ctx');
   if(!_pod.voiceGain){ _pod.voiceGain=ctx.createGain(); _pod.voiceGain.gain.value=1.0; _pod.voiceGain.connect(ctx.destination); }
   podEngineReset();
   const chunks=podChunksForTTS(full);
-  for(let i=0;i<chunks.length;i++){
+  // قطعهٔ اول (با تلاشِ مجدد)؛ اگر نشد → throw تا به صدای گوشی برگردد
+  const first=await podFetchBuffer(chunks[0], 3);
+  if(!first) throw new Error('first chunk failed');
+  if(_pod.mode==='idle') return;
+  _pod.buffers.push(first); const d0=first.duration||0; _pod.durs.push(d0); _pod.cum.push(d0); _pod.totalDur+=d0;
+  _pod.prep=false; podMusicStart(); podMusicGain(0.05); podPlayFrom(0,0); renderPodcastCard();
+  // بقیه: با ریتمِ پخش (حداکثر ۲ قطعه جلوتر) تا زیرِ سقفِ نرخ بماند
+  let fails=0;
+  for(let i=1;i<chunks.length;i++){
+    while(_pod.mode!=='idle' && i>_pod.playIdx+2){ await podSleep(400); }
     if(_pod.mode==='idle') return;
-    let audioBuf;
-    try{ const out=await podTTSFetch(chunks[i]); audioBuf=await podDecode(ctx, out.buf.slice(0)); }
-    catch(e){ if(i===0) throw e; continue; }   // اولین قطعه خطا → فالبک؛ بقیه رد شود
+    const buf=await podFetchBuffer(chunks[i], 3);
     if(_pod.mode==='idle') return;
-    _pod.buffers.push(audioBuf); const d=audioBuf.duration||0; _pod.durs.push(d); _pod.cum.push((_pod.cum[_pod.cum.length-1]||0)+d); _pod.totalDur+=d;
-    if(i===0){ _pod.prep=false; podMusicStart(); podMusicGain(0.05); podPlayFrom(0,0); renderPodcastCard(); }
-    else if(_pod.waiting && _pod.playIdx===_pod.buffers.length-1){ _pod.waiting=false; podPlayFrom(_pod.playIdx, _pod.startOff||0); }
+    if(!buf){ fails++; if(fails>=2){ _pod.cloud=false; uiToast&&uiToast('ادامه با صدای گوشی'); podStopSrc(); podBrowserSpeak(chunks.slice(i).join(' ')); return; } continue; }
+    fails=0;
+    _pod.buffers.push(buf); const d=buf.duration||0; _pod.durs.push(d); _pod.cum.push((_pod.cum[_pod.cum.length-1]||0)+d); _pod.totalDur+=d;
+    if(_pod.waiting && _pod.playIdx===_pod.buffers.length-1){ _pod.waiting=false; podPlayFrom(_pod.playIdx, _pod.startOff||0); }
   }
   _pod.allFetched=true;
   if(!_pod.playing && _pod.mode==='playing') podcastEnded();
