@@ -1980,7 +1980,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۰.۴</b> · انتشار: ۱۴۰۵/۰۶/۰۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۰.۵</b> · انتشار: ۱۴۰۵/۰۶/۰۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3351,7 +3351,8 @@ async function podcastGenerate(force){
   if(online && anyKey){
     try{
       const prompt=podPrompt(mins); const prov=sectionProvider('podcast'); const maxTok=Math.min(4096, mins*300+400);
-      let out=await aiFallbackChain(prov,(pv,key)=>callAIText(pv,key,prompt,maxTok),{onProv:(pv)=>{usedProv=pv;}});
+      // متنِ پادکست را با مدلِ ارزان بگیر (OpenAI → gpt-4o-mini) تا هزینه پایین بماند؛ پزشک/تحلیل جدا و باکیفیت‌تر می‌ماند
+      let out=await aiFallbackChain(prov,(pv,key)=>callAIText(pv,key,prompt,maxTok,0, pv==='openai'?'gpt-4o-mini':undefined),{onProv:(pv)=>{usedProv=pv;}});
       out=podCleanScript(out);
       if(out && podWordCount(out)>=60) script=out;
     }catch(e){ script=''; }
@@ -3385,7 +3386,7 @@ function podMusicStart(){
 function podMusicStop(){ const m=_pod.music; if(!m) return; _pod.music=null; try{ clearInterval(m.bellTimer); m.master.gain.setTargetAtTime(0.0001, m.ctx.currentTime, 0.4); setTimeout(()=>{ try{ m.drone.forEach(o=>o.stop()); m.lfo.stop(); }catch(e){} try{ m.master.disconnect(); }catch(e){} }, 800); }catch(e){} }
 function podMusicGain(v){ const m=_pod.music; if(m){ try{ m.master.gain.setTargetAtTime(v, m.ctx.currentTime, 0.3); }catch(e){} } }
 /* ---- موتورِ پخش و پیشرفت (چند-قطعه‌ای، با اسکراب) ---- */
-function podEngineReset(){ _pod.buffers=[]; _pod.durs=[]; _pod.cum=[0]; _pod.totalDur=0; _pod.allFetched=false; _pod.playIdx=0; _pod.startCtx=0; _pod.startOff=0; _pod.playing=false; _pod.waiting=false; }
+function podEngineReset(){ _pod.buffers=[]; _pod.durs=[]; _pod.cum=[0]; _pod.totalDur=0; _pod.allFetched=false; _pod.playIdx=0; _pod.startCtx=0; _pod.startOff=0; _pod.playing=false; _pod.waiting=false; _pod.fromCache=false; }
 function podElapsed(){ const ctx=_wkAudioCtx; const base=(_pod.cum[_pod.playIdx]||0)+(_pod.startOff||0); if(!ctx||!_pod.playing) return base; return base+(ctx.currentTime-_pod.startCtx); }
 function podTotalKnown(){ return _pod.allFetched? _pod.totalDur : Math.max(_pod.totalDur, _pod.estDur); }
 function podProgressStart(){ podProgressStop(); _pod.timer=setInterval(podTick, 250); podTick(); }
@@ -3531,7 +3532,7 @@ async function podFetchBuffer(text, tries){
   const ctx=_wkAudioCtx; tries=tries||3;
   for(let a=0;a<tries;a++){
     if(_pod.mode==='idle') return null;
-    try{ const out=await podTTSFetch(text); return await podDecode(ctx, out.buf.slice(0)); }
+    try{ const out=await podTTSFetch(text); const audio=await podDecode(ctx, out.buf.slice(0)); return {audio, raw:out.buf, type:out.type}; }
     catch(e){ const m=String(e&&e.message||e);
       const retry=/429|408|409|425|500|502|503|504|overload|rate|quota|exceed|unavailable|timeout|network|decode|internal/i.test(m);
       if(a<tries-1){ await podSleep(retry?1500*(a+1):600); continue; }
@@ -3541,30 +3542,54 @@ async function podFetchBuffer(text, tries){
   }
   return null;
 }
+function podPushBuffer(buf){ _pod.buffers.push(buf); const d=buf.duration||0; _pod.durs.push(d); _pod.cum.push((_pod.cum[_pod.cum.length-1]||0)+d); _pod.totalDur+=d; }
+/* ---- کشِ صوتیِ روزانه (IndexedDB) — همان روز فقط یک‌بار ساخته می‌شود ---- */
+const POD_IDB='calansolin_pod', POD_STORE='clips';
+function podIdbOpen(){ return new Promise((res,rej)=>{ let r; try{ r=indexedDB.open(POD_IDB,1); }catch(e){ return rej(e); } r.onupgradeneeded=()=>{ try{ r.result.createObjectStore(POD_STORE); }catch(e){} }; r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function podCacheGet(key){ try{ const db=await podIdbOpen(); return await new Promise(res=>{ const rq=db.transaction(POD_STORE,'readonly').objectStore(POD_STORE).get(key); rq.onsuccess=()=>res(rq.result||null); rq.onerror=()=>res(null); }); }catch(e){ return null; } }
+async function podCachePut(key,val){ try{ const db=await podIdbOpen(); await new Promise(res=>{ const rq=db.transaction(POD_STORE,'readwrite').objectStore(POD_STORE).put(val,key); rq.onsuccess=()=>res(); rq.onerror=()=>res(); }); }catch(e){} }
+async function podCacheClearOldDay(){ try{ const today=podTodayKey(); if(localStorage.getItem('pod_audio_day')===today) return; const db=await podIdbOpen(); await new Promise(res=>{ const rq=db.transaction(POD_STORE,'readwrite').objectStore(POD_STORE).clear(); rq.onsuccess=()=>res(); rq.onerror=()=>res(); }); try{ localStorage.setItem('pod_audio_day', today); }catch(e){} }catch(e){} }
+function podHash(s){ s=String(s||''); let h=5381; for(let i=0;i<s.length;i++){ h=((h<<5)+h+s.charCodeAt(i))|0; } return (h>>>0).toString(36); }
+function podAudioKey(full){ const c=podCfg(); const voice=_pod.ttsProv==='gemini'?c.gVoice:c.oVoice; return podTodayKey()+'|'+_pod.ttsProv+'|'+voice+'|'+c.minutes+'|'+podHash(full); }
 async function podCloudSpeak(full){
   const ctx=wkEnsureAudio(); if(!ctx) throw new Error('no audio ctx');
   if(!_pod.voiceGain){ _pod.voiceGain=ctx.createGain(); _pod.voiceGain.gain.value=1.0; _pod.voiceGain.connect(ctx.destination); }
   podEngineReset();
-  const chunks=podChunksForTTS(full);
-  // قطعهٔ اول (با تلاشِ مجدد)؛ اگر نشد → throw تا به صدای گوشی برگردد
+  const key=podAudioKey(full); await podCacheClearOldDay();
+  // ۱) کش: اگر امروز با همین صدا/مدت قبلاً ساخته شده، بدونِ هیچ درخواستی پخش کن (رایگان و فوری)
+  try{ const hit=await podCacheGet(key);
+    if(hit && hit.chunks && hit.chunks.length){
+      _pod.prep=false; podMusicStart(); podMusicGain(0.05); _pod.fromCache=true;
+      for(let i=0;i<hit.chunks.length;i++){ if(_pod.mode==='idle') return;
+        let buf; try{ buf=await podDecode(ctx, hit.chunks[i].slice(0)); }catch(e){ continue; }
+        podPushBuffer(buf);
+        if(_pod.buffers.length===1){ podPlayFrom(0,0); renderPodcastCard(); }
+        else if(_pod.waiting && _pod.playIdx===_pod.buffers.length-1){ _pod.waiting=false; podPlayFrom(_pod.playIdx,_pod.startOff||0); }
+      }
+      _pod.allFetched=true; if(!_pod.playing && _pod.mode==='playing') podcastEnded();
+      return;
+    }
+  }catch(e){}
+  // ۲) ساختِ تازه (با ریتم و تلاشِ مجدد) و جمع‌آوریِ خام برای کش
+  const chunks=podChunksForTTS(full); const raw=[]; let rawType='audio/mpeg';
   const first=await podFetchBuffer(chunks[0], 3);
   if(!first) throw new Error('first chunk failed');
   if(_pod.mode==='idle') return;
-  _pod.buffers.push(first); const d0=first.duration||0; _pod.durs.push(d0); _pod.cum.push(d0); _pod.totalDur+=d0;
+  raw.push(first.raw); rawType=first.type||rawType; podPushBuffer(first.audio);
   _pod.prep=false; podMusicStart(); podMusicGain(0.05); podPlayFrom(0,0); renderPodcastCard();
-  // بقیه: با ریتمِ پخش (حداکثر ۲ قطعه جلوتر) تا زیرِ سقفِ نرخ بماند
   let fails=0;
   for(let i=1;i<chunks.length;i++){
     while(_pod.mode!=='idle' && i>_pod.playIdx+2){ await podSleep(400); }
     if(_pod.mode==='idle') return;
-    const buf=await podFetchBuffer(chunks[i], 3);
+    const r=await podFetchBuffer(chunks[i], 3);
     if(_pod.mode==='idle') return;
-    if(!buf){ fails++; if(fails>=2){ _pod.cloud=false; uiToast&&uiToast('ادامه با صدای گوشی'); podStopSrc(); podBrowserSpeak(chunks.slice(i).join(' ')); return; } continue; }
-    fails=0;
-    _pod.buffers.push(buf); const d=buf.duration||0; _pod.durs.push(d); _pod.cum.push((_pod.cum[_pod.cum.length-1]||0)+d); _pod.totalDur+=d;
+    if(!r){ fails++; if(fails>=2){ _pod.cloud=false; uiToast&&uiToast('ادامه با صدای گوشی'); podStopSrc(); podBrowserSpeak(chunks.slice(i).join(' ')); return; } continue; }
+    fails=0; raw.push(r.raw); podPushBuffer(r.audio);
     if(_pod.waiting && _pod.playIdx===_pod.buffers.length-1){ _pod.waiting=false; podPlayFrom(_pod.playIdx, _pod.startOff||0); }
   }
   _pod.allFetched=true;
+  // ۳) ذخیرهٔ کش فقط اگر همهٔ قطعه‌ها کامل ساخته شدند
+  if(raw.length===chunks.length){ try{ await podCachePut(key, {chunks:raw, type:rawType, ts:Date.now()}); }catch(e){} }
   if(!_pod.playing && _pod.mode==='playing') podcastEnded();
 }
 /* ---- کارتِ خانه (پلیر مدرن) ---- */
@@ -8606,14 +8631,14 @@ async function callVision(prov, key, img, promptText, maxTok, thinkBudget){
   return (data.content||[]).filter(b=>b&&b.type==='text').map(b=>b.text).join('\n');
 }
 // تماس فقط‌متنی (بدون عکس) — سبک و کم‌توکن؛ برای تحلیل مقادیر آزمایش.
-async function callAIText(prov, key, promptText, maxTok, thinkBudget){
+async function callAIText(prov, key, promptText, maxTok, thinkBudget, modelOverride){
   const mt=maxTok||700;
   if(prov==='gemini'){
     return await _geminiGenerate(key, [{text:promptText}], mt, thinkBudget);
   }
   if(prov==='openai' || prov==='deepseek'){
     const url = prov==='deepseek' ? 'https://api.deepseek.com/chat/completions' : 'https://api.openai.com/v1/chat/completions';
-    const model = prov==='deepseek' ? VISION_MODELS.deepseek : VISION_MODELS.openai;
+    const model = modelOverride || (prov==='deepseek' ? VISION_MODELS.deepseek : VISION_MODELS.openai);
     const res=await fetch(url,{ method:'POST',
       headers:{'content-type':'application/json','authorization':'Bearer '+key},
       body:JSON.stringify({ model, max_tokens:mt, messages:[{role:'user',content:promptText}] }) });
