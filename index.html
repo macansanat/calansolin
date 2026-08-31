@@ -144,6 +144,37 @@ body.nav-bottom{padding-bottom:100px}
 .jrn-tag{background:var(--field);border:1px solid var(--line);border-radius:14px;padding:4px 10px;font-size:11px;font-weight:700;color:var(--ink)}
 .jrn-note{font-size:12.5px;color:var(--muted);line-height:1.85;margin-top:6px;white-space:pre-wrap}
 .jrn-doc{margin-top:8px;background:rgba(224,163,85,.14);border-right:3px solid #e9b877;border-radius:8px;padding:8px 11px;font-size:12.5px;color:var(--ink);line-height:1.8}
+/* پلیرِ پادکست */
+.pod-card{background:linear-gradient(135deg,rgba(154,134,224,.16),rgba(63,185,163,.10),var(--panel));border:1px solid var(--line);border-radius:18px;padding:14px 15px;margin:12px 0;text-align:right}
+.pod-top{display:flex;align-items:center;gap:10px}
+.pod-eq{font-size:22px}
+.pod-ttl{flex:1;min-width:0}
+.pod-h{font-weight:800;font-size:14.5px;color:var(--ink)}
+.pod-sub{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pod-src{flex:0 0 auto;font-family:inherit;font-size:10.5px;font-weight:800;color:var(--teal);background:var(--field);border:1px solid var(--teal-dim);border-radius:20px;padding:6px 11px;cursor:pointer;white-space:nowrap}
+.pod-src:active{transform:scale(.96)}
+.pod-transport{display:flex;align-items:center;gap:10px;margin-top:13px}
+.pod-play{flex:0 0 auto;width:52px;height:52px;border-radius:50%;border:none;background:linear-gradient(145deg,var(--teal),var(--teal-dim));color:#fff;font-size:17px;cursor:pointer;box-shadow:0 5px 16px rgba(63,185,163,.4);display:flex;align-items:center;justify-content:center}
+.pod-play:active{transform:scale(.93)} .pod-play:disabled{opacity:.6}
+.pod-mid{flex:1;min-width:0}
+.pod-slider{width:100%;-webkit-appearance:none;appearance:none;height:6px;border-radius:6px;background:var(--line);outline:none;cursor:pointer;margin:0}
+.pod-slider::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--teal);border:2px solid var(--panel);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.pod-slider::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--teal);border:2px solid var(--panel)}
+.pod-slider:disabled{opacity:.6;cursor:default}
+.pod-times{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:10px;color:var(--muted);margin-top:6px;direction:ltr}
+.pod-state{color:var(--teal);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pod-gear,.pod-regen{flex:0 0 auto;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:14px;cursor:pointer}
+.pod-gear:active,.pod-regen:active{transform:scale(.9)}
+.pod-note{font-size:10px;color:var(--muted);margin-top:11px;line-height:1.7}
+.pod-seg{display:flex;gap:7px;flex-wrap:wrap}
+.pod-seg button{flex:1;min-width:64px;background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:10px 6px;font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;transition:all .15s}
+.pod-seg button.on{background:var(--teal-dim);border-color:var(--teal);color:#eafff8}
+.pod-vrow{display:flex;align-items:center;gap:8px;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-bottom:7px}
+.pod-vrow.on{border-color:var(--teal);background:var(--teal-dim)}
+.pod-vname{flex:1;min-width:0;font-size:12.5px;font-weight:700;color:var(--ink)}
+.pod-vtest{flex:0 0 auto;border:1px solid var(--teal-dim);background:transparent;color:var(--teal);border-radius:9px;padding:6px 9px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer}
+.pod-vpick{flex:0 0 auto;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:9px;padding:6px 9px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer}
+.pod-vtest:active,.pod-vpick:active{transform:scale(.94)}
 .qmood-row{display:flex;gap:7px;margin-bottom:16px}
 .qmood-row button{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:12px;padding:11px 3px;font-family:inherit;font-weight:700;font-size:10.5px;cursor:pointer;transition:all .15s}
 .qmood-row button span{font-size:23px;line-height:1}
@@ -1156,6 +1187,15 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
 </div>
 
+<!-- تنظیماتِ پادکست -->
+<div class="qbg-modal" id="podCfgModal" onclick="if(event.target===this)podCloseCfg()">
+  <div class="qbg-box">
+    <button class="qbg-x" onclick="podCloseCfg()" title="بستن">✕</button>
+    <div id="podCfgBody"></div>
+    <div class="qbg-actions" style="margin-top:16px"><button class="qbg-save" style="flex:1" onclick="podCloseCfg()">تمام</button></div>
+  </div>
+</div>
+
 <!-- ویرایش یک رویداد (وعده/انسولین/قند/…) -->
 <div class="qbg-modal" id="evEditModal" onclick="if(event.target===this)closeEvEdit()">
   <div class="qbg-box">
@@ -1940,7 +1980,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۰.۲</b> · انتشار: ۱۴۰۵/۰۶/۰۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۰.۳</b> · انتشار: ۱۴۰۵/۰۶/۰۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3219,11 +3259,21 @@ function dashAiDoctorCard(){
    عملکردِ همان روز؛ وگرنه نسخهٔ قالبیِ آفلاین. صدا: اگر کلید OpenAI باشد
    TTS ابریِ باکیفیت، وگرنه صدای گوشی (speechSynthesis). موزیکِ محیطیِ نرم
    با Web Audio زیر صدا پخش می‌شود. */
-const POD_KEY='podcast_v1';
-let _pod={ mode:'idle', cloud:false, music:null, audioEl:null, blobUrl:null,
-  utterQueue:[], uIdx:0, utter:null, faVoice:null, cloudChunks:[], cIdx:0,
-  t0:0, pausedAt:0, estDur:0, timer:0 };
+const POD_KEY='podcast_v1', POD_CFG_KEY='pod_cfg_v1';
+let _pod={ mode:'idle', cloud:false, ttsProv:'', music:null,
+  utterQueue:[], uIdx:0, utter:null, faVoice:null,
+  t0:0, estDur:0, timer:0, prep:false, seeking:false, voiceGain:null, srcNode:null,
+  buffers:[], durs:[], cum:[0], totalDur:0, allFetched:false, playIdx:0, startCtx:0, startOff:0, playing:false, waiting:false };
 const POD_RATING_FA={great:'عالی',good:'خوب',ok:'معمولی',bad:'سخت'};
+// صداهای انتخابیِ هر سرویس (id واقعیِ سرویس + برچسبِ فارسی)
+const POD_VOICES={
+  gemini:[ {id:'Kore',fa:'کوره — زن، گرم'},{id:'Aoede',fa:'آئوده — زن، ملایم'},{id:'Leda',fa:'لِدا — زن، جوان'},{id:'Puck',fa:'پاک — مرد، سرزنده'},{id:'Charon',fa:'کارون — مرد، آرام'},{id:'Orus',fa:'اوروس — مرد، جدی'} ],
+  openai:[ {id:'shimmer',fa:'Shimmer — زن، گرم'},{id:'nova',fa:'Nova — زن، روشن'},{id:'coral',fa:'Coral — زن، مهربان'},{id:'alloy',fa:'Alloy — خنثی'},{id:'onyx',fa:'Onyx — مرد، بم'},{id:'echo',fa:'Echo — مرد، آرام'} ]
+};
+const POD_LENS=[2,3,5,7];
+function podCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(POD_CFG_KEY)||'{}')||{}; }catch(e){}
+  return { prov:o.prov||'auto', minutes:o.minutes||5, gVoice:o.gVoice||'Kore', oVoice:o.oVoice||'shimmer', dVoice:o.dVoice||'' }; }
+function podCfgSet(patch){ const n=Object.assign(podCfg(), patch||{}); try{ localStorage.setItem(POD_CFG_KEY, JSON.stringify(n)); }catch(e){} return n; }
 // کتابخانهٔ نکاتِ آموزشیِ چرخشی (آموزشی و عمومی — بدون دوز/تشخیص)
 const POD_TOPICS=[
   {t:'شاخصِ گلایسمیِ غذاها',b:'غذاهایی که قندشان آرام آزاد می‌شود، مثل جوِ دوسر، حبوبات و سبزیجات، قند خون را ملایم‌تر بالا می‌برند تا نان و برنجِ سفید.',tip:'یک وعده از نانِ سفید را با نانِ سبوس‌دار یا جو عوض کن و تفاوتِ قندت را ببین.'},
@@ -3268,45 +3318,46 @@ function podDayFacts(){
   try{ const vt=(JSON.parse(localStorage.getItem('vitals_v1')||'[]')).filter(x=>x.iso&&dayKey(new Date(x.iso))===key).pop(); if(vt){ if(vt.sys!=null&&vt.dia!=null) out.push('فشارِ امروزت حدودِ '+faDigits(vt.sys)+' روی '+faDigits(vt.dia)+' ثبت شده.'); } }catch(e){}
   return out;
 }
-function podOfflineScript(){
+function podOfflineScript(mins){
+  mins=mins||podCfg().minutes||5;
   const jd=_jLabel(new Date()); const facts=podDayFacts();
   const doy=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,0))/86400000);
-  const t1=POD_TOPICS[((doy%POD_TOPICS.length)+POD_TOPICS.length)%POD_TOPICS.length];
-  const t2=POD_TOPICS[(((doy+7)%POD_TOPICS.length)+POD_TOPICS.length)%POD_TOPICS.length];
-  let s='سلام، وقتت به‌خیر. به پادکستِ کوتاهِ امروزت خوش اومدی؛ امروز '+jd+' هست. چند دقیقه با من همراه باش تا با هم نگاهی به امروزت بندازیم و یه چیزِ مفید یاد بگیریم. ';
+  const topAt=k=>POD_TOPICS[(((doy+k)%POD_TOPICS.length)+POD_TOPICS.length)%POD_TOPICS.length];
+  let s='سلام، وقتت به‌خیر. به پادکستِ امروزت خوش اومدی؛ امروز '+jd+' هست. چند دقیقه با من همراه باش تا با هم نگاهی به امروزت بندازیم و چند چیزِ مفید یاد بگیریم. ';
   s+= facts.length ? ('اول بذار ببینیم امروز چطور گذشت. '+facts.join(' ')+' این که داری ثبت و پیگیری می‌کنی خیلی ارزشمنده؛ یعنی داری با آگاهی جلو می‌ری و این خودش نصفِ راهه. به خودت افتخار کن که وقت می‌ذاری. ')
                    : ('امروز هنوز ثبتِ زیادی ازت ندارم؛ اگه فقط چند دقیقه وقت بذاری و قند، وعده یا حالِ امروزت رو ثبت کنی، من فردا می‌تونم خیلی دقیق‌تر و شخصی‌تر همراهیت کنم. حتی یک ثبتِ کوچیک هم شروعِ خوبیه. ');
-  s+= 'حالا نکتهٔ اولِ امروز دربارهٔ '+t1.t+'ه. '+t1.b+' یه قدمِ کوچیک برای همین امروز: '+t1.tip+' ';
-  s+= 'بریم سراغِ یه نکتهٔ دیگه که به کارت میاد؛ '+t2.t+'. '+t2.b+' و اگه خواستی امتحانش کنی: '+t2.tip+' ';
-  s+= 'قبل از خداحافظی، بیا با هم یه لحظه آروم شیم. شونه‌هات رو رها کن، یه نفسِ عمیق از بینی بکش، آروم تا چهار بشمار… و حالا آروم از دهن رها کن تا شش. همین چند ثانیه هم به قند و هم به آرامشت کمک می‌کنه. ';
+  const nTopics=Math.max(2, Math.min(6, mins-1));   // هر چه بلندتر، نکاتِ بیشتر
+  for(let k=0;k<nTopics;k++){ const tp=topAt(k*3); s+= (k===0?'حالا اولین نکتهٔ امروز دربارهٔ ':'بریم سراغِ نکتهٔ بعدی؛ ')+tp.t+(k===0?'ه. ':'. ')+tp.b+' یه قدمِ کوچیک: '+tp.tip+' '; }
+  s+= 'قبل از خداحافظی، بیا با هم یه لحظه آروم شیم. شونه‌هات رو رها کن، یه نفسِ عمیق از بینی بکش، آروم تا چهار بشمار… و حالا آروم از دهن رها کن تا شش. یک بارِ دیگه؛ دم… و بازدم. همین چند ثانیه هم به قند و هم به آرامشت کمک می‌کنه. ';
   s+= 'تو داری خوب پیش می‌ری؛ مراقبِ خودت باش، و فردا دوباره همین‌جا کنارتم. خداحافظ.';
   return s;
 }
-function podPrompt(){
+function podPrompt(mins){
+  mins=mins||podCfg().minutes||5; const words=mins*150;
   let snap=''; try{ snap=(buildHealthSnapshot('daily')||{}).text||''; }catch(e){}
   const jd=_jLabel(new Date());
-  return "تو گویندهٔ یک پادکستِ روزانهٔ کوتاهِ دیابت به فارسی هستی به نام «همدمِ دیابت». یک متنِ گفتاری بنویس که وقتی با صدا خوانده شود حدود ۴ تا ۵ دقیقه (تقریباً ۷۰۰ تا ۹۰۰ کلمه) شود.\n"+
+  return "تو گویندهٔ یک پادکستِ روزانهٔ دیابت به فارسی هستی به نام «همدمِ دیابت». یک متنِ گفتاری بنویس که وقتی با صدا خوانده شود حدود "+mins+" دقیقه (تقریباً "+words+" کلمه) شود. حتماً به همین اندازه بلند و پرمحتوا باشد.\n"+
   "لحن: گرم، آرام، انسانی، دلگرم‌کننده و جذاب — انگار داری با یک دوستِ صمیمی حرف می‌زنی. جوری بنویس که شنونده جذب شود و تا آخر گوش بدهد.\n"+
   "ساختار (پیوسته و روان، بدونِ نوشتنِ تیتر یا شماره): ۱) یک سلامِ گرم و اشاره به امروز («امروز "+jd+"»). ۲) مرورِ کوتاه و مثبتِ عملکردِ امروزِ کاربر از روی داده‌ها — غذا و کربوهیدرات، ورزش، آرامش و حالِ روحی، قند و وضعیتِ متابولیک؛ به عددهای واقعی اشاره کن، تشویق کن و اگر جایی خوب نبود با مهربانی و بدونِ سرزنش راهنمایی کن. ۳) یک نکتهٔ آموزشیِ مفیدِ امروز دربارهٔ دیابت یا متابولیسم که هر روز متفاوت و کاربردی باشد. ۴) یک قدمِ کوچکِ عملی برای امروز یا فردا. ۵) یک جملهٔ پایانیِ کوتاهِ دلگرم‌کننده و خداحافظی.\n"+
   "قواعدِ مهم: فقط فارسی بنویس. فقط متنِ گفتاری بده — بدونِ تیتر، بدونِ ستاره یا علامتِ مارک‌داون، بدونِ توضیحِ صحنه یا براکت، بدونِ شکلک. جمله‌ها کوتاه و روان تا خوب خوانده شوند. هرگز دوزِ قطعیِ انسولین/دارو یا تشخیصِ قطعی نده. مهم: در متنِ گفتار هیچ جمله‌ی سلبِ مسئولیت نگو (مثلِ «این آموزشی است» یا «جایگزینِ پزشک نیست») — این پیام جای دیگری نشان داده می‌شود؛ فقط گرم و طبیعی صحبت کن.\n\n"+
   "دادهٔ عملکردِ امروزِ کاربر (برای شخصی‌سازی — عین‌به‌عین نخوان، طبیعی و انتخابی استفاده کن):\n"+(snap||'دادهٔ امروز کم است؛ عمومی و دلگرم‌کننده صحبت کن.');
 }
 async function podcastGenerate(force){
-  const today=podTodayKey(); const cur=podLoad();
-  if(!force && cur && cur.dateKey===today && cur.script){ return cur; }
+  const today=podTodayKey(); const cur=podLoad(); const mins=podCfg().minutes;
+  if(!force && cur && cur.dateKey===today && cur.script && cur.len===mins){ return cur; }
   let script='', usedProv='offline';
   const online=(navigator.onLine!==false);
   const anyKey=VISION_PROVIDERS.some(p=>hasAnyKey(p)&&!aiFrozen(p));
   if(online && anyKey){
     try{
-      const prompt=podPrompt(); const prov=sectionProvider('podcast');
-      let out=await aiFallbackChain(prov,(pv,key)=>callAIText(pv,key,prompt,1700),{onProv:(pv)=>{usedProv=pv;}});
+      const prompt=podPrompt(mins); const prov=sectionProvider('podcast'); const maxTok=Math.min(4096, mins*300+400);
+      let out=await aiFallbackChain(prov,(pv,key)=>callAIText(pv,key,prompt,maxTok),{onProv:(pv)=>{usedProv=pv;}});
       out=podCleanScript(out);
       if(out && podWordCount(out)>=60) script=out;
     }catch(e){ script=''; }
   }
-  if(!script){ script=podOfflineScript(); usedProv='offline'; }
-  const rec={ dateKey:today, jday:_jLabel(new Date()), script, provider:usedProv, ts:Date.now() };
+  if(!script){ script=podOfflineScript(mins); usedProv='offline'; }
+  const rec={ dateKey:today, jday:_jLabel(new Date()), script, provider:usedProv, len:mins, ts:Date.now() };
   podSave(rec); return rec;
 }
 /* ---- موزیکِ محیطیِ نرم (Web Audio) ---- */
@@ -3333,9 +3384,41 @@ function podMusicStart(){
 }
 function podMusicStop(){ const m=_pod.music; if(!m) return; _pod.music=null; try{ clearInterval(m.bellTimer); m.master.gain.setTargetAtTime(0.0001, m.ctx.currentTime, 0.4); setTimeout(()=>{ try{ m.drone.forEach(o=>o.stop()); m.lfo.stop(); }catch(e){} try{ m.master.disconnect(); }catch(e){} }, 800); }catch(e){} }
 function podMusicGain(v){ const m=_pod.music; if(m){ try{ m.master.gain.setTargetAtTime(v, m.ctx.currentTime, 0.3); }catch(e){} } }
-/* ---- پیشرفت ---- */
-function podProgressStart(){ podProgressStop(); _pod.timer=setInterval(()=>{ const el=(Date.now()-_pod.t0)/1000; const pct=Math.min(99, Math.round(el/Math.max(1,_pod.estDur)*100)); const bar=document.getElementById('podBar'); if(bar) bar.style.width=pct+'%'; const tl=document.getElementById('podTime'); if(tl) tl.textContent=podFmtTime(el)+' / ~'+podFmtTime(_pod.estDur); }, 500); }
+/* ---- موتورِ پخش و پیشرفت (چند-قطعه‌ای، با اسکراب) ---- */
+function podEngineReset(){ _pod.buffers=[]; _pod.durs=[]; _pod.cum=[0]; _pod.totalDur=0; _pod.allFetched=false; _pod.playIdx=0; _pod.startCtx=0; _pod.startOff=0; _pod.playing=false; _pod.waiting=false; }
+function podElapsed(){ const ctx=_wkAudioCtx; const base=(_pod.cum[_pod.playIdx]||0)+(_pod.startOff||0); if(!ctx||!_pod.playing) return base; return base+(ctx.currentTime-_pod.startCtx); }
+function podTotalKnown(){ return _pod.allFetched? _pod.totalDur : Math.max(_pod.totalDur, _pod.estDur); }
+function podProgressStart(){ podProgressStop(); _pod.timer=setInterval(podTick, 250); podTick(); }
 function podProgressStop(){ if(_pod.timer){ clearInterval(_pod.timer); _pod.timer=0; } }
+function podTick(){
+  const cloud=_pod.cloud; const total=cloud?podTotalKnown():_pod.estDur;
+  const el=cloud?podElapsed():((Date.now()-_pod.t0)/1000);
+  const sl=document.getElementById('podSlider'); if(sl&&!_pod.seeking){ sl.max=Math.max(1,Math.round(total)); sl.value=Math.min(sl.max, Math.round(el)); }
+  const cur=document.getElementById('podCur'); if(cur) cur.textContent=podFmtTime(el);
+  const tot=document.getElementById('podTot'); if(tot) tot.textContent=(cloud&&!_pod.allFetched?'~':'')+podFmtTime(total);
+  const st=document.getElementById('podState'); if(st) st.textContent=_pod.prep?'در حالِ آماده‌سازیِ صدا…':(_pod.mode==='playing'?'در حالِ پخش':(_pod.mode==='paused'?'مکث':''));
+}
+function podStopSrc(){ try{ if(_pod.srcNode){ _pod.srcNode.onended=null; _pod.srcNode.stop(); _pod.srcNode.disconnect(); } }catch(e){} _pod.srcNode=null; _pod.playing=false; }
+function podPlayFrom(idx, off){
+  const ctx=_wkAudioCtx; if(!ctx) return; podStopSrc();
+  if(idx>=_pod.buffers.length){ if(_pod.allFetched){ podcastEnded(); return; } _pod.waiting=true; _pod.playIdx=idx; _pod.startOff=0; return; }
+  const src=ctx.createBufferSource(); src.buffer=_pod.buffers[idx]; src.connect(_pod.voiceGain);
+  src.onended=()=>{ if(_pod.mode!=='playing') return; podPlayFrom(_pod.playIdx+1, 0); };
+  _pod.playIdx=idx; _pod.startOff=off||0; _pod.startCtx=ctx.currentTime; _pod.playing=true;
+  try{ src.start(0, _pod.startOff); }catch(e){ try{ src.start(); }catch(_){} }
+  _pod.srcNode=src;
+}
+function podSeek(sec){
+  const ctx=_wkAudioCtx; if(!ctx||!_pod.cloud) return;
+  const maxKnown=_pod.buffers.length?_pod.cum[_pod.buffers.length]:0;
+  let t=Math.max(0, Math.min(sec, Math.max(0,maxKnown-0.1)));
+  let idx=0; while(idx<_pod.buffers.length-1 && _pod.cum[idx+1]<=t) idx++;
+  if(_pod.mode==='paused'){ _pod.mode='playing'; }
+  try{ if(ctx.state==='suspended'&&ctx.resume) ctx.resume(); }catch(e){}
+  podMusicGain(0.05); podPlayFrom(idx, t-(_pod.cum[idx]||0)); podProgressStart(); renderPodcastCard();
+}
+function podSliderInput(v){ _pod.seeking=true; const cur=document.getElementById('podCur'); if(cur) cur.textContent=podFmtTime(+v); }
+function podSliderChange(v){ _pod.seeking=false; if(_pod.cloud) podSeek(+v); }
 /* ---- کنترلِ پخش ---- */
 async function podcastToggle(){
   if(_pod.mode==='loading') return;
@@ -3349,32 +3432,36 @@ async function podcastToggle(){
 }
 function podTTSProvider(){
   if(navigator.onLine===false) return '';
-  if(hasAnyKey('openai')&&!aiFrozen('openai')) return 'openai';
-  if(hasAnyKey('gemini')&&!aiFrozen('gemini')) return 'gemini';   // رایگان و باکیفیت
+  const c=podCfg(); const okp=p=>hasAnyKey(p)&&!aiFrozen(p);
+  if(c.prov==='device') return '';
+  if(c.prov==='gemini') return okp('gemini')?'gemini':(okp('openai')?'openai':'');
+  if(c.prov==='openai') return okp('openai')?'openai':(okp('gemini')?'gemini':'');
+  if(okp('gemini')) return 'gemini';   // خودکار: جمینای رایگان اولویت
+  if(okp('openai')) return 'openai';
   return '';
 }
 function podcastStart(rec){
   _pod.ttsProv=podTTSProvider();
   _pod.cloud = !!_pod.ttsProv;
   _pod.estDur = Math.max(60, Math.round(podWordCount(rec.script)/2.4));
-  _pod.mode='playing'; _pod.t0=Date.now();
-  podMusicStart(); podProgressStart(); renderPodcastCard();
-  if(_pod.cloud){ podCloudSpeak(rec.script).catch((e)=>{ _pod.cloud=false; try{ console.warn('podcast cloud TTS failed:', e&&e.message||e); }catch(_){}; uiToast&&uiToast('صدای ابری نشد؛ با صدای گوشی پخش می‌شود'); podBrowserSpeak(rec.script); }); }
-  else { podBrowserSpeak(rec.script); }
+  _pod.mode='playing'; _pod.t0=Date.now(); _pod.prep=_pod.cloud;
+  podEngineReset(); podProgressStart(); renderPodcastCard();
+  if(_pod.cloud){
+    podCloudSpeak(rec.script).catch((e)=>{ _pod.cloud=false; _pod.prep=false; try{ console.warn('podcast cloud TTS failed:', e&&e.message||e); }catch(_){}; uiToast&&uiToast('صدای ابری نشد؛ با صدای گوشی پخش می‌شود'); podMusicStart(); podProgressStart(); podBrowserSpeak(rec.script); renderPodcastCard(); });
+  } else { podMusicStart(); podBrowserSpeak(rec.script); }
 }
-function podcastPause(){ _pod.mode='paused'; _pod.pausedAt=Date.now(); try{ if(_pod.cloud){ if(_wkAudioCtx&&_wkAudioCtx.suspend) _wkAudioCtx.suspend(); } else { if(window.speechSynthesis) speechSynthesis.pause(); podMusicGain(0.0001); } }catch(e){} podProgressStop(); renderPodcastCard(); }
-function podcastResume(){ _pod.mode='playing'; if(_pod.pausedAt){ _pod.t0+=(Date.now()-_pod.pausedAt); _pod.pausedAt=0; } try{ if(_pod.cloud){ if(_wkAudioCtx&&_wkAudioCtx.resume) _wkAudioCtx.resume(); } else { if(window.speechSynthesis) speechSynthesis.resume(); podMusicGain(0.09); } }catch(e){} podProgressStart(); renderPodcastCard(); }
-function podStopSrc(){ try{ if(_pod.srcNode){ _pod.srcNode.onended=null; _pod.srcNode.stop(); _pod.srcNode.disconnect(); } }catch(e){} _pod.srcNode=null; }
-function podcastEnded(){ podProgressStop(); podStopSrc(); podMusicStop(); const bar=document.getElementById('podBar'); if(bar) bar.style.width='100%'; _pod.mode='idle'; try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} renderPodcastCard(); setTimeout(()=>{ if(_pod.mode==='idle'){ const b=document.getElementById('podBar'); if(b) b.style.width='0%'; } }, 1000); }
-function podcastStopAll(){ podProgressStop(); podStopSrc(); podMusicStop(); try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} try{ if(_wkAudioCtx&&_wkAudioCtx.state==='suspended'&&_wkAudioCtx.resume) _wkAudioCtx.resume(); }catch(e){} if(_pod.blobUrl){ try{ URL.revokeObjectURL(_pod.blobUrl); }catch(e){} _pod.blobUrl=null; } _pod.mode='idle'; }
+function podcastPause(){ _pod.mode='paused'; try{ if(_pod.cloud){ if(_wkAudioCtx&&_wkAudioCtx.suspend) _wkAudioCtx.suspend(); } else { if(window.speechSynthesis) speechSynthesis.pause(); podMusicGain(0.0001); } }catch(e){} podProgressStop(); renderPodcastCard(); }
+function podcastResume(){ _pod.mode='playing'; try{ if(_pod.cloud){ if(_wkAudioCtx&&_wkAudioCtx.resume) _wkAudioCtx.resume(); podMusicGain(0.05); } else { if(window.speechSynthesis) speechSynthesis.resume(); podMusicGain(0.09); } }catch(e){} podProgressStart(); renderPodcastCard(); }
+function podcastEnded(){ podProgressStop(); podStopSrc(); podMusicStop(); _pod.mode='idle'; _pod.prep=false; try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} const sl=document.getElementById('podSlider'); if(sl) sl.value=sl.max; renderPodcastCard(); }
+function podcastStopAll(){ podProgressStop(); podStopSrc(); podMusicStop(); try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} try{ if(_wkAudioCtx&&_wkAudioCtx.state==='suspended'&&_wkAudioCtx.resume) _wkAudioCtx.resume(); }catch(e){} _pod.mode='idle'; _pod.prep=false; }
 async function podcastRegen(){ podcastStopAll(); _pod.mode='loading'; renderPodcastCard(); try{ await podcastGenerate(true); uiToast&&uiToast('✓ پادکستِ تازه ساخته شد'); }catch(e){} _pod.mode='idle'; renderPodcastCard(); }
 /* ---- صدای گوشی (speechSynthesis) ---- */
 function podBrowserSpeak(text){
   if(!window.speechSynthesis){ uiToast&&uiToast('مرورگر صدا را پشتیبانی نمی‌کند'); podcastEnded(); return; }
   try{ speechSynthesis.cancel(); }catch(e){}
   _pod.cloud=false; _pod.utterQueue=podSplit(text,220); _pod.uIdx=0;
-  const vs=(speechSynthesis.getVoices&&speechSynthesis.getVoices())||[];
-  _pod.faVoice=vs.find(x=>/fa|persian|farsi|iran/i.test((x.lang||'')+(x.name||'')))||null;
+  const vs=(speechSynthesis.getVoices&&speechSynthesis.getVoices())||[]; const pref=podCfg().dVoice;
+  _pod.faVoice=(pref&&vs.find(x=>x.name===pref))||vs.find(x=>/fa|persian|farsi|iran/i.test((x.lang||'')+(x.name||'')))||null;
   if(!vs.length && speechSynthesis.onvoiceschanged===null){ speechSynthesis.onvoiceschanged=()=>{ const v2=speechSynthesis.getVoices()||[]; _pod.faVoice=v2.find(x=>/fa|persian|farsi|iran/i.test((x.lang||'')+(x.name||'')))||_pod.faVoice; }; }
   podSpeakNext();
 }
@@ -3392,18 +3479,18 @@ async function podTTSFetch(text){
   if(_pod.ttsProv==='gemini') return await podGeminiTTS(text);
   return await podOpenAITTS(text);
 }
-async function podOpenAITTS(text){
-  const key=getVisionKey('openai'); if(!key) throw new Error('no key');
+async function podOpenAITTS(text,voice){
+  const key=getVisionKey('openai'); if(!key) throw new Error('no key'); voice=voice||podCfg().oVoice||'shimmer';
   const mk=body=>fetch('https://api.openai.com/v1/audio/speech',{method:'POST',headers:{'authorization':'Bearer '+key,'content-type':'application/json'},body:JSON.stringify(body)});
-  let res=await mk({ model:'gpt-4o-mini-tts', voice:'shimmer', input:text, response_format:'mp3', instructions:'با لحنی گرم، آرام، دلنشین و صمیمی مثلِ گویندهٔ حرفه‌ایِ پادکستِ سلامت به فارسی صحبت کن؛ شمرده، دلگرم‌کننده و روان.' });
-  if(!res.ok){ res=await mk({ model:'tts-1', voice:'shimmer', input:text, response_format:'mp3' }); if(!res.ok) throw new Error('OpenAI TTS '+res.status); }
+  let res=await mk({ model:'gpt-4o-mini-tts', voice, input:text, response_format:'mp3', instructions:'با لحنی گرم، آرام، دلنشین و صمیمی مثلِ گویندهٔ حرفه‌ایِ پادکستِ سلامت به فارسی صحبت کن؛ شمرده، دلگرم‌کننده و روان.' });
+  if(!res.ok){ res=await mk({ model:'tts-1', voice, input:text, response_format:'mp3' }); if(!res.ok) throw new Error('OpenAI TTS '+res.status); }
   return { buf:await res.arrayBuffer(), type:'audio/mpeg' };
 }
-async function podGeminiTTS(text){
-  const key=getVisionKey('gemini'); if(!key) throw new Error('no key');
+async function podGeminiTTS(text,voice){
+  const key=getVisionKey('gemini'); if(!key) throw new Error('no key'); voice=voice||podCfg().gVoice||'Kore';
   const url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key='+encodeURIComponent(key);
   const body={ contents:[{parts:[{text:'با لحنی گرم، آرام و دلنشین بخوان: '+text}]}],
-    generationConfig:{ responseModalities:['AUDIO'], speechConfig:{ voiceConfig:{ prebuiltVoiceConfig:{ voiceName:'Kore' } } } } };
+    generationConfig:{ responseModalities:['AUDIO'], speechConfig:{ voiceConfig:{ prebuiltVoiceConfig:{ voiceName:voice } } } } };
   const res=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
   if(!res.ok) throw new Error('Gemini TTS '+res.status);
   const data=await res.json();
@@ -3427,63 +3514,110 @@ function podPcmToWav(b64, sampleRate){
 // دیکودِ صدا از هر دو شکلِ promise و callbackِ decodeAudioData (سازگاری با سافاری)
 function podDecode(ctx, buf){ return new Promise((res,rej)=>{ let done=false; const ok=b=>{ if(!done){ done=true; res(b); } }; const no=e=>{ if(!done){ done=true; rej(e||new Error('decode')); } };
   try{ const p=ctx.decodeAudioData(buf, ok, no); if(p&&p.then) p.then(ok).catch(no); }catch(e){ no(e); } }); }
+// قطعه‌بندی — قطعهٔ اول کوتاه تا صدا سریع (ثانیهٔ دوم-سوم) شروع شود
+function podChunksForTTS(text){
+  const per=(_pod.ttsProv==='gemini')?520:1200;
+  const all=podSplit(text, per);
+  if(all.length && all[0].length>150){
+    const m=all[0].match(/^[^.!?؟…]+[.!?؟…]?/);
+    if(m && m[0].length<all[0].length){ const head=m[0].trim(), rest=all[0].slice(m[0].length).trim(); all[0]=rest; all.unshift(head); }
+  }
+  return all;
+}
 async function podCloudSpeak(full){
-  const per=(_pod.ttsProv==='gemini')?650:1400;   // قطعاتِ کوتاه‌تر برای جمینای
-  _pod.cloudChunks=podSplit(full,per); _pod.cIdx=0;
   const ctx=wkEnsureAudio(); if(!ctx) throw new Error('no audio ctx');
   if(!_pod.voiceGain){ _pod.voiceGain=ctx.createGain(); _pod.voiceGain.gain.value=1.0; _pod.voiceGain.connect(ctx.destination); }
-  await podCloudPlayChunk();   // اگر اولین قطعه خطا دهد، throw می‌شود تا به صدای گوشی برگردد
+  podEngineReset();
+  const chunks=podChunksForTTS(full);
+  for(let i=0;i<chunks.length;i++){
+    if(_pod.mode==='idle') return;
+    let audioBuf;
+    try{ const out=await podTTSFetch(chunks[i]); audioBuf=await podDecode(ctx, out.buf.slice(0)); }
+    catch(e){ if(i===0) throw e; continue; }   // اولین قطعه خطا → فالبک؛ بقیه رد شود
+    if(_pod.mode==='idle') return;
+    _pod.buffers.push(audioBuf); const d=audioBuf.duration||0; _pod.durs.push(d); _pod.cum.push((_pod.cum[_pod.cum.length-1]||0)+d); _pod.totalDur+=d;
+    if(i===0){ _pod.prep=false; podMusicStart(); podMusicGain(0.05); podPlayFrom(0,0); renderPodcastCard(); }
+    else if(_pod.waiting && _pod.playIdx===_pod.buffers.length-1){ _pod.waiting=false; podPlayFrom(_pod.playIdx, _pod.startOff||0); }
+  }
+  _pod.allFetched=true;
+  if(!_pod.playing && _pod.mode==='playing') podcastEnded();
 }
-async function podCloudPlayChunk(){
-  if(_pod.mode!=='playing') return;
-  const chunks=_pod.cloudChunks||[]; if(_pod.cIdx>=chunks.length){ podcastEnded(); return; }
-  let out;
-  try{ out=await podTTSFetch(chunks[_pod.cIdx]); }
-  catch(e){ if(_pod.cIdx===0) throw e; podBrowserSpeak(chunks.slice(_pod.cIdx).join(' ')); return; }
-  if(_pod.mode!=='playing') return;
-  const ctx=wkEnsureAudio(); if(!ctx){ if(_pod.cIdx===0) throw new Error('no ctx'); return; }
-  let audioBuf;
-  try{ audioBuf=await podDecode(ctx, out.buf.slice(0)); }
-  catch(e){ if(_pod.cIdx===0) throw e; podBrowserSpeak(chunks.slice(_pod.cIdx).join(' ')); return; }
-  if(_pod.mode!=='playing') return;
-  // پخش از خودِ AudioContext (بدونِ نیاز به فعال‌سازیِ دوبارهٔ کاربر — رفعِ عدمِ پخشِ خوانش روی موبایل)
-  try{
-    const src=ctx.createBufferSource(); src.buffer=audioBuf; src.connect(_pod.voiceGain);
-    src.onended=()=>{ if(_pod.mode==='playing'){ _pod.cIdx++; podCloudPlayChunk(); } };
-    podMusicGain(0.05);   // موزیک را زیرِ خوانش کمی می‌آوریم
-    src.start(); _pod.srcNode=src;
-  }catch(e){ if(_pod.cIdx===0) throw e; }
-}
-/* ---- کارتِ خانه ---- */
+/* ---- کارتِ خانه (پلیر مدرن) ---- */
 function renderPodcastCard(){
   const box=document.getElementById('homePodcast'); if(!box) return;
-  const rec=podLoad(); const fresh=rec&&rec.dateKey===podTodayKey()&&rec.script;
+  const rec=podLoad(); const c=podCfg(); const fresh=rec&&rec.dateKey===podTodayKey()&&rec.script;
   const mode=_pod.mode; const playing=mode==='playing', paused=mode==='paused', loading=mode==='loading';
-  const btn = loading?'⏳' : playing?'❚❚' : (paused?'▶':'▶');
-  const cloudVoice=podTTSProvider();
-  const voiceChip = cloudVoice?('🎙️ صدای باکیفیت'+(cloudVoice==='gemini'?' (Gemini)':'')):'🔈 صدای گوشی';
-  const srcNote = fresh ? (rec.provider==='offline'?'متنِ امروز آماده است':'ساختهٔ هوش مصنوعی برای امروز') : 'با یک لمس، اپیزودِ امروز ساخته می‌شود';
-  const jd = (rec&&rec.jday) || _jLabel(new Date());
-  const showBar = playing||paused;
-  box.innerHTML=`<div style="background:linear-gradient(135deg,rgba(154,134,224,.16),rgba(63,185,163,.10),var(--panel));border:1px solid var(--line);border-radius:16px;padding:14px 15px;margin:12px 0;text-align:right">
-    <div style="display:flex;align-items:center;gap:9px">
-      <span style="font-size:22px">🎧</span>
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:800;font-size:14px;color:var(--ink)">پادکستِ امروزِ تو</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px">${escVision(jd)} · ${escVision(srcNote)}</div>
+  const prov=podTTSProvider(); const cloud=!!prov;
+  const provLabel = prov==='gemini'?'Gemini':prov==='openai'?'ChatGPT':'صدای گوشی';
+  const provIco = prov?'🎙️':'🔈';
+  const btn = loading?'···' : (playing?'❚❚':'▶');
+  const total = cloud?podTotalKnown():_pod.estDur;
+  const active = playing||paused;
+  const el = active?(cloud?podElapsed():((Date.now()-_pod.t0)/1000)):0;
+  const stateTxt = loading?'در حالِ ساختِ متنِ امروز…' : _pod.prep?'در حالِ آماده‌سازیِ صدا…' : playing?'در حالِ پخش' : paused?'مکث' : (fresh?('آماده · حدود '+faDigits(c.minutes)+' دقیقه'):'اپیزودِ امروز ساخته نشده');
+  const sliderOn = cloud&&active;   // اسکراب فقط با صدای ابری
+  box.innerHTML=`<div class="pod-card">
+    <div class="pod-top">
+      <div class="pod-eq">🎧</div>
+      <div class="pod-ttl">
+        <div class="pod-h">پادکستِ امروزِ تو</div>
+        <div class="pod-sub">${escVision((rec&&rec.jday)||_jLabel(new Date()))} · ${fresh?(rec.provider==='offline'?'متنِ آماده':'ساختهٔ هوش مصنوعی'):'با یک لمس ساخته می‌شود'}</div>
       </div>
-      <span style="font-size:10px;color:var(--muted);background:var(--field);border:1px solid var(--line);border-radius:20px;padding:3px 9px;white-space:nowrap">${voiceChip}</span>
+      <button class="pod-src" onclick="podOpenCfg()" title="تغییرِ صدا و تنظیمات">${provIco} ${escVision(provLabel)}</button>
     </div>
-    <div style="display:flex;align-items:center;gap:11px;margin-top:12px">
-      <button onclick="podcastToggle()" ${loading?'disabled':''} style="flex:0 0 auto;width:52px;height:52px;border-radius:50%;border:none;background:linear-gradient(145deg,var(--teal),var(--teal-dim));color:#fff;font-size:${playing?'15':'18'}px;cursor:pointer;box-shadow:0 4px 14px rgba(63,185,163,.4);display:flex;align-items:center;justify-content:center">${btn}</button>
-      <div style="flex:1;min-width:0">
-        <div style="height:7px;border-radius:6px;background:var(--line);overflow:hidden"><div id="podBar" style="height:100%;width:${showBar?'':'0%'};background:linear-gradient(90deg,var(--violet,#9a86e0),var(--teal));transition:width .4s"></div></div>
-        <div id="podTime" style="font-size:10.5px;color:var(--muted);margin-top:5px">${loading?'در حالِ ساختِ اپیزودِ امروز…':(playing?'در حالِ پخش…':(paused?'مکث':(fresh?'آمادهٔ پخش · حدود ۵ دقیقه':'اپیزودِ امروز هنوز ساخته نشده')))}</div>
+    <div class="pod-transport">
+      <button class="pod-play" onclick="podcastToggle()" ${loading?'disabled':''}>${btn}</button>
+      <div class="pod-mid">
+        <input id="podSlider" class="pod-slider" type="range" min="0" max="${Math.max(1,Math.round(total))}" value="${Math.round(el)}" ${sliderOn?'':'disabled'} oninput="podSliderInput(this.value)" onchange="podSliderChange(this.value)">
+        <div class="pod-times"><span id="podCur">${podFmtTime(el)}</span><span id="podState" class="pod-state">${escVision(stateTxt)}</span><span id="podTot">${(cloud&&!_pod.allFetched?'~':'')+podFmtTime(total)}</span></div>
       </div>
-      <button onclick="podcastRegen()" ${loading?'disabled':''} title="ساختِ دوبارهٔ اپیزودِ امروز" style="flex:0 0 auto;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:15px;cursor:pointer">🔄</button>
+      <button class="pod-gear" onclick="podOpenCfg()" title="تنظیمات">⚙️</button>
+      <button class="pod-regen" onclick="podcastRegen()" ${loading?'disabled':''} title="ساختِ دوباره">🔄</button>
     </div>
-    <div style="font-size:10px;color:var(--muted);margin-top:10px;line-height:1.7">هر روز متفاوت و بر اساسِ عملکردِ توست. آموزشی و عمومی — جایگزینِ توصیهٔ پزشک نیست.</div>
+    <div class="pod-note">هر روز متفاوت و بر اساسِ عملکردِ توست. آموزشی و عمومی — جایگزینِ توصیهٔ پزشک نیست.</div>
   </div>`;
+}
+/* ---- تنظیماتِ پادکست (پاپ‌آپ) + تستِ صدا ---- */
+function podOpenCfg(){ renderPodCfg(); const m=document.getElementById('podCfgModal'); if(m) m.classList.add('show'); }
+function podCloseCfg(){ const m=document.getElementById('podCfgModal'); if(m) m.classList.remove('show'); try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} podTestStop(); }
+function podCfgPick(k,v){ const patch={}; patch[k]=v; podCfgSet(patch); renderPodCfg(); renderPodcastCard(); if(k==='minutes') uiToast&&uiToast('برای اعمالِ مدت، «ساختِ دوباره 🔄» را بزن'); }
+function podCfgPickVoice(prov,id){ if(prov==='gemini') podCfgSet({gVoice:id}); else if(prov==='openai') podCfgSet({oVoice:id}); else podCfgSet({dVoice:id}); renderPodCfg(); renderPodcastCard(); uiToast&&uiToast('✓ صدا انتخاب شد'); }
+function renderPodCfg(){
+  const box=document.getElementById('podCfgBody'); if(!box) return; const c=podCfg();
+  const provOpts=[['auto','خودکار'],['gemini','Gemini'],['openai','ChatGPT'],['device','صدای گوشی']];
+  let h=`<div class="qbg-head"><span class="qbg-badge" style="background:rgba(154,134,224,.18)">🎧</span><div><div class="qbg-title">تنظیماتِ پادکست</div><div class="qbg-sub">مدت، سرویسِ صدا و لحن را انتخاب کن؛ هر صدا را با ▶ تست کن.</div></div></div>`;
+  h+=`<label class="qbg-lbl">مدتِ پادکست</label><div class="pod-seg">`+POD_LENS.map(m=>`<button class="${c.minutes===m?'on':''}" onclick="podCfgPick('minutes',${m})">${faDigits(m)} دقیقه</button>`).join('')+`</div>`;
+  h+=`<label class="qbg-lbl" style="margin-top:8px">سرویسِ صدا</label><div class="pod-seg">`+provOpts.map(o=>`<button class="${c.prov===o[0]?'on':''}" onclick="podCfgPick('prov','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
+  const eff = c.prov==='auto' ? (hasAnyKey('gemini')?'gemini':(hasAnyKey('openai')?'openai':'device')) : c.prov;
+  if(eff==='gemini'||eff==='openai'){
+    const list=POD_VOICES[eff]; const sel=eff==='gemini'?c.gVoice:c.oVoice;
+    if((eff==='gemini'&&!hasAnyKey('gemini'))||(eff==='openai'&&!hasAnyKey('openai'))) h+=`<div class="qbg-sub" style="color:var(--amber);margin:6px 0">کلیدِ ${eff==='gemini'?'Gemini (رایگان)':'OpenAI'} ثبت نشده؛ در تنظیماتِ 🤖 هوش مصنوعی اضافه کن.</div>`;
+    h+=`<label class="qbg-lbl" style="margin-top:8px">لحن و جنسیتِ صدا (${eff==='gemini'?'Gemini':'ChatGPT'})</label>`;
+    list.forEach(v=>{ h+=`<div class="pod-vrow ${sel===v.id?'on':''}"><span class="pod-vname">${escVision(v.fa)}</span><button class="pod-vtest" onclick="podTestVoice('${eff}','${v.id}')">▶ تست</button><button class="pod-vpick" onclick="podCfgPickVoice('${eff}','${v.id}')">${sel===v.id?'✓ انتخاب':'انتخاب'}</button></div>`; });
+  } else {
+    const vs=(window.speechSynthesis&&speechSynthesis.getVoices&&speechSynthesis.getVoices())||[];
+    const fa=vs.filter(x=>/fa|persian|farsi|iran/i.test((x.lang||'')+(x.name||'')));
+    const show=(fa.length?fa:vs).slice(0,8); window._podDevVoices=show;
+    h+=`<label class="qbg-lbl" style="margin-top:8px">صدای گوشی</label>`;
+    if(!show.length) h+=`<div class="qbg-sub">صدایی روی این مرورگر پیدا نشد (روی iOS صدای فارسی محدود است).</div>`;
+    show.forEach((v,i)=>{ h+=`<div class="pod-vrow ${c.dVoice===v.name?'on':''}"><span class="pod-vname">${escVision(v.name)} <span style="color:var(--muted);font-weight:600;font-size:10px">${escVision(v.lang||'')}</span></span><button class="pod-vtest" onclick="podTestDevice(${i})">▶ تست</button><button class="pod-vpick" onclick="podPickDevice(${i})">${c.dVoice===v.name?'✓ انتخاب':'انتخاب'}</button></div>`; });
+  }
+  box.innerHTML=h;
+}
+function podTestDevice(i){ const v=(window._podDevVoices||[])[i]; if(v) podTestVoice('device', v.name); }
+function podPickDevice(i){ const v=(window._podDevVoices||[])[i]; if(v) podCfgPickVoice('device', v.name); }
+let _podTestSrc=null;
+function podTestStop(){ try{ if(_podTestSrc){ _podTestSrc.onended=null; _podTestSrc.stop(); _podTestSrc.disconnect(); } }catch(e){} _podTestSrc=null; }
+async function podTestVoice(prov, voiceId){
+  const sample='سلام، من صدای پیشنهادیِ پادکستِ تو هستم. امیدوارم دلنشین باشه.';
+  try{
+    if(prov==='device'){ if(!window.speechSynthesis){ uiToast&&uiToast('مرورگر صدا ندارد'); return; } speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(sample); u.lang='fa-IR'; const vs=speechSynthesis.getVoices()||[]; const v=vs.find(x=>x.name===voiceId)||vs.find(x=>/fa|persian/i.test((x.lang||'')+(x.name||''))); if(v) u.voice=v; speechSynthesis.speak(u); return; }
+    const ctx=wkEnsureAudio(); if(!ctx){ uiToast&&uiToast('صدا در دسترس نیست'); return; }
+    uiToast&&uiToast('در حالِ گرفتنِ نمونهٔ صدا…');
+    const out = prov==='gemini' ? await podGeminiTTS(sample, voiceId) : await podOpenAITTS(sample, voiceId);
+    const buf=await podDecode(ctx, out.buf.slice(0));
+    podTestStop(); const src=ctx.createBufferSource(); src.buffer=buf; const g=ctx.createGain(); g.gain.value=1; src.connect(g); g.connect(ctx.destination); src.onended=()=>{ _podTestSrc=null; }; src.start(); _podTestSrc=src;
+  }catch(e){ try{ console.warn('voice test failed:', e&&e.message||e); }catch(_){}; uiToast&&uiToast('تستِ صدا نشد (کلید/اینترنت؟)'); }
 }
 function renderDashboard(){
   const box=document.getElementById('dashboard'); if(!box) return;
@@ -4961,7 +5095,7 @@ function uiToast(msg){
   t.textContent=msg; t.classList.add('show');
   clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
 }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeQuickAdd(); closeQuickBG(); closeBgSrc(); if(typeof closeWkTrack==='function')closeWkTrack(); closeQEntry('qmedModal'); closeQEntry('qsleepModal'); closeQEntry('qmoodModal'); closeQEntry('qinsModal'); closeQEntry('qvitModal'); closeQEntry('qjrnModal'); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeQuickAdd(); closeQuickBG(); closeBgSrc(); if(typeof closeWkTrack==='function')closeWkTrack(); closeQEntry('qmedModal'); closeQEntry('qsleepModal'); closeQEntry('qmoodModal'); closeQEntry('qinsModal'); closeQEntry('qvitModal'); closeQEntry('qjrnModal'); podCloseCfg&&podCloseCfg(); } });
 /* ====== حالت چیدمان منو: بالا (قدیم) یا پایین (جدید) ====== */
 const NAVMODE_KEY='nav_mode';
 function getNavMode(){ try{ return localStorage.getItem(NAVMODE_KEY)||'top'; }catch(e){ return 'top'; } }
@@ -5246,7 +5380,7 @@ async function loadProfile(){
 // کلیدهای localStorage که در بکاپ گنجانده می‌شوند (نقشه‌ی داده‌ی کاربر).
 // از مقادیر رشته‌ای مستقیم استفاده می‌شود چون بعضی از این const‌ها (CGMKEY, BGKEY, ...)
 // پایین‌تر در فایل تعریف شده‌اند و ارجاع به خودِ متغیر اینجا TDZ می‌دهد.
-const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','vitals_v1','journal_v1','custom_foods_v1','custom_meds_v1','custom_exercises_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','journeys_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1'];
+const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','vitals_v1','journal_v1','custom_foods_v1','custom_meds_v1','custom_exercises_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','journeys_v1','pod_cfg_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1'];
 
 async function renderProfileTab(){
   // فرم پروفایل (c-profile) حالا خودش داخل این تب است و وضعیت ذخیره‌شده را نشان می‌دهد.
