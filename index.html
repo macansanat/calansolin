@@ -163,9 +163,26 @@ body.nav-bottom{padding-bottom:100px}
 .pod-slider:disabled{opacity:.6;cursor:default}
 .pod-times{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:10px;color:var(--muted);margin-top:6px;direction:ltr}
 .pod-state{color:var(--teal);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pod-gear,.pod-regen{flex:0 0 auto;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:14px;cursor:pointer}
-.pod-gear:active,.pod-regen:active{transform:scale(.9)}
+.pod-gear,.pod-regen,.pod-dl{flex:0 0 auto;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:14px;cursor:pointer}
+.pod-gear:active,.pod-regen:active,.pod-dl:active{transform:scale(.9)}
+.pod-dl:disabled{opacity:.4;cursor:default}
 .pod-note{font-size:10px;color:var(--muted);margin-top:11px;line-height:1.7}
+/* مجریِ تصویریِ پادکست */
+.pod-av{margin:2px 0 13px;display:flex;justify-content:center}
+.pod-av-stage{position:relative;width:100%;max-width:360px;height:158px;border-radius:16px;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;background:radial-gradient(130% 120% at 50% 12%, rgba(154,134,224,.30), rgba(63,185,163,.12) 52%, rgba(20,26,38,.22));box-shadow:inset 0 0 46px rgba(0,0,0,.16)}
+.pod-av-img{width:100%;height:158px;object-fit:cover;object-position:50% 22%;filter:saturate(1.05) contrast(1.02);transform:scale(1);transition:transform .28s ease-out}
+.pod-av.live .pod-av-img{transform:scale(calc(1 + var(--lv,0)*0.035));animation:podBreathe 6.5s ease-in-out infinite}
+.pod-av.paused .pod-av-img{filter:saturate(.8) brightness(.92)}
+.pod-av-ph{width:100%;height:158px;display:flex;align-items:center;justify-content:center}
+.pod-av.live .pod-av-ph{animation:podBreathe 6.5s ease-in-out infinite}
+.pod-av-ring{position:absolute;inset:0;border-radius:16px;pointer-events:none;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.07), inset 0 0 26px rgba(154,134,224,calc(.12 + var(--lv,0)*.55)), 0 0 calc(6px + var(--lv,0)*22px) rgba(63,185,163,calc(var(--lv,0)*.5));transition:box-shadow .09s linear}
+.pod-av-eq{position:absolute;bottom:9px;left:50%;transform:translateX(-50%);display:flex;gap:3px;align-items:flex-end;height:22px;opacity:0;transition:opacity .3s}
+.pod-av.live .pod-av-eq{opacity:calc(.4 + var(--lv,0)*.6)}
+.pod-av-eq i{width:3px;border-radius:2px;background:linear-gradient(#fff,rgba(255,255,255,.55));height:calc(4px + var(--lv,0)*18px);transform-origin:bottom;animation:podEq .85s ease-in-out infinite}
+.pod-av-eq i:nth-child(2){animation-delay:.12s}.pod-av-eq i:nth-child(3){animation-delay:.26s}.pod-av-eq i:nth-child(4){animation-delay:.18s}.pod-av-eq i:nth-child(5){animation-delay:.32s}
+@keyframes podEq{0%,100%{transform:scaleY(.45)}50%{transform:scaleY(1)}}
+@keyframes podBreathe{0%,100%{filter:brightness(1)}50%{filter:brightness(1.03)}}
+@media (prefers-reduced-motion:reduce){.pod-av-img,.pod-av-ph,.pod-av-eq i{animation:none!important}}
 .pod-seg{display:flex;gap:7px;flex-wrap:wrap}
 .pod-seg button{flex:1;min-width:64px;background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:10px 6px;font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;transition:all .15s}
 .pod-seg button.on{background:var(--teal-dim);border-color:var(--teal);color:#eafff8}
@@ -1980,7 +1997,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۱.۰</b> · انتشار: ۱۴۰۵/۰۶/۰۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۲.۰</b> · انتشار: ۱۴۰۵/۰۶/۱۰ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3263,6 +3280,7 @@ const POD_KEY='podcast_v1', POD_CFG_KEY='pod_cfg_v1';
 let _pod={ mode:'idle', cloud:false, ttsProv:'', music:null,
   utterQueue:[], uIdx:0, utter:null, faVoice:null,
   t0:0, estDur:0, timer:0, prep:false, seeking:false, voiceGain:null, srcNode:null,
+  analyser:null, raf:0, avImg:null, avImgGender:'', avBusy:false, musicKill:0, rawChunks:null, rawType:'',
   buffers:[], durs:[], cum:[0], totalDur:0, allFetched:false, playIdx:0, startCtx:0, startOff:0, playing:false, waiting:false };
 const POD_RATING_FA={great:'عالی',good:'خوب',ok:'معمولی',bad:'سخت'};
 // صداهای انتخابیِ هر سرویس (id واقعیِ سرویس + برچسبِ فارسی)
@@ -3272,7 +3290,8 @@ const POD_VOICES={
 };
 const POD_LENS=[2,3,5,7];
 function podCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(POD_CFG_KEY)||'{}')||{}; }catch(e){}
-  return { prov:o.prov||'auto', minutes:o.minutes||5, gVoice:o.gVoice||'Kore', oVoice:o.oVoice||'shimmer', dVoice:o.dVoice||'' }; }
+  return { prov:o.prov||'auto', minutes:o.minutes||5, gVoice:o.gVoice||'Kore', oVoice:o.oVoice||'shimmer', dVoice:o.dVoice||'',
+    avatar:(o.avatar!==false), avGender:(o.avGender==='male'?'male':'female') }; }
 function podCfgSet(patch){ const n=Object.assign(podCfg(), patch||{}); try{ localStorage.setItem(POD_CFG_KEY, JSON.stringify(n)); }catch(e){} return n; }
 // کتابخانهٔ نکاتِ آموزشیِ چرخشی (آموزشی و عمومی — بدون دوز/تشخیص)
 const POD_TOPICS=[
@@ -3364,6 +3383,8 @@ async function podcastGenerate(force){
 /* ---- موزیکِ محیطیِ نرم (Web Audio) ---- */
 function podMusicStart(){
   const ctx=wkEnsureAudio(); if(!ctx) return; podMusicStop();
+  if(_pod.musicKill){ clearTimeout(_pod.musicKill); _pod.musicKill=0; }   // نگذار پاک‌سازیِ قبلی، موزیکِ تازه را قطع کند
+  try{ if(ctx.state==='suspended'&&ctx.resume) ctx.resume(); }catch(e){}   // کانتکست باید زنده باشد وگرنه موزیکِ پخشِ دوم بی‌صدا می‌ماند
   try{
     const master=ctx.createGain(); master.gain.value=0.0001; master.connect(ctx.destination);
     master.gain.setTargetAtTime(0.09, ctx.currentTime, 1.4);   // ملایم اما شنیدنی، زیرِ صدا
@@ -3383,10 +3404,10 @@ function podMusicStart(){
     _pod.music={ ctx, master, drone, lfo, bellTimer };
   }catch(e){}
 }
-function podMusicStop(){ const m=_pod.music; if(!m) return; _pod.music=null; try{ clearInterval(m.bellTimer); m.master.gain.setTargetAtTime(0.0001, m.ctx.currentTime, 0.4); setTimeout(()=>{ try{ m.drone.forEach(o=>o.stop()); m.lfo.stop(); }catch(e){} try{ m.master.disconnect(); }catch(e){} }, 800); }catch(e){} }
+function podMusicStop(){ const m=_pod.music; if(!m) return; _pod.music=null; try{ clearInterval(m.bellTimer); m.master.gain.setTargetAtTime(0.0001, m.ctx.currentTime, 0.4); if(_pod.musicKill) clearTimeout(_pod.musicKill); _pod.musicKill=setTimeout(()=>{ _pod.musicKill=0; try{ m.drone.forEach(o=>o.stop()); m.lfo.stop(); }catch(e){} try{ m.master.disconnect(); }catch(e){} }, 800); }catch(e){} }
 function podMusicGain(v){ const m=_pod.music; if(m){ try{ m.master.gain.setTargetAtTime(v, m.ctx.currentTime, 0.3); }catch(e){} } }
 /* ---- موتورِ پخش و پیشرفت (چند-قطعه‌ای، با اسکراب) ---- */
-function podEngineReset(){ _pod.buffers=[]; _pod.durs=[]; _pod.cum=[0]; _pod.totalDur=0; _pod.allFetched=false; _pod.playIdx=0; _pod.startCtx=0; _pod.startOff=0; _pod.playing=false; _pod.waiting=false; _pod.fromCache=false; }
+function podEngineReset(){ _pod.buffers=[]; _pod.durs=[]; _pod.cum=[0]; _pod.totalDur=0; _pod.allFetched=false; _pod.playIdx=0; _pod.startCtx=0; _pod.startOff=0; _pod.playing=false; _pod.waiting=false; _pod.fromCache=false; _pod.rawChunks=null; _pod.rawType=''; }
 function podElapsed(){ const ctx=_wkAudioCtx; const base=(_pod.cum[_pod.playIdx]||0)+(_pod.startOff||0); if(!ctx||!_pod.playing) return base; return base+(ctx.currentTime-_pod.startCtx); }
 function podTotalKnown(){ return _pod.allFetched? _pod.totalDur : Math.max(_pod.totalDur, _pod.estDur); }
 function podProgressStart(){ podProgressStop(); _pod.timer=setInterval(podTick, 250); podTick(); }
@@ -3427,6 +3448,7 @@ async function podcastToggle(){
   if(_pod.mode==='paused'){ podcastResume(); return; }
   _pod.mode='loading'; renderPodcastCard();
   wkEnsureAudio(); // لمسِ کاربر — برای آزادسازیِ صدا
+  try{ podAvatarPrepare(); }catch(e){}   // موازی: چهرهٔ مجری (یک‌بار ساخته/کش می‌شود)
   let rec; try{ rec=await podcastGenerate(false); }catch(e){ rec=null; }
   if(!rec||!rec.script){ _pod.mode='idle'; uiToast&&uiToast('نشد پادکست ساخته شود'); renderPodcastCard(); return; }
   podcastStart(rec);
@@ -3544,8 +3566,11 @@ async function podFetchBuffer(text, tries){
 }
 function podPushBuffer(buf){ _pod.buffers.push(buf); const d=buf.duration||0; _pod.durs.push(d); _pod.cum.push((_pod.cum[_pod.cum.length-1]||0)+d); _pod.totalDur+=d; }
 /* ---- کشِ صوتیِ روزانه (IndexedDB) — همان روز فقط یک‌بار ساخته می‌شود ---- */
-const POD_IDB='calansolin_pod', POD_STORE='clips';
-function podIdbOpen(){ return new Promise((res,rej)=>{ let r; try{ r=indexedDB.open(POD_IDB,1); }catch(e){ return rej(e); } r.onupgradeneeded=()=>{ try{ r.result.createObjectStore(POD_STORE); }catch(e){} }; r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+const POD_IDB='calansolin_pod', POD_STORE='clips', POD_AV_STORE='avatars';
+function podIdbOpen(){ return new Promise((res,rej)=>{ let r; try{ r=indexedDB.open(POD_IDB,2); }catch(e){ return rej(e); } r.onupgradeneeded=()=>{ try{ const db=r.result; if(!db.objectStoreNames.contains(POD_STORE)) db.createObjectStore(POD_STORE); if(!db.objectStoreNames.contains(POD_AV_STORE)) db.createObjectStore(POD_AV_STORE); }catch(e){} }; r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+// چهرهٔ مجری در store جدا نگه‌داری می‌شود تا با پاک‌سازیِ روزانهٔ صوت پاک نشود
+async function podAvGet(key){ try{ const db=await podIdbOpen(); if(!db.objectStoreNames.contains(POD_AV_STORE)) return null; return await new Promise(res=>{ const rq=db.transaction(POD_AV_STORE,'readonly').objectStore(POD_AV_STORE).get(key); rq.onsuccess=()=>res(rq.result||null); rq.onerror=()=>res(null); }); }catch(e){ return null; } }
+async function podAvPut(key,val){ try{ const db=await podIdbOpen(); if(!db.objectStoreNames.contains(POD_AV_STORE)) return; await new Promise(res=>{ const rq=db.transaction(POD_AV_STORE,'readwrite').objectStore(POD_AV_STORE).put(val,key); rq.onsuccess=()=>res(); rq.onerror=()=>res(); }); }catch(e){} }
 async function podCacheGet(key){ try{ const db=await podIdbOpen(); return await new Promise(res=>{ const rq=db.transaction(POD_STORE,'readonly').objectStore(POD_STORE).get(key); rq.onsuccess=()=>res(rq.result||null); rq.onerror=()=>res(null); }); }catch(e){ return null; } }
 async function podCachePut(key,val){ try{ const db=await podIdbOpen(); await new Promise(res=>{ const rq=db.transaction(POD_STORE,'readwrite').objectStore(POD_STORE).put(val,key); rq.onsuccess=()=>res(); rq.onerror=()=>res(); }); }catch(e){} }
 async function podCacheClearOldDay(){ try{ const today=podTodayKey(); if(localStorage.getItem('pod_audio_day')===today) return; const db=await podIdbOpen(); await new Promise(res=>{ const rq=db.transaction(POD_STORE,'readwrite').objectStore(POD_STORE).clear(); rq.onsuccess=()=>res(); rq.onerror=()=>res(); }); try{ localStorage.setItem('pod_audio_day', today); }catch(e){} }catch(e){} }
@@ -3553,13 +3578,15 @@ function podHash(s){ s=String(s||''); let h=5381; for(let i=0;i<s.length;i++){ h
 function podAudioKey(full){ const c=podCfg(); const voice=_pod.ttsProv==='gemini'?c.gVoice:c.oVoice; return podTodayKey()+'|'+_pod.ttsProv+'|'+voice+'|'+c.minutes+'|'+podHash(full); }
 async function podCloudSpeak(full){
   const ctx=wkEnsureAudio(); if(!ctx) throw new Error('no audio ctx');
-  if(!_pod.voiceGain){ _pod.voiceGain=ctx.createGain(); _pod.voiceGain.gain.value=1.0; _pod.voiceGain.connect(ctx.destination); }
+  if(!_pod.voiceGain){ _pod.voiceGain=ctx.createGain(); _pod.voiceGain.gain.value=1.0; _pod.voiceGain.connect(ctx.destination);
+    try{ _pod.analyser=ctx.createAnalyser(); _pod.analyser.fftSize=256; _pod.analyser.smoothingTimeConstant=0.75; _pod.voiceGain.connect(_pod.analyser); }catch(e){} }
   podEngineReset();
   const key=podAudioKey(full); await podCacheClearOldDay();
   // ۱) کش: اگر امروز با همین صدا/مدت قبلاً ساخته شده، بدونِ هیچ درخواستی پخش کن (رایگان و فوری)
   try{ const hit=await podCacheGet(key);
     if(hit && hit.chunks && hit.chunks.length){
       _pod.prep=false; podMusicStart(); podMusicGain(0.05); _pod.fromCache=true;
+      _pod.rawChunks=hit.chunks; _pod.rawType=hit.type||'audio/mpeg';
       for(let i=0;i<hit.chunks.length;i++){ if(_pod.mode==='idle') return;
         let buf; try{ buf=await podDecode(ctx, hit.chunks[i].slice(0)); }catch(e){ continue; }
         podPushBuffer(buf);
@@ -3587,12 +3614,138 @@ async function podCloudSpeak(full){
     fails=0; raw.push(r.raw); podPushBuffer(r.audio);
     if(_pod.waiting && _pod.playIdx===_pod.buffers.length-1){ _pod.waiting=false; podPlayFrom(_pod.playIdx, _pod.startOff||0); }
   }
-  _pod.allFetched=true;
+  _pod.allFetched=true; _pod.rawChunks=raw; _pod.rawType=rawType;
   // ۳) ذخیرهٔ کش فقط اگر همهٔ قطعه‌ها کامل ساخته شدند
   if(raw.length===chunks.length){ try{ await podCachePut(key, {chunks:raw, type:rawType, ts:Date.now()}); }catch(e){} }
   if(!_pod.playing && _pod.mode==='playing') podcastEnded();
 }
 /* ---- کارتِ خانه (پلیر مدرن) ---- */
+/* ---- مجریِ تصویریِ پادکست (پرترهٔ AI، یک‌بار ساخته و کش می‌شود) ---- */
+const POD_AV_VER='v1';
+function podAvKey(gender){ return 'avatar|'+(gender==='male'?'male':'female')+'|'+POD_AV_VER; }
+function podAvPrompt(gender){
+  const who = gender==='male'
+    ? 'a poised, handsome, well-groomed man in his early 30s, short neat hair, light stubble, wearing an elegant modern blazer over a plain shirt'
+    : 'a poised, elegant woman in her early 30s with tasteful natural makeup and neat hair, wearing an elegant modern blazer';
+  return 'Photorealistic upper-body studio portrait of '+who+', warm confident friendly closed-mouth smile, looking straight into the camera, luxurious minimal softly-lit studio background with gentle bokeh in calm teal and lavender tones, cinematic soft key lighting, natural realistic skin texture, high-end wellness-podcast host aesthetic, tasteful, professional, centered composition.';
+}
+async function podOpenAIImage(prompt){
+  const key=getVisionKey('openai'); if(!key) throw new Error('no key');
+  const res=await fetch('https://api.openai.com/v1/images/generations',{method:'POST',headers:{'authorization':'Bearer '+key,'content-type':'application/json'},body:JSON.stringify({model:'gpt-image-1',prompt,size:'1024x1024',n:1})});
+  if(!res.ok) throw new Error('OpenAI image '+res.status);
+  const d=await res.json(); const b64=d&&d.data&&d.data[0]&&d.data[0].b64_json; if(!b64) throw new Error('OpenAI image: empty');
+  return 'data:image/png;base64,'+b64;
+}
+async function podGeminiImage(prompt){
+  const key=getVisionKey('gemini'); if(!key) throw new Error('no key');
+  const url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key='+encodeURIComponent(key);
+  const res=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({ contents:[{parts:[{text:prompt}]}] })});
+  if(!res.ok) throw new Error('Gemini image '+res.status);
+  const data=await res.json();
+  const parts=(((data.candidates||[])[0]||{}).content||{}).parts||[];
+  const img=parts.find(p=>p&&p.inlineData&&p.inlineData.data);
+  if(!img) throw new Error('Gemini image: empty');
+  return 'data:'+(img.inlineData.mimeType||'image/png')+';base64,'+img.inlineData.data;
+}
+async function podGenAvatarImage(gender){
+  const prompt=podAvPrompt(gender);
+  if(hasAnyKey('openai')&&!aiFrozen('openai')){ try{ return await podOpenAIImage(prompt); }catch(e){ try{console.warn('avatar openai:',e&&e.message||e);}catch(_){}} }
+  if(hasAnyKey('gemini')&&!aiFrozen('gemini')){ try{ return await podGeminiImage(prompt); }catch(e){ try{console.warn('avatar gemini:',e&&e.message||e);}catch(_){}} }
+  throw new Error('no image provider');
+}
+async function podAvatarEnsure(gender, force){
+  const key=podAvKey(gender);
+  if(!force){ const hit=await podAvGet(key); if(hit) return hit; }
+  const url=await podGenAvatarImage(gender);
+  await podAvPut(key, url); return url;
+}
+// بارگذاری از کش (بدونِ ساخت/هزینه) — سرِ لود و تغییرِ چهره
+async function podAvatarLoad(){
+  const c=podCfg(); if(!c.avatar) return; const g=c.avGender;
+  if(_pod.avImg && _pod.avImgGender===g) return;
+  try{ const url=await podAvGet(podAvKey(g)); if(url){ _pod.avImg=url; _pod.avImgGender=g; renderPodcastCard(); } }catch(e){}
+}
+// سرِ پخش: اگر روشن است و هنوز عکس نداریم، یک‌بار می‌سازد (اگر کلید باشد؛ وگرنه طرحِ جایگزین)
+async function podAvatarPrepare(){
+  const c=podCfg(); if(!c.avatar) return; const g=c.avGender;
+  if(_pod.avImg && _pod.avImgGender===g) return;
+  const cached=await podAvGet(podAvKey(g)); if(cached){ _pod.avImg=cached; _pod.avImgGender=g; renderPodcastCard(); return; }
+  if(!(hasAnyKey('openai')||hasAnyKey('gemini'))) return;   // بدونِ کلید → طرحِ جایگزینِ CSS
+  if(_pod.avBusy) return; _pod.avBusy=true;
+  try{ uiToast&&uiToast('در حالِ ساختِ چهرهٔ مجری (فقط یک‌بار)…'); const url=await podAvatarEnsure(g,false); _pod.avImg=url; _pod.avImgGender=g; renderPodcastCard(); }
+  catch(e){ try{console.warn('avatar prepare:',e&&e.message||e);}catch(_){} }
+  finally{ _pod.avBusy=false; }
+}
+async function podAvatarRegen(){
+  const c=podCfg();
+  if(!(hasAnyKey('openai')||hasAnyKey('gemini'))){ uiToast&&uiToast('برای ساختِ چهره، کلیدِ OpenAI یا Gemini لازم است (تنظیماتِ 🤖).'); return; }
+  if(_pod.avBusy) return; _pod.avBusy=true; uiToast&&uiToast('در حالِ ساختِ چهرهٔ تازه…'); try{ renderPodCfg(); }catch(e){}
+  try{ const url=await podAvatarEnsure(c.avGender,true); _pod.avImg=url; _pod.avImgGender=c.avGender; uiToast&&uiToast('✓ چهرهٔ مجری ساخته شد'); }
+  catch(e){ uiToast&&uiToast('ساختِ چهره نشد (کلید/اینترنت؟)'); }
+  finally{ _pod.avBusy=false; try{ renderPodCfg(); renderPodcastCard(); }catch(e){} }
+}
+function podAvatarSilhouetteSVG(gender){
+  const male=gender==='male';
+  return `<svg viewBox="0 0 120 120" width="86" height="86" aria-hidden="true"><defs><linearGradient id="pavg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--teal)"/><stop offset="1" stop-color="var(--purple,#9a86e0)"/></linearGradient></defs><circle cx="60" cy="46" r="${male?21:20}" fill="url(#pavg)"/><path d="M22 112c0-22 17-34 38-34s38 12 38 34z" fill="url(#pavg)"/></svg>`;
+}
+// انیمیشنِ صدا-واکنشی (رایگان — از AnalyserModule یا نبضِ زمانی برای صدای گوشی)
+function podReactStart(){
+  podReactStop();
+  const el=document.getElementById('podAvatar'); if(!el) return;
+  const an=_pod.analyser; const data = an?new Uint8Array(an.frequencyBinCount):null;
+  const loop=()=>{
+    if(_pod.mode!=='playing'){ _pod.raf=0; return; }
+    let lv=0;
+    if(an && _pod.cloud && data){ an.getByteFrequencyData(data); let s=0; for(let i=0;i<data.length;i++) s+=data[i]; lv=Math.min(1,(s/data.length)/78); }
+    else { lv=0.28+0.34*Math.abs(Math.sin(Date.now()/150))+Math.random()*0.14; }   // نبضِ تخمینی برای صدای گوشی
+    el.style.setProperty('--lv', lv.toFixed(3));
+    _pod.raf=requestAnimationFrame(loop);
+  };
+  _pod.raf=requestAnimationFrame(loop);
+}
+function podReactStop(){ if(_pod.raf){ cancelAnimationFrame(_pod.raf); _pod.raf=0; } const el=document.getElementById('podAvatar'); if(el) el.style.setProperty('--lv','0'); }
+
+/* ---- دانلودِ فایلِ پادکست (WAV یک‌تکه از قطعه‌های صوتی) ---- */
+function podEncodeWav(sampleRate, channels){
+  const ch=channels.length, len=channels[0].length, bytesPer=2;
+  const buf=new ArrayBuffer(44+len*ch*bytesPer); const dv=new DataView(buf);
+  const wr=(o,s)=>{ for(let i=0;i<s.length;i++) dv.setUint8(o+i,s.charCodeAt(i)); };
+  const dataLen=len*ch*bytesPer;
+  wr(0,'RIFF'); dv.setUint32(4,36+dataLen,true); wr(8,'WAVE'); wr(12,'fmt '); dv.setUint32(16,16,true);
+  dv.setUint16(20,1,true); dv.setUint16(22,ch,true); dv.setUint32(24,sampleRate,true);
+  dv.setUint32(28,sampleRate*ch*bytesPer,true); dv.setUint16(32,ch*bytesPer,true); dv.setUint16(34,16,true);
+  wr(36,'data'); dv.setUint32(40,dataLen,true);
+  let off=44; for(let i=0;i<len;i++){ for(let c=0;c<ch;c++){ let v=Math.max(-1,Math.min(1,channels[c][i])); dv.setInt16(off, v<0?v*0x8000:v*0x7FFF, true); off+=2; } }
+  return buf;
+}
+function podConcatToWav(bufs){
+  if(!bufs.length) return null;
+  const sr=bufs[0].sampleRate, ch=Math.min(2, bufs[0].numberOfChannels||1);
+  let total=0; bufs.forEach(b=>total+=b.length);
+  const out=[]; for(let c=0;c<ch;c++) out.push(new Float32Array(total));
+  let pos=0; bufs.forEach(b=>{ for(let c=0;c<ch;c++){ const src=b.getChannelData(Math.min(c,b.numberOfChannels-1)); out[c].set(src,pos); } pos+=b.length; });
+  return podEncodeWav(sr, out);
+}
+async function podDownload(){
+  const ctx=wkEnsureAudio();
+  let bufs=[];
+  try{
+    if(_pod.buffers&&_pod.buffers.length&&_pod.allFetched){ bufs=_pod.buffers.slice(); }
+    else if(_pod.rawChunks&&_pod.rawChunks.length&&ctx){ for(const r of _pod.rawChunks){ try{ bufs.push(await podDecode(ctx, r.slice(0))); }catch(e){} } }
+    else if(ctx){   // از کشِ امروز بخوان
+      const prov=podTTSProvider(); if(prov){ _pod.ttsProv=prov; const rec=podLoad(); if(rec&&rec.script){ const hit=await podCacheGet(podAudioKey(rec.script)); if(hit&&hit.chunks){ for(const r of hit.chunks){ try{ bufs.push(await podDecode(ctx, r.slice(0))); }catch(e){} } } } }
+    }
+  }catch(e){}
+  if(!bufs.length){ uiToast&&uiToast('اول پادکست را با صدای ابری یک‌بار کامل پخش کن، بعد دانلود کن.'); return; }
+  const wav=podConcatToWav(bufs); if(!wav){ uiToast&&uiToast('دانلود نشد'); return; }
+  try{
+    const blob=new Blob([wav],{type:'audio/wav'}); const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download='podcast-'+podTodayKey()+'.wav'; document.body.appendChild(a); a.click();
+    setTimeout(()=>{ try{ document.body.removeChild(a); URL.revokeObjectURL(url); }catch(e){} }, 1500);
+    uiToast&&uiToast('⬇️ فایلِ پادکست دانلود شد');
+  }catch(e){ uiToast&&uiToast('مرورگر اجازهٔ دانلود نداد'); }
+}
+function podHasDownload(){ return !!((_pod.buffers&&_pod.buffers.length&&_pod.allFetched)||(_pod.rawChunks&&_pod.rawChunks.length)); }
 function renderPodcastCard(){
   const box=document.getElementById('homePodcast'); if(!box) return;
   const rec=podLoad(); const c=podCfg(); const fresh=rec&&rec.dateKey===podTodayKey()&&rec.script;
@@ -3606,7 +3759,16 @@ function renderPodcastCard(){
   const el = active?(cloud?podElapsed():((Date.now()-_pod.t0)/1000)):0;
   const stateTxt = loading?'در حالِ ساختِ متنِ امروز…' : _pod.prep?'در حالِ آماده‌سازیِ صدا…' : playing?'در حالِ پخش' : paused?'مکث' : (fresh?('آماده · حدود '+faDigits(c.minutes)+' دقیقه'):'اپیزودِ امروز ساخته نشده');
   const sliderOn = cloud&&active;   // اسکراب فقط با صدای ابری
+  const avOn=c.avatar;
+  const avInner = _pod.avImg
+    ? `<img class="pod-av-img" src="${_pod.avImg}" alt="مجریِ پادکست">`
+    : `<div class="pod-av-ph">${podAvatarSilhouetteSVG(c.avGender)}</div>`;
+  const avBlock = avOn ? `<div id="podAvatar" class="pod-av ${active?'live':''} ${paused?'paused':''}" style="--lv:0">
+      <div class="pod-av-stage">${avInner}<div class="pod-av-ring"></div><div class="pod-av-eq"><i></i><i></i><i></i><i></i><i></i></div></div>
+    </div>` : '';
+  const dlOn = podHasDownload();
   box.innerHTML=`<div class="pod-card">
+    ${avBlock}
     <div class="pod-top">
       <div class="pod-eq">🎧</div>
       <div class="pod-ttl">
@@ -3623,14 +3785,20 @@ function renderPodcastCard(){
       </div>
       <button class="pod-gear" onclick="podOpenCfg()" title="تنظیمات">⚙️</button>
       <button class="pod-regen" onclick="podcastRegen()" ${loading?'disabled':''} title="ساختِ دوباره">🔄</button>
+      <button class="pod-dl" onclick="podDownload()" ${dlOn?'':'disabled'} title="${dlOn?'دانلودِ فایلِ پادکست':'برای دانلود، یک‌بار با صدای ابری پخش کن'}">⬇️</button>
     </div>
     <div class="pod-note">هر روز متفاوت و بر اساسِ عملکردِ توست. آموزشی و عمومی — جایگزینِ توصیهٔ پزشک نیست.</div>
   </div>`;
+  if(playing) podReactStart(); else podReactStop();
 }
 /* ---- تنظیماتِ پادکست (پاپ‌آپ) + تستِ صدا ---- */
 function podOpenCfg(){ renderPodCfg(); const m=document.getElementById('podCfgModal'); if(m) m.classList.add('show'); }
 function podCloseCfg(){ const m=document.getElementById('podCfgModal'); if(m) m.classList.remove('show'); try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} podTestStop(); }
-function podCfgPick(k,v){ const patch={}; patch[k]=v; podCfgSet(patch); renderPodCfg(); renderPodcastCard(); if(k==='minutes') uiToast&&uiToast('برای اعمالِ مدت، «ساختِ دوباره 🔄» را بزن'); }
+function podCfgPick(k,v){ const patch={}; patch[k]=v; podCfgSet(patch);
+  if(k==='avGender'){ _pod.avImg=null; _pod.avImgGender=''; }
+  renderPodCfg(); renderPodcastCard();
+  if(k==='avGender'||(k==='avatar'&&v)){ try{ podAvatarLoad(); }catch(e){} }
+  if(k==='minutes') uiToast&&uiToast('برای اعمالِ مدت، «ساختِ دوباره 🔄» را بزن'); }
 function podCfgPickVoice(prov,id){ if(prov==='gemini') podCfgSet({gVoice:id}); else if(prov==='openai') podCfgSet({oVoice:id}); else podCfgSet({dVoice:id}); renderPodCfg(); renderPodcastCard(); uiToast&&uiToast('✓ صدا انتخاب شد'); }
 function renderPodCfg(){
   const box=document.getElementById('podCfgBody'); if(!box) return; const c=podCfg();
@@ -3651,6 +3819,16 @@ function renderPodCfg(){
     h+=`<label class="qbg-lbl" style="margin-top:8px">صدای گوشی</label>`;
     if(!show.length) h+=`<div class="qbg-sub">صدایی روی این مرورگر پیدا نشد (روی iOS صدای فارسی محدود است).</div>`;
     show.forEach((v,i)=>{ h+=`<div class="pod-vrow ${c.dVoice===v.name?'on':''}"><span class="pod-vname">${escVision(v.name)} <span style="color:var(--muted);font-weight:600;font-size:10px">${escVision(v.lang||'')}</span></span><button class="pod-vtest" onclick="podTestDevice(${i})">▶ تست</button><button class="pod-vpick" onclick="podPickDevice(${i})">${c.dVoice===v.name?'✓ انتخاب':'انتخاب'}</button></div>`; });
+  }
+  // مجریِ تصویری (پرترهٔ AI؛ یک‌بار ساخته و برای همیشه کش می‌شود)
+  h+=`<label class="qbg-lbl" style="margin-top:12px">مجریِ تصویری بالای پلیر</label>`;
+  h+=`<div class="pod-seg">`+[['on','روشن',true],['off','خاموش',false]].map(o=>`<button class="${c.avatar===o[2]?'on':''}" onclick="podCfgPick('avatar',${o[2]})">${o[1]}</button>`).join('')+`</div>`;
+  if(c.avatar){
+    h+=`<label class="qbg-lbl" style="margin-top:8px">چهرهٔ مجری</label>`;
+    h+=`<div class="pod-seg">`+[['female','👩‍💼 زن'],['male','🧑‍💼 مرد']].map(o=>`<button class="${c.avGender===o[0]?'on':''}" onclick="podCfgPick('avGender','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
+    const hasImgKey=hasAnyKey('openai')||hasAnyKey('gemini');
+    h+=`<div class="pod-vrow" style="margin-top:8px"><span class="pod-vname">${_pod.avImg&&_pod.avImgGender===c.avGender?'✓ چهره آماده است':'چهره‌ای ساخته نشده'}</span><button class="pod-vtest" ${(_pod.avBusy||!hasImgKey)?'disabled':''} onclick="podAvatarRegen()">${_pod.avBusy?'… در حالِ ساخت':'🎨 ساختِ چهره'}</button></div>`;
+    h+=`<div class="qbg-sub" style="margin-top:4px">پرتره با هوش مصنوعی ${hasImgKey?'':'(نیازمندِ کلیدِ OpenAI یا Gemini) '}فقط یک‌بار ساخته می‌شود و بعد آفلاین و رایگان است؛ هنگامِ پخش با صدا هماهنگ می‌شود.</div>`;
   }
   box.innerHTML=h;
 }
@@ -3764,6 +3942,7 @@ function renderDashboard(){
   box.innerHTML=h;
   renderHealthAiPanel('home');
   try{ renderPodcastCard(); }catch(e){}
+  try{ podAvatarLoad(); }catch(e){}   // اگر چهره در کش هست، بدونِ هزینه نشان بده
 }
 /* ====== گزارش روزانه ====== */
 let _dailyDate=new Date(); _dailyDate.setHours(0,0,0,0);
