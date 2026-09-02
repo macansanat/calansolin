@@ -1999,7 +1999,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۳</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۴</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3468,7 +3468,7 @@ function podTTSProvider(){
 }
 function podcastStart(rec){
   _pod.ttsProv=podTTSProvider();
-  _pod.cloud = !!_pod.ttsProv; _pod.ttsSwitched=false;
+  _pod.cloud = !!_pod.ttsProv;
   _pod.estDur = Math.max(60, Math.round(podWordCount(rec.script)/2.4));
   _pod.mode='playing'; _pod.t0=Date.now(); _pod.prep=_pod.cloud;
   podEngineReset(); podProgressStart(); renderPodcastCard();
@@ -3476,8 +3476,27 @@ function podcastStart(rec){
     podCloudSpeak(rec.script).catch((e)=>{ _pod.cloud=false; _pod.prep=false; try{ console.warn('podcast cloud TTS failed:', e&&e.message||e); }catch(_){}; uiToast&&uiToast('صدای ابری نشد؛ با صدای گوشی پخش می‌شود'); podMusicStart(); podProgressStart(); podBrowserSpeak(rec.script); renderPodcastCard(); });
   } else { podMusicStart(); podBrowserSpeak(rec.script); }
 }
-function podcastPause(){ _pod.mode='paused'; try{ if(_pod.cloud){ if(_wkAudioCtx&&_wkAudioCtx.suspend) _wkAudioCtx.suspend(); } else { if(window.speechSynthesis) speechSynthesis.pause(); podMusicGain(0.0001); } }catch(e){} podProgressStop(); renderPodcastCard(); }
-function podcastResume(){ _pod.mode='playing'; try{ if(_pod.cloud){ if(_wkAudioCtx&&_wkAudioCtx.resume) _wkAudioCtx.resume(); podMusicGain(0.05); } else { if(window.speechSynthesis) speechSynthesis.resume(); podMusicGain(0.09); } }catch(e){} podProgressStart(); renderPodcastCard(); }
+function podcastPause(){
+  // مهم: کانتکستِ مشترکِ اپ را suspend نکن (وگرنه صدای دکمه‌ها و کلِ اپ هم قطع می‌شود).
+  // به‌جایش موقعیت را نگه دار و فقط منبعِ پادکست را متوقف کن.
+  try{
+    if(_pod.cloud){ _pod.pausePos=podElapsed(); podStopSrc(); podMusicGain(0.0001); }
+    else { if(window.speechSynthesis) speechSynthesis.pause(); podMusicGain(0.0001); }
+  }catch(e){}
+  _pod.mode='paused'; podProgressStop(); renderPodcastCard();
+}
+function podcastResume(){
+  _pod.mode='playing';
+  try{
+    if(_pod.cloud){
+      const ctx=_wkAudioCtx; if(ctx&&(ctx.state==='suspended'||ctx.state==='interrupted')&&ctx.resume) ctx.resume().catch(()=>{});
+      podMusicGain(0.05);
+      const t=Math.max(0,_pod.pausePos||0); let idx=0; while(idx<_pod.buffers.length-1 && _pod.cum[idx+1]<=t) idx++;
+      podPlayFrom(idx, t-(_pod.cum[idx]||0));
+    } else { if(window.speechSynthesis) speechSynthesis.resume(); podMusicGain(0.09); }
+  }catch(e){}
+  podProgressStart(); renderPodcastCard();
+}
 function podcastEnded(){ podProgressStop(); podStopSrc(); podMusicStop(); _pod.mode='idle'; _pod.prep=false; try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} const sl=document.getElementById('podSlider'); if(sl) sl.value=sl.max; renderPodcastCard(); }
 function podcastStopAll(){ podProgressStop(); podStopSrc(); podMusicStop(); try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} try{ if(_wkAudioCtx&&_wkAudioCtx.state==='suspended'&&_wkAudioCtx.resume) _wkAudioCtx.resume(); }catch(e){} _pod.mode='idle'; _pod.prep=false; }
 async function podcastRegen(){ podcastStopAll(); _pod.mode='loading'; renderPodcastCard(); try{ await podcastGenerate(true); uiToast&&uiToast('✓ پادکستِ تازه ساخته شد'); }catch(e){} _pod.mode='idle'; renderPodcastCard(); }
@@ -3502,19 +3521,8 @@ function podSpeakNext(){
 }
 /* ---- صدای ابری (OpenAI TTS) ---- */
 async function podTTSFetch(text){
-  // اگر سرویسِ انتخاب‌شده لیمیت/خطا خورد، به‌جای قطعِ صدا به سرویسِ دیگر سوییچ کن
-  const order = (_pod.ttsProv==='gemini') ? ['gemini','openai'] : ['openai','gemini'];
-  let lastErr;
-  for(const p of order){
-    if(p==='openai' && !hasAnyKey('openai')) continue;
-    if(p==='gemini' && !hasAnyKey('gemini')) continue;
-    try{ const out = (p==='gemini') ? await podGeminiTTS(text) : await podOpenAITTS(text);
-      if(p!==_pod.ttsProv && !_pod.ttsSwitched){ _pod.ttsSwitched=true;
-        try{ uiToast&&uiToast('صدای '+(_pod.ttsProv==='gemini'?'Gemini':'ChatGPT')+' در دسترس نبود؛ با '+(p==='gemini'?'Gemini':'ChatGPT')+' ادامه می‌دهم'); }catch(e){} }
-      return out;
-    }catch(e){ lastErr=e; try{ console.warn('tts '+p+':', e&&e.message||e); }catch(_){} }
-  }
-  throw lastErr||new Error('no tts provider');
+  if(_pod.ttsProv==='gemini') return await podGeminiTTS(text);
+  return await podOpenAITTS(text);
 }
 async function podOpenAITTS(text,voice){
   const key=getVisionKey('openai'); if(!key) throw new Error('no key'); voice=voice||podCfg().oVoice||'shimmer';
@@ -9981,7 +9989,11 @@ let _wkAudioCtx=null;
 // AudioContext را می‌سازد و از حالت suspended/interrupted (باگ iOS بعد از قفل صفحه) درمی‌آورد
 function wkEnsureAudio(){
   try{
-    if(!_wkAudioCtx){ _wkAudioCtx=new (window.AudioContext||window.webkitAudioContext)(); }
+    if(!_wkAudioCtx){ _wkAudioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      // شبکهٔ امنیتی: هر لمس/کلیک، اگر کانتکست خوابیده باشد بیدارش کند (تا صدای کلِ اپ هرگز گیر نیفتد)
+      try{ const wake=()=>{ try{ if(_wkAudioCtx&&(_wkAudioCtx.state==='suspended'||_wkAudioCtx.state==='interrupted')) _wkAudioCtx.resume().catch(()=>{}); }catch(e){} };
+        document.addEventListener('pointerdown', wake, true); document.addEventListener('touchstart', wake, true); document.addEventListener('click', wake, true); }catch(e){}
+    }
     const ctx=_wkAudioCtx;
     if(ctx.state==='suspended'||ctx.state==='interrupted'){ ctx.resume().catch(()=>{}); }
     return ctx;
