@@ -3713,10 +3713,27 @@ async function podGeminiEditRegion(baseDataURL, r, what){
   if(!img) throw new Error('gemini edit empty');
   return 'data:'+(img.inlineData.mimeType||'image/png')+';base64,'+img.inlineData.data;
 }
+function podSleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function podIsRateLimit(msg){ return /\b(429|rate|quota|limit|exhausted|resource|503|500|overload)\b/i.test(String(msg||'')); }
+/* ساختِ یک فریم با تلاشِ مجدد و backoff — سقفِ نرخِ سرویس (به‌خصوص Gemini رایگان)
+   عاملِ اصلیِ گیرکردن روی «۱/۵» بود؛ حالا روی 429/quota صبر و دوباره تلاش می‌کند
+   و در صورتِ نیاز به سرویسِ دیگر سوییچ می‌کند. آخرین خطا در _pod.avLastErr می‌ماند. */
 async function podGenFrame(baseDataURL, r, what){
-  if(hasAnyKey('openai')&&!aiFrozen('openai')){ try{ return await podOpenAIEditRegion(baseDataURL,r,what); }catch(e){ try{console.warn('frame openai:',e&&e.message||e);}catch(_){}} }
-  if(hasAnyKey('gemini')&&!aiFrozen('gemini')){ try{ return await podGeminiEditRegion(baseDataURL,r,what); }catch(e){ try{console.warn('frame gemini:',e&&e.message||e);}catch(_){}} }
-  throw new Error('no image provider');
+  const provs=[];
+  if(hasAnyKey('openai')&&!aiFrozen('openai')) provs.push(['openai',podOpenAIEditRegion]);
+  if(hasAnyKey('gemini')&&!aiFrozen('gemini')) provs.push(['gemini',podGeminiEditRegion]);
+  if(!provs.length){ _pod.avLastErr='کلیدِ OpenAI یا Gemini ثبت نشده'; throw new Error('no image provider'); }
+  let last='';
+  for(let attempt=0; attempt<4; attempt++){
+    for(const [name,fn] of provs){
+      try{ const out=await fn(baseDataURL,r,what); _pod.avLastErr=''; return out; }
+      catch(e){ last=(e&&e.message)||String(e); _pod.avLastErr=name+': '+last;
+        try{console.warn('frame '+name+':',last);}catch(_){}
+        if(podIsRateLimit(last)){ await podSleep(1500*Math.pow(2,attempt)+Math.random()*400); }  // 1.5→3→6→12s
+      }
+    }
+  }
+  throw new Error(last||'frame failed');
 }
 async function podFrameEnsure(gender, fr, baseDataURL, force){
   const key=podFrKey(gender,fr.id);
@@ -3773,12 +3790,9 @@ async function podAvatarPrepare(){
     }
     if(!_pod.avGeom){ try{ const gm=await podDetectRegions(g,_pod.avImg,false); if(gm){ _pod.avGeom=gm; _pod.avLayers=null; } }catch(e){} }
     _pod.avFrames=_pod.avFrames||{};
-    const todo=podFramesMissing(); let i=0;
-    for(const fr of todo){ i++;
-      uiToast&&uiToast('ساختِ حالت‌های چهره '+faDigits(i)+'/'+faDigits(todo.length)+'…');
-      try{ const u=await podFrameEnsure(g,fr,_pod.avImg,false); _pod.avFrames[fr.id]=u; _pod.avLayers=null; renderPodcastCard(); }catch(e){}
-    }
-    if(todo.length) uiToast&&uiToast('✓ مجری آمادهٔ اجراست');
+    const todo=podFramesMissing();
+    if(todo.length){ await podBuildFramesPaced(g, _pod.avImg, POD_FRAMES);
+      uiToast&&uiToast(podFramesReady()>=POD_FRAMES.length ? '✓ مجری آمادهٔ اجراست' : ('مجری آماده · '+faDigits(podFramesReady())+'/'+faDigits(POD_FRAMES.length)+' حالت')); }
   }catch(e){ try{console.warn('avatar prepare:',e&&e.message||e);}catch(_){} }
   finally{ _pod.avBusy=false; try{ renderPodCfg(); renderPodcastCard(); }catch(e){} }
 }
@@ -3791,15 +3805,39 @@ async function podAvatarRegen(){
   try{
     const url=await podAvatarEnsure(g,true); _pod.avImg=url; _pod.avImgGender=g; try{ renderPodCfg(); renderPodcastCard(); }catch(e){}
     try{ const gm=await podDetectRegions(g,url,true); if(gm) _pod.avGeom=gm; }catch(e){}
-    let i=0;
-    for(const fr of POD_FRAMES){ i++;
-      uiToast&&uiToast('ساختِ حالت‌های چهره '+faDigits(i)+'/'+faDigits(POD_FRAMES.length)+'…');
-      try{ const u=await podFrameEnsure(g,fr,url,true); _pod.avFrames[fr.id]=u; _pod.avLayers=null; renderPodcastCard(); }catch(e){}
-    }
-    uiToast&&uiToast(podFramesReady()?'✓ مجری با حالت‌های گفتار آماده شد':'چهره ساخته شد ولی حالت‌ها نشد');
+    await podBuildFramesPaced(g, url, POD_FRAMES);
+    const done=podFramesReady(), all=POD_FRAMES.length;
+    uiToast&&uiToast(done>=all ? '✓ مجری با حالت‌های کاملِ گفتار آماده شد'
+      : (done ? ('چهره آماده · '+faDigits(done)+'/'+faDigits(all)+' حالت ساخته شد'+(_pod.avLastErr?(' — '+podErrHint(_pod.avLastErr)):''))
+              : ('چهره ساخته شد ولی حالت‌ها نشد'+(_pod.avLastErr?(' — '+podErrHint(_pod.avLastErr)):''))));
   }
-  catch(e){ uiToast&&uiToast('ساختِ چهره نشد (کلید/اینترنت؟)'); }
+  catch(e){ uiToast&&uiToast('ساختِ چهره نشد '+(_pod.avLastErr?('— '+podErrHint(_pod.avLastErr)):'(کلید/اینترنت؟)')); }
   finally{ _pod.avBusy=false; try{ renderPodCfg(); renderPodcastCard(); }catch(e){} }
+}
+// پیامِ راهنمای کوتاه از متنِ خطا (برای کاربر)
+function podErrHint(msg){ const m=String(msg||'');
+  if(/429|rate|quota|limit|exhausted|resource/i.test(m)) return 'سقفِ نرخِ سرویس؛ چند دقیقه بعد دوباره «🎨 ساختِ چهره» را بزن (Gemini رایگان محدودیتِ دقیقه‌ای دارد)';
+  if(/401|403|invalid|api key|permission|unauthor/i.test(m)) return 'کلید/دسترسی مشکل دارد (تنظیماتِ 🤖 را چک کن)';
+  if(/verif|organization/i.test(m)) return 'برای gpt-image-1 باید سازمانِ OpenAI تأیید شود؛ کلیدِ Gemini امتحان کن';
+  if(/network|failed to fetch|timeout|tunnel/i.test(m)) return 'اینترنت/اتصال قطع شد؛ دوباره تلاش کن';
+  return m.slice(0,60);
+}
+// ساختِ همهٔ فریم‌ها با فاصله بینشان + یک دورِ دومِ تلاش برای ناموفق‌ها (ضدِ گیرکردن روی X/5)
+async function podBuildFramesPaced(g, baseURL, frames){
+  _pod.avFrames=_pod.avFrames||{};
+  const need=()=>frames.filter(f=>!_pod.avFrames[f.id]);
+  for(let pass=0; pass<2; pass++){
+    const todo=need(); if(!todo.length) break;
+    for(let i=0;i<todo.length;i++){ const fr=todo[i];
+      const doneN=frames.length-need().length;
+      uiToast&&uiToast('ساختِ حالت‌های چهره '+faDigits(doneN+1)+'/'+faDigits(frames.length)+(pass?' (تلاشِ دوباره)':'')+'…');
+      try{ const u=await podFrameEnsure(g,fr,baseURL,true); _pod.avFrames[fr.id]=u; _pod.avLayers=null; try{ renderPodCfg(); renderPodcastCard(); }catch(e){} }
+      catch(e){ try{console.warn('frame '+fr.id+':',e&&e.message||e);}catch(_){} }
+      if(i<todo.length-1) await podSleep(1200);          // فاصله تا سقفِ نرخ نخورد
+    }
+    if(need().length && pass===0) await podSleep(4000);   // قبلِ دورِ دوم کمی بیشتر صبر
+  }
+  return frames.length-need().length;
 }
 function podAvatarSilhouetteSVG(gender){
   const male=gender==='male';
@@ -4077,6 +4115,7 @@ function renderPodCfg(){
     const nfr=podFramesReady(), nAll=POD_FRAMES.length;
     const stat = !avReady ? 'چهره‌ای ساخته نشده' : (nfr>=nAll ? '✓ چهره + حالت‌های کاملِ گفتار آماده' : (nfr ? ('✓ چهره آماده · '+faDigits(nfr)+'/'+faDigits(nAll)+' حالتِ چهره') : '✓ چهره آماده (بدونِ حالتِ گفتار)'));
     h+=`<div class="pod-vrow" style="margin-top:8px"><span class="pod-vname">${stat}</span><button class="pod-vtest" ${(_pod.avBusy||!hasImgKey)?'disabled':''} onclick="podAvatarRegen()">${_pod.avBusy?'… در حالِ ساخت':'🎨 ساختِ چهره'}</button></div>`;
+    if(!_pod.avBusy && nfr<nAll && _pod.avLastErr) h+=`<div class="qbg-sub" style="color:var(--amber);margin-top:4px">علتِ توقف: ${escVision(podErrHint(_pod.avLastErr))}</div>`;
     h+=`<div class="qbg-sub" style="margin-top:4px">پرتره ${hasImgKey?'':'(نیازمندِ کلیدِ OpenAI یا Gemini) '}فقط یک‌بار ساخته می‌شود: چهره + حالت‌های «آ/ای/او»، پلک و ابرو. بعد از آن آفلاین و رایگان است — ریتم و شکلِ دهان از خودِ صدا خوانده می‌شود و هیچ توکنی مصرف نمی‌کند.</div>`;
   }
   box.innerHTML=h;
