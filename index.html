@@ -2014,7 +2014,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۶</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۷</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3309,7 +3309,8 @@ const POD_VOICES={
 const POD_LENS=[2,3,5,7];
 function podCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(POD_CFG_KEY)||'{}')||{}; }catch(e){}
   return { prov:o.prov||'auto', minutes:o.minutes||5, gVoice:o.gVoice||'Kore', oVoice:o.oVoice||'shimmer', dVoice:o.dVoice||'',
-    avatar:(o.avatar!==false), avGender:(o.avGender==='male'?'male':'female') }; }
+    avatar:(o.avatar!==false), avGender:(o.avGender==='male'?'male':'female'),
+    mDy:(typeof o.mDy==='number'?o.mDy:0), mScale:(typeof o.mScale==='number'?o.mScale:1) }; }
 function podCfgSet(patch){ const n=Object.assign(podCfg(), patch||{}); try{ localStorage.setItem(POD_CFG_KEY, JSON.stringify(n)); }catch(e){} return n; }
 // کتابخانهٔ نکاتِ آموزشیِ چرخشی (آموزشی و عمومی — بدون دوز/تشخیص)
 const POD_TOPICS=[
@@ -3726,7 +3727,7 @@ function podTalkKey(gender){ return 'avatartalk|'+(gender==='male'?'male':'femal
 // حدهای منطقیِ هر ناحیه — ماسکِ دهان هرگز نباید بزرگ‌تر از یک دهان شود (وگرنه کلِ صورت
 // عوض می‌شود و انیمیشن به «اسلایدشوِ چند عکسِ متفاوت» تبدیل می‌گردد — شکایتِ کاربر).
 const POD_REG_LIM={
-  mouth:{ x:[.30,.70], y:[.34,.86], rx:[.070,.165], ry:[.045,.105] },
+  mouth:{ x:[.30,.70], y:[.34,.86], rx:[.070,.180], ry:[.045,.135] },
   eyes: { x:[.30,.70], y:[.12,.60], rx:[.100,.240], ry:[.030,.080] },
   brow: { x:[.30,.70], y:[.08,.55], rx:[.100,.240], ry:[.028,.075] }
 };
@@ -3736,10 +3737,16 @@ function podClampReg(r, kind){
   if(r.x<L.x[0]-.12||r.x>L.x[1]+.12||r.y<L.y[0]-.10||r.y>L.y[1]+.10) return null;   // خیلی پرت — قابل‌اعتماد نیست
   return { x:cl(r.x,L.x), y:cl(r.y,L.y), rx:cl(r.rx||0,L.rx), ry:cl(r.ry||0,L.ry) };
 }
+// جابه‌جایی/بزرگ‌نماییِ دستیِ ناحیهٔ دهان (تنظیمِ ریزِ کاربر — هر چهره کمی فرق دارد)
+function podMouthTune(m){
+  if(!m) return m; const c=podCfg();
+  const dy=Math.max(-.08,Math.min(.08, c.mDy||0)), k=Math.max(.7,Math.min(1.5, c.mScale||1));
+  return podClampReg({ x:m.x, y:m.y+dy, rx:m.rx*k, ry:m.ry*k }, 'mouth')||m;
+}
 function podRegions(){
   const r=_pod.avGeom||{};
   return {
-    mouth: podClampReg(r.mouth,'mouth')||POD_REG_DEF.mouth,
+    mouth: podMouthTune(podClampReg(r.mouth,'mouth')||POD_REG_DEF.mouth),
     eyes:  podClampReg(r.eyes,'eyes') ||POD_REG_DEF.eyes,
     brow:  podClampReg(r.brow,'brow') ||POD_REG_DEF.brow
   };
@@ -3785,7 +3792,11 @@ async function podComputeCompRegions(){
   const mSrc=_pod.avFrames.A||_pod.avFrames.E||_pod.avFrames.O;
   // اگر تفاوت «سراسری» باشد (AI کلِ عکس را عوض کرده) مرکزِ دیف بی‌معنی است → به پیش‌فرض تکیه کن
   const take=(r,kind)=>{ if(!r||r.frac>0.30) return null; return podClampReg(r,kind); };
-  if(mSrc){ try{ const r=take(_podDiffBox(baseD, await toData(mSrc), S),'mouth'); if(r) out.mouth=r; }catch(e){} }
+  // مرکزِ «تفاوت» به‌خاطر افتادنِ فک/چانه پایین‌تر از خودِ لب می‌افتد → کمی بالا می‌بریمش و
+  // ارتفاع را بازتر می‌کنیم تا ناحیه هم لبِ بستهٔ پایه و هم دهانِ بازِ فریم را بپوشاند.
+  if(mSrc){ try{ const d=_podDiffBox(baseD, await toData(mSrc), S);
+    if(d){ d.y-=d.ry*0.28; d.ry*=1.18; }
+    const r=take(d,'mouth'); if(r) out.mouth=r; }catch(e){} }
   if(_pod.avFrames.BL){ try{ const r=take(_podDiffBox(baseD, await toData(_pod.avFrames.BL), S),'eyes'); if(r) out.eyes=r; }catch(e){} }
   if(_pod.avFrames.BR){ try{ const r=take(_podDiffBox(baseD, await toData(_pod.avFrames.BR), S),'brow'); if(r) out.brow=r; }catch(e){} }
   return (out.mouth||out.eyes||out.brow)?out:null;
@@ -4339,6 +4350,11 @@ function renderPodCfg(){
       // فریم‌هایی که AI به‌جای ویرایشِ همان چهره، عکسِ تازه‌ای ساخته → کنار گذاشته شده‌اند
       if(_pod.avBad&&_pod.avBad.length){ h+=`<div class="qbg-sub" style="margin-top:4px;color:var(--amber)">⚠️ ${faDigits(String(_pod.avBad.length))} حالت (${_pod.avBad.join('، ')}) با چهرهٔ پایه هم‌خوان نبود (ژست/زاویه فرق داشت) و برای جلوگیری از «پریدنِ عکس» کنار گذاشته شد. با «🔄 چهرهٔ نو» یا ساختِ دوبارهٔ همان حالت‌ها بهتر می‌شود.</div>`; }
       h+=`<div class="pod-seg"><button onclick="podAvShowStates()">🔍 نمایشِ حالت‌ها</button><button onclick="podAvDownloadStates()">⬇️ دانلود</button><button onclick="podAvLoadTestFrames()">🧪 تستِ موتور</button></div>`;
+      // تنظیمِ ریزِ جای دهان (هر چهره کمی فرق دارد؛ هنگامِ پخش زنده اثر می‌کند)
+      const _c=podCfg();
+      h+=`<label class="qbg-lbl" style="margin-top:10px">جای دهان (اگر کمی بالا/پایین افتاده)</label>`;
+      h+=`<div class="pod-seg"><button onclick="podMouthNudge(-0.01,0)">⬆️ بالاتر</button><button onclick="podMouthNudge(0.01,0)">⬇️ پایین‌تر</button><button onclick="podMouthNudge(0,0.06)">➕ بزرگ‌تر</button><button onclick="podMouthNudge(0,-0.06)">➖ کوچک‌تر</button><button onclick="podMouthReset()">↺</button></div>`;
+      h+=`<div class="qbg-sub" style="margin-top:4px">جابه‌جایی: ${faDigits(String(Math.round((_c.mDy||0)*1000)/10))}٪ · اندازه: ${faDigits(String(Math.round((_c.mScale||1)*100)))}٪ — بهترین کار: پادکست را پخش کن و همین‌جا تنظیم کن تا دهان دقیقاً روی لب‌ها بنشیند.</div>`;
       if(_pod.avStripURL){ h+=`<div class="qbg-sub" style="margin-top:6px">اگر دهانِ «آ/ای/او» زیر واقعاً باز نیست، مشکل از عکس‌های AI است (نه موتور). این تصویر را برایم بفرست:</div>`;
         h+=`<div style="margin-top:6px;overflow-x:auto;-webkit-overflow-scrolling:touch"><img src="${_pod.avStripURL}" style="height:150px;max-width:none;border-radius:8px" alt="حالت‌های چهره"></div>`; }
       h+=`<div class="qbg-sub" style="margin-top:4px">🧪 تستِ موتور: دهانِ آشکارا باز را (بدونِ هزینه) جایگزین می‌کند؛ «پخش» کن — اگر لب‌ها باز/بسته شد، موتور سالم است. با رفرش به عکس‌های واقعی برمی‌گردد.</div>`;
@@ -4346,6 +4362,15 @@ function renderPodCfg(){
   }
   box.innerHTML=h;
 }
+// جابه‌جایی/اندازهٔ ناحیهٔ دهان را تغییر می‌دهد و لایه‌ها را با ناحیهٔ تازه از نو می‌سازد
+async function podMouthNudge(dy, ds){
+  const c=podCfg();
+  podCfgSet({ mDy: Math.max(-.08,Math.min(.08,(c.mDy||0)+(dy||0))),
+              mScale: Math.max(.7,Math.min(1.5,(c.mScale||1)+(ds||0))) });
+  _pod.avLayers=null; try{ await podAvBuildLayers(); podAvDraw(); }catch(e){}
+  try{ renderPodCfg(); }catch(e){}
+}
+async function podMouthReset(){ podCfgSet({ mDy:0, mScale:1 }); _pod.avLayers=null; try{ await podAvBuildLayers(); podAvDraw(); }catch(e){} try{ renderPodCfg(); }catch(e){} }
 function podTestDevice(i){ const v=(window._podDevVoices||[])[i]; if(v) podTestVoice('device', v.name); }
 function podPickDevice(i){ const v=(window._podDevVoices||[])[i]; if(v) podCfgPickVoice('device', v.name); }
 let _podTestSrc=null;
