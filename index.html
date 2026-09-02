@@ -1999,7 +1999,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۱</b> · انتشار: ۱۴۰۵/۰۶/۱۱ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۲</b> · انتشار: ۱۴۰۵/۰۶/۱۱ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3673,9 +3673,8 @@ const POD_FRAMES=[
   {id:'O',  reg:'mouth', p:'the lips rounded and slightly pushed forward as if saying "ooo", a small rounded mouth opening'},
   {id:'BR', reg:'brow',  p:'both eyebrows raised slightly in a warm, engaged, expressive way'}
 ];
-const POD_MOUTH_IDS=['A','E','O'];      // ویزم‌های دهان (با هم مورف می‌شوند)
+const POD_MOUTH_IDS=['A','E','O'];      // ویزم‌های دهان (در نسخه ۲۳.۲ گسسته مهر می‌شوند)
 const POD_SOLO_IDS=['BL','BR'];         // پلک و ابرو (مستقل، آلفای خودشان)
-const POD_MOUTH_GAIN=1.9;               // بهرهٔ نمایانیِ دهان تا حرکت واقعاً دیده شود
 function podFrKey(gender,id){ return 'avfr|'+(gender==='male'?'male':'female')+'|'+id+'|'+POD_FR_VER; }
 function podGeomKey(gender){ return 'avgeom|'+(gender==='male'?'male':'female')+'|'+POD_FR_VER; }
 function podTalkKey(gender){ return 'avatartalk|'+(gender==='male'?'male':'female')+'|'+POD_AV_VER; }   // فریمِ نسخه ۲۲.۱ → مهاجرت به 'A'
@@ -3825,6 +3824,35 @@ async function podAvBuildLayers(){
   }
   _pod.avLayers=L; _pod.avLayersFor=_pod.avImg; return L;
 }
+/* دهانِ رویه‌ای (فقط وقتی فریمِ ساخته‌شده نداریم): حفرهٔ تیرهٔ نرم‌لبه که با شدتِ آوا
+   باز/بسته می‌شود و شکلش با ویزم (آ/ای/او) فرق می‌کند. تمام‌کدر در مرکز → شبح نمی‌سازد. */
+function podDrawMouthProc(ctx, zx,zy,zw,zh, r, open, vis){
+  if(!r) return;
+  const cx=zx+r.x*zw, cy=zy+r.y*zh;
+  const bx=r.rx*zw, by=r.ry*zh;
+  let aw=0.95, ah=1.12;                                   // پیش‌فرض/«آ»
+  if(vis==='E'){ aw=1.28; ah=0.52; }                      // «ای»: پهن و کوتاه
+  else if(vis==='O'){ aw=0.60; ah=1.02; }                 // «او»: گرد و جمع
+  const rx=Math.max(2, bx*aw*(0.55+0.45*open));
+  const ry=Math.max(1, by*ah*Math.min(1,open)*1.15);
+  ctx.save();
+  const g=ctx.createRadialGradient(cx,cy-ry*0.12,Math.max(1,ry*0.12), cx,cy,Math.max(rx,ry));
+  g.addColorStop(0,'rgba(26,9,11,0.97)');
+  g.addColorStop(0.70,'rgba(40,15,17,0.9)');
+  g.addColorStop(1,'rgba(60,26,28,0)');                   // لبه‌ها در لب‌ها محو می‌شوند
+  ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(cx,cy,rx,ry,0,0,7); ctx.fill();
+  if(open>0.28 && vis!=='O'){                             // دندانِ بالا
+    const a=0.85*Math.min(1,(open-0.2)/0.5);
+    const tg=ctx.createLinearGradient(0,cy-ry,0,cy-ry*0.15);
+    tg.addColorStop(0,'rgba(242,240,234,'+a.toFixed(3)+')'); tg.addColorStop(1,'rgba(242,240,234,0)');
+    ctx.fillStyle=tg; ctx.beginPath(); ctx.ellipse(cx,cy-ry*0.68,rx*0.82,ry*0.32,0,0,7); ctx.fill();
+  }
+  if(open>0.4 && vis!=='E'){                              // زبان (کفِ دهان)
+    ctx.fillStyle='rgba(150,70,74,'+(0.5*Math.min(1,(open-0.35)/0.5)).toFixed(3)+')';
+    ctx.beginPath(); ctx.ellipse(cx,cy+ry*0.5,rx*0.6,ry*0.34,0,0,7); ctx.fill();
+  }
+  ctx.restore();
+}
 function podAvDraw(){
   const cv=document.getElementById('podAvCanvas'); const L=_pod.avLayers; if(!cv||!L||!L.base) return;
   const dpr=Math.min(2, window.devicePixelRatio||1);
@@ -3841,20 +3869,20 @@ function podAvDraw(){
   ctx.clearRect(0,0,W,H);
   ctx.drawImage(L.base, zx,zy,zw,zh);
   const w=_pod.avW||{};
-  // گروهِ دهان: سه ویزم اول در یک کانواسِ کمکی با وزنِ نرمالیزه مورف می‌شوند (مجموعِ وزن‌ها = ۱)
-  // و بعد یک‌جا با شدتِ بازشدنِ دهان روی چهره می‌نشینند. اگر مثلِ قبل هرکدام جدا با آلفای
-  // خودشان کشیده شوند، وزن بینِ سه لایه تقسیم می‌شود و دهان محوِ صورتِ ثابت می‌ماند.
-  let msum=0; for(const id of POD_MOUTH_IDS){ if(L.frames[id]) msum+=Math.max(0,w[id]||0); }
-  if(msum>0.02){
-    let tmp=_pod.avTmp; if(!tmp){ tmp=_pod.avTmp=document.createElement('canvas'); }
-    if(tmp.width!==W||tmp.height!==H){ tmp.width=W; tmp.height=H; }
-    const tg=tmp.getContext('2d'); tg.clearRect(0,0,W,H);
-    let acc=0;
-    for(const id of POD_MOUTH_IDS){ const lay=L.frames[id], a=Math.max(0,w[id]||0);
-      if(!lay||a<=0) continue; acc+=a; tg.globalAlpha=a/acc; tg.drawImage(lay, zx,zy,zw,zh); }
-    tg.globalAlpha=1;
-    ctx.globalAlpha=Math.min(1, msum*POD_MOUTH_GAIN);
-    ctx.drawImage(tmp,0,0); ctx.globalAlpha=1;
+  // ---- دهان (نسخه ۲۳.۲) ----
+  // چرا قبلاً «سایه» می‌شد: فریمِ دهانِ باز با آلفای نیمه‌شفاف روی صورتِ بستهٔ زیر
+  // کراس‌فِید می‌شد → هم‌زمان دهانِ بسته و دهانِ باز، هر دو محو، روی هم = شبح/سایه.
+  // اصلاح: مثلِ لب‌سینکِ ۲بعدیِ کلاسیک یک ویزمِ «غالب» را «تمام‌کدر» روی همان ناحیه مهر
+  // می‌کنیم؛ لبهٔ ماسک نرم است پس بی‌درز با پوست ترکیب می‌شود، و چون هستهٔ ماسک کاملاً
+  // کدر است دهانِ بستهٔ زیر هرگز از پشتش پیدا نیست → دیگر شبح نداریم، بازوبسته‌شدنِ واقعی.
+  const M=_pod.avMouth||{vis:'X',open:0};
+  const mo=Math.max(0,Math.min(1,M.open||0));
+  const mFrame=(M.vis&&M.vis!=='X')?L.frames[M.vis]:null;
+  if(mFrame && mo>0.03){
+    ctx.drawImage(mFrame, zx,zy,zw,zh);          // مهرِ تمام‌کدر، بدونِ آلفا → بدونِ سایه
+  } else if(mo>0.06){
+    // بدونِ فریمِ ساخته‌شده (کلید/چهره آماده نیست) → دهانِ رویه‌ای: حفرهٔ تیره که با آوا باز/بسته می‌شود
+    try{ podDrawMouthProc(ctx, zx,zy,zw,zh, podRegions().mouth, mo, M.vis); }catch(e){}
   }
   for(const id of POD_SOLO_IDS){ const lay=L.frames[id]; if(!lay) continue;
     const a=Math.min(1,(w[id]||0)*(id==='BR'?1.7:1));
@@ -3869,6 +3897,7 @@ function podReactStart(){
   const fd=an?new Uint8Array(an.frequencyBinCount):null;
   const td=an?new Uint8Array(an.fftSize):null;
   const W=_pod.avW={A:0,E:0,O:0,BL:0,BR:0};
+  const MO=_pod.avMouth={vis:'X',open:0,visAt:0};        // دهانِ گسسته: ویزمِ فعلی + شدتِ بازشدن
   const calm=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
   const lerp=(a,b,k)=>a+(b-a)*k;
   let env=0, envSlow=0;
@@ -3876,7 +3905,7 @@ function podReactStart(){
   const loop=()=>{
     if(_pod.mode!=='playing'){ _pod.raf=0; return; }
     const now=performance.now(); const t=now/1000;
-    let lv=0; const tg={A:0,E:0,O:0};
+    let lv=0, open=0, sA=0, sE=0, sO=0;
     if(an&&_pod.cloud&&fd&&td){
       an.getByteTimeDomainData(td);
       let s=0; for(let i=0;i<td.length;i++){ const v=(td[i]-128)/128; s+=v*v; }
@@ -3885,21 +3914,22 @@ function podReactStart(){
       const sr=(_wkAudioCtx&&_wkAudioCtx.sampleRate)||24000, hz=(sr/2)/fd.length;
       const band=(f1,f2)=>{ const i1=Math.max(0,Math.floor(f1/hz)), i2=Math.min(fd.length-1,Math.ceil(f2/hz)); let a=0,n=0; for(let i=i1;i<=i2;i++){ a+=fd[i]; n++; } return n?a/n:0; };
       const lo=band(180,760), mid=band(760,2200), hi=band(2200,4800), tot=lo+mid+hi+1e-6;
-      const open=Math.max(0, Math.min(1,(lv-0.055)*2.1));
-      if(open>0.02){
-        // وزنِ نرمِ سه شکلِ دهان از سهمِ باندها (به‌جای انتخابِ قطعی) → مورفِ پیوسته و طبیعی
-        const sq=x=>{ const v=Math.max(0,x); return v*v; };
-        let wO=sq(lo/tot-0.20), wA=sq(mid/tot-0.16), wE=sq(hi/tot-0.18);
-        const sum=wO+wA+wE;
-        if(sum>1e-6){ tg.O=open*wO/sum; tg.A=open*wA/sum; tg.E=open*wE/sum; } else { tg.A=open; }
-      }
+      open=Math.max(0, Math.min(1,(lv-0.05)*2.4));           // میزانِ بازشدنِ دهان از بلندیِ صدا
+      const sq=x=>{ const v=Math.max(0,x); return v*v; };     // سهمِ باندها → امتیازِ هر ویزم
+      sO=sq(lo/tot-0.20); sA=sq(mid/tot-0.16); sE=sq(hi/tot-0.18);
+      if(sA+sE+sO<1e-5) sA=1;
     } else {
-      lv=0.34+0.30*Math.abs(Math.sin(t*6.1))+0.10*Math.sin(t*11.3);
-      const ph=(Math.sin(t*3.7)+1)/2;
-      if(ph<0.34) tg.A=lv; else if(ph<0.67) tg.E=lv*0.9; else tg.O=lv*0.8;
+      lv=0.32+0.34*Math.abs(Math.sin(t*6.1))+0.08*Math.sin(t*11.3);
+      open=0.30+0.55*Math.abs(Math.sin(t*6.1));               // صدای گوشی: ریتمِ زمانی
+      const ph=(Math.sin(t*3.1)+1)/2;
+      if(ph<0.34) sA=1; else if(ph<0.67) sE=1; else sO=1;
     }
-    const k=calm?0.18:0.36;                                   // نرم‌سازی: ریتمِ طبیعی بدونِ لرزش
-    W.A=lerp(W.A,tg.A,k); W.E=lerp(W.E,tg.E,k); W.O=lerp(W.O,tg.O,k);
+    // بازشدنِ نرم + انتخابِ ویزمِ غالب به‌صورتِ گسسته (هیسترزیس/کمینه‌زمان تا نلرزد و شبح نسازد)
+    MO.open=lerp(MO.open, open, calm?0.22:0.42);
+    let want='X';
+    if(MO.open>=0.10) want=(sA>=sE&&sA>=sO)?'A':((sE>=sO)?'E':'O');
+    if(want!==MO.vis){ const held=now-(MO.visAt||0), minHold=(want==='X')?90:60;
+      if(held>=minHold){ MO.vis=want; MO.visAt=now; } }
     env=lerp(env,lv,0.28); envSlow=lerp(envSlow,lv,0.02);     // ابرو روی تأکیدِ جمله بالا می‌رود
     W.BR=lerp(W.BR, Math.max(0,Math.min(1,(env-envSlow)*2.8)), 0.12);
     if(now>=_pod.blinkNext){ _pod.blinkAt=now; _pod.blinkNext=now+2200+Math.random()*4200; }
@@ -3916,7 +3946,7 @@ function podReactStart(){
 function podReactStop(){
   if(_pod.raf){ cancelAnimationFrame(_pod.raf); _pod.raf=0; }
   const el=document.getElementById('podAvatar'); if(el) el.style.setProperty('--lv','0');
-  _pod.avW={A:0,E:0,O:0,BL:0,BR:0}; _pod.avSway={x:0,y:0,s:1.02};
+  _pod.avW={A:0,E:0,O:0,BL:0,BR:0}; _pod.avMouth={vis:'X',open:0,visAt:0}; _pod.avSway={x:0,y:0,s:1.02};
   try{ podAvDraw(); }catch(e){}
 }
 
