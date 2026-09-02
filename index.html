@@ -1999,7 +1999,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۲</b> · انتشار: ۱۴۰۵/۰۶/۱۱ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۳</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3468,7 +3468,7 @@ function podTTSProvider(){
 }
 function podcastStart(rec){
   _pod.ttsProv=podTTSProvider();
-  _pod.cloud = !!_pod.ttsProv;
+  _pod.cloud = !!_pod.ttsProv; _pod.ttsSwitched=false;
   _pod.estDur = Math.max(60, Math.round(podWordCount(rec.script)/2.4));
   _pod.mode='playing'; _pod.t0=Date.now(); _pod.prep=_pod.cloud;
   podEngineReset(); podProgressStart(); renderPodcastCard();
@@ -3502,8 +3502,19 @@ function podSpeakNext(){
 }
 /* ---- صدای ابری (OpenAI TTS) ---- */
 async function podTTSFetch(text){
-  if(_pod.ttsProv==='gemini') return await podGeminiTTS(text);
-  return await podOpenAITTS(text);
+  // اگر سرویسِ انتخاب‌شده لیمیت/خطا خورد، به‌جای قطعِ صدا به سرویسِ دیگر سوییچ کن
+  const order = (_pod.ttsProv==='gemini') ? ['gemini','openai'] : ['openai','gemini'];
+  let lastErr;
+  for(const p of order){
+    if(p==='openai' && !hasAnyKey('openai')) continue;
+    if(p==='gemini' && !hasAnyKey('gemini')) continue;
+    try{ const out = (p==='gemini') ? await podGeminiTTS(text) : await podOpenAITTS(text);
+      if(p!==_pod.ttsProv && !_pod.ttsSwitched){ _pod.ttsSwitched=true;
+        try{ uiToast&&uiToast('صدای '+(_pod.ttsProv==='gemini'?'Gemini':'ChatGPT')+' در دسترس نبود؛ با '+(p==='gemini'?'Gemini':'ChatGPT')+' ادامه می‌دهم'); }catch(e){} }
+      return out;
+    }catch(e){ lastErr=e; try{ console.warn('tts '+p+':', e&&e.message||e); }catch(_){} }
+  }
+  throw lastErr||new Error('no tts provider');
 }
 async function podOpenAITTS(text,voice){
   const key=getVisionKey('openai'); if(!key) throw new Error('no key'); voice=voice||podCfg().oVoice||'shimmer';
