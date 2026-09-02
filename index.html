@@ -1812,6 +1812,21 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <div id="zoomSetting"></div>
   </div>
 </div>
+<div class="card" id="c-profile-audio">
+  <h2><span>🔊 صدا (عیب‌یابی و تعمیر)</span></h2>
+  <div class="card-body">
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:10px">
+      اگر <b style="color:var(--red)">هیچ صدایی</b> از برنامه نمی‌آید (نه دکمه‌ها، نه پادکست)، اینجا وضعیتِ موتورِ صدا را ببین و دکمهٔ تعمیر را بزن.
+      <br>نکته: در iOS کلیدِ بی‌صدا (Silent) و کم‌بودنِ ولومِ زنگ هم صدای صفحه‌های وب را قطع می‌کند.
+    </div>
+    <div id="audioDiagBox" style="font-size:12.5px;line-height:2;direction:ltr;text-align:left;background:var(--bg2,rgba(127,127,127,.08));border-radius:10px;padding:10px;margin-bottom:10px">—</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="mini-btn" onclick="audioDiagTest()">🔔 تستِ صدا</button>
+      <button class="mini-btn" onclick="audioDiagFix()">🛠 تعمیرِ صدا</button>
+      <button class="mini-btn" onclick="audioDiagRefresh()">🔄 به‌روزرسانیِ وضعیت</button>
+    </div>
+  </div>
+</div>
 <div class="card" id="c-profile-vision">
   <h2><span>🤖 هوش مصنوعی (کلیدها و انتخاب سرویس)</span></h2>
   <div class="card-body">
@@ -1999,7 +2014,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۴</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۵</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3423,11 +3438,23 @@ function podTick(){
   const tot=document.getElementById('podTot'); if(tot) tot.textContent=(cloud&&!_pod.allFetched?'~':'')+podFmtTime(total);
   const st=document.getElementById('podState'); if(st) st.textContent=_pod.prep?'در حالِ آماده‌سازیِ صدا…':(_pod.mode==='playing'?'در حالِ پخش':(_pod.mode==='paused'?'مکث':''));
 }
+// گِینِ خروجیِ پادکست را برای کانتکستِ فعلی می‌سازد/بازمی‌سازد (بعد از بازسازیِ کانتکست حیاتی است)
+function podVoiceOut(ctx){
+  if(!ctx) return null;
+  if(!_pod.voiceGain || _pod.voiceGain.context!==ctx){
+    try{
+      _pod.voiceGain=ctx.createGain(); _pod.voiceGain.gain.value=1.0; _pod.voiceGain.connect(ctx.destination);
+      _pod.analyser=ctx.createAnalyser(); _pod.analyser.fftSize=256; _pod.analyser.smoothingTimeConstant=0.75; _pod.voiceGain.connect(_pod.analyser);
+    }catch(e){}
+  }
+  return _pod.voiceGain;
+}
 function podStopSrc(){ try{ if(_pod.srcNode){ _pod.srcNode.onended=null; _pod.srcNode.stop(); _pod.srcNode.disconnect(); } }catch(e){} _pod.srcNode=null; _pod.playing=false; }
 function podPlayFrom(idx, off){
   const ctx=_wkAudioCtx; if(!ctx) return; podStopSrc();
   if(idx>=_pod.buffers.length){ if(_pod.allFetched){ podcastEnded(); return; } _pod.waiting=true; _pod.playIdx=idx; _pod.startOff=0; return; }
-  const src=ctx.createBufferSource(); src.buffer=_pod.buffers[idx]; src.connect(_pod.voiceGain);
+  const src=ctx.createBufferSource(); src.buffer=_pod.buffers[idx];
+  try{ src.connect(podVoiceOut(ctx)); }catch(e){ try{ src.connect(ctx.destination); }catch(_){} }
   src.onended=()=>{ if(_pod.mode!=='playing') return; podPlayFrom(_pod.playIdx+1, 0); };
   _pod.playIdx=idx; _pod.startOff=off||0; _pod.startCtx=ctx.currentTime; _pod.playing=true;
   try{ src.start(0, _pod.startOff); }catch(e){ try{ src.start(); }catch(_){} }
@@ -3600,8 +3627,7 @@ function podHash(s){ s=String(s||''); let h=5381; for(let i=0;i<s.length;i++){ h
 function podAudioKey(full){ const c=podCfg(); const voice=_pod.ttsProv==='gemini'?c.gVoice:c.oVoice; return podTodayKey()+'|'+_pod.ttsProv+'|'+voice+'|'+c.minutes+'|'+podHash(full); }
 async function podCloudSpeak(full){
   const ctx=wkEnsureAudio(); if(!ctx) throw new Error('no audio ctx');
-  if(!_pod.voiceGain){ _pod.voiceGain=ctx.createGain(); _pod.voiceGain.gain.value=1.0; _pod.voiceGain.connect(ctx.destination);
-    try{ _pod.analyser=ctx.createAnalyser(); _pod.analyser.fftSize=256; _pod.analyser.smoothingTimeConstant=0.75; _pod.voiceGain.connect(_pod.analyser); }catch(e){} }
+  podVoiceOut(ctx);
   podEngineReset();
   const key=podAudioKey(full); await podCacheClearOldDay();
   // ۱) کش: اگر امروز با همین صدا/مدت قبلاً ساخته شده، بدونِ هیچ درخواستی پخش کن (رایگان و فوری)
@@ -5186,7 +5212,7 @@ function switchTab(name,btn){
   if(name==='plan'){ goToToday(); }
   if(name==='labs'){ renderLabsTab(); }
   if(name==='exercise'){ renderExerciseTab(); }
-  if(name==='profile'){ renderProfileTab(); }
+  if(name==='profile'){ renderProfileTab(); try{ audioDiagRefresh(); }catch(e){} }
   if(name==='chat'){ renderChatTab(); }
   if(name==='aihistory'){ renderAiHistoryTab(); }
 }
@@ -9987,17 +10013,61 @@ let _wkRunning=false;
 let _wkSound=true;    // صدا روشن/خاموش
 let _wkAudioCtx=null;
 // AudioContext را می‌سازد و از حالت suspended/interrupted (باگ iOS بعد از قفل صفحه) درمی‌آورد
+// وقتی کانتکست عوض/بسته می‌شود، همهٔ گره‌های وابسته به کانتکستِ قدیمی باید دور ریخته شوند
+// (وگرنه اتصالِ منبعِ جدید به گِینِ قدیمی خطا می‌دهد و صدا برای همیشه قطع می‌ماند).
+let _wkWakeBound=false;
+function wkAudioInvalidate(){
+  try{ _wkMusicGain=null; }catch(e){}
+  try{ if(typeof _pod!=='undefined'&&_pod){ _pod.voiceGain=null; _pod.analyser=null; } }catch(e){}
+}
 function wkEnsureAudio(){
   try{
-    if(!_wkAudioCtx){ _wkAudioCtx=new (window.AudioContext||window.webkitAudioContext)();
-      // شبکهٔ امنیتی: هر لمس/کلیک، اگر کانتکست خوابیده باشد بیدارش کند (تا صدای کلِ اپ هرگز گیر نیفتد)
-      try{ const wake=()=>{ try{ if(_wkAudioCtx&&(_wkAudioCtx.state==='suspended'||_wkAudioCtx.state==='interrupted')) _wkAudioCtx.resume().catch(()=>{}); }catch(e){} };
+    if(_wkAudioCtx && _wkAudioCtx.state==='closed'){ _wkAudioCtx=null; wkAudioInvalidate(); }
+    if(!_wkAudioCtx){ _wkAudioCtx=new (window.AudioContext||window.webkitAudioContext)(); wkAudioInvalidate(); }
+    // شبکهٔ امنیتی (فقط یک‌بار): هر لمس/کلیک، اگر کانتکست خوابیده باشد بیدارش کند
+    if(!_wkWakeBound){ _wkWakeBound=true;
+      try{ const wake=()=>{ try{ const c=_wkAudioCtx; if(c&&(c.state==='suspended'||c.state==='interrupted')) c.resume().catch(()=>{}); }catch(e){} };
         document.addEventListener('pointerdown', wake, true); document.addEventListener('touchstart', wake, true); document.addEventListener('click', wake, true); }catch(e){}
     }
     const ctx=_wkAudioCtx;
     if(ctx.state==='suspended'||ctx.state==='interrupted'){ ctx.resume().catch(()=>{}); }
     return ctx;
   }catch(e){ return null; }
+}
+/* ---- عیب‌یابیِ صدا (نسخه ۲۳.۵) ---- */
+function audioDiagRefresh(){
+  const box=document.getElementById('audioDiagBox'); if(!box) return;
+  const c=_wkAudioCtx;
+  const rows=[
+    ['AudioContext', c? c.state : 'not created yet'],
+    ['sampleRate', c? c.sampleRate : '—'],
+    ['app sound flag', (typeof _wkSound!=='undefined'&&_wkSound)?'on':'off'],
+    ['podcast mode', (typeof _pod!=='undefined'&&_pod)?(_pod.mode||'idle'):'—'],
+    ['voice out ctx', (typeof _pod!=='undefined'&&_pod&&_pod.voiceGain)?((c&&_pod.voiceGain.context===c)?'ok':'STALE'):'none'],
+    ['speechSynthesis', window.speechSynthesis?'available':'missing']
+  ];
+  box.innerHTML=rows.map(r=>'<div><b>'+r[0]+':</b> '+r[1]+'</div>').join('');
+}
+function audioDiagTest(){
+  try{
+    const ctx=wkEnsureAudio();
+    if(!ctx){ uiToast&&uiToast('موتورِ صدا ساخته نشد'); audioDiagRefresh(); return; }
+    const go=()=>{ try{ uiDing(); setTimeout(()=>{ try{ wkBeep(523,0.18,'sine',0.2); }catch(e){} },220); }catch(e){} audioDiagRefresh(); };
+    if(ctx.state!=='running' && ctx.resume) ctx.resume().then(go).catch(go); else go();
+    uiToast&&uiToast('اگر بوق را نشنیدی، «تعمیرِ صدا» را بزن');
+  }catch(e){ uiToast&&uiToast('تستِ صدا نشد'); }
+}
+// کانتکستِ خراب/خوابیده را می‌بندد و از نو می‌سازد (باید از داخلِ لمسِ کاربر صدا زده شود)
+function audioDiagFix(){
+  try{
+    if(typeof _wkSound!=='undefined' && !_wkSound){ _wkSound=true; const b=document.getElementById('wkSoundBtn'); if(b) b.textContent='🔊'; }
+    try{ wkStopBeat(); }catch(e){}
+    if(_wkAudioCtx){ try{ _wkAudioCtx.close(); }catch(e){} }
+    _wkAudioCtx=null; wkAudioInvalidate();
+    const ctx=wkEnsureAudio();
+    const done=()=>{ audioDiagRefresh(); try{ uiDing(); }catch(e){} uiToast&&uiToast(ctx&&ctx.state==='running'?'✓ موتورِ صدا از نو ساخته شد':'موتورِ صدا هنوز بیدار نشد — کلیدِ بی‌صدای گوشی را چک کن'); };
+    if(ctx && ctx.state!=='running' && ctx.resume) ctx.resume().then(done).catch(done); else done();
+  }catch(e){ uiToast&&uiToast('تعمیرِ صدا نشد'); }
 }
 // --- صداها با Web Audio (آفلاین) ---
 function wkBeep(freq,dur,type,vol){
@@ -10089,7 +10159,7 @@ function wkAudioResume(){
       setTimeout(()=>{
         if(_wkAudioCtx && _wkAudioCtx.state!=='running'){
           try{ _wkAudioCtx.close(); }catch(e){}
-          _wkAudioCtx=null; _wkMusicGain=null;   // خروجی موزیک قدیمی بی‌اعتبار شد
+          _wkAudioCtx=null; wkAudioInvalidate();   // خروجی موزیک/صدای پادکستِ قدیمی بی‌اعتبار شد
           wkEnsureAudio();
           if(_wkRunning&&_wkMusic&&_wkSound&&_wkPhase==='work'){ wkStopBeat(); wkStartBeat(); }
         }
