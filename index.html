@@ -3679,6 +3679,42 @@ function podFrKey(gender,id){ return 'avfr|'+(gender==='male'?'male':'female')+'
 function podGeomKey(gender){ return 'avgeom|'+(gender==='male'?'male':'female')+'|'+POD_FR_VER; }
 function podTalkKey(gender){ return 'avatartalk|'+(gender==='male'?'male':'female')+'|'+POD_AV_VER; }   // فریمِ نسخه ۲۲.۱ → مهاجرت به 'A'
 function podRegions(){ const r=_pod.avGeom||{}; return { mouth:r.mouth||POD_REG_DEF.mouth, eyes:r.eyes||POD_REG_DEF.eyes, brow:r.brow||POD_REG_DEF.brow }; }
+/* ---- تشخیصِ خودکارِ ناحیه از تفاوتِ فریم با چهرهٔ پایه (بی‌هزینه، همیشه هم‌ترازِ تغییرِ واقعی) ----
+   مشکلِ اصلیِ «لب تکان نمی‌خورد»: مختصاتِ ماسکِ ترکیب اشتباه بود (تشخیصِ ویژن پیش‌فرضِ
+   بالا می‌افتاد، روی بینی)، پس ماسک جایی را می‌برید که بین همهٔ فریم‌ها یکی است.
+   اینجا جایی که فریم واقعاً با پایه فرق دارد را پیدا می‌کنیم = دقیقاً همان‌جا که AI عوض کرده. */
+function _podDiffBox(baseD, frD, S){
+  let sw=0,sx=0,sy=0; const pts=[];
+  for(let yy=0;yy<S;yy++){ for(let xx=0;xx<S;xx++){ const i=(yy*S+xx)*4;
+    const d=Math.abs((baseD[i]+baseD[i+1]+baseD[i+2])-(frD[i]+frD[i+1]+frD[i+2]))/3;
+    if(d>26){ sw+=d; sx+=xx*d; sy+=yy*d; pts.push(xx,yy,d); } } }
+  if(pts.length<3 || sw < S*S*0.20) return null;          // تغییرِ کافی نبود
+  const mx=sx/sw, my=sy/sw; let vx=0,vy=0;
+  for(let k=0;k<pts.length;k+=3){ const dx=pts[k]-mx, dy=pts[k+1]-my, d=pts[k+2]; vx+=d*dx*dx; vy+=d*dy*dy; }
+  const rx=Math.sqrt(vx/sw), ry=Math.sqrt(vy/sw);
+  return { x:mx/S, y:my/S, rx:Math.min(.42,(rx*2.5)/S), ry:Math.min(.34,(ry*2.7)/S) };
+}
+async function podComputeCompRegions(){
+  if(!_pod.avImg||!_pod.avFrames) return null;
+  const S=128;
+  const toData=async(url)=>{ const im=await podLoadImg(url); const c=document.createElement('canvas'); c.width=c.height=S; const g=c.getContext('2d'); g.drawImage(im,0,0,S,S); return g.getImageData(0,0,S,S).data; };
+  let baseD; try{ baseD=await toData(_pod.avImg); }catch(e){ return null; }
+  const out={};
+  const mSrc=_pod.avFrames.A||_pod.avFrames.E||_pod.avFrames.O;
+  if(mSrc){ try{ const r=_podDiffBox(baseD, await toData(mSrc), S); if(r&&r.y>.30&&r.y<.90){ r.rx=Math.max(.08,r.rx); r.ry=Math.max(.055,r.ry); out.mouth=r; } }catch(e){} }
+  if(_pod.avFrames.BL){ try{ const r=_podDiffBox(baseD, await toData(_pod.avFrames.BL), S); if(r&&r.y>.12&&r.y<.60){ r.rx=Math.max(.13,r.rx); r.ry=Math.max(.045,r.ry); out.eyes=r; } }catch(e){} }
+  if(_pod.avFrames.BR){ try{ const r=_podDiffBox(baseD, await toData(_pod.avFrames.BR), S); if(r&&r.y>.08&&r.y<.55){ r.rx=Math.max(.13,r.rx); r.ry=Math.max(.045,r.ry); out.brow=r; } }catch(e){} }
+  return (out.mouth||out.eyes||out.brow)?out:null;
+}
+// ناحیه‌ها را از روی فریم‌ها اصلاح می‌کند و برای ترکیبِ درست به کار می‌برد (یک‌بار در هر جلسه)
+async function podFixCompRegions(persist){
+  if(_pod.avGeomFixed) return false;
+  const cr=await podComputeCompRegions(); if(!cr){ return false; }
+  _pod.avGeom=Object.assign({}, _pod.avGeom||{}, cr); _pod.avGeomFixed=true; _pod.avLayers=null;
+  if(persist){ try{ await podAvPut(podGeomKey(_pod.avImgGender||podCfg().avGender), _pod.avGeom); }catch(e){} }
+  try{ await podAvBuildLayers(); podAvDraw(); }catch(e){}
+  return true;
+}
 function podDataURLtoBlob(u){ const c=String(u).split(','); const mime=(c[0].match(/data:([^;]+)/)||[])[1]||'image/png'; const bin=atob(c[1]||''); const n=bin.length; const a=new Uint8Array(n); for(let i=0;i<n;i++) a[i]=bin.charCodeAt(i); return new Blob([a],{type:mime}); }
 function podLoadImg(src){ return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>rej(new Error('img load')); im.src=src; }); }
 async function podToPngDataURL(src){ const im=await podLoadImg(src); const cv=document.createElement('canvas'); cv.width=im.naturalWidth||1024; cv.height=im.naturalHeight||1024; cv.getContext('2d').drawImage(im,0,0); return cv.toDataURL('image/png'); }
@@ -3781,6 +3817,8 @@ async function podAvatarLoad(){
     for(const fr of POD_FRAMES){ if(_pod.avFrames[fr.id]) continue; const u=await podAvGet(podFrKey(g,fr.id)); if(u){ _pod.avFrames[fr.id]=u; got=true; } }
     if(!_pod.avFrames.A){ const old=await podAvGet(podTalkKey(g)); if(old){ _pod.avFrames.A=old; got=true; } }   // مهاجرت از نسخه ۲۲.۱
     if(got) _pod.avLayers=null;
+    // ناحیه‌ها را از روی تفاوتِ فریم‌ها اصلاح کن (تا ماسکِ ترکیب دقیقاً روی دهان/چشم بنشیند)
+    try{ if(podFramesReady()>0) await podFixCompRegions(true); }catch(e){}
     renderPodcastCard();
   }catch(e){}
 }
@@ -3813,7 +3851,7 @@ async function podAvatarRegen(fresh){
   // fresh=true → همه‌چیز از نو. پیش‌فرض: چهره و فریم‌های ساخته‌شده را نگه می‌دارد و فقط
   // ناقص‌ها را می‌سازد (تا تپ‌های بعدیِ «ادامهٔ ساخت» کارِ قبلی را دور نریزند).
   const haveFace=_pod.avImg&&_pod.avImgGender===g;
-  if(fresh===true || !haveFace){ _pod.avFrames={}; _pod.avGeom=null; _pod.avLayers=null; }
+  if(fresh===true || !haveFace){ _pod.avFrames={}; _pod.avGeom=null; _pod.avLayers=null; _pod.avGeomFixed=false; }
   _pod.avFrames=_pod.avFrames||{};
   uiToast&&uiToast('در حالِ ساختِ چهره…'); try{ renderPodCfg(); }catch(e){}
   try{
@@ -3895,7 +3933,10 @@ async function podBuildFramesPaced(g, baseURL, frames){
     }
     if(need().length && pass<2) await podSleep(3000);     // قبلِ دورِ بعد کمی صبر
   }
-  _pod.avProg=null; try{ renderPodCfg(); }catch(e){}
+  _pod.avProg=null;
+  // ناحیه‌ها را از روی فریم‌های تازه اصلاح کن تا ماسکِ ترکیب دقیقاً روی دهان بنشیند
+  _pod.avGeomFixed=false; try{ if(podFramesReady()>0) await podFixCompRegions(true); }catch(e){}
+  try{ renderPodCfg(); renderPodcastCard(); }catch(e){}
   return frames.length-need().length;
 }
 function podAvatarSilhouetteSVG(gender){
@@ -4138,7 +4179,7 @@ function renderPodcastCard(){
 function podOpenCfg(){ renderPodCfg(); const m=document.getElementById('podCfgModal'); if(m) m.classList.add('show'); }
 function podCloseCfg(){ const m=document.getElementById('podCfgModal'); if(m) m.classList.remove('show'); try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} podTestStop(); }
 function podCfgPick(k,v){ const patch={}; patch[k]=v; podCfgSet(patch);
-  if(k==='avGender'){ _pod.avImg=null; _pod.avFrames=null; _pod.avLayers=null; _pod.avGeom=null; _pod.avImgGender=''; }
+  if(k==='avGender'){ _pod.avImg=null; _pod.avFrames=null; _pod.avLayers=null; _pod.avGeom=null; _pod.avGeomFixed=false; _pod.avImgGender=''; }
   renderPodCfg(); renderPodcastCard();
   if(k==='avGender'||(k==='avatar'&&v)){ try{ podAvatarLoad(); }catch(e){} }
   if(k==='minutes') uiToast&&uiToast('برای اعمالِ مدت، «ساختِ دوباره 🔄» را بزن'); }
