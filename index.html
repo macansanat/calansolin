@@ -1999,7 +1999,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۰</b> · انتشار: ۱۴۰۵/۰۶/۱۱ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۱</b> · انتشار: ۱۴۰۵/۰۶/۱۱ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3283,7 +3283,7 @@ let _pod={ mode:'idle', cloud:false, ttsProv:'', music:null,
   utterQueue:[], uIdx:0, utter:null, faVoice:null,
   t0:0, estDur:0, timer:0, prep:false, seeking:false, voiceGain:null, srcNode:null,
   analyser:null, raf:0, avImg:null, avImgGender:'', avBusy:false, musicKill:0, rawChunks:null, rawType:'',
-  avFrames:null, avLayers:null, avLayersFor:'', avGeom:null, avW:null, avSway:null, blinkNext:0, blinkAt:0,
+  avFrames:null, avLayers:null, avLayersFor:'', avGeom:null, avW:null, avSway:null, blinkNext:0, blinkAt:0, avTmp:null,
   buffers:[], durs:[], cum:[0], totalDur:0, allFetched:false, playIdx:0, startCtx:0, startOff:0, playing:false, waiting:false };
 const POD_RATING_FA={great:'عالی',good:'خوب',ok:'معمولی',bad:'سخت'};
 // صداهای انتخابیِ هر سرویس (id واقعیِ سرویس + برچسبِ فارسی)
@@ -3673,6 +3673,9 @@ const POD_FRAMES=[
   {id:'O',  reg:'mouth', p:'the lips rounded and slightly pushed forward as if saying "ooo", a small rounded mouth opening'},
   {id:'BR', reg:'brow',  p:'both eyebrows raised slightly in a warm, engaged, expressive way'}
 ];
+const POD_MOUTH_IDS=['A','E','O'];      // ویزم‌های دهان (با هم مورف می‌شوند)
+const POD_SOLO_IDS=['BL','BR'];         // پلک و ابرو (مستقل، آلفای خودشان)
+const POD_MOUTH_GAIN=1.9;               // بهرهٔ نمایانیِ دهان تا حرکت واقعاً دیده شود
 function podFrKey(gender,id){ return 'avfr|'+(gender==='male'?'male':'female')+'|'+id+'|'+POD_FR_VER; }
 function podGeomKey(gender){ return 'avgeom|'+(gender==='male'?'male':'female')+'|'+POD_FR_VER; }
 function podTalkKey(gender){ return 'avatartalk|'+(gender==='male'?'male':'female')+'|'+POD_AV_VER; }   // فریمِ نسخه ۲۲.۱ → مهاجرت به 'A'
@@ -3837,7 +3840,25 @@ function podAvDraw(){
   const zy=(H-dh)*0.22-(zh-dh)/2 + sw.y*H;
   ctx.clearRect(0,0,W,H);
   ctx.drawImage(L.base, zx,zy,zw,zh);
-  const w=_pod.avW; if(w){ for(const id in w){ const lay=L.frames[id]; const a=w[id]; if(lay&&a>0.012){ ctx.globalAlpha=Math.min(1,a); ctx.drawImage(lay, zx,zy,zw,zh); } } ctx.globalAlpha=1; }
+  const w=_pod.avW||{};
+  // گروهِ دهان: سه ویزم اول در یک کانواسِ کمکی با وزنِ نرمالیزه مورف می‌شوند (مجموعِ وزن‌ها = ۱)
+  // و بعد یک‌جا با شدتِ بازشدنِ دهان روی چهره می‌نشینند. اگر مثلِ قبل هرکدام جدا با آلفای
+  // خودشان کشیده شوند، وزن بینِ سه لایه تقسیم می‌شود و دهان محوِ صورتِ ثابت می‌ماند.
+  let msum=0; for(const id of POD_MOUTH_IDS){ if(L.frames[id]) msum+=Math.max(0,w[id]||0); }
+  if(msum>0.02){
+    let tmp=_pod.avTmp; if(!tmp){ tmp=_pod.avTmp=document.createElement('canvas'); }
+    if(tmp.width!==W||tmp.height!==H){ tmp.width=W; tmp.height=H; }
+    const tg=tmp.getContext('2d'); tg.clearRect(0,0,W,H);
+    let acc=0;
+    for(const id of POD_MOUTH_IDS){ const lay=L.frames[id], a=Math.max(0,w[id]||0);
+      if(!lay||a<=0) continue; acc+=a; tg.globalAlpha=a/acc; tg.drawImage(lay, zx,zy,zw,zh); }
+    tg.globalAlpha=1;
+    ctx.globalAlpha=Math.min(1, msum*POD_MOUTH_GAIN);
+    ctx.drawImage(tmp,0,0); ctx.globalAlpha=1;
+  }
+  for(const id of POD_SOLO_IDS){ const lay=L.frames[id]; if(!lay) continue;
+    const a=Math.min(1,(w[id]||0)*(id==='BR'?1.7:1));
+    if(a>0.012){ ctx.globalAlpha=a; ctx.drawImage(lay, zx,zy,zw,zh); ctx.globalAlpha=1; } }
 }
 /* ---- ریتم و شکلِ دهان از خودِ صدا (بدونِ هیچ توکن/هزینه) ---- */
 function podReactStart(){
