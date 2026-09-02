@@ -170,19 +170,23 @@ body.nav-bottom{padding-bottom:100px}
 /* مجریِ تصویریِ پادکست */
 .pod-av{margin:2px 0 13px;display:flex;justify-content:center}
 .pod-av-stage{position:relative;width:100%;max-width:360px;height:158px;border-radius:16px;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;background:radial-gradient(130% 120% at 50% 12%, rgba(154,134,224,.30), rgba(63,185,163,.12) 52%, rgba(20,26,38,.22));box-shadow:inset 0 0 46px rgba(0,0,0,.16)}
-.pod-av-img{width:100%;height:158px;object-fit:cover;object-position:50% 22%;filter:saturate(1.05) contrast(1.02);transform:scale(1);transition:transform .28s ease-out}
-.pod-av.live .pod-av-img{transform:scale(calc(1 + var(--lv,0)*0.035));animation:podBreathe 6.5s ease-in-out infinite}
+.pod-av-img,.pod-av-mouth{position:absolute;inset:0;width:100%;height:158px;object-fit:cover;object-position:50% 22%;transform:scale(1.04);will-change:transform,opacity}
+.pod-av-img{filter:saturate(1.05) contrast(1.02)}
+.pod-av-mouth{opacity:0}
+.pod-av.live .pod-av-mouth{opacity:var(--mo,0)}
+.pod-av.live .pod-av-img,.pod-av.live .pod-av-mouth{animation:podSway 8s ease-in-out infinite}
 .pod-av.paused .pod-av-img{filter:saturate(.8) brightness(.92)}
 .pod-av-ph{width:100%;height:158px;display:flex;align-items:center;justify-content:center}
 .pod-av.live .pod-av-ph{animation:podBreathe 6.5s ease-in-out infinite}
 .pod-av-ring{position:absolute;inset:0;border-radius:16px;pointer-events:none;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.07), inset 0 0 26px rgba(154,134,224,calc(.12 + var(--lv,0)*.55)), 0 0 calc(6px + var(--lv,0)*22px) rgba(63,185,163,calc(var(--lv,0)*.5));transition:box-shadow .09s linear}
-.pod-av-eq{position:absolute;bottom:9px;left:50%;transform:translateX(-50%);display:flex;gap:3px;align-items:flex-end;height:22px;opacity:0;transition:opacity .3s}
+.pod-av-eq{position:absolute;bottom:9px;left:50%;transform:translateX(-50%);display:flex;gap:3px;align-items:flex-end;height:22px;opacity:0;transition:opacity .3s;z-index:2}
 .pod-av.live .pod-av-eq{opacity:calc(.4 + var(--lv,0)*.6)}
 .pod-av-eq i{width:3px;border-radius:2px;background:linear-gradient(#fff,rgba(255,255,255,.55));height:calc(4px + var(--lv,0)*18px);transform-origin:bottom;animation:podEq .85s ease-in-out infinite}
 .pod-av-eq i:nth-child(2){animation-delay:.12s}.pod-av-eq i:nth-child(3){animation-delay:.26s}.pod-av-eq i:nth-child(4){animation-delay:.18s}.pod-av-eq i:nth-child(5){animation-delay:.32s}
 @keyframes podEq{0%,100%{transform:scaleY(.45)}50%{transform:scaleY(1)}}
 @keyframes podBreathe{0%,100%{filter:brightness(1)}50%{filter:brightness(1.03)}}
-@media (prefers-reduced-motion:reduce){.pod-av-img,.pod-av-ph,.pod-av-eq i{animation:none!important}}
+@keyframes podSway{0%,100%{transform:scale(1.04) translate(0,0)}33%{transform:scale(1.05) translate(-1.1%,0.4%)}66%{transform:scale(1.05) translate(1%,-0.5%)}}
+@media (prefers-reduced-motion:reduce){.pod-av-img,.pod-av-mouth,.pod-av-ph,.pod-av-eq i{animation:none!important}}
 .pod-seg{display:flex;gap:7px;flex-wrap:wrap}
 .pod-seg button{flex:1;min-width:64px;background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:10px 6px;font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;transition:all .15s}
 .pod-seg button.on{background:var(--teal-dim);border-color:var(--teal);color:#eafff8}
@@ -1997,7 +2001,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۲.۰</b> · انتشار: ۱۴۰۵/۰۶/۱۰ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۲.۱</b> · انتشار: ۱۴۰۵/۰۶/۱۱ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3280,7 +3284,7 @@ const POD_KEY='podcast_v1', POD_CFG_KEY='pod_cfg_v1';
 let _pod={ mode:'idle', cloud:false, ttsProv:'', music:null,
   utterQueue:[], uIdx:0, utter:null, faVoice:null,
   t0:0, estDur:0, timer:0, prep:false, seeking:false, voiceGain:null, srcNode:null,
-  analyser:null, raf:0, avImg:null, avImgGender:'', avBusy:false, musicKill:0, rawChunks:null, rawType:'',
+  analyser:null, raf:0, avImg:null, avTalk:null, avImgGender:'', avBusy:false, musicKill:0, rawChunks:null, rawType:'',
   buffers:[], durs:[], cum:[0], totalDur:0, allFetched:false, playIdx:0, startCtx:0, startOff:0, playing:false, waiting:false };
 const POD_RATING_FA={great:'عالی',good:'خوب',ok:'معمولی',bad:'سخت'};
 // صداهای انتخابیِ هر سرویس (id واقعیِ سرویس + برچسبِ فارسی)
@@ -3659,29 +3663,91 @@ async function podAvatarEnsure(gender, force){
   const url=await podGenAvatarImage(gender);
   await podAvPut(key, url); return url;
 }
+/* ---- فریمِ «دهان‌باز» از همان چهره (برای تکان‌خوردنِ لب هنگامِ گفتار) ---- */
+function podTalkKey(gender){ return 'avatartalk|'+(gender==='male'?'male':'female')+'|'+POD_AV_VER; }
+function podDataURLtoBlob(u){ const c=String(u).split(','); const mime=(c[0].match(/data:([^;]+)/)||[])[1]||'image/png'; const bin=atob(c[1]||''); const n=bin.length; const a=new Uint8Array(n); for(let i=0;i<n;i++) a[i]=bin.charCodeAt(i); return new Blob([a],{type:mime}); }
+function podLoadImg(src){ return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>rej(new Error('img load')); im.src=src; }); }
+async function podToPngDataURL(src){ const im=await podLoadImg(src); const cv=document.createElement('canvas'); cv.width=im.naturalWidth||1024; cv.height=im.naturalHeight||1024; cv.getContext('2d').drawImage(im,0,0); return cv.toDataURL('image/png'); }
+// ماسکِ نرمِ ناحیهٔ دهان: آلفا۰ = قابلِ ویرایش، آلفا۲۵۵ = دست‌نخورده
+function podMouthMaskBlob(w,h){ return new Promise(res=>{ const cv=document.createElement('canvas'); cv.width=w; cv.height=h; const g=cv.getContext('2d');
+  g.fillStyle='#000'; g.fillRect(0,0,w,h);
+  const cx=w*0.5, cy=h*0.605, rx=w*0.17, ry=h*0.12;
+  g.globalCompositeOperation='destination-out';
+  g.save(); g.translate(cx,cy); g.scale(1, ry/rx);
+  const rg=g.createRadialGradient(0,0,rx*0.3,0,0,rx); rg.addColorStop(0,'rgba(0,0,0,1)'); rg.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=rg; g.beginPath(); g.arc(0,0,rx,0,7); g.fill(); g.restore();
+  cv.toBlob(b=>res(b),'image/png'); }); }
+const POD_TALK_PROMPT='The exact same person, identical face, hair, makeup, clothing, lighting and background. Only change the mouth: mouth open as if speaking a vowel, lips parted, upper teeth slightly visible, natural and photorealistic.';
+async function podOpenAIEditMouth(baseDataURL){
+  const key=getVisionKey('openai'); if(!key) throw new Error('no key');
+  const png=await podToPngDataURL(baseDataURL); const im=await podLoadImg(png); const w=im.naturalWidth||1024, h=im.naturalHeight||1024;
+  const fd=new FormData();
+  fd.append('model','gpt-image-1'); fd.append('image', podDataURLtoBlob(png), 'base.png'); fd.append('mask', await podMouthMaskBlob(w,h), 'mask.png');
+  fd.append('prompt', POD_TALK_PROMPT); fd.append('size', w===h?'1024x1024':'auto'); fd.append('n','1');
+  const res=await fetch('https://api.openai.com/v1/images/edits',{method:'POST',headers:{'authorization':'Bearer '+key},body:fd});
+  if(!res.ok) throw new Error('OpenAI edit '+res.status);
+  const d=await res.json(); const b64=d&&d.data&&d.data[0]&&d.data[0].b64_json; if(!b64) throw new Error('edit empty');
+  return 'data:image/png;base64,'+b64;
+}
+async function podGeminiEditMouth(baseDataURL){
+  const key=getVisionKey('gemini'); if(!key) throw new Error('no key');
+  const png=await podToPngDataURL(baseDataURL); const b64=png.split(',')[1];
+  const url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key='+encodeURIComponent(key);
+  const body={ contents:[{parts:[ {inlineData:{mimeType:'image/png',data:b64}}, {text:POD_TALK_PROMPT+' Return only the edited image.'} ]}] };
+  const res=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+  if(!res.ok) throw new Error('Gemini edit '+res.status);
+  const data=await res.json(); const parts=(((data.candidates||[])[0]||{}).content||{}).parts||[]; const img=parts.find(p=>p&&p.inlineData&&p.inlineData.data);
+  if(!img) throw new Error('gemini edit empty');
+  return 'data:'+(img.inlineData.mimeType||'image/png')+';base64,'+img.inlineData.data;
+}
+async function podGenAvatarTalk(gender, baseDataURL){
+  if(hasAnyKey('openai')&&!aiFrozen('openai')){ try{ return await podOpenAIEditMouth(baseDataURL); }catch(e){ try{console.warn('talk openai:',e&&e.message||e);}catch(_){}} }
+  if(hasAnyKey('gemini')&&!aiFrozen('gemini')){ try{ return await podGeminiEditMouth(baseDataURL); }catch(e){ try{console.warn('talk gemini:',e&&e.message||e);}catch(_){}} }
+  throw new Error('no talk provider');
+}
+async function podAvatarTalkEnsure(gender, baseDataURL, force){
+  const key=podTalkKey(gender);
+  if(!force){ const hit=await podAvGet(key); if(hit) return hit; }
+  const url=await podGenAvatarTalk(gender, baseDataURL);
+  await podAvPut(key, url); return url;
+}
 // بارگذاری از کش (بدونِ ساخت/هزینه) — سرِ لود و تغییرِ چهره
 async function podAvatarLoad(){
   const c=podCfg(); if(!c.avatar) return; const g=c.avGender;
-  if(_pod.avImg && _pod.avImgGender===g) return;
-  try{ const url=await podAvGet(podAvKey(g)); if(url){ _pod.avImg=url; _pod.avImgGender=g; renderPodcastCard(); } }catch(e){}
+  if(_pod.avImg && _pod.avImgGender===g && _pod.avTalk) return;
+  try{
+    if(!(_pod.avImg && _pod.avImgGender===g)){ const url=await podAvGet(podAvKey(g)); if(url){ _pod.avImg=url; _pod.avImgGender=g; } }
+    if(!_pod.avTalk){ const t=await podAvGet(podTalkKey(g)); if(t) _pod.avTalk=t; }
+    renderPodcastCard();
+  }catch(e){}
 }
-// سرِ پخش: اگر روشن است و هنوز عکس نداریم، یک‌بار می‌سازد (اگر کلید باشد؛ وگرنه طرحِ جایگزین)
+// سرِ پخش: چهره + فریمِ دهان‌باز را (یک‌بار) می‌سازد؛ بعد کش و رایگان
 async function podAvatarPrepare(){
   const c=podCfg(); if(!c.avatar) return; const g=c.avGender;
-  if(_pod.avImg && _pod.avImgGender===g) return;
-  const cached=await podAvGet(podAvKey(g)); if(cached){ _pod.avImg=cached; _pod.avImgGender=g; renderPodcastCard(); return; }
+  // اول از کش (بی‌هزینه)
+  if(!(_pod.avImg && _pod.avImgGender===g)){ const cb=await podAvGet(podAvKey(g)); if(cb){ _pod.avImg=cb; _pod.avImgGender=g; } }
+  if(!_pod.avTalk){ const ct=await podAvGet(podTalkKey(g)); if(ct) _pod.avTalk=ct; }
+  renderPodcastCard();
+  const ready = (_pod.avImg && _pod.avImgGender===g) && _pod.avTalk;
+  if(ready) return;
   if(!(hasAnyKey('openai')||hasAnyKey('gemini'))) return;   // بدونِ کلید → طرحِ جایگزینِ CSS
   if(_pod.avBusy) return; _pod.avBusy=true;
-  try{ uiToast&&uiToast('در حالِ ساختِ چهرهٔ مجری (فقط یک‌بار)…'); const url=await podAvatarEnsure(g,false); _pod.avImg=url; _pod.avImgGender=g; renderPodcastCard(); }
-  catch(e){ try{console.warn('avatar prepare:',e&&e.message||e);}catch(_){} }
+  try{
+    if(!(_pod.avImg && _pod.avImgGender===g)){ uiToast&&uiToast('در حالِ ساختِ چهرهٔ مجری (یک‌بار)…'); const url=await podAvatarEnsure(g,false); _pod.avImg=url; _pod.avImgGender=g; renderPodcastCard(); }
+    if(!_pod.avTalk && _pod.avImg){ uiToast&&uiToast('در حالِ زنده‌سازیِ لب‌ها…'); const t=await podAvatarTalkEnsure(g,_pod.avImg,false); _pod.avTalk=t; renderPodcastCard(); }
+  }catch(e){ try{console.warn('avatar prepare:',e&&e.message||e);}catch(_){} }
   finally{ _pod.avBusy=false; }
 }
 async function podAvatarRegen(){
-  const c=podCfg();
+  const c=podCfg(); const g=c.avGender;
   if(!(hasAnyKey('openai')||hasAnyKey('gemini'))){ uiToast&&uiToast('برای ساختِ چهره، کلیدِ OpenAI یا Gemini لازم است (تنظیماتِ 🤖).'); return; }
-  if(_pod.avBusy) return; _pod.avBusy=true; uiToast&&uiToast('در حالِ ساختِ چهرهٔ تازه…'); try{ renderPodCfg(); }catch(e){}
-  try{ const url=await podAvatarEnsure(c.avGender,true); _pod.avImg=url; _pod.avImgGender=c.avGender; uiToast&&uiToast('✓ چهرهٔ مجری ساخته شد'); }
-  catch(e){ uiToast&&uiToast('ساختِ چهره نشد (کلید/اینترنت؟)'); }
+  if(_pod.avBusy) return; _pod.avBusy=true; _pod.avTalk=null; uiToast&&uiToast('در حالِ ساختِ چهرهٔ تازه…'); try{ renderPodCfg(); }catch(e){}
+  try{
+    const url=await podAvatarEnsure(g,true); _pod.avImg=url; _pod.avImgGender=g; try{ renderPodCfg(); renderPodcastCard(); }catch(e){}
+    uiToast&&uiToast('در حالِ زنده‌سازیِ لب‌ها…'); const t=await podAvatarTalkEnsure(g,url,true); _pod.avTalk=t;
+    uiToast&&uiToast('✓ چهرهٔ مجری ساخته شد');
+  }
+  catch(e){ uiToast&&uiToast(_pod.avImg?'چهره ساخته شد ولی زنده‌سازیِ لب نشد':'ساختِ چهره نشد (کلید/اینترنت؟)'); }
   finally{ _pod.avBusy=false; try{ renderPodCfg(); renderPodcastCard(); }catch(e){} }
 }
 function podAvatarSilhouetteSVG(gender){
@@ -3699,11 +3765,12 @@ function podReactStart(){
     if(an && _pod.cloud && data){ an.getByteFrequencyData(data); let s=0; for(let i=0;i<data.length;i++) s+=data[i]; lv=Math.min(1,(s/data.length)/78); }
     else { lv=0.28+0.34*Math.abs(Math.sin(Date.now()/150))+Math.random()*0.14; }   // نبضِ تخمینی برای صدای گوشی
     el.style.setProperty('--lv', lv.toFixed(3));
+    el.style.setProperty('--mo', Math.min(1, lv*1.85).toFixed(3));   // شفافیتِ فریمِ دهان‌باز
     _pod.raf=requestAnimationFrame(loop);
   };
   _pod.raf=requestAnimationFrame(loop);
 }
-function podReactStop(){ if(_pod.raf){ cancelAnimationFrame(_pod.raf); _pod.raf=0; } const el=document.getElementById('podAvatar'); if(el) el.style.setProperty('--lv','0'); }
+function podReactStop(){ if(_pod.raf){ cancelAnimationFrame(_pod.raf); _pod.raf=0; } const el=document.getElementById('podAvatar'); if(el){ el.style.setProperty('--lv','0'); el.style.setProperty('--mo','0'); } }
 
 /* ---- دانلودِ فایلِ پادکست (WAV یک‌تکه از قطعه‌های صوتی) ---- */
 function podEncodeWav(sampleRate, channels){
@@ -3761,7 +3828,7 @@ function renderPodcastCard(){
   const sliderOn = cloud&&active;   // اسکراب فقط با صدای ابری
   const avOn=c.avatar;
   const avInner = _pod.avImg
-    ? `<img class="pod-av-img" src="${_pod.avImg}" alt="مجریِ پادکست">`
+    ? `<img class="pod-av-img" src="${_pod.avImg}" alt="مجریِ پادکست">`+(_pod.avTalk?`<img class="pod-av-mouth" src="${_pod.avTalk}" alt="">`:'')
     : `<div class="pod-av-ph">${podAvatarSilhouetteSVG(c.avGender)}</div>`;
   const avBlock = avOn ? `<div id="podAvatar" class="pod-av ${active?'live':''} ${paused?'paused':''}" style="--lv:0">
       <div class="pod-av-stage">${avInner}<div class="pod-av-ring"></div><div class="pod-av-eq"><i></i><i></i><i></i><i></i><i></i></div></div>
@@ -3795,7 +3862,7 @@ function renderPodcastCard(){
 function podOpenCfg(){ renderPodCfg(); const m=document.getElementById('podCfgModal'); if(m) m.classList.add('show'); }
 function podCloseCfg(){ const m=document.getElementById('podCfgModal'); if(m) m.classList.remove('show'); try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} podTestStop(); }
 function podCfgPick(k,v){ const patch={}; patch[k]=v; podCfgSet(patch);
-  if(k==='avGender'){ _pod.avImg=null; _pod.avImgGender=''; }
+  if(k==='avGender'){ _pod.avImg=null; _pod.avTalk=null; _pod.avImgGender=''; }
   renderPodCfg(); renderPodcastCard();
   if(k==='avGender'||(k==='avatar'&&v)){ try{ podAvatarLoad(); }catch(e){} }
   if(k==='minutes') uiToast&&uiToast('برای اعمالِ مدت، «ساختِ دوباره 🔄» را بزن'); }
@@ -3827,8 +3894,10 @@ function renderPodCfg(){
     h+=`<label class="qbg-lbl" style="margin-top:8px">چهرهٔ مجری</label>`;
     h+=`<div class="pod-seg">`+[['female','👩‍💼 زن'],['male','🧑‍💼 مرد']].map(o=>`<button class="${c.avGender===o[0]?'on':''}" onclick="podCfgPick('avGender','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
     const hasImgKey=hasAnyKey('openai')||hasAnyKey('gemini');
-    h+=`<div class="pod-vrow" style="margin-top:8px"><span class="pod-vname">${_pod.avImg&&_pod.avImgGender===c.avGender?'✓ چهره آماده است':'چهره‌ای ساخته نشده'}</span><button class="pod-vtest" ${(_pod.avBusy||!hasImgKey)?'disabled':''} onclick="podAvatarRegen()">${_pod.avBusy?'… در حالِ ساخت':'🎨 ساختِ چهره'}</button></div>`;
-    h+=`<div class="qbg-sub" style="margin-top:4px">پرتره با هوش مصنوعی ${hasImgKey?'':'(نیازمندِ کلیدِ OpenAI یا Gemini) '}فقط یک‌بار ساخته می‌شود و بعد آفلاین و رایگان است؛ هنگامِ پخش با صدا هماهنگ می‌شود.</div>`;
+    const avReady=_pod.avImg&&_pod.avImgGender===c.avGender;
+    const stat = avReady ? (_pod.avTalk?'✓ چهره + لب‌های متحرک آماده':'✓ چهره آماده (بدونِ لبِ متحرک)') : 'چهره‌ای ساخته نشده';
+    h+=`<div class="pod-vrow" style="margin-top:8px"><span class="pod-vname">${stat}</span><button class="pod-vtest" ${(_pod.avBusy||!hasImgKey)?'disabled':''} onclick="podAvatarRegen()">${_pod.avBusy?'… در حالِ ساخت':'🎨 ساختِ چهره'}</button></div>`;
+    h+=`<div class="qbg-sub" style="margin-top:4px">پرتره با هوش مصنوعی ${hasImgKey?'':'(نیازمندِ کلیدِ OpenAI یا Gemini) '}فقط یک‌بار ساخته می‌شود (چهره + یک فریمِ «دهان‌باز» برای تکان‌خوردنِ لب) و بعد آفلاین و رایگان است؛ لب‌ها هنگامِ پخش با صدا هماهنگ می‌شوند.</div>`;
   }
   box.innerHTML=h;
 }
