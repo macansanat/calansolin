@@ -2014,7 +2014,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۵</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۶</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3723,7 +3723,44 @@ const POD_SOLO_IDS=['BL','BR'];         // پلک و ابرو (مستقل، آل
 function podFrKey(gender,id){ return 'avfr|'+(gender==='male'?'male':'female')+'|'+id+'|'+POD_FR_VER; }
 function podGeomKey(gender){ return 'avgeom|'+(gender==='male'?'male':'female')+'|'+POD_FR_VER; }
 function podTalkKey(gender){ return 'avatartalk|'+(gender==='male'?'male':'female')+'|'+POD_AV_VER; }   // فریمِ نسخه ۲۲.۱ → مهاجرت به 'A'
-function podRegions(){ const r=_pod.avGeom||{}; return { mouth:r.mouth||POD_REG_DEF.mouth, eyes:r.eyes||POD_REG_DEF.eyes, brow:r.brow||POD_REG_DEF.brow }; }
+// حدهای منطقیِ هر ناحیه — ماسکِ دهان هرگز نباید بزرگ‌تر از یک دهان شود (وگرنه کلِ صورت
+// عوض می‌شود و انیمیشن به «اسلایدشوِ چند عکسِ متفاوت» تبدیل می‌گردد — شکایتِ کاربر).
+const POD_REG_LIM={
+  mouth:{ x:[.30,.70], y:[.34,.86], rx:[.070,.165], ry:[.045,.105] },
+  eyes: { x:[.30,.70], y:[.12,.60], rx:[.100,.240], ry:[.030,.080] },
+  brow: { x:[.30,.70], y:[.08,.55], rx:[.100,.240], ry:[.028,.075] }
+};
+function podClampReg(r, kind){
+  const L=POD_REG_LIM[kind]; if(!L||!r||typeof r.x!=='number') return null;
+  const cl=(v,a)=>Math.max(a[0],Math.min(a[1],v));
+  if(r.x<L.x[0]-.12||r.x>L.x[1]+.12||r.y<L.y[0]-.10||r.y>L.y[1]+.10) return null;   // خیلی پرت — قابل‌اعتماد نیست
+  return { x:cl(r.x,L.x), y:cl(r.y,L.y), rx:cl(r.rx||0,L.rx), ry:cl(r.ry||0,L.ry) };
+}
+function podRegions(){
+  const r=_pod.avGeom||{};
+  return {
+    mouth: podClampReg(r.mouth,'mouth')||POD_REG_DEF.mouth,
+    eyes:  podClampReg(r.eyes,'eyes') ||POD_REG_DEF.eyes,
+    brow:  podClampReg(r.brow,'brow') ||POD_REG_DEF.brow
+  };
+}
+// چقدر از فریم *بیرونِ* ناحیهٔ مجاز با چهرهٔ پایه فرق دارد؟ اگر زیاد بود یعنی AI کلِ عکس را
+// عوض کرده (ژست/زاویه/نور فرق دارد) و مهرکردنش = پریدنِ چهره. چنین فریمی کنار گذاشته می‌شود.
+function _podOutsideDiff(baseIm, frIm, r){
+  try{
+    const S=96;
+    const mk=(im)=>{ const c=document.createElement('canvas'); c.width=c.height=S; const g=c.getContext('2d'); g.drawImage(im,0,0,S,S); return g.getImageData(0,0,S,S).data; };
+    const a=mk(baseIm), b=mk(frIm); let n=0, tot=0;
+    const gx=Math.max(.03,(r.rx||.12)*1.9), gy=Math.max(.03,(r.ry||.08)*2.1);
+    for(let y=0;y<S;y++){ for(let x=0;x<S;x++){
+      const dx=((x+.5)/S-r.x)/gx, dy=((y+.5)/S-r.y)/gy;
+      if(dx*dx+dy*dy<=1) continue;                       // داخلِ ناحیه — طبیعی است که فرق کند
+      const i=(y*S+x)*4; tot++;
+      if((Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2]))/3 > 24) n++;
+    } }
+    return tot? n/tot : 1;
+  }catch(e){ return 0; }
+}
 /* ---- تشخیصِ خودکارِ ناحیه از تفاوتِ فریم با چهرهٔ پایه (بی‌هزینه، همیشه هم‌ترازِ تغییرِ واقعی) ----
    مشکلِ اصلیِ «لب تکان نمی‌خورد»: مختصاتِ ماسکِ ترکیب اشتباه بود (تشخیصِ ویژن پیش‌فرضِ
    بالا می‌افتاد، روی بینی)، پس ماسک جایی را می‌برید که بین همهٔ فریم‌ها یکی است.
@@ -3737,7 +3774,7 @@ function _podDiffBox(baseD, frD, S){
   const mx=sx/sw, my=sy/sw; let vx=0,vy=0;
   for(let k=0;k<pts.length;k+=3){ const dx=pts[k]-mx, dy=pts[k+1]-my, d=pts[k+2]; vx+=d*dx*dx; vy+=d*dy*dy; }
   const rx=Math.sqrt(vx/sw), ry=Math.sqrt(vy/sw);
-  return { x:mx/S, y:my/S, rx:Math.min(.42,(rx*2.5)/S), ry:Math.min(.34,(ry*2.7)/S) };
+  return { x:mx/S, y:my/S, rx:(rx*2.5)/S, ry:(ry*2.7)/S, frac:(pts.length/3)/(S*S) };
 }
 async function podComputeCompRegions(){
   if(!_pod.avImg||!_pod.avFrames) return null;
@@ -3746,9 +3783,11 @@ async function podComputeCompRegions(){
   let baseD; try{ baseD=await toData(_pod.avImg); }catch(e){ return null; }
   const out={};
   const mSrc=_pod.avFrames.A||_pod.avFrames.E||_pod.avFrames.O;
-  if(mSrc){ try{ const r=_podDiffBox(baseD, await toData(mSrc), S); if(r&&r.y>.30&&r.y<.90){ r.rx=Math.max(.08,r.rx); r.ry=Math.max(.055,r.ry); out.mouth=r; } }catch(e){} }
-  if(_pod.avFrames.BL){ try{ const r=_podDiffBox(baseD, await toData(_pod.avFrames.BL), S); if(r&&r.y>.12&&r.y<.60){ r.rx=Math.max(.13,r.rx); r.ry=Math.max(.045,r.ry); out.eyes=r; } }catch(e){} }
-  if(_pod.avFrames.BR){ try{ const r=_podDiffBox(baseD, await toData(_pod.avFrames.BR), S); if(r&&r.y>.08&&r.y<.55){ r.rx=Math.max(.13,r.rx); r.ry=Math.max(.045,r.ry); out.brow=r; } }catch(e){} }
+  // اگر تفاوت «سراسری» باشد (AI کلِ عکس را عوض کرده) مرکزِ دیف بی‌معنی است → به پیش‌فرض تکیه کن
+  const take=(r,kind)=>{ if(!r||r.frac>0.30) return null; return podClampReg(r,kind); };
+  if(mSrc){ try{ const r=take(_podDiffBox(baseD, await toData(mSrc), S),'mouth'); if(r) out.mouth=r; }catch(e){} }
+  if(_pod.avFrames.BL){ try{ const r=take(_podDiffBox(baseD, await toData(_pod.avFrames.BL), S),'eyes'); if(r) out.eyes=r; }catch(e){} }
+  if(_pod.avFrames.BR){ try{ const r=take(_podDiffBox(baseD, await toData(_pod.avFrames.BR), S),'brow'); if(r) out.brow=r; }catch(e){} }
   return (out.mouth||out.eyes||out.brow)?out:null;
 }
 // ناحیه‌ها را از روی فریم‌ها اصلاح می‌کند و برای ترکیبِ درست به کار می‌برد (یک‌بار در هر جلسه)
@@ -4000,11 +4039,17 @@ async function podAvBuildLayers(){
   if(!_pod.avImg) return null;
   if(_pod.avLayers && _pod.avLayersFor===_pod.avImg) return _pod.avLayers;
   let base; try{ base=await podLoadImg(_pod.avImg); }catch(e){ return null; }
-  const regs=podRegions(); const L={ base, frames:{} };
+  const regs=podRegions(); const L={ base, frames:{}, bad:{} };
   for(const fr of POD_FRAMES){
     const src=_pod.avFrames&&_pod.avFrames[fr.id]; if(!src) continue;
-    try{ const im=await podLoadImg(src); L.frames[fr.id]=podAvSoftMasked(im, regs[fr.reg]); }catch(e){}
+    try{ const im=await podLoadImg(src);
+      const od=_podOutsideDiff(base, im, regs[fr.reg]);
+      if(od>0.12){ L.bad[fr.id]=od; continue; }   // ژست/چهرهٔ متفاوت — مهرش «پریدنِ عکس» می‌سازد
+      L.frames[fr.id]=podAvSoftMasked(im, regs[fr.reg]);
+    }catch(e){}
   }
+  try{ L.baseMouth=podAvSoftMasked(base, regs.mouth); }catch(e){}   // حالتِ «دهانِ بسته» برای گذارِ نرم
+  _pod.avBad=Object.keys(L.bad);
   _pod.avLayers=L; _pod.avLayersFor=_pod.avImg; return L;
 }
 /* دهانِ رویه‌ای (فقط وقتی فریمِ ساخته‌شده نداریم): حفرهٔ تیرهٔ نرم‌لبه که با شدتِ آوا
@@ -4036,6 +4081,13 @@ function podDrawMouthProc(ctx, zx,zy,zw,zh, r, open, vis){
   }
   ctx.restore();
 }
+// بافرِ کمکیِ میکسِ حالت‌های دهان (یک‌بار ساخته می‌شود)
+function _podMixCtx(W,H){
+  try{ let c=_pod.avMixCv; if(!c) c=_pod.avMixCv=document.createElement('canvas');
+    if(c.width!==W||c.height!==H){ c.width=W; c.height=H; }
+    return c.getContext('2d');
+  }catch(e){ return null; }
+}
 function podAvDraw(){
   const cv=document.getElementById('podAvCanvas'); const L=_pod.avLayers; if(!cv||!L||!L.base) return;
   const dpr=Math.min(2, window.devicePixelRatio||1);
@@ -4058,13 +4110,24 @@ function podAvDraw(){
   // اصلاح: مثلِ لب‌سینکِ ۲بعدیِ کلاسیک یک ویزمِ «غالب» را «تمام‌کدر» روی همان ناحیه مهر
   // می‌کنیم؛ لبهٔ ماسک نرم است پس بی‌درز با پوست ترکیب می‌شود، و چون هستهٔ ماسک کاملاً
   // کدر است دهانِ بستهٔ زیر هرگز از پشتش پیدا نیست → دیگر شبح نداریم، بازوبسته‌شدنِ واقعی.
+  // نسخه ۲۳.۶: به‌جای «کات»ِ ناگهانی بین حالت‌ها، دو حالتِ متوالی داخلِ یک بافرِ کمکی روی هم
+  // میکس می‌شوند و بعد یک‌جا و تمام‌کدر روی چهره می‌نشینند. چون هستهٔ هر دو لایه کدر است،
+  // دهانِ بستهٔ زیر هرگز از پشت پیدا نمی‌شود → نرم می‌شود ولی شبح/سایه نمی‌سازد.
   const M=_pod.avMouth||{vis:'X',open:0};
   const mo=Math.max(0,Math.min(1,M.open||0));
-  const mFrame=(M.vis&&M.vis!=='X')?L.frames[M.vis]:null;
-  if(mFrame && mo>0.03){
-    ctx.drawImage(mFrame, zx,zy,zw,zh);          // مهرِ تمام‌کدر، بدونِ آلفا → بدونِ سایه
+  const anyMouth=POD_MOUTH_IDS.some(id=>L.frames[id]);
+  if(anyMouth){
+    const layOf=v=>((v&&v!=='X'&&L.frames[v])?L.frames[v]:L.baseMouth);
+    const cur=layOf(M.vis), prv=layOf(M.prev), k=Math.max(0,Math.min(1,(M.mix==null?1:M.mix)));
+    if(cur&&prv&&cur!==prv&&k<0.995){
+      const mx=_podMixCtx(W,H);
+      if(mx){ mx.clearRect(0,0,W,H); mx.drawImage(prv, zx,zy,zw,zh);
+        mx.globalAlpha=k; mx.drawImage(cur, zx,zy,zw,zh); mx.globalAlpha=1;
+        ctx.drawImage(mx.canvas, 0,0); }
+      else ctx.drawImage(cur, zx,zy,zw,zh);
+    } else if(cur){ ctx.drawImage(cur, zx,zy,zw,zh); }
   } else if(mo>0.06){
-    // بدونِ فریمِ ساخته‌شده (کلید/چهره آماده نیست) → دهانِ رویه‌ای: حفرهٔ تیره که با آوا باز/بسته می‌شود
+    // فریمِ قابل‌استفاده نداریم → دهانِ رویه‌ای: حرکتِ پیوسته و همیشه هم‌تراز (نرم، بدونِ پرش)
     try{ podDrawMouthProc(ctx, zx,zy,zw,zh, podRegions().mouth, mo, M.vis); }catch(e){}
   }
   for(const id of POD_SOLO_IDS){ const lay=L.frames[id]; if(!lay) continue;
@@ -4080,7 +4143,7 @@ function podReactStart(){
   const fd=an?new Uint8Array(an.frequencyBinCount):null;
   const td=an?new Uint8Array(an.fftSize):null;
   const W=_pod.avW={A:0,E:0,O:0,BL:0,BR:0};
-  const MO=_pod.avMouth={vis:'X',open:0,visAt:0};        // دهانِ گسسته: ویزمِ فعلی + شدتِ بازشدن
+  const MO=_pod.avMouth={vis:'X',prev:'X',mix:1,open:0,visAt:0};   // ویزمِ فعلی + قبلی + پیشرفتِ گذار
   const calm=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
   const lerp=(a,b,k)=>a+(b-a)*k;
   let env=0, envSlow=0;
@@ -4111,8 +4174,10 @@ function podReactStart(){
     MO.open=lerp(MO.open, open, calm?0.22:0.42);
     let want='X';
     if(MO.open>=0.10) want=(sA>=sE&&sA>=sO)?'A':((sE>=sO)?'E':'O');
-    if(want!==MO.vis){ const held=now-(MO.visAt||0), minHold=(want==='X')?90:60;
-      if(held>=minHold){ MO.vis=want; MO.visAt=now; } }
+    if(want!==MO.vis){ const held=now-(MO.visAt||0), minHold=(want==='X')?130:80;
+      if(held>=minHold){ MO.prev=MO.vis; MO.vis=want; MO.visAt=now; } }
+    const XF=calm?170:120;                                  // مدتِ گذارِ نرمِ بین دو حالت (ms)
+    MO.mix=Math.max(0,Math.min(1,(now-(MO.visAt||0))/XF));
     env=lerp(env,lv,0.28); envSlow=lerp(envSlow,lv,0.02);     // ابرو روی تأکیدِ جمله بالا می‌رود
     W.BR=lerp(W.BR, Math.max(0,Math.min(1,(env-envSlow)*2.8)), 0.12);
     if(now>=_pod.blinkNext){ _pod.blinkAt=now; _pod.blinkNext=now+2200+Math.random()*4200; }
@@ -4129,7 +4194,7 @@ function podReactStart(){
 function podReactStop(){
   if(_pod.raf){ cancelAnimationFrame(_pod.raf); _pod.raf=0; }
   const el=document.getElementById('podAvatar'); if(el) el.style.setProperty('--lv','0');
-  _pod.avW={A:0,E:0,O:0,BL:0,BR:0}; _pod.avMouth={vis:'X',open:0,visAt:0}; _pod.avSway={x:0,y:0,s:1.02};
+  _pod.avW={A:0,E:0,O:0,BL:0,BR:0}; _pod.avMouth={vis:'X',prev:'X',mix:1,open:0,visAt:0}; _pod.avSway={x:0,y:0,s:1.02};
   try{ podAvDraw(); }catch(e){}
 }
 
@@ -4271,6 +4336,8 @@ function renderPodCfg(){
     // ابزارِ عیب‌یابی (فقط وقتی چهره‌ای هست)
     if(avReady && !_pod.avBusy){
       h+=`<label class="qbg-lbl" style="margin-top:10px">عیب‌یابیِ حالت‌ها (تست)</label>`;
+      // فریم‌هایی که AI به‌جای ویرایشِ همان چهره، عکسِ تازه‌ای ساخته → کنار گذاشته شده‌اند
+      if(_pod.avBad&&_pod.avBad.length){ h+=`<div class="qbg-sub" style="margin-top:4px;color:var(--amber)">⚠️ ${faDigits(String(_pod.avBad.length))} حالت (${_pod.avBad.join('، ')}) با چهرهٔ پایه هم‌خوان نبود (ژست/زاویه فرق داشت) و برای جلوگیری از «پریدنِ عکس» کنار گذاشته شد. با «🔄 چهرهٔ نو» یا ساختِ دوبارهٔ همان حالت‌ها بهتر می‌شود.</div>`; }
       h+=`<div class="pod-seg"><button onclick="podAvShowStates()">🔍 نمایشِ حالت‌ها</button><button onclick="podAvDownloadStates()">⬇️ دانلود</button><button onclick="podAvLoadTestFrames()">🧪 تستِ موتور</button></div>`;
       if(_pod.avStripURL){ h+=`<div class="qbg-sub" style="margin-top:6px">اگر دهانِ «آ/ای/او» زیر واقعاً باز نیست، مشکل از عکس‌های AI است (نه موتور). این تصویر را برایم بفرست:</div>`;
         h+=`<div style="margin-top:6px;overflow-x:auto;-webkit-overflow-scrolling:touch"><img src="${_pod.avStripURL}" style="height:150px;max-width:none;border-radius:8px" alt="حالت‌های چهره"></div>`; }
