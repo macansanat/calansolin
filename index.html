@@ -170,12 +170,10 @@ body.nav-bottom{padding-bottom:100px}
 /* مجریِ تصویریِ پادکست */
 .pod-av{margin:2px 0 13px;display:flex;justify-content:center}
 .pod-av-stage{position:relative;width:100%;max-width:360px;height:158px;border-radius:16px;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;background:radial-gradient(130% 120% at 50% 12%, rgba(154,134,224,.30), rgba(63,185,163,.12) 52%, rgba(20,26,38,.22));box-shadow:inset 0 0 46px rgba(0,0,0,.16)}
-.pod-av-img,.pod-av-mouth{position:absolute;inset:0;width:100%;height:158px;object-fit:cover;object-position:50% 22%;transform:scale(1.04);will-change:transform,opacity}
-.pod-av-img{filter:saturate(1.05) contrast(1.02)}
-.pod-av-mouth{opacity:0}
-.pod-av.live .pod-av-mouth{opacity:var(--mo,0)}
-.pod-av.live .pod-av-img,.pod-av.live .pod-av-mouth{animation:podSway 8s ease-in-out infinite}
-.pod-av.paused .pod-av-img{filter:saturate(.8) brightness(.92)}
+.pod-av-img,.pod-av-cv{position:absolute;inset:0;width:100%;height:158px}
+.pod-av-img{object-fit:cover;object-position:50% 22%;filter:saturate(1.05) contrast(1.02)}
+.pod-av-cv{display:block;will-change:contents}
+.pod-av.paused .pod-av-img,.pod-av.paused .pod-av-cv{filter:saturate(.85) brightness(.93)}
 .pod-av-ph{width:100%;height:158px;display:flex;align-items:center;justify-content:center}
 .pod-av.live .pod-av-ph{animation:podBreathe 6.5s ease-in-out infinite}
 .pod-av-ring{position:absolute;inset:0;border-radius:16px;pointer-events:none;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.07), inset 0 0 26px rgba(154,134,224,calc(.12 + var(--lv,0)*.55)), 0 0 calc(6px + var(--lv,0)*22px) rgba(63,185,163,calc(var(--lv,0)*.5));transition:box-shadow .09s linear}
@@ -186,7 +184,7 @@ body.nav-bottom{padding-bottom:100px}
 @keyframes podEq{0%,100%{transform:scaleY(.45)}50%{transform:scaleY(1)}}
 @keyframes podBreathe{0%,100%{filter:brightness(1)}50%{filter:brightness(1.03)}}
 @keyframes podSway{0%,100%{transform:scale(1.04) translate(0,0)}33%{transform:scale(1.05) translate(-1.1%,0.4%)}66%{transform:scale(1.05) translate(1%,-0.5%)}}
-@media (prefers-reduced-motion:reduce){.pod-av-img,.pod-av-mouth,.pod-av-ph,.pod-av-eq i{animation:none!important}}
+@media (prefers-reduced-motion:reduce){.pod-av-img,.pod-av-ph,.pod-av-eq i{animation:none!important}}
 .pod-seg{display:flex;gap:7px;flex-wrap:wrap}
 .pod-seg button{flex:1;min-width:64px;background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:10px 6px;font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;transition:all .15s}
 .pod-seg button.on{background:var(--teal-dim);border-color:var(--teal);color:#eafff8}
@@ -2001,7 +1999,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۲.۱</b> · انتشار: ۱۴۰۵/۰۶/۱۱ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۰</b> · انتشار: ۱۴۰۵/۰۶/۱۱ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3284,7 +3282,8 @@ const POD_KEY='podcast_v1', POD_CFG_KEY='pod_cfg_v1';
 let _pod={ mode:'idle', cloud:false, ttsProv:'', music:null,
   utterQueue:[], uIdx:0, utter:null, faVoice:null,
   t0:0, estDur:0, timer:0, prep:false, seeking:false, voiceGain:null, srcNode:null,
-  analyser:null, raf:0, avImg:null, avTalk:null, avImgGender:'', avBusy:false, musicKill:0, rawChunks:null, rawType:'',
+  analyser:null, raf:0, avImg:null, avImgGender:'', avBusy:false, musicKill:0, rawChunks:null, rawType:'',
+  avFrames:null, avLayers:null, avLayersFor:'', avGeom:null, avW:null, avSway:null, blinkNext:0, blinkAt:0,
   buffers:[], durs:[], cum:[0], totalDur:0, allFetched:false, playIdx:0, startCtx:0, startOff:0, playing:false, waiting:false };
 const POD_RATING_FA={great:'عالی',good:'خوب',ok:'معمولی',bad:'سخت'};
 // صداهای انتخابیِ هر سرویس (id واقعیِ سرویس + برچسبِ فارسی)
@@ -3663,114 +3662,242 @@ async function podAvatarEnsure(gender, force){
   const url=await podGenAvatarImage(gender);
   await podAvPut(key, url); return url;
 }
-/* ---- فریمِ «دهان‌باز» از همان چهره (برای تکان‌خوردنِ لب هنگامِ گفتار) ---- */
-function podTalkKey(gender){ return 'avatartalk|'+(gender==='male'?'male':'female')+'|'+POD_AV_VER; }
+/* ---- فریم‌های چهرهٔ مجری: ویزم‌های دهان + پلک + ابرو (هرکدام یک‌بار ساخته و کش می‌شود) ---- */
+/* هر فریم با ویرایشِ ماسک‌دار فقط همان ناحیه را عوض می‌کند تا بقیهٔ صورت عیناً یکی بماند */
+const POD_FR_VER='v2';
+const POD_REG_DEF={ mouth:{x:.50,y:.445,rx:.135,ry:.080}, eyes:{x:.50,y:.288,rx:.205,ry:.058}, brow:{x:.50,y:.250,rx:.205,ry:.052} };
+const POD_FRAMES=[
+  {id:'A',  reg:'mouth', p:'the mouth open as if saying "aah", jaw dropped naturally, upper and lower teeth slightly visible, relaxed lips'},
+  {id:'BL', reg:'eyes',  p:'both eyes gently and fully closed, eyelids relaxed and down as in a natural blink, eyelashes visible'},
+  {id:'E',  reg:'mouth', p:'the mouth open in a wide "eee" shape, lips spread horizontally, upper teeth visible, slight smile'},
+  {id:'O',  reg:'mouth', p:'the lips rounded and slightly pushed forward as if saying "ooo", a small rounded mouth opening'},
+  {id:'BR', reg:'brow',  p:'both eyebrows raised slightly in a warm, engaged, expressive way'}
+];
+function podFrKey(gender,id){ return 'avfr|'+(gender==='male'?'male':'female')+'|'+id+'|'+POD_FR_VER; }
+function podGeomKey(gender){ return 'avgeom|'+(gender==='male'?'male':'female')+'|'+POD_FR_VER; }
+function podTalkKey(gender){ return 'avatartalk|'+(gender==='male'?'male':'female')+'|'+POD_AV_VER; }   // فریمِ نسخه ۲۲.۱ → مهاجرت به 'A'
+function podRegions(){ const r=_pod.avGeom||{}; return { mouth:r.mouth||POD_REG_DEF.mouth, eyes:r.eyes||POD_REG_DEF.eyes, brow:r.brow||POD_REG_DEF.brow }; }
 function podDataURLtoBlob(u){ const c=String(u).split(','); const mime=(c[0].match(/data:([^;]+)/)||[])[1]||'image/png'; const bin=atob(c[1]||''); const n=bin.length; const a=new Uint8Array(n); for(let i=0;i<n;i++) a[i]=bin.charCodeAt(i); return new Blob([a],{type:mime}); }
 function podLoadImg(src){ return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>rej(new Error('img load')); im.src=src; }); }
 async function podToPngDataURL(src){ const im=await podLoadImg(src); const cv=document.createElement('canvas'); cv.width=im.naturalWidth||1024; cv.height=im.naturalHeight||1024; cv.getContext('2d').drawImage(im,0,0); return cv.toDataURL('image/png'); }
-// ماسکِ نرمِ ناحیهٔ دهان: آلفا۰ = قابلِ ویرایش، آلفا۲۵۵ = دست‌نخورده
-function podMouthMaskBlob(w,h){ return new Promise(res=>{ const cv=document.createElement('canvas'); cv.width=w; cv.height=h; const g=cv.getContext('2d');
-  g.fillStyle='#000'; g.fillRect(0,0,w,h);
-  const cx=w*0.5, cy=h*0.605, rx=w*0.17, ry=h*0.12;
-  g.globalCompositeOperation='destination-out';
-  g.save(); g.translate(cx,cy); g.scale(1, ry/rx);
-  const rg=g.createRadialGradient(0,0,rx*0.3,0,0,rx); rg.addColorStop(0,'rgba(0,0,0,1)'); rg.addColorStop(1,'rgba(0,0,0,0)');
-  g.fillStyle=rg; g.beginPath(); g.arc(0,0,rx,0,7); g.fill(); g.restore();
+// بیضیِ نرمِ یک ناحیه روی کانواس (برای ماسکِ ساخت و ماسکِ نمایش)
+function podEllipseFade(g,w,h,r,inner){ g.save(); g.translate(w*r.x,h*r.y); const R=w*r.rx; g.scale(1,(h*r.ry)/R);
+  const rg=g.createRadialGradient(0,0,R*inner,0,0,R); rg.addColorStop(0,'rgba(0,0,0,1)'); rg.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=rg; g.beginPath(); g.arc(0,0,R,0,7); g.fill(); g.restore(); }
+// ماسکِ ویرایش: آلفا۰ = قابلِ ویرایش، آلفا۲۵۵ = دست‌نخورده
+function podRegionMaskBlob(w,h,r){ return new Promise(res=>{ const cv=document.createElement('canvas'); cv.width=w; cv.height=h; const g=cv.getContext('2d');
+  g.fillStyle='#000'; g.fillRect(0,0,w,h); g.globalCompositeOperation='destination-out'; podEllipseFade(g,w,h,r,0.35);
   cv.toBlob(b=>res(b),'image/png'); }); }
-const POD_TALK_PROMPT='The exact same person, identical face, hair, makeup, clothing, lighting and background. Only change the mouth: mouth open as if speaking a vowel, lips parted, upper teeth slightly visible, natural and photorealistic.';
-async function podOpenAIEditMouth(baseDataURL){
+const POD_KEEP='Keep the exact same person: identical face, hair, makeup, skin tone, clothing, pose, camera angle, lighting and background. Change nothing except the described detail. Photorealistic, seamless. ';
+async function podOpenAIEditRegion(baseDataURL, r, what){
   const key=getVisionKey('openai'); if(!key) throw new Error('no key');
   const png=await podToPngDataURL(baseDataURL); const im=await podLoadImg(png); const w=im.naturalWidth||1024, h=im.naturalHeight||1024;
   const fd=new FormData();
-  fd.append('model','gpt-image-1'); fd.append('image', podDataURLtoBlob(png), 'base.png'); fd.append('mask', await podMouthMaskBlob(w,h), 'mask.png');
-  fd.append('prompt', POD_TALK_PROMPT); fd.append('size', w===h?'1024x1024':'auto'); fd.append('n','1');
+  fd.append('model','gpt-image-1'); fd.append('image', podDataURLtoBlob(png),'base.png'); fd.append('mask', await podRegionMaskBlob(w,h,r),'mask.png');
+  fd.append('prompt', POD_KEEP+'Show '+what+'.'); fd.append('size', w===h?'1024x1024':'auto'); fd.append('n','1');
   const res=await fetch('https://api.openai.com/v1/images/edits',{method:'POST',headers:{'authorization':'Bearer '+key},body:fd});
   if(!res.ok) throw new Error('OpenAI edit '+res.status);
   const d=await res.json(); const b64=d&&d.data&&d.data[0]&&d.data[0].b64_json; if(!b64) throw new Error('edit empty');
   return 'data:image/png;base64,'+b64;
 }
-async function podGeminiEditMouth(baseDataURL){
+async function podGeminiEditRegion(baseDataURL, r, what){
   const key=getVisionKey('gemini'); if(!key) throw new Error('no key');
   const png=await podToPngDataURL(baseDataURL); const b64=png.split(',')[1];
   const url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key='+encodeURIComponent(key);
-  const body={ contents:[{parts:[ {inlineData:{mimeType:'image/png',data:b64}}, {text:POD_TALK_PROMPT+' Return only the edited image.'} ]}] };
+  const body={ contents:[{parts:[ {inlineData:{mimeType:'image/png',data:b64}}, {text:POD_KEEP+'Show '+what+'. Return only the edited image.'} ]}] };
   const res=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
   if(!res.ok) throw new Error('Gemini edit '+res.status);
   const data=await res.json(); const parts=(((data.candidates||[])[0]||{}).content||{}).parts||[]; const img=parts.find(p=>p&&p.inlineData&&p.inlineData.data);
   if(!img) throw new Error('gemini edit empty');
   return 'data:'+(img.inlineData.mimeType||'image/png')+';base64,'+img.inlineData.data;
 }
-async function podGenAvatarTalk(gender, baseDataURL){
-  if(hasAnyKey('openai')&&!aiFrozen('openai')){ try{ return await podOpenAIEditMouth(baseDataURL); }catch(e){ try{console.warn('talk openai:',e&&e.message||e);}catch(_){}} }
-  if(hasAnyKey('gemini')&&!aiFrozen('gemini')){ try{ return await podGeminiEditMouth(baseDataURL); }catch(e){ try{console.warn('talk gemini:',e&&e.message||e);}catch(_){}} }
-  throw new Error('no talk provider');
+async function podGenFrame(baseDataURL, r, what){
+  if(hasAnyKey('openai')&&!aiFrozen('openai')){ try{ return await podOpenAIEditRegion(baseDataURL,r,what); }catch(e){ try{console.warn('frame openai:',e&&e.message||e);}catch(_){}} }
+  if(hasAnyKey('gemini')&&!aiFrozen('gemini')){ try{ return await podGeminiEditRegion(baseDataURL,r,what); }catch(e){ try{console.warn('frame gemini:',e&&e.message||e);}catch(_){}} }
+  throw new Error('no image provider');
 }
-async function podAvatarTalkEnsure(gender, baseDataURL, force){
-  const key=podTalkKey(gender);
+async function podFrameEnsure(gender, fr, baseDataURL, force){
+  const key=podFrKey(gender,fr.id);
   if(!force){ const hit=await podAvGet(key); if(hit) return hit; }
-  const url=await podGenAvatarTalk(gender, baseDataURL);
-  await podAvPut(key, url); return url;
+  const url=await podGenFrame(baseDataURL, podRegions()[fr.reg], fr.p);
+  await podAvPut(key,url); return url;
+}
+/* محلِ دقیقِ دهان/چشم/ابرو با یک تماسِ ویژنِ خیلی کوچک (تصویرِ ۲۵۶px، یک‌بار، کش‌شده) */
+async function podDetectRegions(gender, baseDataURL, force){
+  const key=podGeomKey(gender);
+  if(!force){ const hit=await podAvGet(key); if(hit) return hit; }
+  if(typeof aiSectionCall!=='function'||typeof callVision!=='function') return null;
+  let dataURL,b64;
+  try{ const im=await podLoadImg(baseDataURL); const S=256; const cv=document.createElement('canvas'); cv.width=S; cv.height=S;
+    cv.getContext('2d').drawImage(im,0,0,S,S); dataURL=cv.toDataURL('image/jpeg',0.7); b64=dataURL.split(',')[1]; }catch(e){ return null; }
+  const prompt='Locate facial features in this portrait. Reply with ONLY compact JSON and no other text:\n{"mouth":{"x":0.5,"y":0.6,"rx":0.17,"ry":0.11},"eyes":{"x":0.5,"y":0.44,"rx":0.3,"ry":0.08},"brow":{"x":0.5,"y":0.36,"rx":0.3,"ry":0.07}}\nx,y = center of the feature as a fraction of image width/height. rx,ry = half-width/half-height of a box that fully contains it. "mouth" = lips only. "eyes" = both eyes together. "brow" = both eyebrows together. All values are fractions between 0 and 1.';
+  let txt='';
+  try{ txt=await aiSectionCall('podcast', (prov,k,model)=>callVision(prov,k,{mediaType:'image/jpeg',b64,dataURL}, prompt, 300, 0, model), {vision:true}); }catch(e){ return null; }
+  let o=null; try{ const m=String(txt||'').match(/\{[\s\S]*\}/); o=m?JSON.parse(m[0]):null; }catch(e){ o=null; }
+  const ok=v=>v&&isFinite(v.x)&&isFinite(v.y)&&isFinite(v.rx)&&isFinite(v.ry)&&v.x>.2&&v.x<.8&&v.y>.05&&v.y<.95&&v.rx>.04&&v.rx<.45&&v.ry>.02&&v.ry<.35;
+  if(!o||!ok(o.mouth)) return null;
+  const pad=(v,kx,ky)=>({x:v.x,y:v.y,rx:Math.min(.45,v.rx*kx),ry:Math.min(.35,v.ry*ky)});
+  const out={ mouth:pad(o.mouth,1.3,1.45), eyes: ok(o.eyes)?pad(o.eyes,1.2,1.5):POD_REG_DEF.eyes, brow: ok(o.brow)?pad(o.brow,1.2,1.6):POD_REG_DEF.brow };
+  await podAvPut(key,out); return out;
 }
 // بارگذاری از کش (بدونِ ساخت/هزینه) — سرِ لود و تغییرِ چهره
 async function podAvatarLoad(){
   const c=podCfg(); if(!c.avatar) return; const g=c.avGender;
-  if(_pod.avImg && _pod.avImgGender===g && _pod.avTalk) return;
   try{
-    if(!(_pod.avImg && _pod.avImgGender===g)){ const url=await podAvGet(podAvKey(g)); if(url){ _pod.avImg=url; _pod.avImgGender=g; } }
-    if(!_pod.avTalk){ const t=await podAvGet(podTalkKey(g)); if(t) _pod.avTalk=t; }
+    if(!(_pod.avImg && _pod.avImgGender===g)){ const url=await podAvGet(podAvKey(g)); if(url){ _pod.avImg=url; _pod.avImgGender=g; _pod.avLayers=null; } }
+    if(!_pod.avImg) return;
+    if(!_pod.avGeom){ const gm=await podAvGet(podGeomKey(g)); if(gm){ _pod.avGeom=gm; _pod.avLayers=null; } }
+    _pod.avFrames=_pod.avFrames||{};
+    let got=false;
+    for(const fr of POD_FRAMES){ if(_pod.avFrames[fr.id]) continue; const u=await podAvGet(podFrKey(g,fr.id)); if(u){ _pod.avFrames[fr.id]=u; got=true; } }
+    if(!_pod.avFrames.A){ const old=await podAvGet(podTalkKey(g)); if(old){ _pod.avFrames.A=old; got=true; } }   // مهاجرت از نسخه ۲۲.۱
+    if(got) _pod.avLayers=null;
     renderPodcastCard();
   }catch(e){}
 }
-// سرِ پخش: چهره + فریمِ دهان‌باز را (یک‌بار) می‌سازد؛ بعد کش و رایگان
+function podFramesMissing(){ return POD_FRAMES.filter(f=>!(_pod.avFrames&&_pod.avFrames[f.id])); }
+function podFramesReady(){ return _pod.avFrames?POD_FRAMES.filter(f=>_pod.avFrames[f.id]).length:0; }
+// سرِ پخش: چهره + حالت‌های گفتار را (یک‌بار) می‌سازد؛ بعد کش و رایگان
 async function podAvatarPrepare(){
   const c=podCfg(); if(!c.avatar) return; const g=c.avGender;
-  // اول از کش (بی‌هزینه)
-  if(!(_pod.avImg && _pod.avImgGender===g)){ const cb=await podAvGet(podAvKey(g)); if(cb){ _pod.avImg=cb; _pod.avImgGender=g; } }
-  if(!_pod.avTalk){ const ct=await podAvGet(podTalkKey(g)); if(ct) _pod.avTalk=ct; }
-  renderPodcastCard();
-  const ready = (_pod.avImg && _pod.avImgGender===g) && _pod.avTalk;
-  if(ready) return;
+  await podAvatarLoad();
+  if((_pod.avImg && _pod.avImgGender===g) && !podFramesMissing().length) return;
   if(!(hasAnyKey('openai')||hasAnyKey('gemini'))) return;   // بدونِ کلید → طرحِ جایگزینِ CSS
   if(_pod.avBusy) return; _pod.avBusy=true;
   try{
-    if(!(_pod.avImg && _pod.avImgGender===g)){ uiToast&&uiToast('در حالِ ساختِ چهرهٔ مجری (یک‌بار)…'); const url=await podAvatarEnsure(g,false); _pod.avImg=url; _pod.avImgGender=g; renderPodcastCard(); }
-    if(!_pod.avTalk && _pod.avImg){ uiToast&&uiToast('در حالِ زنده‌سازیِ لب‌ها…'); const t=await podAvatarTalkEnsure(g,_pod.avImg,false); _pod.avTalk=t; renderPodcastCard(); }
+    if(!(_pod.avImg && _pod.avImgGender===g)){
+      uiToast&&uiToast('در حالِ ساختِ چهرهٔ مجری (یک‌بار)…');
+      const url=await podAvatarEnsure(g,false); _pod.avImg=url; _pod.avImgGender=g; _pod.avLayers=null; renderPodcastCard();
+    }
+    if(!_pod.avGeom){ try{ const gm=await podDetectRegions(g,_pod.avImg,false); if(gm){ _pod.avGeom=gm; _pod.avLayers=null; } }catch(e){} }
+    _pod.avFrames=_pod.avFrames||{};
+    const todo=podFramesMissing(); let i=0;
+    for(const fr of todo){ i++;
+      uiToast&&uiToast('ساختِ حالت‌های چهره '+faDigits(i)+'/'+faDigits(todo.length)+'…');
+      try{ const u=await podFrameEnsure(g,fr,_pod.avImg,false); _pod.avFrames[fr.id]=u; _pod.avLayers=null; renderPodcastCard(); }catch(e){}
+    }
+    if(todo.length) uiToast&&uiToast('✓ مجری آمادهٔ اجراست');
   }catch(e){ try{console.warn('avatar prepare:',e&&e.message||e);}catch(_){} }
-  finally{ _pod.avBusy=false; }
+  finally{ _pod.avBusy=false; try{ renderPodCfg(); renderPodcastCard(); }catch(e){} }
 }
 async function podAvatarRegen(){
   const c=podCfg(); const g=c.avGender;
   if(!(hasAnyKey('openai')||hasAnyKey('gemini'))){ uiToast&&uiToast('برای ساختِ چهره، کلیدِ OpenAI یا Gemini لازم است (تنظیماتِ 🤖).'); return; }
-  if(_pod.avBusy) return; _pod.avBusy=true; _pod.avTalk=null; uiToast&&uiToast('در حالِ ساختِ چهرهٔ تازه…'); try{ renderPodCfg(); }catch(e){}
+  if(_pod.avBusy) return; _pod.avBusy=true;
+  _pod.avFrames={}; _pod.avGeom=null; _pod.avLayers=null;
+  uiToast&&uiToast('در حالِ ساختِ چهرهٔ تازه…'); try{ renderPodCfg(); }catch(e){}
   try{
     const url=await podAvatarEnsure(g,true); _pod.avImg=url; _pod.avImgGender=g; try{ renderPodCfg(); renderPodcastCard(); }catch(e){}
-    uiToast&&uiToast('در حالِ زنده‌سازیِ لب‌ها…'); const t=await podAvatarTalkEnsure(g,url,true); _pod.avTalk=t;
-    uiToast&&uiToast('✓ چهرهٔ مجری ساخته شد');
+    try{ const gm=await podDetectRegions(g,url,true); if(gm) _pod.avGeom=gm; }catch(e){}
+    let i=0;
+    for(const fr of POD_FRAMES){ i++;
+      uiToast&&uiToast('ساختِ حالت‌های چهره '+faDigits(i)+'/'+faDigits(POD_FRAMES.length)+'…');
+      try{ const u=await podFrameEnsure(g,fr,url,true); _pod.avFrames[fr.id]=u; _pod.avLayers=null; renderPodcastCard(); }catch(e){}
+    }
+    uiToast&&uiToast(podFramesReady()?'✓ مجری با حالت‌های گفتار آماده شد':'چهره ساخته شد ولی حالت‌ها نشد');
   }
-  catch(e){ uiToast&&uiToast(_pod.avImg?'چهره ساخته شد ولی زنده‌سازیِ لب نشد':'ساختِ چهره نشد (کلید/اینترنت؟)'); }
+  catch(e){ uiToast&&uiToast('ساختِ چهره نشد (کلید/اینترنت؟)'); }
   finally{ _pod.avBusy=false; try{ renderPodCfg(); renderPodcastCard(); }catch(e){} }
 }
 function podAvatarSilhouetteSVG(gender){
   const male=gender==='male';
   return `<svg viewBox="0 0 120 120" width="86" height="86" aria-hidden="true"><defs><linearGradient id="pavg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--teal)"/><stop offset="1" stop-color="var(--purple,#9a86e0)"/></linearGradient></defs><circle cx="60" cy="46" r="${male?21:20}" fill="url(#pavg)"/><path d="M22 112c0-22 17-34 38-34s38 12 38 34z" fill="url(#pavg)"/></svg>`;
 }
-// انیمیشنِ صدا-واکنشی (رایگان — از AnalyserModule یا نبضِ زمانی برای صدای گوشی)
+/* ---- ترکیب‌کنندهٔ کانواس: چهرهٔ پایه + ویزم‌های دهان + پلک + ابرو ---- */
+// از هر فریم یک نسخهٔ ماسک‌خوردهٔ نرم (فقط همان ناحیه) می‌سازد تا لایه‌ها مستقل و بی‌درز روی هم بنشینند
+function podAvSoftMasked(img, r){
+  const w=img.naturalWidth||1024, h=img.naturalHeight||1024;
+  const cv=document.createElement('canvas'); cv.width=w; cv.height=h; const g=cv.getContext('2d');
+  g.drawImage(img,0,0,w,h); g.globalCompositeOperation='destination-in'; podEllipseFade(g,w,h,r,0.45);
+  return cv;
+}
+async function podAvBuildLayers(){
+  if(!_pod.avImg) return null;
+  if(_pod.avLayers && _pod.avLayersFor===_pod.avImg) return _pod.avLayers;
+  let base; try{ base=await podLoadImg(_pod.avImg); }catch(e){ return null; }
+  const regs=podRegions(); const L={ base, frames:{} };
+  for(const fr of POD_FRAMES){
+    const src=_pod.avFrames&&_pod.avFrames[fr.id]; if(!src) continue;
+    try{ const im=await podLoadImg(src); L.frames[fr.id]=podAvSoftMasked(im, regs[fr.reg]); }catch(e){}
+  }
+  _pod.avLayers=L; _pod.avLayersFor=_pod.avImg; return L;
+}
+function podAvDraw(){
+  const cv=document.getElementById('podAvCanvas'); const L=_pod.avLayers; if(!cv||!L||!L.base) return;
+  const dpr=Math.min(2, window.devicePixelRatio||1);
+  const cw=cv.clientWidth||360, ch=cv.clientHeight||158;
+  if(!cw||!ch) return;
+  if(cv.width!==Math.round(cw*dpr)||cv.height!==Math.round(ch*dpr)){ cv.width=Math.round(cw*dpr); cv.height=Math.round(ch*dpr); }
+  const ctx=cv.getContext('2d'); const W=cv.width, H=cv.height;
+  const iw=L.base.naturalWidth||1024, ih=L.base.naturalHeight||1024;
+  const sc=Math.max(W/iw,H/ih); const dw=iw*sc, dh=ih*sc;          // cover
+  const sw=_pod.avSway||{x:0,y:0,s:1.02};
+  const zw=dw*sw.s, zh=dh*sw.s;
+  const zx=(W-dw)*0.5-(zw-dw)/2 + sw.x*W;                           // object-position 50% 22% + تکانِ سر
+  const zy=(H-dh)*0.22-(zh-dh)/2 + sw.y*H;
+  ctx.clearRect(0,0,W,H);
+  ctx.drawImage(L.base, zx,zy,zw,zh);
+  const w=_pod.avW; if(w){ for(const id in w){ const lay=L.frames[id]; const a=w[id]; if(lay&&a>0.012){ ctx.globalAlpha=Math.min(1,a); ctx.drawImage(lay, zx,zy,zw,zh); } } ctx.globalAlpha=1; }
+}
+/* ---- ریتم و شکلِ دهان از خودِ صدا (بدونِ هیچ توکن/هزینه) ---- */
 function podReactStart(){
   podReactStop();
   const el=document.getElementById('podAvatar'); if(!el) return;
-  const an=_pod.analyser; const data = an?new Uint8Array(an.frequencyBinCount):null;
+  const an=_pod.analyser;
+  if(an && an.fftSize<512){ try{ an.fftSize=512; an.smoothingTimeConstant=0.55; }catch(e){} }
+  const fd=an?new Uint8Array(an.frequencyBinCount):null;
+  const td=an?new Uint8Array(an.fftSize):null;
+  const W=_pod.avW={A:0,E:0,O:0,BL:0,BR:0};
+  const calm=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const lerp=(a,b,k)=>a+(b-a)*k;
+  let env=0, envSlow=0;
+  _pod.blinkNext=performance.now()+700+Math.random()*2200; _pod.blinkAt=-9999;
   const loop=()=>{
     if(_pod.mode!=='playing'){ _pod.raf=0; return; }
-    let lv=0;
-    if(an && _pod.cloud && data){ an.getByteFrequencyData(data); let s=0; for(let i=0;i<data.length;i++) s+=data[i]; lv=Math.min(1,(s/data.length)/78); }
-    else { lv=0.28+0.34*Math.abs(Math.sin(Date.now()/150))+Math.random()*0.14; }   // نبضِ تخمینی برای صدای گوشی
+    const now=performance.now(); const t=now/1000;
+    let lv=0; const tg={A:0,E:0,O:0};
+    if(an&&_pod.cloud&&fd&&td){
+      an.getByteTimeDomainData(td);
+      let s=0; for(let i=0;i<td.length;i++){ const v=(td[i]-128)/128; s+=v*v; }
+      lv=Math.min(1, Math.sqrt(s/td.length)*3.4);
+      an.getByteFrequencyData(fd);
+      const sr=(_wkAudioCtx&&_wkAudioCtx.sampleRate)||24000, hz=(sr/2)/fd.length;
+      const band=(f1,f2)=>{ const i1=Math.max(0,Math.floor(f1/hz)), i2=Math.min(fd.length-1,Math.ceil(f2/hz)); let a=0,n=0; for(let i=i1;i<=i2;i++){ a+=fd[i]; n++; } return n?a/n:0; };
+      const lo=band(180,760), mid=band(760,2200), hi=band(2200,4800), tot=lo+mid+hi+1e-6;
+      const open=Math.max(0, Math.min(1,(lv-0.055)*2.1));
+      if(open>0.02){
+        // وزنِ نرمِ سه شکلِ دهان از سهمِ باندها (به‌جای انتخابِ قطعی) → مورفِ پیوسته و طبیعی
+        const sq=x=>{ const v=Math.max(0,x); return v*v; };
+        let wO=sq(lo/tot-0.20), wA=sq(mid/tot-0.16), wE=sq(hi/tot-0.18);
+        const sum=wO+wA+wE;
+        if(sum>1e-6){ tg.O=open*wO/sum; tg.A=open*wA/sum; tg.E=open*wE/sum; } else { tg.A=open; }
+      }
+    } else {
+      lv=0.34+0.30*Math.abs(Math.sin(t*6.1))+0.10*Math.sin(t*11.3);
+      const ph=(Math.sin(t*3.7)+1)/2;
+      if(ph<0.34) tg.A=lv; else if(ph<0.67) tg.E=lv*0.9; else tg.O=lv*0.8;
+    }
+    const k=calm?0.18:0.36;                                   // نرم‌سازی: ریتمِ طبیعی بدونِ لرزش
+    W.A=lerp(W.A,tg.A,k); W.E=lerp(W.E,tg.E,k); W.O=lerp(W.O,tg.O,k);
+    env=lerp(env,lv,0.28); envSlow=lerp(envSlow,lv,0.02);     // ابرو روی تأکیدِ جمله بالا می‌رود
+    W.BR=lerp(W.BR, Math.max(0,Math.min(1,(env-envSlow)*2.8)), 0.12);
+    if(now>=_pod.blinkNext){ _pod.blinkAt=now; _pod.blinkNext=now+2200+Math.random()*4200; }
+    const bt=now-_pod.blinkAt;                                 // پلکِ طبیعی: بستن ۷۰ms، مکث، بازشدن ۹۰ms
+    W.BL = bt<70 ? bt/70 : (bt<150 ? 1 : (bt<240 ? 1-(bt-150)/90 : 0));
+    _pod.avSway = calm ? {x:0,y:0,s:1.02}
+      : { x:Math.sin(t*0.42)*0.006, y:Math.cos(t*0.33)*0.005+W.BR*0.004, s:1.02+lv*0.014 };
     el.style.setProperty('--lv', lv.toFixed(3));
-    el.style.setProperty('--mo', Math.min(1, lv*1.85).toFixed(3));   // شفافیتِ فریمِ دهان‌باز
+    podAvDraw();
     _pod.raf=requestAnimationFrame(loop);
   };
   _pod.raf=requestAnimationFrame(loop);
 }
-function podReactStop(){ if(_pod.raf){ cancelAnimationFrame(_pod.raf); _pod.raf=0; } const el=document.getElementById('podAvatar'); if(el){ el.style.setProperty('--lv','0'); el.style.setProperty('--mo','0'); } }
+function podReactStop(){
+  if(_pod.raf){ cancelAnimationFrame(_pod.raf); _pod.raf=0; }
+  const el=document.getElementById('podAvatar'); if(el) el.style.setProperty('--lv','0');
+  _pod.avW={A:0,E:0,O:0,BL:0,BR:0}; _pod.avSway={x:0,y:0,s:1.02};
+  try{ podAvDraw(); }catch(e){}
+}
 
 /* ---- دانلودِ فایلِ پادکست (WAV یک‌تکه از قطعه‌های صوتی) ---- */
 function podEncodeWav(sampleRate, channels){
@@ -3828,7 +3955,7 @@ function renderPodcastCard(){
   const sliderOn = cloud&&active;   // اسکراب فقط با صدای ابری
   const avOn=c.avatar;
   const avInner = _pod.avImg
-    ? `<img class="pod-av-img" src="${_pod.avImg}" alt="مجریِ پادکست">`+(_pod.avTalk?`<img class="pod-av-mouth" src="${_pod.avTalk}" alt="">`:'')
+    ? `<img class="pod-av-img" src="${_pod.avImg}" alt="مجریِ پادکست"><canvas id="podAvCanvas" class="pod-av-cv"></canvas>`
     : `<div class="pod-av-ph">${podAvatarSilhouetteSVG(c.avGender)}</div>`;
   const avBlock = avOn ? `<div id="podAvatar" class="pod-av ${active?'live':''} ${paused?'paused':''}" style="--lv:0">
       <div class="pod-av-stage">${avInner}<div class="pod-av-ring"></div><div class="pod-av-eq"><i></i><i></i><i></i><i></i><i></i></div></div>
@@ -3856,13 +3983,14 @@ function renderPodcastCard(){
     </div>
     <div class="pod-note">هر روز متفاوت و بر اساسِ عملکردِ توست. آموزشی و عمومی — جایگزینِ توصیهٔ پزشک نیست.</div>
   </div>`;
+  if(avOn && _pod.avImg){ podAvBuildLayers().then(()=>{ try{ podAvDraw(); }catch(e){} }).catch(()=>{}); }
   if(playing) podReactStart(); else podReactStop();
 }
 /* ---- تنظیماتِ پادکست (پاپ‌آپ) + تستِ صدا ---- */
 function podOpenCfg(){ renderPodCfg(); const m=document.getElementById('podCfgModal'); if(m) m.classList.add('show'); }
 function podCloseCfg(){ const m=document.getElementById('podCfgModal'); if(m) m.classList.remove('show'); try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} podTestStop(); }
 function podCfgPick(k,v){ const patch={}; patch[k]=v; podCfgSet(patch);
-  if(k==='avGender'){ _pod.avImg=null; _pod.avTalk=null; _pod.avImgGender=''; }
+  if(k==='avGender'){ _pod.avImg=null; _pod.avFrames=null; _pod.avLayers=null; _pod.avGeom=null; _pod.avImgGender=''; }
   renderPodCfg(); renderPodcastCard();
   if(k==='avGender'||(k==='avatar'&&v)){ try{ podAvatarLoad(); }catch(e){} }
   if(k==='minutes') uiToast&&uiToast('برای اعمالِ مدت، «ساختِ دوباره 🔄» را بزن'); }
@@ -3895,9 +4023,10 @@ function renderPodCfg(){
     h+=`<div class="pod-seg">`+[['female','👩‍💼 زن'],['male','🧑‍💼 مرد']].map(o=>`<button class="${c.avGender===o[0]?'on':''}" onclick="podCfgPick('avGender','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
     const hasImgKey=hasAnyKey('openai')||hasAnyKey('gemini');
     const avReady=_pod.avImg&&_pod.avImgGender===c.avGender;
-    const stat = avReady ? (_pod.avTalk?'✓ چهره + لب‌های متحرک آماده':'✓ چهره آماده (بدونِ لبِ متحرک)') : 'چهره‌ای ساخته نشده';
+    const nfr=podFramesReady(), nAll=POD_FRAMES.length;
+    const stat = !avReady ? 'چهره‌ای ساخته نشده' : (nfr>=nAll ? '✓ چهره + حالت‌های کاملِ گفتار آماده' : (nfr ? ('✓ چهره آماده · '+faDigits(nfr)+'/'+faDigits(nAll)+' حالتِ چهره') : '✓ چهره آماده (بدونِ حالتِ گفتار)'));
     h+=`<div class="pod-vrow" style="margin-top:8px"><span class="pod-vname">${stat}</span><button class="pod-vtest" ${(_pod.avBusy||!hasImgKey)?'disabled':''} onclick="podAvatarRegen()">${_pod.avBusy?'… در حالِ ساخت':'🎨 ساختِ چهره'}</button></div>`;
-    h+=`<div class="qbg-sub" style="margin-top:4px">پرتره با هوش مصنوعی ${hasImgKey?'':'(نیازمندِ کلیدِ OpenAI یا Gemini) '}فقط یک‌بار ساخته می‌شود (چهره + یک فریمِ «دهان‌باز» برای تکان‌خوردنِ لب) و بعد آفلاین و رایگان است؛ لب‌ها هنگامِ پخش با صدا هماهنگ می‌شوند.</div>`;
+    h+=`<div class="qbg-sub" style="margin-top:4px">پرتره ${hasImgKey?'':'(نیازمندِ کلیدِ OpenAI یا Gemini) '}فقط یک‌بار ساخته می‌شود: چهره + حالت‌های «آ/ای/او»، پلک و ابرو. بعد از آن آفلاین و رایگان است — ریتم و شکلِ دهان از خودِ صدا خوانده می‌شود و هیچ توکنی مصرف نمی‌کند.</div>`;
   }
   box.innerHTML=h;
 }
