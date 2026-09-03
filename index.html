@@ -2016,7 +2016,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۱۱</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۱۲</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4277,7 +4277,7 @@ function podReactStart(){
   const td=an?new Uint8Array(an.fftSize):null;
   const W=_pod.avW={A:0,E:0,O:0,BL:0,BR:0};
   const MO=_pod.avMouth={vis:'X',prev:'X',mix:1,open:0,visAt:0,sec:'',secW:0};   // ویزمِ فعلی + قبلی + دومِ وزن‌دار
-  _pod.jawV=0;                                                     // سرعتِ فک (برای اینرسی)
+  _pod.jawV=0; _pod.envA=0;                                        // سرعتِ فک + انرژیِ هموارشده (نویزگیت)
   const calm=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
   const lerp=(a,b,k)=>a+(b-a)*k;
   let env=0, envSlow=0;
@@ -4306,18 +4306,26 @@ function podReactStart(){
     }
     // ۲۳.۱۱ — اگر خطِ زمانیِ متن هست، «شکل» را از متن بگیر و «بازشدن» را از صدا (بلندی).
     podEnsureVisemeTL();
-    let want='X', sec='', secW=0, tl=null;
+    let want='X', sec='', secW=0, tl=null, tlGate=1;
     if(_pod.visTL){ const el=_pod.cloud?podElapsed():((Date.now()-_pod.t0)/1000); tl=podVisemeAt(el); }
     if(tl){
-      const loud=Math.min(1, lv*1.5);
-      open = tl.o * (0.42 + 0.58*loud);            // بازشدن = طبیعتِ آوا × بلندیِ صدا
+      // ۲۳.۱۲ — نویزگیت: دامنهٔ دهان از انرژیِ واقعیِ صدا گرفته می‌شود، نه فقط از متن.
+      // مشکل: خطِ زمانیِ متن یکنواخت پخش می‌شود ولی صدای واقعی بین کلمات/جملات مکث دارد؛
+      // پس در سکوت، متن می‌گفت «واکه» و دهان باز می‌ماند و پشتِ‌سرِ‌هم تکان می‌خورد.
+      // اصلاح: کفِ ثابتِ ۲۳.۱۱ حذف شد؛ در سکوت gate→۰ و دهان بسته می‌شود.
+      // برای صدای گوشی (بی‌آنالایزر) از طبیعتِ آوای متن استفاده می‌شود.
+      if(an&&_pod.cloud){
+        _pod.envA=(_pod.envA||0)*0.6 + lv*0.4;                     // هموارسازیِ انرژی
+        tlGate = _pod.envA<=0.06 ? 0 : Math.min(1,(_pod.envA-0.06)/0.20);
+      } else { tlGate = tl.o>0 ? 1 : 0; }                          // گوشی: مکث فقط روی سکوتِ متن
+      open = tl.o * tlGate;
     }
     // ۲۳.۹ — فک با «اینرسی» حرکت می‌کند: کمی دیر می‌رسد و ریزتابِ طبیعی دارد (نه پرشِ آنی).
     const stiff=calm?0.18:0.27, damp=calm?0.76:0.67;
     _pod.jawV=(_pod.jawV||0)*damp+(open-MO.open)*stiff;
     MO.open=Math.max(0, Math.min(1.25, MO.open+_pod.jawV));   // سقف بازتر تا فنر پشتِ کلمپ گیر نکند
     if(tl){
-      want = tl.v;                                 // شکل مستقیماً از متن (شاملِ لبِ بسته و ف)
+      want = (tlGate<0.12) ? 'X' : tl.v;           // سکوتِ صدا → دهانِ بسته؛ صدا → شکلِ متن
     } else if(MO.open>=0.10){
       // فالبک: انتخابِ ویزمِ غالب از باندهای صدا + ویزمِ دومِ وزن‌دار
       const arr=[['A',sA],['E',sE],['O',sO]].sort((a,b)=>b[1]-a[1]);
