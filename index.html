@@ -2030,7 +2030,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۱۶</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۱۷</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4810,7 +4810,7 @@ function renderPodCfg(){
       h+=`<label class="qbg-lbl" style="margin-top:8px">لینکِ آواتارِ ${c.avGender==='male'?'مرد':'زن'} (Ready Player Me)</label>`;
       h+=`<input id="pod3dUrlInput" class="pod-3d-url" value="${escVision(gUrl)}" placeholder="https://models.readyplayer.me/xxxx.glb" autocomplete="off" autocapitalize="off" spellcheck="false">`;
       h+=`<div class="pod-seg" style="margin-top:6px"><button onclick="pod3dApplyUrl()">✅ اعمالِ لینک</button><button onclick="pod3dClearUrl()">↺ چهرهٔ ساده</button></div>`;
-      h+=`<details style="margin-top:6px"><summary style="cursor:pointer;font-size:12px;color:var(--teal)">چطور یک چهرهٔ خوشگل بسازم؟ (رایگان، ۱ دقیقه)</summary><div class="qbg-sub" style="margin-top:6px;line-height:2">۱) در مرورگر به <b style="color:var(--teal)">readyplayer.me</b> برو و «Create Avatar» بزن.<br>۲) از عکسِ سلفی یا از قالب‌های آماده یک زن/مردِ زیبا بساز.<br>۳) آخرِ کار روی «Copy .glb» یا لینکِ آواتار بزن (لینکی مثلِ <span style="direction:ltr">models.readyplayer.me/....glb</span>).<br>۴) لینک را اینجا پِیست کن و «اعمالِ لینک» بزن.<br>۵) برای مرد و زن جداگانه لینک بگذار (اول جنسیت را از پایین انتخاب کن).</div></details>`;
+      h+=`<details style="margin-top:6px" open><summary style="cursor:pointer;font-size:12px;color:var(--teal)">چطور یک چهرهٔ خوشگل بسازم؟ (رایگان، ۱ دقیقه)</summary><div class="qbg-sub" style="margin-top:6px;line-height:2">۱) در <b style="color:var(--teal)">نوارِ آدرسِ</b> مرورگر (نه جستجوی گوگل) این را باز کن: <b style="color:var(--teal);direction:ltr;display:inline-block">demo.readyplayer.me</b><br>۲) «Create Avatar» → از سلفی یا قالبِ آماده یک زن/مردِ زیبا بساز.<br>۳) آخرِ کار «Next/Done» یک لینک می‌دهد که به <b style="direction:ltr;display:inline-block">.glb</b> ختم می‌شود (مثلِ <span style="direction:ltr">models.readyplayer.me/....glb</span>) — کپی‌اش کن.<br>۴) لینک را اینجا پِیست کن و «✅ اعمالِ لینک» بزن.<br>۵) برای مرد و زن جداگانه لینک بگذار (اول جنسیت را از پایین انتخاب کن).</div></details>`;
       if(!gUrl) h+=`<div class="qbg-sub" style="margin-top:4px;color:var(--amber)">تا وقتی لینک نگذاری، چهرهٔ سادهٔ پیش‌فرض نشان داده می‌شود (همان که دیدی).</div>`;
     }
     h+=`<label class="qbg-lbl" style="margin-top:8px">${c.avMode==='3d'?'شخصیتِ سه‌بعدی (زن/مرد)':'چهرهٔ مجری'}</label>`;
