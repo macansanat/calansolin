@@ -2016,7 +2016,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۱۰</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۱۱</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3501,6 +3501,7 @@ function podcastStart(rec){
   _pod.ttsProv=podTTSProvider();
   _pod.cloud = !!_pod.ttsProv;
   _pod.estDur = Math.max(60, Math.round(podWordCount(rec.script)/2.4));
+  _pod.script = rec.script||''; _pod.visTL=null; _pod.visIdx=0;   // متن برای زمان‌بندیِ شکلِ دهان
   _pod.mode='playing'; _pod.t0=Date.now(); _pod.prep=_pod.cloud;
   podEngineReset(); podProgressStart(); renderPodcastCard();
   if(_pod.cloud){
@@ -3720,9 +3721,12 @@ const POD_FRAMES=[
   {id:'BL', reg:'eyes',  p:'both eyes gently and fully closed, eyelids relaxed and down as in a natural blink, eyelashes visible'},
   {id:'E',  reg:'mouth', p:'the mouth open in a wide "eee" shape, lips spread horizontally, upper teeth visible, slight smile'},
   {id:'O',  reg:'mouth', p:'the lips rounded and slightly pushed forward as if saying "ooo", a small rounded mouth opening'},
-  {id:'BR', reg:'brow',  p:'both eyebrows raised slightly in a warm, engaged, expressive way'}
+  {id:'BR', reg:'brow',  p:'both eyebrows raised slightly in a warm, engaged, expressive way'},
+  {id:'MB', reg:'mouth', p:'the lips gently pressed together and fully closed as when saying "m" or "b", relaxed, no teeth visible'},
+  {id:'F',  reg:'mouth', p:'the lower lip tucked lightly under the upper front teeth as when saying "f" or "v", upper teeth resting on the lower lip'},
+  {id:'AH', reg:'mouth', p:'the mouth slightly open in a small relaxed "ah", lips softly parted only a little, a natural half-open resting talk pose'}
 ];
-const POD_MOUTH_IDS=['A','E','O'];      // ویزم‌های دهان (در نسخه ۲۳.۲ گسسته مهر می‌شوند)
+const POD_MOUTH_IDS=['A','E','O','F','AH','MB'];   // ویزم‌های دهان (گسسته مهر می‌شوند)
 const POD_SOLO_IDS=['BL','BR'];         // پلک و ابرو (مستقل، آلفای خودشان)
 function podFrKey(gender,id){ return 'avfr|'+(gender==='male'?'male':'female')+'|'+id+'|'+POD_FR_VER; }
 function podGeomKey(gender){ return 'avgeom|'+(gender==='male'?'male':'female')+'|'+POD_FR_VER; }
@@ -4182,13 +4186,21 @@ function podAvDraw(){
   const mo=Math.max(0,Math.min(1,M.open||0));
   const anyMouth=POD_MOUTH_IDS.some(id=>L.frames[id]);
   if(anyMouth){
-    const layOf=v=>((v&&v!=='X'&&L.frames[v])?L.frames[v]:L.baseMouth);
+    const layOf=v=>{
+      if(!v||v==='X'||v==='C') return L.baseMouth;             // بسته
+      if(v==='MB') return L.frames.MB||L.baseMouth;            // لبِ بسته (م/ب/پ)
+      if(L.frames[v]) return L.frames[v];
+      if(v==='AH') return L.frames.A||L.baseMouth;             // فالبک‌ها اگر فریمِ تازه نبود
+      if(v==='F')  return L.frames.O||L.frames.A||L.baseMouth;
+      return L.baseMouth;
+    };
     const cur=layOf(M.vis), prv=layOf(M.prev), k=Math.max(0,Math.min(1,(M.mix==null?1:M.mix)));
     const sec=(M.sec&&M.sec!==M.vis)?layOf(M.sec):null, secW=Math.max(0,Math.min(.45,M.secW||0));
     // ۲۳.۹ — فکِ پیوسته: لایهٔ دهان حولِ «لولایِ لبِ بالا» با شدتِ صدا فشرده/کشیده می‌شود،
     // پس بینِ حالت‌های آماده حرکتِ واقعی دیده می‌شود نه پرشِ گسسته. روی دهانِ بسته اثری ندارد.
     const R=podRegions().mouth;
-    const wOpen=Math.max(0,Math.min(1,(M.vis&&M.vis!=='X'?k:0)+(M.prev&&M.prev!=='X'?1-k:0)));
+    const isClosed=v=>(!v||v==='X'||v==='C'||v==='MB');       // این حالت‌ها = دهانِ بسته
+    const wOpen=Math.max(0,Math.min(1,(isClosed(M.vis)?0:k)+(isClosed(M.prev)?0:1-k)));
     const moJ=Math.max(0,Math.min(1.08,M.open||0));          // اجازهٔ ریزتابِ کوچکِ فک
     const jaw=1+wOpen*(-0.20+0.26*moJ);
     const ax=zx+R.x*zw, ay=zy+(R.y-R.ry*0.62)*zh;
@@ -4213,6 +4225,49 @@ function podAvDraw(){
   ctx.restore();
 }
 /* ---- ریتم و شکلِ دهان از خودِ صدا (بدونِ هیچ توکن/هزینه) ---- */
+/* ---- ۲۳.۱۱ — زمان‌بندیِ شکلِ دهان از خودِ متنِ فارسیِ پادکست (صفر توکن/هزینه) ----
+   موتورِ صدا فقط از «بلندیِ صدا» شکل را حدس می‌زد؛ اینجا از خودِ حروفِ متن توالیِ آواها
+   (آ/ای/او/ف/لبِ‌بسته) را درمی‌آوریم و روی کلِ مدت پخش می‌کنیم. شکل و ریتم از متن،
+   شدتِ بازشدن از صدا → لب‌سینکِ خیلی طبیعی‌تر و کم‌تر رباتی. */
+function podVisemeFor(ch){
+  // {v:ویزم, w:وزنِ زمانی, o:هدفِ بازشدن}
+  if(ch===' '||ch==='‌'||ch==='\n'||ch==='\t') return {v:'X',w:0.5,o:0};
+  if('.،,!؟?؛;:…-—()[]«»"‘’“”،'.indexOf(ch)>=0) return {v:'X',w:1.0,o:0};
+  if('اآأإٱى'.indexOf(ch)>=0) return {v:'A', w:1.2,o:1.0};   // واکهٔ باز
+  if('هحعغ'.indexOf(ch)>=0)  return {v:'AH',w:1.0,o:0.7};   // نیمه‌باز
+  if('وؤ'.indexOf(ch)>=0)    return {v:'O', w:1.0,o:0.85};  // گرد
+  if('یيئ'.indexOf(ch)>=0)   return {v:'E', w:1.0,o:0.7};   // پهن
+  if('مبپ'.indexOf(ch)>=0)   return {v:'MB',w:0.7,o:0.0};   // لبِ بسته
+  if('فڤ'.indexOf(ch)>=0)    return {v:'F', w:0.8,o:0.4};   // لبِ پایین زیرِ دندان
+  if('َُِ'.indexOf(ch)>=0){ if(ch==='َ')return{v:'A',w:0.6,o:0.9}; if(ch==='ُ')return{v:'O',w:0.6,o:0.8}; return{v:'E',w:0.6,o:0.65}; }
+  return {v:'_',w:0.6,o:0.5};   // بقیهٔ صامت‌ها: شکلِ واکهٔ قبلی را با بازشدنِ کم نگه می‌دارند
+}
+function podBuildVisemeTL(script, dur){
+  const s=String(script||''); if(!s || !(dur>1)) return null;
+  const vis=[], op=[], wt=[]; let lastVowel='A', total=0;
+  for(let i=0;i<s.length;i++){
+    const e=podVisemeFor(s[i]); let v=e.v, o=e.o;
+    if(v==='_'){ v=lastVowel; o=0.5; }
+    else if(v==='A'||v==='AH'||v==='E'||v==='O') lastVowel=v;
+    vis.push(v); op.push(o); wt.push(e.w); total+=e.w;
+  }
+  if(!total) return null;
+  const scale=dur/total; const at=new Float64Array(vis.length); let acc=0;
+  for(let i=0;i<vis.length;i++){ at[i]=acc*scale; acc+=wt[i]; }
+  return { at, vis, op, n:vis.length, dur };
+}
+function podEnsureVisemeTL(){
+  const dur = _pod.cloud ? podTotalKnown() : _pod.estDur;
+  if(!_pod.script || !(dur>1)){ _pod.visTL=null; return; }
+  if(_pod.visTL && Math.abs((_pod.visTL.dur||0)-dur) < 1.5) return;   // فقط وقتی مدت واقعاً عوض شد بازبساز
+  _pod.visTL = podBuildVisemeTL(_pod.script, dur); _pod.visIdx=0;
+}
+function podVisemeAt(el){
+  const T=_pod.visTL; if(!T||!T.n) return null;
+  let i=_pod.visIdx||0; if(i>=T.n||el<T.at[i]) i=0;               // بعد از seek به عقب، از نو
+  while(i+1<T.n && T.at[i+1]<=el) i++;
+  _pod.visIdx=i; return { v:T.vis[i], o:T.op[i] };
+}
 function podReactStart(){
   podReactStop();
   const el=document.getElementById('podAvatar'); if(!el) return;
@@ -4249,18 +4304,27 @@ function podReactStart(){
       const ph=(Math.sin(t*3.1)+1)/2;
       if(ph<0.34) sA=1; else if(ph<0.67) sE=1; else sO=1;
     }
+    // ۲۳.۱۱ — اگر خطِ زمانیِ متن هست، «شکل» را از متن بگیر و «بازشدن» را از صدا (بلندی).
+    podEnsureVisemeTL();
+    let want='X', sec='', secW=0, tl=null;
+    if(_pod.visTL){ const el=_pod.cloud?podElapsed():((Date.now()-_pod.t0)/1000); tl=podVisemeAt(el); }
+    if(tl){
+      const loud=Math.min(1, lv*1.5);
+      open = tl.o * (0.42 + 0.58*loud);            // بازشدن = طبیعتِ آوا × بلندیِ صدا
+    }
     // ۲۳.۹ — فک با «اینرسی» حرکت می‌کند: کمی دیر می‌رسد و ریزتابِ طبیعی دارد (نه پرشِ آنی).
     const stiff=calm?0.18:0.27, damp=calm?0.76:0.67;
     _pod.jawV=(_pod.jawV||0)*damp+(open-MO.open)*stiff;
     MO.open=Math.max(0, Math.min(1.25, MO.open+_pod.jawV));   // سقف بازتر تا فنر پشتِ کلمپ گیر نکند
-    // انتخابِ ویزمِ غالب (گسسته، با هیسترزیس) + نگه‌داشتنِ ویزمِ دوم برای ترکیبِ وزن‌دار
-    let want='X', sec='', secW=0;
-    if(MO.open>=0.10){
+    if(tl){
+      want = tl.v;                                 // شکل مستقیماً از متن (شاملِ لبِ بسته و ف)
+    } else if(MO.open>=0.10){
+      // فالبک: انتخابِ ویزمِ غالب از باندهای صدا + ویزمِ دومِ وزن‌دار
       const arr=[['A',sA],['E',sE],['O',sO]].sort((a,b)=>b[1]-a[1]);
       want=arr[0][0];
       if(arr[0][1]>1e-6 && arr[1][1]>0){ sec=arr[1][0]; secW=0.45*Math.min(1, arr[1][1]/arr[0][1]); }
     }
-    if(want!==MO.vis){ const held=now-(MO.visAt||0), minHold=(want==='X')?130:80;
+    if(want!==MO.vis){ const held=now-(MO.visAt||0), minHold=(want==='X'||want==='MB')?100:(tl?55:80);
       if(held>=minHold){ MO.prev=MO.vis; MO.vis=want; MO.visAt=now; } }
     MO.sec=sec; MO.secW=lerp(MO.secW||0, (sec&&sec!==MO.vis)?secW:0, 0.25);   // ترکیبِ نرمِ آواهای نزدیک
     const XF=calm?170:120;                                  // مدتِ گذارِ نرمِ بین دو حالت (ms)
