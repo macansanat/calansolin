@@ -2030,7 +2030,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۱۷</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۱۸</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4574,15 +4574,16 @@ function pod3dApply(){
   const open=closed?0:Math.max(0,Math.min(1.1,M.open||0));
   const bl=Math.max(0,Math.min(1,w.BL||0)), br=Math.max(0,Math.min(1,w.BR||0));
   if(_pod3d.gltf && _pod3d.morphs){
-    // آواتارِ Ready Player Me → مورف‌تارگت‌ها (ARKit + Oculus Visemes)
-    ['viseme_aa','viseme_E','viseme_I','viseme_O','viseme_U','viseme_FF','viseme_PP','jawOpen','mouthOpen'].forEach(n=>pod3dSetMorph(n,0));
+    // هر دو نام‌گذاری پشتیبانی می‌شود: Oculus Visemes (RPM) و ARKit blendshapes (facecap و…)
+    ['viseme_aa','viseme_E','viseme_I','viseme_O','viseme_U','viseme_FF','viseme_PP','jawOpen','mouthOpen',
+     'mouthFunnel','mouthPucker','mouthStretchLeft','mouthStretchRight','mouthPressLeft','mouthPressRight','mouthClose'].forEach(n=>pod3dSetMorph(n,0));
+    // بازشدنِ فک (هر دو استاندارد jawOpen دارند)
     pod3dSetMorph('jawOpen', open*0.85); pod3dSetMorph('mouthOpen', open*0.6);
-    if(vis==='A') pod3dSetMorph('viseme_aa',0.95);
-    else if(vis==='E') pod3dSetMorph('viseme_E',0.9);
-    else if(vis==='AH') pod3dSetMorph('viseme_aa',0.55);
-    else if(vis==='O') pod3dSetMorph('viseme_O',0.95);
-    else if(vis==='F') pod3dSetMorph('viseme_FF',0.85);
-    else if(vis==='MB'||vis==='X'||vis==='C') pod3dSetMorph('viseme_PP',0.25);
+    if(vis==='A'||vis==='AH'){ pod3dSetMorph('viseme_aa', vis==='A'?0.95:0.55); }
+    else if(vis==='E'){ pod3dSetMorph('viseme_E',0.9); pod3dSetMorph('mouthStretchLeft',0.5); pod3dSetMorph('mouthStretchRight',0.5); }
+    else if(vis==='O'){ pod3dSetMorph('viseme_O',0.95); pod3dSetMorph('mouthFunnel',0.55); pod3dSetMorph('mouthPucker',0.35); }
+    else if(vis==='F'){ pod3dSetMorph('viseme_FF',0.85); pod3dSetMorph('mouthPressLeft',0.4); pod3dSetMorph('mouthPressRight',0.4); }
+    else if(vis==='MB'||vis==='X'||vis==='C'){ pod3dSetMorph('viseme_PP',0.25); pod3dSetMorph('mouthClose',open>0?0:0.15); }
     pod3dSetMorph('eyeBlinkLeft', bl); pod3dSetMorph('eyeBlinkRight', bl);
     pod3dSetMorph('browInnerUp', br); pod3dSetMorph('browOuterUpLeft', br*0.6); pod3dSetMorph('browOuterUpRight', br*0.6);
     const g=_pod3d.modelRoot; if(g){ g.rotation.y=(sw.x||0)*4; g.rotation.x=-(sw.y||0)*3; g.rotation.z=(sw.rot||0)*2; }
@@ -4601,7 +4602,7 @@ function pod3dApply(){
 function pod3dLoadModel(url, gender){
   pod3dEnsureGLTF((ok)=>{
     if(!ok){ uiToast&&uiToast('لودرِ سه‌بعدی لود نشد؛ چهرهٔ سادهٔ پشتیبان'); try{ pod3dInitProcedural(gender); pod3dStartLoop(); }catch(e){} return; }
-    let u=String(url||''); if(u && u.indexOf('morphTargets')<0) u+=(u.indexOf('?')<0?'?':'&')+'morphTargets=ARKit,Oculus%20Visemes';
+    let u=String(url||''); if(u && u.indexOf('readyplayer')>=0 && u.indexOf('morphTargets')<0) u+=(u.indexOf('?')<0?'?':'&')+'morphTargets=ARKit,Oculus%20Visemes';
     try{
       const loader=new THREE.GLTFLoader();
       loader.load(u, (gltf)=>{ try{ pod3dSetupModel(gltf.scene||gltf.scenes[0], gender, url); pod3dStartLoop(); }catch(e){ try{console.warn('3d model setup',e)}catch(_){}; try{ pod3dInitProcedural(gender); pod3dStartLoop(); }catch(_2){} } },
@@ -4657,6 +4658,14 @@ function pod3dApplyUrl(){
   try{ renderPodcastCard(); renderPodCfg(); }catch(e){}
 }
 function pod3dClearUrl(){ const g=podCfg().avGender; podCfgSet(g==='male'?{av3dUrlM:''}:{av3dUrlF:''}); _pod3d.gender=''; _pod3d.srcUrl=''; try{ renderPodcastCard(); renderPodCfg(); }catch(e){} }
+// چهرهٔ واقعیِ نمونه (facecap.glb روی سرورِ رسمیِ three.js — دائمی و رایگان، دارای مورف‌های ARKit)
+function pod3dUseSample(){
+  const url='https://threejs.org/examples/models/gltf/facecap.glb';
+  const g=podCfg().avGender; podCfgSet(g==='male'?{av3dUrlM:url}:{av3dUrlF:url});
+  _pod3d.gender=''; _pod3d.srcUrl='';
+  uiToast&&uiToast('در حالِ بارگیریِ چهرهٔ نمونه…');
+  try{ renderPodcastCard(); renderPodCfg(); }catch(e){}
+}
 
 /* ---- دانلودِ فایلِ پادکست (WAV یک‌تکه از قطعه‌های صوتی) ---- */
 function podEncodeWav(sampleRate, channels){
@@ -4807,10 +4816,13 @@ function renderPodCfg(){
     if(c.avMode==='3d'){
       const gUrl=(c.avGender==='male'?c.av3dUrlM:c.av3dUrlF)||'';
       h+=`<div class="qbg-sub" style="margin-top:4px">با همان صدا/متن لب می‌زند و پلک می‌زند. بارِ اول به اینترنت نیاز دارد، بعد کش می‌شود.</div>`;
-      h+=`<label class="qbg-lbl" style="margin-top:8px">لینکِ آواتارِ ${c.avGender==='male'?'مرد':'زن'} (Ready Player Me)</label>`;
+      h+=`<label class="qbg-lbl" style="margin-top:8px">نمونهٔ آمادهٔ چهرهٔ واقعی (یک لمس، بدونِ ساختِ چیزی)</label>`;
+      h+=`<div class="pod-seg"><button onclick="pod3dUseSample()">🎭 چهرهٔ واقعیِ نمونه</button></div>`;
+      h+=`<div class="qbg-sub" style="margin-top:4px">یک چهرهٔ واقعیِ آماده روی سرورِ رسمیِ three.js. بارِ اول اینترنت لازم دارد.</div>`;
+      h+=`<label class="qbg-lbl" style="margin-top:10px">یا لینکِ دلخواهِ آواتارِ ${c.avGender==='male'?'مرد':'زن'} (اختیاری)</label>`;
       h+=`<input id="pod3dUrlInput" class="pod-3d-url" value="${escVision(gUrl)}" placeholder="https://models.readyplayer.me/xxxx.glb" autocomplete="off" autocapitalize="off" spellcheck="false">`;
       h+=`<div class="pod-seg" style="margin-top:6px"><button onclick="pod3dApplyUrl()">✅ اعمالِ لینک</button><button onclick="pod3dClearUrl()">↺ چهرهٔ ساده</button></div>`;
-      h+=`<details style="margin-top:6px" open><summary style="cursor:pointer;font-size:12px;color:var(--teal)">چطور یک چهرهٔ خوشگل بسازم؟ (رایگان، ۱ دقیقه)</summary><div class="qbg-sub" style="margin-top:6px;line-height:2">۱) در <b style="color:var(--teal)">نوارِ آدرسِ</b> مرورگر (نه جستجوی گوگل) این را باز کن: <b style="color:var(--teal);direction:ltr;display:inline-block">demo.readyplayer.me</b><br>۲) «Create Avatar» → از سلفی یا قالبِ آماده یک زن/مردِ زیبا بساز.<br>۳) آخرِ کار «Next/Done» یک لینک می‌دهد که به <b style="direction:ltr;display:inline-block">.glb</b> ختم می‌شود (مثلِ <span style="direction:ltr">models.readyplayer.me/....glb</span>) — کپی‌اش کن.<br>۴) لینک را اینجا پِیست کن و «✅ اعمالِ لینک» بزن.<br>۵) برای مرد و زن جداگانه لینک بگذار (اول جنسیت را از پایین انتخاب کن).</div></details>`;
+      h+=`<details style="margin-top:6px"><summary style="cursor:pointer;font-size:12px;color:var(--teal)">می‌خواهم چهرهٔ خودم/دلخواه بگذارم</summary><div class="qbg-sub" style="margin-top:6px;line-height:2">هر لینکِ <b style="direction:ltr;display:inline-block">.glb</b> با مورف‌تارگتِ چهره (ARKit یا Oculus Visemes) کار می‌کند. اگر از Ready Player Me آواتار ساختی، لینکِ <span style="direction:ltr">models.readyplayer.me/....glb</span> را اینجا پِیست کن. برای مرد و زن جداگانه (اول جنسیت را انتخاب کن).</div></details>`;
       if(!gUrl) h+=`<div class="qbg-sub" style="margin-top:4px;color:var(--amber)">تا وقتی لینک نگذاری، چهرهٔ سادهٔ پیش‌فرض نشان داده می‌شود (همان که دیدی).</div>`;
     }
     h+=`<label class="qbg-lbl" style="margin-top:8px">${c.avMode==='3d'?'شخصیتِ سه‌بعدی (زن/مرد)':'چهرهٔ مجری'}</label>`;
