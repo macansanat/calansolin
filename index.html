@@ -105,9 +105,18 @@ body.nav-bottom{padding-bottom:100px}
 .qbg-box{position:relative;width:100%;max-width:400px;background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 24px 64px rgba(0,0,0,.55)}
 /* مودال بلند (ثبت خوراکی): از بالا و با اسکرول داخلی تا کل فرم روی گوشی برسد */
 #customFoodModal.show{align-items:flex-start}
-#customFoodModal .qbg-box,#podCfgModal .qbg-box{max-height:calc(100dvh - 32px);max-height:calc(100vh - 32px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-/* روی صفحه‌های کوتاه، مودالِ بلند از بالا شروع شود تا هدرش قابلِ دیدن/اسکرول بماند */
-@media (max-height:760px){#podCfgModal.show{align-items:flex-start}}
+#customFoodModal .qbg-box{max-height:calc(100dvh - 32px);max-height:calc(100vh - 32px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+/* مودالِ تنظیماتِ پادکست: ستون؛ فقط بدنه اسکرول شود و دکمهٔ «تمام» همیشه ته و در دسترس بماند */
+#podCfgModal .qbg-box{max-height:calc(100dvh - 24px);max-height:calc(100vh - 24px);display:flex;flex-direction:column;overflow:hidden;padding-top:18px}
+#podCfgModal #podCfgBody{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-top:4px}
+#podCfgModal .qbg-actions{flex:0 0 auto;padding-top:12px;margin-top:10px!important;border-top:1px solid var(--line);position:sticky;bottom:0;background:linear-gradient(180deg,transparent,var(--panel) 40%)}
+/* بندانگشتیِ چهرهٔ مرد/زن در تنظیمات */
+.pod-gthumb{display:flex;gap:8px;margin:6px 0 2px}
+.pod-gcell{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.pod-gcell .fr{width:100%;height:76px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--field);display:flex;align-items:center;justify-content:center}
+.pod-gcell .fr img{width:100%;height:100%;object-fit:cover;object-position:50% 20%}
+.pod-gcell .cap{font-size:11px;color:var(--muted)}
+.pod-gcell.on .fr{border-color:var(--teal);box-shadow:0 0 0 1.5px var(--teal)}
 .qbg-x{position:absolute;top:14px;left:14px;width:30px;height:30px;border-radius:50%;background:var(--field);border:1px solid var(--line);color:var(--muted);font-size:14px;cursor:pointer;line-height:1}
 .qbg-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
 .qbg-badge{flex:0 0 auto;width:44px;height:44px;border-radius:13px;background:rgba(224,104,95,.16);display:flex;align-items:center;justify-content:center;font-size:22px}
@@ -171,12 +180,12 @@ body.nav-bottom{padding-bottom:100px}
 .pod-note{font-size:10px;color:var(--muted);margin-top:11px;line-height:1.7}
 /* مجریِ تصویریِ پادکست */
 .pod-av{margin:2px 0 13px;display:flex;justify-content:center}
-.pod-av-stage{position:relative;width:100%;max-width:360px;height:158px;border-radius:16px;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;background:radial-gradient(130% 120% at 50% 12%, rgba(154,134,224,.30), rgba(63,185,163,.12) 52%, rgba(20,26,38,.22));box-shadow:inset 0 0 46px rgba(0,0,0,.16)}
-.pod-av-img,.pod-av-cv{position:absolute;inset:0;width:100%;height:158px}
-.pod-av-img{object-fit:cover;object-position:50% 22%;filter:saturate(1.05) contrast(1.02)}
+.pod-av-stage{position:relative;width:100%;max-width:360px;height:210px;border-radius:16px;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;background:radial-gradient(130% 120% at 50% 12%, rgba(154,134,224,.30), rgba(63,185,163,.12) 52%, rgba(20,26,38,.22));box-shadow:inset 0 0 46px rgba(0,0,0,.16)}
+.pod-av-img,.pod-av-cv{position:absolute;inset:0;width:100%;height:100%}
+.pod-av-img{object-fit:cover;object-position:50% 28%;filter:saturate(1.05) contrast(1.02)}
 .pod-av-cv{display:block;will-change:contents}
 .pod-av.paused .pod-av-img,.pod-av.paused .pod-av-cv{filter:saturate(.85) brightness(.93)}
-.pod-av-ph{width:100%;height:158px;display:flex;align-items:center;justify-content:center}
+.pod-av-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
 .pod-av.live .pod-av-ph{animation:podBreathe 6.5s ease-in-out infinite}
 .pod-av-ring{position:absolute;inset:0;border-radius:16px;pointer-events:none;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.07), inset 0 0 26px rgba(154,134,224,calc(.12 + var(--lv,0)*.55)), 0 0 calc(6px + var(--lv,0)*22px) rgba(63,185,163,calc(var(--lv,0)*.5));transition:box-shadow .09s linear}
 .pod-av-eq{position:absolute;bottom:9px;left:50%;transform:translateX(-50%);display:flex;gap:3px;align-items:flex-end;height:22px;opacity:0;transition:opacity .3s;z-index:2}
@@ -2016,7 +2025,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۱۲</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۱۳</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3312,8 +3321,10 @@ const POD_LENS=[2,3,5,7];
 function podCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(POD_CFG_KEY)||'{}')||{}; }catch(e){}
   return { prov:o.prov||'auto', minutes:o.minutes||5, gVoice:o.gVoice||'Kore', oVoice:o.oVoice||'shimmer', dVoice:o.dVoice||'',
     avatar:(o.avatar!==false), avGender:(o.avGender==='male'?'male':'female'),
-    mDx:(typeof o.mDx==='number'?o.mDx:0), mDy:(typeof o.mDy==='number'?o.mDy:0),
-    mScale:(typeof o.mScale==='number'?o.mScale:1) }; }
+    avZoom:(typeof o.avZoom==='number'?o.avZoom:0.45),
+    mDx:(typeof o.mDx==='number'?o.mDx:0), mDy:(typeof o.mDy==='number'?o.mDy:0), mScale:(typeof o.mScale==='number'?o.mScale:1),
+    mDxM:(typeof o.mDxM==='number'?o.mDxM:0), mDyM:(typeof o.mDyM==='number'?o.mDyM:0), mScaleM:(typeof o.mScaleM==='number'?o.mScaleM:1),
+    eDx:(typeof o.eDx==='number'?o.eDx:0), eDy:(typeof o.eDy==='number'?o.eDy:0), eScale:(typeof o.eScale==='number'?o.eScale:1) }; }
 function podCfgSet(patch){ const n=Object.assign(podCfg(), patch||{}); try{ localStorage.setItem(POD_CFG_KEY, JSON.stringify(n)); }catch(e){} return n; }
 // کتابخانهٔ نکاتِ آموزشیِ چرخشی (آموزشی و عمومی — بدون دوز/تشخیص)
 const POD_TOPICS=[
@@ -3748,10 +3759,21 @@ function podClampReg(r, kind){
 const POD_TUNE_LIM={ dx:0.30, dy:0.30, sMin:0.35, sMax:3.0 };
 // جابه‌جایی/بزرگ‌نماییِ دستیِ ناحیهٔ دهان. عمداً بعد از کلمپِ خودکار و بدونِ کلمپِ دوباره
 // اعمال می‌شود تا محدودیتِ خودکار جلوی تنظیمِ کاربر را نگیرد (فقط سقفِ امنِ کلی).
+function podCurGender(){ return (_pod.avImgGender||podCfg().avGender)==='male'?'male':'female'; }
+// تنظیمِ دهان جدا برای مرد و زن نگه‌داری می‌شود (چهرهٔ مرد شکل/اندازهٔ متفاوت دارد)
+function podMouthCfg(){ const c=podCfg(); return podCurGender()==='male'
+  ? {dx:c.mDxM||0,dy:c.mDyM||0,k:c.mScaleM||1} : {dx:c.mDx||0,dy:c.mDy||0,k:c.mScale||1}; }
 function podMouthTune(m){
-  if(!m) return m; const c=podCfg(); const L=POD_TUNE_LIM;
-  const dx=Math.max(-L.dx,Math.min(L.dx, c.mDx||0)), dy=Math.max(-L.dy,Math.min(L.dy, c.mDy||0));
-  const k=Math.max(L.sMin,Math.min(L.sMax, c.mScale||1));
+  if(!m) return m; const L=POD_TUNE_LIM, t=podMouthCfg();
+  const dx=Math.max(-L.dx,Math.min(L.dx,t.dx)), dy=Math.max(-L.dy,Math.min(L.dy,t.dy));
+  const k=Math.max(L.sMin,Math.min(L.sMax,t.k));
+  const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+  return { x:cl(m.x+dx,.02,.98), y:cl(m.y+dy,.02,.98), rx:cl(m.rx*k,.02,.60), ry:cl(m.ry*k,.015,.60) };
+}
+function podEyeTune(m){
+  if(!m) return m; const c=podCfg(), L=POD_TUNE_LIM;
+  const dx=Math.max(-L.dx,Math.min(L.dx,c.eDx||0)), dy=Math.max(-L.dy,Math.min(L.dy,c.eDy||0));
+  const k=Math.max(L.sMin,Math.min(L.sMax,c.eScale||1));
   const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
   return { x:cl(m.x+dx,.02,.98), y:cl(m.y+dy,.02,.98), rx:cl(m.rx*k,.02,.60), ry:cl(m.ry*k,.015,.60) };
 }
@@ -3759,8 +3781,8 @@ function podRegions(){
   const r=_pod.avGeom||{};
   return {
     mouth: podMouthTune(podClampReg(r.mouth,'mouth')||POD_REG_DEF.mouth),
-    eyes:  podClampReg(r.eyes,'eyes') ||POD_REG_DEF.eyes,
-    brow:  podClampReg(r.brow,'brow') ||POD_REG_DEF.brow
+    eyes:  podEyeTune(podClampReg(r.eyes,'eyes') ||POD_REG_DEF.eyes),
+    brow:  podEyeTune(podClampReg(r.brow,'brow') ||POD_REG_DEF.brow)
   };
 }
 // چقدر از فریم *بیرونِ* ناحیهٔ مجاز با چهرهٔ پایه فرق دارد؟ اگر زیاد بود یعنی AI کلِ عکس را
@@ -4013,9 +4035,11 @@ async function podAvDownloadStates(){ const u=_pod.avStripURL||await podAvFrames
 function podAvPackData(){
   const c=podCfg(); const g=_pod.avImgGender||c.avGender;
   const frames={}; POD_FRAMES.forEach(f=>{ const u=_pod.avFrames&&_pod.avFrames[f.id]; if(u) frames[f.id]=u; });
-  return { type:'calansolin-avatar-pack', ver:1, gender:(g==='male'?'male':'female'), date:new Date().toISOString(),
+  const male=(g==='male');
+  return { type:'calansolin-avatar-pack', ver:2, gender:(male?'male':'female'), date:new Date().toISOString(),
     base:_pod.avImg||'', frames, geom:_pod.avGeom||null,
-    tune:{ mDx:c.mDx||0, mDy:c.mDy||0, mScale:c.mScale||1 } };
+    tune:{ mDx:(male?c.mDxM:c.mDx)||0, mDy:(male?c.mDyM:c.mDy)||0, mScale:(male?c.mScaleM:c.mScale)||1,
+           eDx:c.eDx||0, eDy:c.eDy||0, eScale:c.eScale||1, avZoom:(c.avZoom!=null?c.avZoom:0.45) } };
 }
 function podAvExportPack(){
   try{
@@ -4040,10 +4064,16 @@ async function podAvImportPack(input){
     for(const fr of POD_FRAMES){ const u=d.frames&&d.frames[fr.id];
       if(u && String(u).slice(0,11)==='data:image/'){ frames[fr.id]=u; await podAvPut(podFrKey(g,fr.id), u); } }
     if(d.geom) await podAvPut(podGeomKey(g), d.geom);
-    const t=d.tune||{};
-    podCfgSet({ avGender:g, avatar:true,
-      mDx:(typeof t.mDx==='number'?t.mDx:0), mDy:(typeof t.mDy==='number'?t.mDy:0),
-      mScale:(typeof t.mScale==='number'?t.mScale:1) });
+    const t=d.tune||{}; const male=(g==='male'); const patch={ avGender:g, avatar:true };
+    patch[male?'mDxM':'mDx']=(typeof t.mDx==='number'?t.mDx:0);
+    patch[male?'mDyM':'mDy']=(typeof t.mDy==='number'?t.mDy:0);
+    patch[male?'mScaleM':'mScale']=(typeof t.mScale==='number'?t.mScale:1);
+    if(typeof t.eDx==='number') patch.eDx=t.eDx;
+    if(typeof t.eDy==='number') patch.eDy=t.eDy;
+    if(typeof t.eScale==='number') patch.eScale=t.eScale;
+    if(typeof t.avZoom==='number') patch.avZoom=t.avZoom;
+    podCfgSet(patch); _pod.avZoom=(typeof t.avZoom==='number'?t.avZoom:_pod.avZoom);
+    try{ _pod.avThumbs=_pod.avThumbs||{}; _pod.avThumbs[g]=d.base; }catch(e){}
     _pod.avImg=d.base; _pod.avImgGender=g; _pod.avFrames=frames; _pod.avGeom=d.geom||null;
     _pod.avGeomFixed=!!d.geom; _pod.avLayers=null; _pod.avStripURL=null;
     try{ await podAvBuildLayers(); podAvDraw(); }catch(e){}
@@ -4103,6 +4133,7 @@ function podAvSoftMasked(img, r){
   return cv;
 }
 async function podAvBuildLayers(){
+  try{ _pod.avZoom=podCfg().avZoom; }catch(e){}
   if(!_pod.avImg) return null;
   if(_pod.avLayers && _pod.avLayersFor===_pod.avImg) return _pod.avLayers;
   let base; try{ base=await podLoadImg(_pod.avImg); }catch(e){ return null; }
@@ -4163,11 +4194,14 @@ function podAvDraw(){
   if(cv.width!==Math.round(cw*dpr)||cv.height!==Math.round(ch*dpr)){ cv.width=Math.round(cw*dpr); cv.height=Math.round(ch*dpr); }
   const ctx=cv.getContext('2d'); const W=cv.width, H=cv.height;
   const iw=L.base.naturalWidth||1024, ih=L.base.naturalHeight||1024;
-  const sc=Math.max(W/iw,H/ih); const dw=iw*sc, dh=ih*sc;          // cover
+  const cover=Math.max(W/iw,H/ih), contain=Math.min(W/iw,H/ih);   // پوششِ کامل ↔ نمایشِ کاملِ عکس
+  const z=Math.max(0,Math.min(1, (_pod.avZoom!=null?_pod.avZoom:0.45)));
+  const sc=cover+(contain-cover)*z; const dw=iw*sc, dh=ih*sc;      // زوم‌بک: هرچه z بیشتر، مو/شانه بیشتر پیدا
   const sw=_pod.avSway||{x:0,y:0,s:1.02};
   const zw=dw*sw.s, zh=dh*sw.s;
-  const zx=(W-dw)*0.5-(zw-dw)/2 + sw.x*W;                           // object-position 50% 22% + تکانِ سر
-  const zy=(H-dh)*0.22-(zh-dh)/2 + sw.y*H;
+  const posY=dh>H?0.22:0.5;                                        // اگر عکس بلندتر از قاب بود سر بالا، وگرنه وسط
+  const zx=(W-dw)*0.5-(zw-dw)/2 + sw.x*W;
+  const zy=(H-dh)*posY-(zh-dh)/2 + sw.y*H;
   ctx.clearRect(0,0,W,H);
   ctx.save();
   if(sw.rot){ ctx.translate(W/2,H/2); ctx.rotate(sw.rot); ctx.translate(-W/2,-H/2); }   // چرخشِ خیلی ریزِ سر
@@ -4451,14 +4485,33 @@ function renderPodcastCard(){
   if(playing) podReactStart(); else podReactStop();
 }
 /* ---- تنظیماتِ پادکست (پاپ‌آپ) + تستِ صدا ---- */
-function podOpenCfg(){ renderPodCfg(); const m=document.getElementById('podCfgModal'); if(m) m.classList.add('show'); }
+function podOpenCfg(){ renderPodCfg(); const m=document.getElementById('podCfgModal'); if(m) m.classList.add('show'); try{ podLoadAvThumbs(); }catch(e){} }
+// چهرهٔ پایهٔ مرد و زن را (اگر ساخته شده) برای نمایشِ بندانگشتی در تنظیمات می‌خواند
+async function podLoadAvThumbs(){
+  _pod.avThumbs=_pod.avThumbs||{};
+  for(const g of ['female','male']){
+    if(_pod.avThumbs[g]!==undefined) continue;
+    try{ _pod.avThumbs[g]=(g===_pod.avImgGender&&_pod.avImg)?_pod.avImg:(await podAvGet(podAvKey(g))||null); }
+    catch(e){ _pod.avThumbs[g]=null; }
+  }
+  try{ if(document.getElementById('podCfgModal').classList.contains('show')) renderPodCfg(); }catch(e){}
+}
 function podCloseCfg(){ const m=document.getElementById('podCfgModal'); if(m) m.classList.remove('show'); try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} podTestStop(); }
 function podCfgPick(k,v){ const patch={}; patch[k]=v; podCfgSet(patch);
-  if(k==='avGender'){ _pod.avImg=null; _pod.avFrames=null; _pod.avLayers=null; _pod.avGeom=null; _pod.avGeomFixed=false; _pod.avImgGender=''; }
+  if(k==='avGender'){ _pod.avImg=null; _pod.avFrames=null; _pod.avLayers=null; _pod.avGeom=null; _pod.avGeomFixed=false; _pod.avImgGender=''; try{ podLoadAvThumbs(); }catch(e){} }
   renderPodCfg(); renderPodcastCard();
   if(k==='avGender'||(k==='avatar'&&v)){ try{ podAvatarLoad(); }catch(e){} }
+  if(k==='prov') podResetForVoiceChange('✓ سرویسِ صدا عوض شد — «پخش» را بزن تا با آن ساخته شود');
   if(k==='minutes') uiToast&&uiToast('برای اعمالِ مدت، «ساختِ دوباره 🔄» را بزن'); }
-function podCfgPickVoice(prov,id){ if(prov==='gemini') podCfgSet({gVoice:id}); else if(prov==='openai') podCfgSet({oVoice:id}); else podCfgSet({dVoice:id}); renderPodCfg(); renderPodcastCard(); uiToast&&uiToast('✓ صدا انتخاب شد'); }
+// وقتی صدا/سرویس عوض می‌شود، صوتِ ساخته‌شدهٔ فعلی باید دور ریخته شود تا «پخش» با صدای تازه بسازد
+function podResetForVoiceChange(msg){
+  try{ podcastStopAll(); }catch(e){}
+  try{ podEngineReset(); }catch(e){}
+  _pod.rawChunks=null; _pod.rawType=''; _pod.fromCache=false; _pod.mode='idle'; _pod.prep=false;
+  try{ renderPodcastCard(); }catch(e){}
+  if(msg) uiToast&&uiToast(msg);
+}
+function podCfgPickVoice(prov,id){ if(prov==='gemini') podCfgSet({gVoice:id}); else if(prov==='openai') podCfgSet({oVoice:id}); else podCfgSet({dVoice:id}); podResetForVoiceChange('✓ صدا انتخاب شد — «پخش» را بزن تا با صدای تازه بسازد'); renderPodCfg(); renderPodcastCard(); }
 function renderPodCfg(){
   const box=document.getElementById('podCfgBody'); if(!box) return; const c=podCfg();
   const provOpts=[['auto','خودکار'],['gemini','Gemini'],['openai','ChatGPT'],['device','صدای گوشی']];
@@ -4484,7 +4537,10 @@ function renderPodCfg(){
   h+=`<div class="pod-seg">`+[['on','روشن',true],['off','خاموش',false]].map(o=>`<button class="${c.avatar===o[2]?'on':''}" onclick="podCfgPick('avatar',${o[2]})">${o[1]}</button>`).join('')+`</div>`;
   if(c.avatar){
     h+=`<label class="qbg-lbl" style="margin-top:8px">چهرهٔ مجری</label>`;
-    h+=`<div class="pod-seg">`+[['female','👩‍💼 زن'],['male','🧑‍💼 مرد']].map(o=>`<button class="${c.avGender===o[0]?'on':''}" onclick="podCfgPick('avGender','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
+    const th=_pod.avThumbs||{};
+    const gcell=(g,lbl)=>{ const img=th[g]; const inner=img?`<img src="${img}" alt="${lbl}">`:`<span style="font-size:22px;opacity:.5">${g==='male'?'🧑‍💼':'👩‍💼'}</span>`;
+      return `<div class="pod-gcell ${c.avGender===g?'on':''}" onclick="podCfgPick('avGender','${g}')"><div class="fr">${inner}</div><div class="cap">${lbl}${img?'':' (نساخته)'}</div></div>`; };
+    h+=`<div class="pod-gthumb">${gcell('female','زن')}${gcell('male','مرد')}</div>`;
     const hasImgKey=hasAnyKey('openai')||hasAnyKey('gemini');
     const avReady=_pod.avImg&&_pod.avImgGender===c.avGender;
     const nfr=podFramesReady(), nAll=POD_FRAMES.length;
@@ -4497,6 +4553,10 @@ function renderPodCfg(){
     h+=`<div class="pod-vrow" style="margin-top:8px"><span class="pod-vname">${stat}</span><button class="pod-vtest" ${(_pod.avBusy||!hasImgKey)?'disabled':''} onclick="${btnAct}">${btnLbl}</button></div>`;
     if(_pod.avBusy && pg) h+=`<div class="qbg-sub" style="margin-top:4px">این صفحه را باز نگه دار؛ هر حالت چند ثانیه طول می‌کشد. اگر بست، دوباره «ادامهٔ ساخت» را بزن — کارِ انجام‌شده کش می‌ماند.</div>`;
     if(!_pod.avBusy && nfr<nAll && _pod.avLastErr) h+=`<div class="qbg-sub" style="color:var(--amber);margin-top:4px">علتِ توقف: ${escVision(podErrHint(_pod.avLastErr))}</div>`;
+    // زوم قاب: هرچه بیشتر، مو و شانه‌ها بیشتر پیدا می‌شوند
+    h+=`<label class="qbg-lbl" style="margin-top:10px">زومِ قاب (نمایشِ مو/شانه)</label>`;
+    h+=`<div class="pod-seg"><button onclick="podAvZoom(-0.12)">🔍➕ نزدیک‌تر</button><button onclick="podAvZoom(0.12)">🔍➖ دورتر</button><button onclick="podCfgPick('avZoom',0.45)&&0;podAvZoom(0)">↺</button></div>`;
+    h+=`<div class="qbg-sub" style="margin-top:4px">دورتر = صورت کوچک‌تر ولی مو و شانه‌ها کامل دیده می‌شوند.</div>`;
     h+=`<div class="qbg-sub" style="margin-top:4px">پرتره ${hasImgKey?'':'(نیازمندِ کلیدِ OpenAI یا Gemini) '}فقط یک‌بار ساخته می‌شود: چهره + حالت‌های «آ/ای/او»، پلک و ابرو. بعد از آن آفلاین و رایگان است — ریتم و شکلِ دهان از خودِ صدا خوانده می‌شود و هیچ توکنی مصرف نمی‌کند.</div>`;
     // ابزارِ عیب‌یابی (فقط وقتی چهره‌ای هست)
     if(avReady && !_pod.avBusy){
@@ -4510,7 +4570,13 @@ function renderPodCfg(){
       h+=`<div class="pod-seg"><button onclick="podMouthNudge(-0.01,0,0)">⬆️ بالا</button><button onclick="podMouthNudge(0.01,0,0)">⬇️ پایین</button><button onclick="podMouthNudge(0,0,-0.01)">⬅️ چپ</button><button onclick="podMouthNudge(0,0,0.01)">➡️ راست</button></div>`;
       h+=`<div class="pod-seg" style="margin-top:6px"><button onclick="podMouthNudge(0,0.06,0)">➕ بزرگ‌تر</button><button onclick="podMouthNudge(0,-0.06,0)">➖ کوچک‌تر</button><button onclick="podMouthNudge(0,0.25,0)">➕➕ خیلی بزرگ‌تر</button><button onclick="podMouthNudge(0,-0.25,0)">➖➖ خیلی کوچک‌تر</button><button onclick="podMouthReset()">↺ ریست</button></div>`;
       h+=`<div class="pod-seg" style="margin-top:6px"><button onclick="podMouthNudge(-0.04,0,0)">⏫ بالا (درشت)</button><button onclick="podMouthNudge(0.04,0,0)">⏬ پایین (درشت)</button><button onclick="podMouthNudge(0,0,-0.04)">⏪ چپ (درشت)</button><button onclick="podMouthNudge(0,0,0.04)">⏩ راست (درشت)</button></div>`;
-      h+=`<div class="qbg-sub" style="margin-top:4px">عمودی: ${faDigits(String(Math.round((_c.mDy||0)*1000)/10))}٪ · افقی: ${faDigits(String(Math.round((_c.mDx||0)*1000)/10))}٪ · اندازه: ${faDigits(String(Math.round((_c.mScale||1)*100)))}٪ — بهترین کار: پادکست را پخش کن و همین‌جا تنظیم کن تا دهان دقیقاً روی لب‌ها بنشیند.</div>`;
+      const _mt=podMouthCfg();
+      h+=`<div class="qbg-sub" style="margin-top:4px">دهانِ «${c.avGender==='male'?'مرد':'زن'}» — عمودی: ${faDigits(String(Math.round((_mt.dy||0)*1000)/10))}٪ · افقی: ${faDigits(String(Math.round((_mt.dx||0)*1000)/10))}٪ · اندازه: ${faDigits(String(Math.round((_mt.k||1)*100)))}٪ (تنظیمِ مرد و زن جداست). بهترین کار: پخش کن و همین‌جا تنظیم کن.</div>`;
+      // ---- چشم/پلک/ابرو: تنظیمِ جای ناحیه + تستِ پلک ----
+      h+=`<label class="qbg-lbl" style="margin-top:10px">جای چشم (برای پلک و ابرو)</label>`;
+      h+=`<div class="pod-seg"><button onclick="podEyeNudge(-0.01,0,0)">⬆️ بالا</button><button onclick="podEyeNudge(0.01,0,0)">⬇️ پایین</button><button onclick="podEyeNudge(0,0,-0.01)">⬅️ چپ</button><button onclick="podEyeNudge(0,0,0.01)">➡️ راست</button></div>`;
+      h+=`<div class="pod-seg" style="margin-top:6px"><button onclick="podEyeNudge(0,0.06,0)">➕ بزرگ‌تر</button><button onclick="podEyeNudge(0,-0.06,0)">➖ کوچک‌تر</button><button onclick="podEyeReset()">↺ ریست</button><button onclick="podBlinkTest()">👁 تستِ پلک</button></div>`;
+      h+=`<div class="qbg-sub" style="margin-top:4px">عمودی: ${faDigits(String(Math.round((_c.eDy||0)*1000)/10))}٪ · افقی: ${faDigits(String(Math.round((_c.eDx||0)*1000)/10))}٪ · اندازه: ${faDigits(String(Math.round((_c.eScale||1)*100)))}٪ — «👁 تستِ پلک» را بزن؛ اگر پلک سرِ جای چشم نبود، با این دکمه‌ها میخش کن.</div>`;
       if(_pod.avStripURL){ h+=`<div class="qbg-sub" style="margin-top:6px">اگر دهانِ «آ/ای/او» زیر واقعاً باز نیست، مشکل از عکس‌های AI است (نه موتور). این تصویر را برایم بفرست:</div>`;
         h+=`<div style="margin-top:6px;overflow-x:auto;-webkit-overflow-scrolling:touch"><img src="${_pod.avStripURL}" style="height:150px;max-width:none;border-radius:8px" alt="حالت‌های چهره"></div>`; }
       h+=`<div class="qbg-sub" style="margin-top:4px">🧪 تستِ موتور: دهانِ آشکارا باز را (بدونِ هزینه) جایگزین می‌کند؛ «پخش» کن — اگر لب‌ها باز/بسته شد، موتور سالم است. با رفرش به عکس‌های واقعی برمی‌گردد.</div>`;
@@ -4527,14 +4593,43 @@ function renderPodCfg(){
 }
 // جابه‌جایی/اندازهٔ ناحیهٔ دهان را تغییر می‌دهد و لایه‌ها را با ناحیهٔ تازه از نو می‌سازد
 async function podMouthNudge(dy, ds, dx){
-  const c=podCfg(), L=POD_TUNE_LIM;
-  podCfgSet({ mDx: Math.max(-L.dx,Math.min(L.dx,(c.mDx||0)+(dx||0))),
-              mDy: Math.max(-L.dy,Math.min(L.dy,(c.mDy||0)+(dy||0))),
-              mScale: Math.max(L.sMin,Math.min(L.sMax,(c.mScale||1)+(ds||0))) });
+  const c=podCfg(), L=POD_TUNE_LIM, male=podCurGender()==='male';
+  const gd=male?'mDxM':'mDx', gy=male?'mDyM':'mDy', gs=male?'mScaleM':'mScale';
+  const patch={};
+  patch[gd]=Math.max(-L.dx,Math.min(L.dx,(c[gd]||0)+(dx||0)));
+  patch[gy]=Math.max(-L.dy,Math.min(L.dy,(c[gy]||0)+(dy||0)));
+  patch[gs]=Math.max(L.sMin,Math.min(L.sMax,(c[gs]||1)+(ds||0)));
+  podCfgSet(patch);
   _pod.avLayers=null; try{ await podAvBuildLayers(); podAvDraw(); }catch(e){}
   try{ renderPodCfg(); }catch(e){}
 }
-async function podMouthReset(){ podCfgSet({ mDx:0, mDy:0, mScale:1 }); _pod.avLayers=null; try{ await podAvBuildLayers(); podAvDraw(); }catch(e){} try{ renderPodCfg(); }catch(e){} }
+async function podMouthReset(){ const male=podCurGender()==='male';
+  podCfgSet(male?{mDxM:0,mDyM:0,mScaleM:1}:{mDx:0,mDy:0,mScale:1});
+  _pod.avLayers=null; try{ await podAvBuildLayers(); podAvDraw(); }catch(e){} try{ renderPodCfg(); }catch(e){} }
+// تنظیمِ ریزِ ناحیهٔ چشم (برای پلک/ابرو) + تستِ پلک + زوم + بندانگشتیِ چهره‌ها
+async function podEyeNudge(dy, ds, dx){
+  const c=podCfg(), L=POD_TUNE_LIM;
+  podCfgSet({ eDx:Math.max(-L.dx,Math.min(L.dx,(c.eDx||0)+(dx||0))),
+              eDy:Math.max(-L.dy,Math.min(L.dy,(c.eDy||0)+(dy||0))),
+              eScale:Math.max(L.sMin,Math.min(L.sMax,(c.eScale||1)+(ds||0))) });
+  _pod.avLayers=null; try{ await podAvBuildLayers(); podAvDraw(); }catch(e){}
+  try{ renderPodCfg(); }catch(e){}
+}
+async function podEyeReset(){ podCfgSet({eDx:0,eDy:0,eScale:1}); _pod.avLayers=null; try{ await podAvBuildLayers(); podAvDraw(); }catch(e){} try{ renderPodCfg(); }catch(e){} }
+async function podAvZoom(d){ const c=podCfg(); const z=Math.max(0,Math.min(1,(c.avZoom!=null?c.avZoom:0.45)+d));
+  podCfgSet({avZoom:z}); _pod.avZoom=z; try{ podAvDraw(); }catch(e){} try{ renderPodCfg(); }catch(e){} }
+// یک پلکِ آزمایشی می‌زند (حتی وقتی پخش نیست) تا کاربر جای/اندازهٔ چشم را ببیند و تنظیم کند
+function podBlinkTest(){
+  if(!_pod.avLayers){ uiToast&&uiToast('اول یک چهره بساز'); return; }
+  _pod.avW=_pod.avW||{A:0,E:0,O:0,BL:0,BR:0};
+  const t0=performance.now();
+  const step=()=>{ const bt=performance.now()-t0;
+    _pod.avW.BL = bt<90?bt/90 : (bt<200?1 : (bt<340?1-(bt-200)/140:0));
+    try{ podAvDraw(); }catch(e){}
+    if(bt<340) requestAnimationFrame(step); else { _pod.avW.BL=0; try{ podAvDraw(); }catch(e){} }
+  };
+  requestAnimationFrame(step);
+}
 function podTestDevice(i){ const v=(window._podDevVoices||[])[i]; if(v) podTestVoice('device', v.name); }
 function podPickDevice(i){ const v=(window._podDevVoices||[])[i]; if(v) podCfgPickVoice('device', v.name); }
 let _podTestSrc=null;
