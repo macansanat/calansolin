@@ -118,6 +118,9 @@ body.nav-bottom{padding-bottom:100px}
 .pod-gcell .cap{font-size:11px;color:var(--muted)}
 .pod-gcell.on .fr{border-color:var(--teal);box-shadow:0 0 0 1.5px var(--teal)}
 .pod-eyeprev{width:100%;max-width:260px;height:130px;border-radius:12px;background:var(--field);border:1px solid var(--line);display:block;margin:8px auto 0}
+.pod-3d-host{position:absolute;inset:0;width:100%;height:100%}
+.pod-3d-host canvas{width:100%!important;height:100%!important;display:block}
+.pod-3d-badge{position:absolute;top:8px;right:8px;z-index:3;font-size:10px;background:rgba(20,26,38,.6);color:#cfe;border-radius:8px;padding:2px 7px;pointer-events:none}
 .qbg-x{position:absolute;top:14px;left:14px;width:30px;height:30px;border-radius:50%;background:var(--field);border:1px solid var(--line);color:var(--muted);font-size:14px;cursor:pointer;line-height:1}
 .qbg-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
 .qbg-badge{flex:0 0 auto;width:44px;height:44px;border-radius:13px;background:rgba(224,104,95,.16);display:flex;align-items:center;justify-content:center;font-size:22px}
@@ -2026,7 +2029,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۱۴</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۱۵</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3322,7 +3325,7 @@ const POD_LENS=[2,3,5,7];
 function podCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(POD_CFG_KEY)||'{}')||{}; }catch(e){}
   return { prov:o.prov||'auto', minutes:o.minutes||5, gVoice:o.gVoice||'Kore', oVoice:o.oVoice||'shimmer', dVoice:o.dVoice||'',
     avatar:(o.avatar!==false), avGender:(o.avGender==='male'?'male':'female'),
-    avZoom:(typeof o.avZoom==='number'?o.avZoom:0.45),
+    avZoom:(typeof o.avZoom==='number'?o.avZoom:0.45), avMode:(o.avMode==='3d'?'3d':'photo'),
     mDx:(typeof o.mDx==='number'?o.mDx:0), mDy:(typeof o.mDy==='number'?o.mDy:0), mScale:(typeof o.mScale==='number'?o.mScale:1),
     mDxM:(typeof o.mDxM==='number'?o.mDxM:0), mDyM:(typeof o.mDyM==='number'?o.mDyM:0), mScaleM:(typeof o.mScaleM==='number'?o.mScaleM:1),
     eDx:(typeof o.eDx==='number'?o.eDx:0), eDy:(typeof o.eDy==='number'?o.eDy:0), eScale:(typeof o.eScale==='number'?o.eScale:1) }; }
@@ -4217,6 +4220,7 @@ function _podMixCtx(W,H){
   }catch(e){ return null; }
 }
 function podAvDraw(){
+  if((_pod.avMode||'photo')==='3d') return;   // حالتِ سه‌بعدی ترسیمِ خودش را دارد
   const cv=document.getElementById('podAvCanvas'); const L=_pod.avLayers; if(!cv||!L||!L.base) return;
   const dpr=Math.min(2, window.devicePixelRatio||1);
   const cw=cv.clientWidth||360, ch=cv.clientHeight||158;
@@ -4447,6 +4451,126 @@ function podReactStop(){
   _pod.jawV=0; _pod.avSway={x:0,y:0,s:1.02,rot:0};
   try{ podAvDraw(); }catch(e){}
 }
+/* ================= حالتِ دومِ مجری: چهرهٔ سه‌بعدی (three.js) — نمونهٔ آزمایشی =================
+   شخصیتِ سه‌بعدیِ ساختگی (نه عکسِ واقعی)، رایگان و آفلاین‌پس‌از‌بارِ‌اول. با همان موتورِ
+   ویزم/پلک/ابروِ خودمان تکان می‌خورد. three.js فقط وقتی این حالت انتخاب شود لود می‌شود؛
+   اگر لود نشد، خودکار به حالتِ عکس برمی‌گردد. */
+const _pod3d={ ready:false, loading:false, ren:null, scene:null, cam:null, headGroup:null, parts:null, raf:0, gender:'', host:null, blinkNext:0, blinkAt:-9999 };
+function pod3dEnsureLib(cb){
+  if(window.THREE){ cb(true); return; }
+  const done=(ok)=>{ _pod3d.loading=false; cb(ok); };
+  if(_pod3d.loading){ let n=0; const w=setInterval(()=>{ if(window.THREE){ clearInterval(w); done(true); } else if(++n>40){ clearInterval(w); done(!!window.THREE); } },250); return; }
+  _pod3d.loading=true;
+  const sc=document.createElement('script');
+  sc.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+  sc.onload=()=>done(!!window.THREE); sc.onerror=()=>done(false);
+  document.head.appendChild(sc);
+}
+function pod3dBuildHead(gender){
+  const T=THREE, male=gender==='male', grp=new T.Group();
+  const skinMat=new T.MeshStandardMaterial({color:male?0xd9a97e:0xf0c6a4, roughness:0.6, metalness:0.02});
+  const head=new T.Mesh(new T.SphereGeometry(1,48,48), skinMat); head.scale.set(0.82,1.0,0.86); grp.add(head);
+  const jaw=new T.Mesh(new T.SphereGeometry(0.7,32,32), skinMat); jaw.position.set(0,-0.55,0.06); jaw.scale.set(0.86,0.7,0.8); grp.add(jaw);
+  // چشم‌ها
+  const white=new T.MeshStandardMaterial({color:0xf6f6f2, roughness:0.25});
+  const iris=new T.MeshStandardMaterial({color:male?0x5b3a24:0x6a4a2c, roughness:0.4});
+  const black=new T.MeshBasicMaterial({color:0x120b08});
+  const mkEye=(sx)=>{ const e=new T.Group();
+    e.add(new T.Mesh(new T.SphereGeometry(0.165,24,24), white));
+    const ir=new T.Mesh(new T.CircleGeometry(0.08,20), iris); ir.position.z=0.15; e.add(ir);
+    const pu=new T.Mesh(new T.CircleGeometry(0.036,16), black); pu.position.z=0.158; e.add(pu);
+    e.position.set(sx,0.14,0.74); e.scale.set(1,0.92,1); return e; };
+  const eyeL=mkEye(-0.31), eyeR=mkEye(0.31); grp.add(eyeL,eyeR);
+  // پلک (کلاهکِ پوستی که با بستن بزرگ می‌شود)
+  const mkLid=(sx)=>{ const l=new T.Mesh(new T.SphereGeometry(0.185,24,16,0,Math.PI*2,0,Math.PI/2), skinMat); l.position.set(sx,0.14,0.735); l.scale.set(1,0.02,1); return l; };
+  const lidL=mkLid(-0.31), lidR=mkLid(0.31); grp.add(lidL,lidR);
+  // ابرو
+  const browMat=new T.MeshStandardMaterial({color:male?0x33241a:0x4a3524, roughness:0.75});
+  const mkBrow=(sx)=>{ const b=new T.Mesh(new T.BoxGeometry(0.24,0.045,0.06), browMat); b.position.set(sx,0.34,0.8); return b; };
+  const browL=mkBrow(-0.31), browR=mkBrow(0.31); grp.add(browL,browR);
+  // بینی
+  const nose=new T.Mesh(new T.ConeGeometry(0.1,0.3,18), skinMat); nose.position.set(0,-0.02,0.86); nose.rotation.x=Math.PI*0.5; grp.add(nose);
+  // لب و حفرهٔ دهان
+  const lipMat=new T.MeshStandardMaterial({color:male?0xb56a5d:0xd07a72, roughness:0.45});
+  const cavity=new T.Mesh(new T.SphereGeometry(0.15,20,16), new T.MeshStandardMaterial({color:0x2a0c0e, roughness:0.95}));
+  cavity.position.set(0,-0.44,0.78); cavity.scale.set(1,0.2,0.5); grp.add(cavity);
+  const upperLip=new T.Mesh(new T.TorusGeometry(0.14,0.03,10,24,Math.PI), lipMat); upperLip.position.set(0,-0.38,0.85); upperLip.rotation.z=Math.PI; grp.add(upperLip);
+  const lowerLip=new T.Mesh(new T.TorusGeometry(0.14,0.036,10,24,Math.PI), lipMat); lowerLip.position.set(0,-0.47,0.85); grp.add(lowerLip);
+  // مو
+  const hairMat=new T.MeshStandardMaterial({color:male?0x241a12:0x2a1c12, roughness:0.85});
+  if(male){ const h=new T.Mesh(new T.SphereGeometry(1.02,40,40,0,Math.PI*2,0,Math.PI*0.5), hairMat); h.scale.set(0.9,0.95,0.92); h.position.y=0.14; grp.add(h); }
+  else { const h=new T.Mesh(new T.SphereGeometry(1.06,40,40,0,Math.PI*2,0,Math.PI*0.72), hairMat); h.scale.set(0.93,1.05,0.99); h.position.y=0.06; grp.add(h);
+    const back=new T.Mesh(new T.SphereGeometry(0.92,32,32), hairMat); back.position.set(0,-0.28,-0.22); back.scale.set(0.98,1.3,0.72); grp.add(back);
+    // گونهٔ صورتی و رژِ ملایم برای زیبایی
+    const blush=new T.MeshStandardMaterial({color:0xe89a90, roughness:0.6, transparent:true, opacity:0.5});
+    [-0.42,0.42].forEach(sx=>{ const c=new T.Mesh(new T.CircleGeometry(0.12,18), blush); c.position.set(sx,-0.12,0.82); grp.add(c); });
+  }
+  grp.userData={ eyeL,eyeR,lidL,lidR,browL,browR, lowerLip,upperLip,cavity };
+  return grp;
+}
+function pod3dInit(host, gender){
+  const T=THREE; const w=host.clientWidth||300, h=host.clientHeight||210;
+  const ren=new T.WebGLRenderer({alpha:true, antialias:true}); ren.setPixelRatio(Math.min(2,window.devicePixelRatio||1)); ren.setSize(w,h);
+  host.innerHTML=''; host.appendChild(ren.domElement);
+  const badge=document.createElement('div'); badge.className='pod-3d-badge'; badge.textContent='نمونهٔ سه‌بعدی'; host.appendChild(badge);
+  const scene=new T.Scene();
+  const cam=new T.PerspectiveCamera(30, w/h, 0.1, 100); cam.position.set(0,0.05,4.3);
+  scene.add(new T.AmbientLight(0xffffff,0.78));
+  const key=new T.DirectionalLight(0xfff2e6,0.95); key.position.set(1.3,1.5,2.2); scene.add(key);
+  const fill=new T.DirectionalLight(0xd6e4ff,0.35); fill.position.set(-1.6,-0.4,1.2); scene.add(fill);
+  const rim=new T.DirectionalLight(0xffffff,0.45); rim.position.set(0,1.2,-2); scene.add(rim);
+  const headGroup=pod3dBuildHead(gender); const root=new T.Group(); root.add(headGroup); root.scale.setScalar(1.4); root.position.y=-0.15; scene.add(root);
+  _pod3d.ren=ren; _pod3d.scene=scene; _pod3d.cam=cam; _pod3d.headGroup=headGroup; _pod3d.parts=headGroup.userData; _pod3d.gender=gender; _pod3d.host=host; _pod3d.ready=true;
+}
+function pod3dResize(){ try{ const h=_pod3d.host; if(!h||!_pod3d.ren) return; const w=h.clientWidth||300, hh=h.clientHeight||210; _pod3d.ren.setSize(w,hh); _pod3d.cam.aspect=w/hh; _pod3d.cam.updateProjectionMatrix(); }catch(e){} }
+function pod3dApply(){
+  if(!_pod3d.ready) return; const P=_pod3d.parts; if(!P) return;
+  const M=_pod.avMouth||{vis:'X',open:0}, w=_pod.avW||{}, sw=_pod.avSway||{x:0,y:0,s:1.02,rot:0};
+  const vis=M.vis||'X', closed=(vis==='X'||vis==='MB'||vis==='C');
+  const open=closed?0:Math.max(0,Math.min(1.1,M.open||0));
+  const wide=vis==='E'?1.4: vis==='O'?0.7: vis==='F'?0.92: 1.0;
+  P.lowerLip.position.y=-0.47-open*0.2; P.lowerLip.scale.x=wide; P.upperLip.scale.x=wide;
+  P.cavity.scale.set(wide, 0.12+open*0.95, 0.5); P.cavity.position.y=-0.44-open*0.05;
+  const bl=Math.max(0,Math.min(1,w.BL||0)); P.lidL.scale.y=0.02+bl*0.95; P.lidR.scale.y=0.02+bl*0.95;
+  const br=Math.max(0,Math.min(1,w.BR||0)); P.browL.position.y=P.browR.position.y=0.34+br*0.06;
+  const g=_pod3d.headGroup; g.rotation.y=(sw.x||0)*6; g.rotation.x=-(sw.y||0)*5; g.rotation.z=(sw.rot||0)*3;
+  g.scale.setScalar(1+((sw.s||1.02)-1.02)*0.5);
+  try{ _pod3d.ren.render(_pod3d.scene,_pod3d.cam); }catch(e){}
+}
+function pod3dStopLoop(){ if(_pod3d.raf){ cancelAnimationFrame(_pod3d.raf); _pod3d.raf=0; } }
+function pod3dStartLoop(){
+  pod3dStopLoop();
+  _pod3d.blinkNext=performance.now()+1500+Math.random()*2500; _pod3d.blinkAt=-9999;
+  const loop=()=>{
+    if((_pod.avMode||'photo')!=='3d'||!_pod3d.ready){ _pod3d.raf=0; return; }
+    if(!document.getElementById('pod3dHost')){ _pod3d.raf=0; return; }
+    const now=performance.now();
+    if(_pod.mode!=='playing'){        // بی‌کار: تنفسِ آرام + پلکِ خودکار
+      const t=now/1000;
+      _pod.avSway={x:Math.sin(t*0.4)*0.004,y:Math.cos(t*0.33)*0.004,s:1.02+Math.sin(t*0.55)*0.004,rot:Math.sin(t*0.27)*0.003};
+      if(now>=_pod3d.blinkNext){ _pod3d.blinkAt=now; _pod3d.blinkNext=now+2500+Math.random()*3500; }
+      const bt=now-_pod3d.blinkAt; _pod.avW=_pod.avW||{}; _pod.avW.BL=bt<80?bt/80:(bt<160?1:(bt<250?1-(bt-160)/90:0)); _pod.avW.BR=(_pod.avW.BR||0)*0.9;
+      _pod.avMouth=_pod.avMouth||{vis:'X',open:0}; _pod.avMouth.open*=0.8;
+    }
+    pod3dApply(); _pod3d.raf=requestAnimationFrame(loop);
+  };
+  _pod3d.raf=requestAnimationFrame(loop);
+}
+function pod3dDispose(){ pod3dStopLoop(); try{ if(_pod3d.ren){ _pod3d.ren.forceContextLoss&&_pod3d.ren.forceContextLoss(); _pod3d.ren.dispose&&_pod3d.ren.dispose(); } }catch(e){} _pod3d.ready=false; _pod3d.ren=null; _pod3d.scene=null; _pod3d.parts=null; _pod3d.headGroup=null; _pod3d.host=null; }
+function pod3dEnsure(gender){
+  const host=document.getElementById('pod3dHost'); if(!host) return;
+  const fail=(msg)=>{ uiToast&&uiToast(msg); podCfgSet({avMode:'photo'}); _pod.avMode='photo'; try{ renderPodcastCard(); }catch(e){} };
+  pod3dEnsureLib((ok)=>{
+    if(!ok){ fail('حالتِ سه‌بعدی نیاز به اینترنت (بارِ اول) دارد؛ فعلاً حالتِ عکس'); return; }
+    if(document.getElementById('pod3dHost')!==host && !document.getElementById('pod3dHost')) return;
+    try{
+      const h=document.getElementById('pod3dHost')||host;
+      if(!_pod3d.ready || _pod3d.gender!==gender){ pod3dDispose(); pod3dInit(h, gender); }
+      else { h.innerHTML=''; h.appendChild(_pod3d.ren.domElement); const b=document.createElement('div'); b.className='pod-3d-badge'; b.textContent='نمونهٔ سه‌بعدی'; h.appendChild(b); _pod3d.host=h; pod3dResize(); }
+      pod3dStartLoop();
+    }catch(e){ try{console.warn('3d init',e)}catch(_){}; fail('حالتِ سه‌بعدی روی این دستگاه اجرا نشد؛ حالتِ عکس'); }
+  });
+}
 
 /* ---- دانلودِ فایلِ پادکست (WAV یک‌تکه از قطعه‌های صوتی) ---- */
 function podEncodeWav(sampleRate, channels){
@@ -4502,10 +4626,13 @@ function renderPodcastCard(){
   const el = active?(cloud?podElapsed():((Date.now()-_pod.t0)/1000)):0;
   const stateTxt = loading?'در حالِ ساختِ متنِ امروز…' : _pod.prep?'در حالِ آماده‌سازیِ صدا…' : playing?'در حالِ پخش' : paused?'مکث' : (fresh?('آماده · حدود '+faDigits(c.minutes)+' دقیقه'):'اپیزودِ امروز ساخته نشده');
   const sliderOn = cloud&&active;   // اسکراب فقط با صدای ابری
-  const avOn=c.avatar;
-  const avInner = _pod.avImg
-    ? `<img class="pod-av-img" src="${_pod.avImg}" alt="مجریِ پادکست"><canvas id="podAvCanvas" class="pod-av-cv"></canvas>`
-    : `<div class="pod-av-ph">${podAvatarSilhouetteSVG(c.avGender)}</div>`;
+  const avOn=c.avatar; _pod.avMode=c.avMode;
+  const av3d = c.avMode==='3d';
+  const avInner = av3d
+    ? `<div id="pod3dHost" class="pod-3d-host"></div>`
+    : (_pod.avImg
+      ? `<img class="pod-av-img" src="${_pod.avImg}" alt="مجریِ پادکست"><canvas id="podAvCanvas" class="pod-av-cv"></canvas>`
+      : `<div class="pod-av-ph">${podAvatarSilhouetteSVG(c.avGender)}</div>`);
   const avBlock = avOn ? `<div id="podAvatar" class="pod-av ${active?'live':''} ${paused?'paused':''}" style="--lv:0">
       <div class="pod-av-stage">${avInner}<div class="pod-av-ring"></div><div class="pod-av-eq"><i></i><i></i><i></i><i></i><i></i></div></div>
     </div>` : '';
@@ -4532,7 +4659,8 @@ function renderPodcastCard(){
     </div>
     <div class="pod-note">هر روز متفاوت و بر اساسِ عملکردِ توست. آموزشی و عمومی — جایگزینِ توصیهٔ پزشک نیست.</div>
   </div>`;
-  if(avOn && _pod.avImg){ podAvBuildLayers().then(()=>{ try{ podAvDraw(); }catch(e){} }).catch(()=>{}); }
+  if(av3d){ try{ pod3dEnsure(c.avGender); }catch(e){} }
+  else { pod3dStopLoop(); if(avOn && _pod.avImg){ podAvBuildLayers().then(()=>{ try{ podAvDraw(); }catch(e){} }).catch(()=>{}); } }
   if(playing) podReactStart(); else podReactStop();
 }
 /* ---- تنظیماتِ پادکست (پاپ‌آپ) + تستِ صدا ---- */
@@ -4552,6 +4680,7 @@ function podCfgPick(k,v){ const patch={}; patch[k]=v; podCfgSet(patch);
   if(k==='avGender'){ _pod.avImg=null; _pod.avFrames=null; _pod.avLayers=null; _pod.avGeom=null; _pod.avGeomFixed=false; _pod.avImgGender=''; try{ podLoadAvThumbs(); }catch(e){} }
   renderPodCfg(); renderPodcastCard();
   if(k==='avGender'||(k==='avatar'&&v)){ try{ podAvatarLoad(); }catch(e){} }
+  if(k==='avMode'){ _pod.avMode=v; if(v!=='3d') pod3dStopLoop(); renderPodcastCard(); }
   if(k==='prov') podResetForVoiceChange('✓ سرویسِ صدا عوض شد — «پخش» را بزن تا با آن ساخته شود');
   if(k==='minutes') uiToast&&uiToast('برای اعمالِ مدت، «ساختِ دوباره 🔄» را بزن'); }
 // وقتی صدا/سرویس عوض می‌شود، صوتِ ساخته‌شدهٔ فعلی باید دور ریخته شود تا «پخش» با صدای تازه بسازد
@@ -4587,7 +4716,10 @@ function renderPodCfg(){
   h+=`<label class="qbg-lbl" style="margin-top:12px">مجریِ تصویری بالای پلیر</label>`;
   h+=`<div class="pod-seg">`+[['on','روشن',true],['off','خاموش',false]].map(o=>`<button class="${c.avatar===o[2]?'on':''}" onclick="podCfgPick('avatar',${o[2]})">${o[1]}</button>`).join('')+`</div>`;
   if(c.avatar){
-    h+=`<label class="qbg-lbl" style="margin-top:8px">چهرهٔ مجری</label>`;
+    h+=`<label class="qbg-lbl" style="margin-top:8px">حالتِ مجری</label>`;
+    h+=`<div class="pod-seg">`+[['photo','📷 عکسِ واقعی'],['3d','🧑‍🎨 سه‌بعدی (نمونه)']].map(o=>`<button class="${c.avMode===o[0]?'on':''}" onclick="podCfgPick('avMode','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
+    if(c.avMode==='3d') h+=`<div class="qbg-sub" style="margin-top:4px">شخصیتِ سه‌بعدیِ ساختگی (نه عکسِ واقعی). حرکتِ نرم‌تر؛ با همان صدا/متن لب می‌زند. بارِ اول برای بارگیریِ کتابخانه به اینترنت نیاز دارد، بعد آفلاین کار می‌کند. جنسیت را از پایین انتخاب کن.</div>`;
+    h+=`<label class="qbg-lbl" style="margin-top:8px">${c.avMode==='3d'?'شخصیتِ سه‌بعدی (زن/مرد)':'چهرهٔ مجری'}</label>`;
     const th=_pod.avThumbs||{};
     const gcell=(g,lbl)=>{ const img=th[g]; const inner=img?`<img src="${img}" alt="${lbl}">`:`<span style="font-size:22px;opacity:.5">${g==='male'?'🧑‍💼':'👩‍💼'}</span>`;
       return `<div class="pod-gcell ${c.avGender===g?'on':''}" onclick="podCfgPick('avGender','${g}')"><div class="fr">${inner}</div><div class="cap">${lbl}${img?'':' (نساخته)'}</div></div>`; };
