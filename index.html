@@ -2030,7 +2030,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۱۸</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۱۹</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4826,10 +4826,15 @@ function renderPodCfg(){
       if(!gUrl) h+=`<div class="qbg-sub" style="margin-top:4px;color:var(--amber)">تا وقتی لینک نگذاری، چهرهٔ سادهٔ پیش‌فرض نشان داده می‌شود (همان که دیدی).</div>`;
     }
     h+=`<label class="qbg-lbl" style="margin-top:8px">${c.avMode==='3d'?'شخصیتِ سه‌بعدی (زن/مرد)':'چهرهٔ مجری'}</label>`;
-    const th=_pod.avThumbs||{};
-    const gcell=(g,lbl)=>{ const img=th[g]; const inner=img?`<img src="${img}" alt="${lbl}">`:`<span style="font-size:22px;opacity:.5">${g==='male'?'🧑‍💼':'👩‍💼'}</span>`;
-      return `<div class="pod-gcell ${c.avGender===g?'on':''}" onclick="podCfgPick('avGender','${g}')"><div class="fr">${inner}</div><div class="cap">${lbl}${img?'':' (نساخته)'}</div></div>`; };
-    h+=`<div class="pod-gthumb">${gcell('female','زن')}${gcell('male','مرد')}</div>`;
+    if(c.avMode==='3d'){
+      h+=`<div class="pod-seg">`+[['female','👩 زن'],['male','🧑 مرد']].map(o=>`<button class="${c.avGender===o[0]?'on':''}" onclick="podCfgPick('avGender','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
+    } else {
+      const th=_pod.avThumbs||{};
+      const gcell=(g,lbl)=>{ const img=th[g]; const inner=img?`<img src="${img}" alt="${lbl}">`:`<span style="font-size:22px;opacity:.5">${g==='male'?'🧑‍💼':'👩‍💼'}</span>`;
+        return `<div class="pod-gcell ${c.avGender===g?'on':''}" onclick="podCfgPick('avGender','${g}')"><div class="fr">${inner}</div><div class="cap">${lbl}${img?'':' (نساخته)'}</div></div>`; };
+      h+=`<div class="pod-gthumb">${gcell('female','زن')}${gcell('male','مرد')}</div>`;
+    }
+    if(c.avMode!=='3d'){   // ---- تنظیماتِ مخصوصِ حالتِ عکس (در حالتِ سه‌بعدی نمایش داده نمی‌شود) ----
     const hasImgKey=hasAnyKey('openai')||hasAnyKey('gemini');
     const avReady=_pod.avImg&&_pod.avImgGender===c.avGender;
     const nfr=podFramesReady(), nAll=POD_FRAMES.length;
@@ -4878,6 +4883,7 @@ function renderPodCfg(){
       h+=`<input type="file" id="podAvPackFile" accept="application/json,.json" style="display:none" onchange="podAvImportPack(this)">`;
       h+=`<div class="qbg-sub" style="margin-top:4px">همهٔ چهره + حالت‌ها + ناحیه + تنظیماتِ دهان در یک فایل JSON ذخیره می‌شود. با «وارد کردن» روی همین گوشی یا گوشیِ دیگر بدونِ ساختِ دوباره و بدونِ هزینه برمی‌گردد.</div>`;
     }
+    }   // پایانِ if(c.avMode!=='3d')
   }
   box.innerHTML=h;
   try{ if(_pod.avLayers && document.getElementById('podEyePrev')) setTimeout(()=>podEyePreviewDraw(0),0); }catch(e){}
@@ -10659,7 +10665,7 @@ let _wkAudioCtx=null;
 // AudioContext را می‌سازد و از حالت suspended/interrupted (باگ iOS بعد از قفل صفحه) درمی‌آورد
 // وقتی کانتکست عوض/بسته می‌شود، همهٔ گره‌های وابسته به کانتکستِ قدیمی باید دور ریخته شوند
 // (وگرنه اتصالِ منبعِ جدید به گِینِ قدیمی خطا می‌دهد و صدا برای همیشه قطع می‌ماند).
-let _wkWakeBound=false;
+let _wkWakeBound=false, _wkCtxCount=0;
 function wkAudioInvalidate(){
   try{ _wkMusicGain=null; }catch(e){}
   try{ if(typeof _pod!=='undefined'&&_pod){ _pod.voiceGain=null; _pod.analyser=null; } }catch(e){}
@@ -10667,7 +10673,10 @@ function wkAudioInvalidate(){
 function wkEnsureAudio(){
   try{
     if(_wkAudioCtx && _wkAudioCtx.state==='closed'){ _wkAudioCtx=null; wkAudioInvalidate(); }
-    if(!_wkAudioCtx){ _wkAudioCtx=new (window.AudioContext||window.webkitAudioContext)(); wkAudioInvalidate(); }
+    if(!_wkAudioCtx){
+      if((_wkCtxCount||0) >= 3){ return null; }   // سقفِ ساختِ کانتکست (ضدِ تمام‌شدنِ سهمیهٔ iOS)
+      _wkAudioCtx=new (window.AudioContext||window.webkitAudioContext)(); _wkCtxCount=(_wkCtxCount||0)+1; wkAudioInvalidate();
+    }
     // شبکهٔ امنیتی (فقط یک‌بار): هر لمس/کلیک، اگر کانتکست خوابیده باشد بیدارش کند
     if(!_wkWakeBound){ _wkWakeBound=true;
       try{ const wake=()=>{ try{ const c=_wkAudioCtx; if(c&&(c.state==='suspended'||c.state==='interrupted')) c.resume().catch(()=>{}); }catch(e){} };
@@ -10706,8 +10715,9 @@ function audioDiagFix(){
   try{
     if(typeof _wkSound!=='undefined' && !_wkSound){ _wkSound=true; const b=document.getElementById('wkSoundBtn'); if(b) b.textContent='🔊'; }
     try{ wkStopBeat(); }catch(e){}
-    if(_wkAudioCtx){ try{ _wkAudioCtx.close(); }catch(e){} }
-    _wkAudioCtx=null; wkAudioInvalidate();
+    // اول فقط resume را امتحان کن (بدونِ ساختِ کانتکستِ تازه — ضدِ تمام‌شدنِ سهمیهٔ iOS)
+    if(_wkAudioCtx && _wkAudioCtx.state!=='closed'){ try{ _wkAudioCtx.resume(); }catch(e){} }
+    else { if(_wkAudioCtx){ try{ _wkAudioCtx.close(); }catch(e){} } _wkAudioCtx=null; _wkCtxCount=0; wkAudioInvalidate(); }
     const ctx=wkEnsureAudio();
     const done=()=>{ audioDiagRefresh(); try{ uiDing(); }catch(e){} uiToast&&uiToast(ctx&&ctx.state==='running'?'✓ موتورِ صدا از نو ساخته شد':'موتورِ صدا هنوز بیدار نشد — کلیدِ بی‌صدای گوشی را چک کن'); };
     if(ctx && ctx.state!=='running' && ctx.resume) ctx.resume().then(done).catch(done); else done();
@@ -10794,21 +10804,16 @@ function renderWkTrackOpts(){
 // رفع قطع صدا بعد از قفل/آنلاک/مکث (به‌ویژه iOS): با هر لمس یا برگشت به صفحه AudioContext را زنده می‌کنیم.
 // روی iOS گاهی context به حالت interrupted گیر می‌کند و resume جواب نمی‌دهد → آن را بازسازی می‌کنیم.
 function wkAudioResume(){
+  // ⚠️ باگِ مهمِ iOS (نسخه ۲۳.۱۹): قبلاً روی حالتِ 'interrupted' کانتکست را close و
+  // دوباره new AudioContext می‌ساختیم. iOS سهمیهٔ محدودی برای AudioContext دارد (~۴ در هر تب)
+  // و close هم آزادش نمی‌کند؛ چون iOS مدام کانتکست را interrupted می‌کند (کلیدِ سایلنت،
+  // صدای دیگر، بک‌گراند)، این چرخه سهمیه را تمام می‌کرد → صدای کلِ اپ برای همیشه می‌مرد،
+  // حتی بعد از رفرش (چون تب همان است). اصلاح: هرگز خودکار close/بازنساز نکن؛ فقط resume.
   try{
-    if(!_wkAudioCtx) return;
-    const ctx=_wkAudioCtx, st=ctx.state;
-    if(st==='running') return;
+    const ctx=_wkAudioCtx; if(!ctx || ctx.state==='running') return;
     ctx.resume().catch(()=>{});
-    if(st==='interrupted'){
-      setTimeout(()=>{
-        if(_wkAudioCtx && _wkAudioCtx.state!=='running'){
-          try{ _wkAudioCtx.close(); }catch(e){}
-          _wkAudioCtx=null; wkAudioInvalidate();   // خروجی موزیک/صدای پادکستِ قدیمی بی‌اعتبار شد
-          wkEnsureAudio();
-          if(_wkRunning&&_wkMusic&&_wkSound&&_wkPhase==='work'){ wkStopBeat(); wkStartBeat(); }
-        }
-      },250);
-    }
+    // iOS گاهی چند resumeِ پشت‌سرهم می‌خواهد
+    let n=0; const t=setInterval(()=>{ if(!_wkAudioCtx||_wkAudioCtx.state==='running'||++n>4){ clearInterval(t); return; } _wkAudioCtx.resume().catch(()=>{}); }, 160);
   }catch(e){}
 }
 // شنونده‌های سراسری (نه فقط هنگام ورزش) تا صدای کلیدها/ورزش بعد از آنلاک برگردد
