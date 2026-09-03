@@ -117,6 +117,7 @@ body.nav-bottom{padding-bottom:100px}
 .pod-gcell .fr img{width:100%;height:100%;object-fit:cover;object-position:50% 20%}
 .pod-gcell .cap{font-size:11px;color:var(--muted)}
 .pod-gcell.on .fr{border-color:var(--teal);box-shadow:0 0 0 1.5px var(--teal)}
+.pod-eyeprev{width:100%;max-width:260px;height:130px;border-radius:12px;background:var(--field);border:1px solid var(--line);display:block;margin:8px auto 0}
 .qbg-x{position:absolute;top:14px;left:14px;width:30px;height:30px;border-radius:50%;background:var(--field);border:1px solid var(--line);color:var(--muted);font-size:14px;cursor:pointer;line-height:1}
 .qbg-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
 .qbg-badge{flex:0 0 auto;width:44px;height:44px;border-radius:13px;background:rgba(224,104,95,.16);display:flex;align-items:center;justify-content:center;font-size:22px}
@@ -2025,7 +2026,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۱۳</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۱۴</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4147,8 +4148,37 @@ async function podAvBuildLayers(){
     }catch(e){}
   }
   try{ L.baseMouth=podAvSoftMasked(base, regs.mouth); }catch(e){}   // حالتِ «دهانِ بسته» برای گذارِ نرم
+  try{ L.eyeSkin=podSampleSkin(base, regs.eyes); }catch(e){}         // رنگِ پوست برای پلکِ رویه‌ای
   _pod.avBad=Object.keys(L.bad);
   _pod.avLayers=L; _pod.avLayersFor=_pod.avImg; return L;
+}
+/* ---- پلکِ رویه‌ای (۲۳.۱۴): مطمئن‌ترین راهِ پلک‌زدن — نیازی به فریمِ AI ندارد.
+   رنگِ پوستِ اطرافِ چشم را از خودِ عکس می‌گیرد و پلکِ بالا را از بالای ناحیهٔ چشم پایین
+   می‌آورد تا چشم‌ها را بپوشاند؛ لبهٔ پایین یک خطِ نازکِ مژه. چون همان ناحیهٔ تنظیم‌پذیرِ
+   چشم را می‌پوشاند، همیشه هم‌تراز و قابل‌دیدن است. */
+function podSampleSkin(img, r){
+  const S=64; const c=document.createElement('canvas'); c.width=c.height=S; const g=c.getContext('2d');
+  g.drawImage(img,0,0,S,S);
+  const at=(nx,ny)=>{ const x=Math.max(0,Math.min(S-1,Math.round(nx*S))), y=Math.max(0,Math.min(S-1,Math.round(ny*S))); const d=g.getImageData(x,y,1,1).data; return [d[0],d[1],d[2]]; };
+  const pts=[[r.x,r.y-r.ry*2.4],[r.x-r.rx*0.55,r.y-r.ry*1.8],[r.x+r.rx*0.55,r.y-r.ry*1.8],[r.x,r.y+r.ry*2.0]];
+  let R=0,G=0,B=0; pts.forEach(pt=>{ const c2=at(pt[0],pt[1]); R+=c2[0];G+=c2[1];B+=c2[2]; });
+  const n=pts.length; return [Math.round(R/n),Math.round(G/n),Math.round(B/n)];
+}
+function podDrawEyelids(ctx, zx,zy,zw,zh, r, amt, skin){
+  if(!r||amt<=0||!skin) return;
+  const cx=zx+r.x*zw, cyTop=zy+(r.y-r.ry*1.25)*zh;
+  const halfW=r.rx*zw*1.08, fullH=r.ry*2.5*zh, h=fullH*Math.min(1,amt);
+  const x0=cx-halfW, x1=cx+halfW, y0=cyTop, y1=cyTop+h, rr=Math.max(1,Math.min(halfW*0.5, h*0.5));
+  ctx.save();
+  ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y0); ctx.lineTo(x1,y1-rr);
+  ctx.quadraticCurveTo(x1,y1,x1-rr,y1); ctx.lineTo(x0+rr,y1); ctx.quadraticCurveTo(x0,y1,x0,y1-rr); ctx.closePath();
+  const g=ctx.createLinearGradient(0,y0,0,y1);
+  g.addColorStop(0,`rgb(${skin[0]},${skin[1]},${skin[2]})`);
+  g.addColorStop(1,`rgb(${Math.round(skin[0]*0.9)},${Math.round(skin[1]*0.87)},${Math.round(skin[2]*0.85)})`);
+  ctx.fillStyle=g; ctx.shadowColor='rgba(0,0,0,0.18)'; ctx.shadowBlur=Math.max(1,zh*0.006); ctx.fill();
+  if(amt>0.55){ ctx.shadowBlur=0; ctx.globalAlpha=Math.min(1,(amt-0.55)/0.45)*0.55; ctx.strokeStyle='rgba(60,40,38,0.9)';
+    ctx.lineWidth=Math.max(1,zh*0.006); ctx.beginPath(); ctx.moveTo(x0+rr,y1); ctx.lineTo(x1-rr,y1); ctx.stroke(); ctx.globalAlpha=1; }
+  ctx.restore();
 }
 /* دهانِ رویه‌ای (فقط وقتی فریمِ ساخته‌شده نداریم): حفرهٔ تیرهٔ نرم‌لبه که با شدتِ آوا
    باز/بسته می‌شود و شکلش با ویزم (آ/ای/او) فرق می‌کند. تمام‌کدر در مرکز → شبح نمی‌سازد. */
@@ -4253,10 +4283,31 @@ function podAvDraw(){
     // فریمِ قابل‌استفاده نداریم → دهانِ رویه‌ای: حرکتِ پیوسته و همیشه هم‌تراز (نرم، بدونِ پرش)
     try{ podDrawMouthProc(ctx, zx,zy,zw,zh, podRegions().mouth, mo, M.vis); }catch(e){}
   }
-  for(const id of POD_SOLO_IDS){ const lay=L.frames[id]; if(!lay) continue;
-    const a=Math.min(1,(w[id]||0)*(id==='BR'?1.7:1));
-    if(a>0.012){ ctx.globalAlpha=a; ctx.drawImage(lay, zx,zy,zw,zh); ctx.globalAlpha=1; } }
+  // پلک: رویه‌ای (مطمئن، از رنگِ پوستِ خودِ عکس؛ روی ناحیهٔ تنظیم‌پذیرِ چشم)
+  if((w.BL||0)>0.02){ try{ podDrawEyelids(ctx, zx,zy,zw,zh, podRegions().eyes, Math.min(1,w.BL), L.eyeSkin||[210,175,150]); }catch(e){} }
+  // ابرو: اگر فریمِ آن ساخته شده باشد
+  { const lay=L.frames.BR; if(lay){ const a=Math.min(1,(w.BR||0)*1.7); if(a>0.012){ ctx.globalAlpha=a; ctx.drawImage(lay, zx,zy,zw,zh); ctx.globalAlpha=1; } } }
   ctx.restore();
+}
+// نگاشتِ cover/zoom برای یک canvasِ دلخواه (برای پیش‌نمایشِ چشم در تنظیمات)
+function podCoverMap(cv, iw, ih){
+  const W=cv.width, H=cv.height;
+  const cover=Math.max(W/iw,H/ih), contain=Math.min(W/iw,H/ih);
+  const z=Math.max(0,Math.min(1,(_pod.avZoom!=null?_pod.avZoom:0.45)));
+  const sc=cover+(contain-cover)*z; const dw=iw*sc, dh=ih*sc;
+  const posY=dh>H?0.22:0.5;
+  return {dw,dh,zx:(W-dw)*0.5,zy:(H-dh)*posY,W,H};
+}
+// پیش‌نمایشِ زنده‌ی چهره + پلک داخلِ تنظیمات (چون مجریِ اصلی پشتِ مودال است و دیده نمی‌شود)
+function podEyePreviewDraw(blink){
+  const cv=document.getElementById('podEyePrev'); const L=_pod.avLayers; if(!cv||!L||!L.base) return;
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  const cw=cv.clientWidth||240, ch=cv.clientHeight||120;
+  if(cv.width!==Math.round(cw*dpr)||cv.height!==Math.round(ch*dpr)){ cv.width=Math.round(cw*dpr); cv.height=Math.round(ch*dpr); }
+  const ctx=cv.getContext('2d'), iw=L.base.naturalWidth||1024, ih=L.base.naturalHeight||1024;
+  const m=podCoverMap(cv,iw,ih);
+  ctx.clearRect(0,0,m.W,m.H); ctx.drawImage(L.base,m.zx,m.zy,m.dw,m.dh);
+  if(blink>0){ try{ podDrawEyelids(ctx, m.zx,m.zy,m.dw,m.dh, podRegions().eyes, Math.min(1,blink), L.eyeSkin||[210,175,150]); }catch(e){} }
 }
 /* ---- ریتم و شکلِ دهان از خودِ صدا (بدونِ هیچ توکن/هزینه) ---- */
 /* ---- ۲۳.۱۱ — زمان‌بندیِ شکلِ دهان از خودِ متنِ فارسیِ پادکست (صفر توکن/هزینه) ----
@@ -4576,7 +4627,8 @@ function renderPodCfg(){
       h+=`<label class="qbg-lbl" style="margin-top:10px">جای چشم (برای پلک و ابرو)</label>`;
       h+=`<div class="pod-seg"><button onclick="podEyeNudge(-0.01,0,0)">⬆️ بالا</button><button onclick="podEyeNudge(0.01,0,0)">⬇️ پایین</button><button onclick="podEyeNudge(0,0,-0.01)">⬅️ چپ</button><button onclick="podEyeNudge(0,0,0.01)">➡️ راست</button></div>`;
       h+=`<div class="pod-seg" style="margin-top:6px"><button onclick="podEyeNudge(0,0.06,0)">➕ بزرگ‌تر</button><button onclick="podEyeNudge(0,-0.06,0)">➖ کوچک‌تر</button><button onclick="podEyeReset()">↺ ریست</button><button onclick="podBlinkTest()">👁 تستِ پلک</button></div>`;
-      h+=`<div class="qbg-sub" style="margin-top:4px">عمودی: ${faDigits(String(Math.round((_c.eDy||0)*1000)/10))}٪ · افقی: ${faDigits(String(Math.round((_c.eDx||0)*1000)/10))}٪ · اندازه: ${faDigits(String(Math.round((_c.eScale||1)*100)))}٪ — «👁 تستِ پلک» را بزن؛ اگر پلک سرِ جای چشم نبود، با این دکمه‌ها میخش کن.</div>`;
+      h+=`<canvas id="podEyePrev" class="pod-eyeprev"></canvas>`;
+      h+=`<div class="qbg-sub" style="margin-top:4px">عمودی: ${faDigits(String(Math.round((_c.eDy||0)*1000)/10))}٪ · افقی: ${faDigits(String(Math.round((_c.eDx||0)*1000)/10))}٪ · اندازه: ${faDigits(String(Math.round((_c.eScale||1)*100)))}٪ — «👁 تستِ پلک» را بزن و **همین بالا در پیش‌نمایش** ببین؛ اگر پلک سرِ جای چشم نبود با این دکمه‌ها میخش کن. (پلک دیگر به عکسِ AI وابسته نیست.)</div>`;
       if(_pod.avStripURL){ h+=`<div class="qbg-sub" style="margin-top:6px">اگر دهانِ «آ/ای/او» زیر واقعاً باز نیست، مشکل از عکس‌های AI است (نه موتور). این تصویر را برایم بفرست:</div>`;
         h+=`<div style="margin-top:6px;overflow-x:auto;-webkit-overflow-scrolling:touch"><img src="${_pod.avStripURL}" style="height:150px;max-width:none;border-radius:8px" alt="حالت‌های چهره"></div>`; }
       h+=`<div class="qbg-sub" style="margin-top:4px">🧪 تستِ موتور: دهانِ آشکارا باز را (بدونِ هزینه) جایگزین می‌کند؛ «پخش» کن — اگر لب‌ها باز/بسته شد، موتور سالم است. با رفرش به عکس‌های واقعی برمی‌گردد.</div>`;
@@ -4590,6 +4642,7 @@ function renderPodCfg(){
     }
   }
   box.innerHTML=h;
+  try{ if(_pod.avLayers && document.getElementById('podEyePrev')) setTimeout(()=>podEyePreviewDraw(0),0); }catch(e){}
 }
 // جابه‌جایی/اندازهٔ ناحیهٔ دهان را تغییر می‌دهد و لایه‌ها را با ناحیهٔ تازه از نو می‌سازد
 async function podMouthNudge(dy, ds, dx){
@@ -4624,9 +4677,11 @@ function podBlinkTest(){
   _pod.avW=_pod.avW||{A:0,E:0,O:0,BL:0,BR:0};
   const t0=performance.now();
   const step=()=>{ const bt=performance.now()-t0;
-    _pod.avW.BL = bt<90?bt/90 : (bt<200?1 : (bt<340?1-(bt-200)/140:0));
-    try{ podAvDraw(); }catch(e){}
-    if(bt<340) requestAnimationFrame(step); else { _pod.avW.BL=0; try{ podAvDraw(); }catch(e){} }
+    const bl = bt<90?bt/90 : (bt<230?1 : (bt<400?1-(bt-230)/170:0));
+    _pod.avW.BL=bl;
+    podEyePreviewDraw(bl);                 // پیش‌نمایشِ داخلِ تنظیمات (دیده می‌شود)
+    try{ podAvDraw(); }catch(e){}          // مجریِ اصلی هم (پشتِ مودال)
+    if(bt<400) requestAnimationFrame(step); else { _pod.avW.BL=0; podEyePreviewDraw(0); try{ podAvDraw(); }catch(e){} }
   };
   requestAnimationFrame(step);
 }
