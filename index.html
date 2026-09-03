@@ -121,6 +121,7 @@ body.nav-bottom{padding-bottom:100px}
 .pod-3d-host{position:absolute;inset:0;width:100%;height:100%}
 .pod-3d-host canvas{width:100%!important;height:100%!important;display:block}
 .pod-3d-badge{position:absolute;top:8px;right:8px;z-index:3;font-size:10px;background:rgba(20,26,38,.6);color:#cfe;border-radius:8px;padding:2px 7px;pointer-events:none}
+.pod-3d-url{width:100%;box-sizing:border-box;margin-top:6px;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:var(--field);color:var(--text,#eaf0f6);font-size:12px;direction:ltr;text-align:left}
 .qbg-x{position:absolute;top:14px;left:14px;width:30px;height:30px;border-radius:50%;background:var(--field);border:1px solid var(--line);color:var(--muted);font-size:14px;cursor:pointer;line-height:1}
 .qbg-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
 .qbg-badge{flex:0 0 auto;width:44px;height:44px;border-radius:13px;background:rgba(224,104,95,.16);display:flex;align-items:center;justify-content:center;font-size:22px}
@@ -2029,7 +2030,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۱۵</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۱۶</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3326,6 +3327,7 @@ function podCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(POD_CFG_KEY)
   return { prov:o.prov||'auto', minutes:o.minutes||5, gVoice:o.gVoice||'Kore', oVoice:o.oVoice||'shimmer', dVoice:o.dVoice||'',
     avatar:(o.avatar!==false), avGender:(o.avGender==='male'?'male':'female'),
     avZoom:(typeof o.avZoom==='number'?o.avZoom:0.45), avMode:(o.avMode==='3d'?'3d':'photo'),
+    av3dUrlF:(typeof o.av3dUrlF==='string'?o.av3dUrlF:''), av3dUrlM:(typeof o.av3dUrlM==='string'?o.av3dUrlM:''),
     mDx:(typeof o.mDx==='number'?o.mDx:0), mDy:(typeof o.mDy==='number'?o.mDy:0), mScale:(typeof o.mScale==='number'?o.mScale:1),
     mDxM:(typeof o.mDxM==='number'?o.mDxM:0), mDyM:(typeof o.mDyM==='number'?o.mDyM:0), mScaleM:(typeof o.mScaleM==='number'?o.mScaleM:1),
     eDx:(typeof o.eDx==='number'?o.eDx:0), eDy:(typeof o.eDy==='number'?o.eDy:0), eScale:(typeof o.eScale==='number'?o.eScale:1) }; }
@@ -4455,7 +4457,7 @@ function podReactStop(){
    شخصیتِ سه‌بعدیِ ساختگی (نه عکسِ واقعی)، رایگان و آفلاین‌پس‌از‌بارِ‌اول. با همان موتورِ
    ویزم/پلک/ابروِ خودمان تکان می‌خورد. three.js فقط وقتی این حالت انتخاب شود لود می‌شود؛
    اگر لود نشد، خودکار به حالتِ عکس برمی‌گردد. */
-const _pod3d={ ready:false, loading:false, ren:null, scene:null, cam:null, headGroup:null, parts:null, raf:0, gender:'', host:null, blinkNext:0, blinkAt:-9999 };
+const _pod3d={ ready:false, loading:false, gltfLoading:false, ren:null, scene:null, cam:null, root:null, headGroup:null, parts:null, gltf:false, morphs:null, modelRoot:null, raf:0, gender:'', srcUrl:'', host:null, blinkNext:0, blinkAt:-9999 };
 function pod3dEnsureLib(cb){
   if(window.THREE){ cb(true); return; }
   const done=(ok)=>{ _pod3d.loading=false; cb(ok); };
@@ -4465,6 +4467,17 @@ function pod3dEnsureLib(cb){
   sc.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
   sc.onload=()=>done(!!window.THREE); sc.onerror=()=>done(false);
   document.head.appendChild(sc);
+}
+// GLTFLoader را (برای آواتارِ Ready Player Me) در صورتِ نیاز لود می‌کند
+function pod3dEnsureGLTF(cb){
+  if(window.THREE&&THREE.GLTFLoader){ cb(true); return; }
+  if(_pod3d.gltfLoading){ let n=0; const w=setInterval(()=>{ if(THREE&&THREE.GLTFLoader){ clearInterval(w); cb(true); } else if(++n>40){ clearInterval(w); cb(!!(THREE&&THREE.GLTFLoader)); } },250); return; }
+  _pod3d.gltfLoading=true;
+  const g=document.createElement('script');
+  g.src='https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js';
+  g.onload=()=>{ _pod3d.gltfLoading=false; cb(!!(THREE&&THREE.GLTFLoader)); };
+  g.onerror=()=>{ _pod3d.gltfLoading=false; cb(false); };
+  document.head.appendChild(g);
 }
 function pod3dBuildHead(gender){
   const T=THREE, male=gender==='male', grp=new T.Group();
@@ -4508,34 +4521,94 @@ function pod3dBuildHead(gender){
   grp.userData={ eyeL,eyeR,lidL,lidR,browL,browR, lowerLip,upperLip,cavity };
   return grp;
 }
-function pod3dInit(host, gender){
+function pod3dBadge(host,txt){ const b=document.createElement('div'); b.className='pod-3d-badge'; b.textContent=txt; host.appendChild(b); }
+// فقط صحنه/نور/دوربین را می‌سازد (بدونِ چهره)
+function pod3dInitStage(host){
   const T=THREE; const w=host.clientWidth||300, h=host.clientHeight||210;
   const ren=new T.WebGLRenderer({alpha:true, antialias:true}); ren.setPixelRatio(Math.min(2,window.devicePixelRatio||1)); ren.setSize(w,h);
+  if(ren.outputEncoding!=null&&T.sRGBEncoding) ren.outputEncoding=T.sRGBEncoding;
   host.innerHTML=''; host.appendChild(ren.domElement);
-  const badge=document.createElement('div'); badge.className='pod-3d-badge'; badge.textContent='نمونهٔ سه‌بعدی'; host.appendChild(badge);
   const scene=new T.Scene();
-  const cam=new T.PerspectiveCamera(30, w/h, 0.1, 100); cam.position.set(0,0.05,4.3);
-  scene.add(new T.AmbientLight(0xffffff,0.78));
-  const key=new T.DirectionalLight(0xfff2e6,0.95); key.position.set(1.3,1.5,2.2); scene.add(key);
-  const fill=new T.DirectionalLight(0xd6e4ff,0.35); fill.position.set(-1.6,-0.4,1.2); scene.add(fill);
-  const rim=new T.DirectionalLight(0xffffff,0.45); rim.position.set(0,1.2,-2); scene.add(rim);
-  const headGroup=pod3dBuildHead(gender); const root=new T.Group(); root.add(headGroup); root.scale.setScalar(1.4); root.position.y=-0.15; scene.add(root);
-  _pod3d.ren=ren; _pod3d.scene=scene; _pod3d.cam=cam; _pod3d.headGroup=headGroup; _pod3d.parts=headGroup.userData; _pod3d.gender=gender; _pod3d.host=host; _pod3d.ready=true;
+  const cam=new T.PerspectiveCamera(28, w/h, 0.01, 100); cam.position.set(0,0.05,4.3);
+  scene.add(new T.AmbientLight(0xffffff,0.85));
+  const key=new T.DirectionalLight(0xfff2e6,1.0); key.position.set(1.3,1.7,2.4); scene.add(key);
+  const fill=new T.DirectionalLight(0xd6e4ff,0.4); fill.position.set(-1.8,-0.2,1.4); scene.add(fill);
+  const rim=new T.DirectionalLight(0xffffff,0.5); rim.position.set(0,1.4,-2.2); scene.add(rim);
+  const root=new T.Group(); scene.add(root);
+  _pod3d.ren=ren; _pod3d.scene=scene; _pod3d.cam=cam; _pod3d.root=root; _pod3d.host=host; _pod3d.ready=true;
 }
+function pod3dClearRoot(){ const r=_pod3d.root; if(!r) return; while(r.children&&r.children.length) r.remove(r.children[r.children.length-1]); _pod3d.parts=null; _pod3d.morphs=null; _pod3d.modelRoot=null; _pod3d.gltf=false; _pod3d.headGroup=null; }
+// چهرهٔ سادهٔ درون‌ساخته (فالبک)
+function pod3dInitProcedural(gender){
+  pod3dClearRoot(); const T=THREE;
+  const headGroup=pod3dBuildHead(gender); const g=new T.Group(); g.add(headGroup); g.scale.setScalar(1.4); g.position.y=-0.15; _pod3d.root.add(g);
+  _pod3d.headGroup=headGroup; _pod3d.parts=headGroup.userData; _pod3d.gltf=false; _pod3d.gender=gender; _pod3d.srcUrl='';
+  pod3dBadge(_pod3d.host,'نمونهٔ سه‌بعدی');
+}
+// آواتارِ Ready Player Me: مدل را اضافه، مورف‌ها را جمع و دوربین را روی سر تنظیم می‌کند
+function pod3dSetupModel(modelScene, gender, url){
+  pod3dClearRoot(); const T=THREE;
+  _pod3d.root.add(modelScene); _pod3d.modelRoot=modelScene;
+  const morphs=[]; modelScene.traverse(o=>{ if(o.morphTargetDictionary&&o.morphTargetInfluences){ morphs.push({dict:o.morphTargetDictionary, infl:o.morphTargetInfluences}); if(o.frustumCulled!=null) o.frustumCulled=false; } });
+  _pod3d.morphs=morphs;
+  // قابِ دوربین روی سر
+  try{
+    const box=new T.Box3().setFromObject(modelScene); const size=box.getSize(new T.Vector3()); const center=box.getCenter(new T.Vector3());
+    let head=null; modelScene.traverse(o=>{ if(!head && /head/i.test(o.name||'') && !/(mesh|wolf3d|geo)/i.test(o.name||'')) head=o; });
+    let hy=box.max.y - Math.max(size.y*0.07, size.x*0.16);
+    if(head){ const v=new T.Vector3(); head.getWorldPosition&&head.getWorldPosition(v); if(v.y) hy=v.y+size.x*0.03; }
+    const dist=Math.max(0.5, size.x*3.0);
+    _pod3d.cam.position.set(center.x, hy, dist); _pod3d.cam.near=dist/50; _pod3d.cam.far=dist*50; _pod3d.cam.updateProjectionMatrix&&_pod3d.cam.updateProjectionMatrix(); _pod3d.cam.lookAt&&_pod3d.cam.lookAt(center.x, hy, 0);
+    _pod3d.headY=hy; _pod3d.centerX=center.x;
+  }catch(e){}
+  _pod3d.gltf=true; _pod3d.gender=gender; _pod3d.srcUrl=url;
+  pod3dBadge(_pod3d.host, gender==='male'?'مردِ سه‌بعدی':'زنِ سه‌بعدی');
+}
+function pod3dSetMorph(name, val){ const L=_pod3d.morphs; if(!L) return; for(const m of L){ const i=m.dict[name]; if(i!=null) m.infl[i]=val; } }
+function pod3dInit(host, gender){ pod3dInitStage(host); pod3dInitProcedural(gender); }
 function pod3dResize(){ try{ const h=_pod3d.host; if(!h||!_pod3d.ren) return; const w=h.clientWidth||300, hh=h.clientHeight||210; _pod3d.ren.setSize(w,hh); _pod3d.cam.aspect=w/hh; _pod3d.cam.updateProjectionMatrix(); }catch(e){} }
 function pod3dApply(){
-  if(!_pod3d.ready) return; const P=_pod3d.parts; if(!P) return;
+  if(!_pod3d.ready) return;
   const M=_pod.avMouth||{vis:'X',open:0}, w=_pod.avW||{}, sw=_pod.avSway||{x:0,y:0,s:1.02,rot:0};
   const vis=M.vis||'X', closed=(vis==='X'||vis==='MB'||vis==='C');
   const open=closed?0:Math.max(0,Math.min(1.1,M.open||0));
-  const wide=vis==='E'?1.4: vis==='O'?0.7: vis==='F'?0.92: 1.0;
-  P.lowerLip.position.y=-0.47-open*0.2; P.lowerLip.scale.x=wide; P.upperLip.scale.x=wide;
-  P.cavity.scale.set(wide, 0.12+open*0.95, 0.5); P.cavity.position.y=-0.44-open*0.05;
-  const bl=Math.max(0,Math.min(1,w.BL||0)); P.lidL.scale.y=0.02+bl*0.95; P.lidR.scale.y=0.02+bl*0.95;
-  const br=Math.max(0,Math.min(1,w.BR||0)); P.browL.position.y=P.browR.position.y=0.34+br*0.06;
-  const g=_pod3d.headGroup; g.rotation.y=(sw.x||0)*6; g.rotation.x=-(sw.y||0)*5; g.rotation.z=(sw.rot||0)*3;
-  g.scale.setScalar(1+((sw.s||1.02)-1.02)*0.5);
+  const bl=Math.max(0,Math.min(1,w.BL||0)), br=Math.max(0,Math.min(1,w.BR||0));
+  if(_pod3d.gltf && _pod3d.morphs){
+    // آواتارِ Ready Player Me → مورف‌تارگت‌ها (ARKit + Oculus Visemes)
+    ['viseme_aa','viseme_E','viseme_I','viseme_O','viseme_U','viseme_FF','viseme_PP','jawOpen','mouthOpen'].forEach(n=>pod3dSetMorph(n,0));
+    pod3dSetMorph('jawOpen', open*0.85); pod3dSetMorph('mouthOpen', open*0.6);
+    if(vis==='A') pod3dSetMorph('viseme_aa',0.95);
+    else if(vis==='E') pod3dSetMorph('viseme_E',0.9);
+    else if(vis==='AH') pod3dSetMorph('viseme_aa',0.55);
+    else if(vis==='O') pod3dSetMorph('viseme_O',0.95);
+    else if(vis==='F') pod3dSetMorph('viseme_FF',0.85);
+    else if(vis==='MB'||vis==='X'||vis==='C') pod3dSetMorph('viseme_PP',0.25);
+    pod3dSetMorph('eyeBlinkLeft', bl); pod3dSetMorph('eyeBlinkRight', bl);
+    pod3dSetMorph('browInnerUp', br); pod3dSetMorph('browOuterUpLeft', br*0.6); pod3dSetMorph('browOuterUpRight', br*0.6);
+    const g=_pod3d.modelRoot; if(g){ g.rotation.y=(sw.x||0)*4; g.rotation.x=-(sw.y||0)*3; g.rotation.z=(sw.rot||0)*2; }
+  } else {
+    const P=_pod3d.parts; if(!P) return;
+    const wide=vis==='E'?1.4: vis==='O'?0.7: vis==='F'?0.92: 1.0;
+    P.lowerLip.position.y=-0.47-open*0.2; P.lowerLip.scale.x=wide; P.upperLip.scale.x=wide;
+    P.cavity.scale.set(wide, 0.12+open*0.95, 0.5); P.cavity.position.y=-0.44-open*0.05;
+    P.lidL.scale.y=0.02+bl*0.95; P.lidR.scale.y=0.02+bl*0.95;
+    P.browL.position.y=P.browR.position.y=0.34+br*0.06;
+    const g=_pod3d.headGroup; if(g){ g.rotation.y=(sw.x||0)*6; g.rotation.x=-(sw.y||0)*5; g.rotation.z=(sw.rot||0)*3; g.scale.setScalar(1+((sw.s||1.02)-1.02)*0.5); }
+  }
   try{ _pod3d.ren.render(_pod3d.scene,_pod3d.cam); }catch(e){}
+}
+// مدلِ Ready Player Me را از URL لود می‌کند؛ در خطا به چهرهٔ ساده برمی‌گردد
+function pod3dLoadModel(url, gender){
+  pod3dEnsureGLTF((ok)=>{
+    if(!ok){ uiToast&&uiToast('لودرِ سه‌بعدی لود نشد؛ چهرهٔ سادهٔ پشتیبان'); try{ pod3dInitProcedural(gender); pod3dStartLoop(); }catch(e){} return; }
+    let u=String(url||''); if(u && u.indexOf('morphTargets')<0) u+=(u.indexOf('?')<0?'?':'&')+'morphTargets=ARKit,Oculus%20Visemes';
+    try{
+      const loader=new THREE.GLTFLoader();
+      loader.load(u, (gltf)=>{ try{ pod3dSetupModel(gltf.scene||gltf.scenes[0], gender, url); pod3dStartLoop(); }catch(e){ try{console.warn('3d model setup',e)}catch(_){}; try{ pod3dInitProcedural(gender); pod3dStartLoop(); }catch(_2){} } },
+        undefined,
+        (err)=>{ try{console.warn('3d model load',err)}catch(_){}; uiToast&&uiToast('لینکِ آواتار لود نشد؛ لینک را چک کن (چهرهٔ ساده)'); try{ pod3dInitProcedural(gender); pod3dStartLoop(); }catch(e){} });
+    }catch(e){ try{ pod3dInitProcedural(gender); pod3dStartLoop(); }catch(_){} }
+  });
 }
 function pod3dStopLoop(){ if(_pod3d.raf){ cancelAnimationFrame(_pod3d.raf); _pod3d.raf=0; } }
 function pod3dStartLoop(){
@@ -4559,18 +4632,31 @@ function pod3dStartLoop(){
 function pod3dDispose(){ pod3dStopLoop(); try{ if(_pod3d.ren){ _pod3d.ren.forceContextLoss&&_pod3d.ren.forceContextLoss(); _pod3d.ren.dispose&&_pod3d.ren.dispose(); } }catch(e){} _pod3d.ready=false; _pod3d.ren=null; _pod3d.scene=null; _pod3d.parts=null; _pod3d.headGroup=null; _pod3d.host=null; }
 function pod3dEnsure(gender){
   const host=document.getElementById('pod3dHost'); if(!host) return;
+  const c=podCfg(); const url=(gender==='male'?c.av3dUrlM:c.av3dUrlF)||'';
   const fail=(msg)=>{ uiToast&&uiToast(msg); podCfgSet({avMode:'photo'}); _pod.avMode='photo'; try{ renderPodcastCard(); }catch(e){} };
   pod3dEnsureLib((ok)=>{
     if(!ok){ fail('حالتِ سه‌بعدی نیاز به اینترنت (بارِ اول) دارد؛ فعلاً حالتِ عکس'); return; }
-    if(document.getElementById('pod3dHost')!==host && !document.getElementById('pod3dHost')) return;
+    const h=document.getElementById('pod3dHost'); if(!h) return;
     try{
-      const h=document.getElementById('pod3dHost')||host;
-      if(!_pod3d.ready || _pod3d.gender!==gender){ pod3dDispose(); pod3dInit(h, gender); }
-      else { h.innerHTML=''; h.appendChild(_pod3d.ren.domElement); const b=document.createElement('div'); b.className='pod-3d-badge'; b.textContent='نمونهٔ سه‌بعدی'; h.appendChild(b); _pod3d.host=h; pod3dResize(); }
+      if(!_pod3d.ready){ pod3dDispose(); pod3dInitStage(h); }
+      else if(_pod3d.host!==h){ h.innerHTML=''; h.appendChild(_pod3d.ren.domElement); _pod3d.host=h; pod3dResize(); }
+      const need = (_pod3d.gender!==gender) || (url? (!_pod3d.gltf||_pod3d.srcUrl!==url) : _pod3d.gltf);
+      if(need){ if(url){ pod3dLoadModel(url, gender); return; } else { pod3dInitProcedural(gender); } }
       pod3dStartLoop();
     }catch(e){ try{console.warn('3d init',e)}catch(_){}; fail('حالتِ سه‌بعدی روی این دستگاه اجرا نشد؛ حالتِ عکس'); }
   });
 }
+// اعمال/حذفِ لینکِ آواتار از تنظیمات
+function pod3dApplyUrl(){
+  const inp=document.getElementById('pod3dUrlInput'); if(!inp) return;
+  let u=(inp.value||'').trim();
+  if(u && !/\.glb(\?|$)/i.test(u) && u.indexOf('readyplayer')<0){ uiToast&&uiToast('لینک باید به .glb ختم شود (از Ready Player Me)'); return; }
+  const g=podCfg().avGender; podCfgSet(g==='male'?{av3dUrlM:u}:{av3dUrlF:u});
+  _pod3d.gender=''; _pod3d.srcUrl='';   // اجبار به بازساخت
+  uiToast&&uiToast(u?'در حالِ بارگیریِ آواتار…':'به چهرهٔ ساده برگشت');
+  try{ renderPodcastCard(); renderPodCfg(); }catch(e){}
+}
+function pod3dClearUrl(){ const g=podCfg().avGender; podCfgSet(g==='male'?{av3dUrlM:''}:{av3dUrlF:''}); _pod3d.gender=''; _pod3d.srcUrl=''; try{ renderPodcastCard(); renderPodCfg(); }catch(e){} }
 
 /* ---- دانلودِ فایلِ پادکست (WAV یک‌تکه از قطعه‌های صوتی) ---- */
 function podEncodeWav(sampleRate, channels){
@@ -4718,7 +4804,15 @@ function renderPodCfg(){
   if(c.avatar){
     h+=`<label class="qbg-lbl" style="margin-top:8px">حالتِ مجری</label>`;
     h+=`<div class="pod-seg">`+[['photo','📷 عکسِ واقعی'],['3d','🧑‍🎨 سه‌بعدی (نمونه)']].map(o=>`<button class="${c.avMode===o[0]?'on':''}" onclick="podCfgPick('avMode','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
-    if(c.avMode==='3d') h+=`<div class="qbg-sub" style="margin-top:4px">شخصیتِ سه‌بعدیِ ساختگی (نه عکسِ واقعی). حرکتِ نرم‌تر؛ با همان صدا/متن لب می‌زند. بارِ اول برای بارگیریِ کتابخانه به اینترنت نیاز دارد، بعد آفلاین کار می‌کند. جنسیت را از پایین انتخاب کن.</div>`;
+    if(c.avMode==='3d'){
+      const gUrl=(c.avGender==='male'?c.av3dUrlM:c.av3dUrlF)||'';
+      h+=`<div class="qbg-sub" style="margin-top:4px">با همان صدا/متن لب می‌زند و پلک می‌زند. بارِ اول به اینترنت نیاز دارد، بعد کش می‌شود.</div>`;
+      h+=`<label class="qbg-lbl" style="margin-top:8px">لینکِ آواتارِ ${c.avGender==='male'?'مرد':'زن'} (Ready Player Me)</label>`;
+      h+=`<input id="pod3dUrlInput" class="pod-3d-url" value="${escVision(gUrl)}" placeholder="https://models.readyplayer.me/xxxx.glb" autocomplete="off" autocapitalize="off" spellcheck="false">`;
+      h+=`<div class="pod-seg" style="margin-top:6px"><button onclick="pod3dApplyUrl()">✅ اعمالِ لینک</button><button onclick="pod3dClearUrl()">↺ چهرهٔ ساده</button></div>`;
+      h+=`<details style="margin-top:6px"><summary style="cursor:pointer;font-size:12px;color:var(--teal)">چطور یک چهرهٔ خوشگل بسازم؟ (رایگان، ۱ دقیقه)</summary><div class="qbg-sub" style="margin-top:6px;line-height:2">۱) در مرورگر به <b style="color:var(--teal)">readyplayer.me</b> برو و «Create Avatar» بزن.<br>۲) از عکسِ سلفی یا از قالب‌های آماده یک زن/مردِ زیبا بساز.<br>۳) آخرِ کار روی «Copy .glb» یا لینکِ آواتار بزن (لینکی مثلِ <span style="direction:ltr">models.readyplayer.me/....glb</span>).<br>۴) لینک را اینجا پِیست کن و «اعمالِ لینک» بزن.<br>۵) برای مرد و زن جداگانه لینک بگذار (اول جنسیت را از پایین انتخاب کن).</div></details>`;
+      if(!gUrl) h+=`<div class="qbg-sub" style="margin-top:4px;color:var(--amber)">تا وقتی لینک نگذاری، چهرهٔ سادهٔ پیش‌فرض نشان داده می‌شود (همان که دیدی).</div>`;
+    }
     h+=`<label class="qbg-lbl" style="margin-top:8px">${c.avMode==='3d'?'شخصیتِ سه‌بعدی (زن/مرد)':'چهرهٔ مجری'}</label>`;
     const th=_pod.avThumbs||{};
     const gcell=(g,lbl)=>{ const img=th[g]; const inner=img?`<img src="${img}" alt="${lbl}">`:`<span style="font-size:22px;opacity:.5">${g==='male'?'🧑‍💼':'👩‍💼'}</span>`;
