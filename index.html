@@ -2055,7 +2055,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۲۹</b> · انتشار: ۱۴۰۵/۰۶/۱۳ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۳۰</b> · انتشار: ۱۴۰۵/۰۶/۱۳ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3383,8 +3383,11 @@ function podCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(POD_CFG_KEY)
 function podContentCfg(cc){ cc=cc||{};
   const dflt={glucose:true,meals:true,insulin:true,meds:true,exercise:true,sleep:true,vitals:true,mood:true,labs:true,tip:true,step:true};
   const r={}; for(const k in dflt) r[k]=(cc[k]!==false);
-  r.glucoseRange=cc.glucoseRange||'today'; return r; }
-function podContentSet(key,val){ const c=podCfg().content; c[key]=val; podCfgSet({content:c}); try{ renderPodCfg(); }catch(e){} }
+  r.glucoseRange=cc.glucoseRange||'today';
+  r.tone=(cc.tone==='formal'?'formal':'casual');   // لحنِ گفتار: محاوره‌ای (پیش‌فرض) یا رسمی
+  return r; }
+function podContentSet(key,val){ const c=podCfg().content; c[key]=val; podCfgSet({content:c}); try{ renderPodCfg(); }catch(e){}
+  uiToast&&uiToast('✓ ثبت شد — «پخش» یا «🔄 ساختِ دوباره» را بزن تا با تنظیماتِ تازه ساخته شود'); }
 function podCfgSet(patch){ const n=Object.assign(podCfg(), patch||{}); try{ localStorage.setItem(POD_CFG_KEY, JSON.stringify(n)); }catch(e){} return n; }
 // کتابخانهٔ نکاتِ آموزشیِ چرخشی (آموزشی و عمومی — بدون دوز/تشخیص)
 const POD_TOPICS=[
@@ -3492,13 +3495,16 @@ function podPrompt(mins){
   struct+="در پایان یک جملهٔ کوتاهِ دلگرم‌کننده و خداحافظی.\n";
   return "تو گویندهٔ پادکستِ روزانهٔ نرم‌افزارِ «"+APP_NAME+"» (یک اپِ آموزشیِ دیابت) به فارسی هستی. نامِ نرم‌افزار دقیقاً «"+APP_NAME+"» است؛ اگر خواستی خوشامد بگویی همین نام را به کار ببر و هرگز نامِ دیگری برای اپ نساز. یک متنِ گفتاری بنویس که وقتی با صدا خوانده شود حدود "+mins+" دقیقه (تقریباً "+words+" کلمه) شود. حتماً به همین اندازه بلند و پرمحتوا باشد.\n"+
   "لحن: گرم، آرام، انسانی، دلگرم‌کننده و جذاب — انگار داری با یک دوستِ صمیمی حرف می‌زنی. جوری بنویس که شنونده جذب شود و تا آخر گوش بدهد.\n"+
+  (C.tone==='formal'
+    ? "زبان: فارسیِ معیارِ روان و محترمانه (نوشتاری اما ساده).\n"
+    : "زبان: کاملاً «محاوره‌ای» و خودمونی بنویس، دقیقاً مثلِ حرف‌زدنِ عادیِ روزمره — «می‌ره» نه «می‌رود»، «می‌گه» نه «می‌گوید»، «بریم»، «چطوری»، «یه»، «واسه»، «الان». اصلاً رسمی و کتابی ننویس. می‌تونی از کلمه‌های صمیمی مثلِ «ببین»، «راستش»، «خب» استفاده کنی تا مثلِ یه آدمِ واقعی که داره باهات گپ می‌زنه به‌نظر بیاد. جمله‌ها کوتاه و شکسته.\n")+
   struct+
   "قواعدِ مهم: فقط فارسی بنویس. فقط متنِ گفتاری بده — بدونِ تیتر، بدونِ ستاره یا علامتِ مارک‌داون، بدونِ توضیحِ صحنه یا براکت، بدونِ شکلک. جمله‌ها کوتاه و روان تا خوب خوانده شوند. هرگز دوزِ قطعیِ انسولین/دارو یا تشخیصِ قطعی نده. مهم: در متنِ گفتار هیچ جمله‌ی سلبِ مسئولیت نگو (مثلِ «این آموزشی است» یا «جایگزینِ پزشک نیست») — این پیام جای دیگری نشان داده می‌شود؛ فقط گرم و طبیعی صحبت کن.\n\n"+
   "دادهٔ عملکردِ کاربر (برای شخصی‌سازی — عین‌به‌عین نخوان، طبیعی و انتخابی استفاده کن):\n"+(snapF||'دادهٔ کافی نیست؛ عمومی و دلگرم‌کننده صحبت کن.');
 }
 async function podcastGenerate(force){
-  const today=podTodayKey(); const cur=podLoad(); const mins=podCfg().minutes;
-  if(!force && cur && cur.dateKey===today && cur.script && cur.len===mins){ return cur; }
+  const today=podTodayKey(); const cur=podLoad(); const mins=podCfg().minutes; const sig=podContentSig();
+  if(!force && cur && cur.dateKey===today && cur.script && cur.len===mins && cur.sig===sig){ return cur; }
   let script='', usedProv='offline';
   const online=(navigator.onLine!==false);
   const anyKey=VISION_PROVIDERS.some(p=>hasAnyKey(p)&&!aiFrozen(p));
@@ -3512,9 +3518,11 @@ async function podcastGenerate(force){
     }catch(e){ script=''; }
   }
   if(!script){ script=podOfflineScript(mins); usedProv='offline'; }
-  const rec={ dateKey:today, jday:_jLabel(new Date()), script, provider:usedProv, len:mins, ts:Date.now() };
+  const rec={ dateKey:today, jday:_jLabel(new Date()), script, provider:usedProv, len:mins, sig, ts:Date.now() };
   podSave(rec); return rec;
 }
+// امضایِ تنظیماتِ محتوا (لحن + موضوع‌ها + بازهٔ قند) — با تغییرش، پادکستِ امروز از نو ساخته می‌شود
+function podContentSig(){ try{ return JSON.stringify(podCfg().content||{}); }catch(e){ return ''; } }
 /* ---- موزیکِ محیطیِ نرم (Web Audio) ---- */
 function podMusicStart(){
   const ctx=wkEnsureAudio(); if(!ctx) return; podMusicStop();
@@ -3672,7 +3680,11 @@ async function podTTSFetch(text){
 async function podOpenAITTS(text,voice){
   const key=getVisionKey('openai'); if(!key) throw new Error('no key'); voice=voice||podCfg().oVoice||'shimmer';
   const mk=body=>fetch('https://api.openai.com/v1/audio/speech',{method:'POST',headers:{'authorization':'Bearer '+key,'content-type':'application/json'},body:JSON.stringify(body)});
-  let res=await mk({ model:'gpt-4o-mini-tts', voice, input:text, response_format:'mp3', instructions:'با لحنی گرم، آرام، دلنشین و صمیمی مثلِ گویندهٔ حرفه‌ایِ پادکستِ سلامت به فارسی صحبت کن؛ شمرده، دلگرم‌کننده و روان.' });
+  const tone=(podCfg().content&&podCfg().content.tone)||'casual';
+  const instr=(tone==='formal')
+    ? 'به فارسی با لحنی گرم، آرام، دلنشین و محترمانه مثلِ گویندهٔ حرفه‌ایِ پادکستِ سلامت صحبت کن؛ شمرده، دلگرم‌کننده و روان.'
+    : 'به فارسی کاملاً خودمونی و محاوره‌ای صحبت کن، انگار با یک دوستِ صمیمی داری گپ می‌زنی — طبیعی، گرم، پرانرژی و بی‌تکلف؛ نه مثلِ خواندنِ متن، بلکه مثلِ حرف‌زدنِ واقعیِ روزمره با مکث‌ها و آهنگِ طبیعیِ گفتار.';
+  let res=await mk({ model:'gpt-4o-mini-tts', voice, input:text, response_format:'mp3', instructions:instr });
   if(!res.ok){ res=await mk({ model:'tts-1', voice, input:text, response_format:'mp3' }); if(!res.ok) throw new Error('OpenAI TTS '+res.status); }
   return { buf:await res.arrayBuffer(), type:'audio/mpeg' };
 }
@@ -5077,6 +5089,9 @@ function renderPodCfg(){
   if(tab==='content'){
   const C=c.content||podContentCfg();
   h+=`<label class="qbg-lbl">مدتِ پادکست</label><div class="pod-seg">`+POD_LENS.map(m=>`<button class="${c.minutes===m?'on':''}" onclick="podCfgPick('minutes',${m})">${faDigits(m)} دقیقه</button>`).join('')+`</div>`;
+  h+=`<label class="qbg-lbl" style="margin-top:10px">🗣️ لحنِ گفتار</label>`;
+  h+=`<div class="pod-seg">`+[['casual','😊 محاوره‌ای (خودمونی)'],['formal','🎩 رسمی']].map(o=>`<button class="${C.tone===o[0]?'on':''}" onclick="podContentSet('tone','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
+  h+=`<div class="qbg-sub" style="margin-top:4px">«محاوره‌ای» متن و صدا را مثلِ حرف‌زدنِ عادیِ روزمره می‌کند (می‌ره، می‌گه…) تا طبیعی‌تر و صمیمی‌تر باشد.</div>`;
   h+=`<div class="qbg-sub" style="margin-top:10px;line-height:1.9">انتخاب کن پادکستِ امروز راجع‌به چه چیزهایی حرف بزند. هر مورد که خاموش باشد در پادکست نمی‌آید.</div>`;
   h+=`<label class="qbg-lbl" style="margin-top:10px">🩸 بازهٔ بررسیِ قند</label>`;
   const grOpts=[['today','امروز'],['7','۷ روز'],['14','۱۴ روز'],['30','۳۰ روز'],['90','۹۰ روز']];
