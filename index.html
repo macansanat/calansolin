@@ -132,6 +132,8 @@ body.nav-bottom{padding-bottom:100px}
 .pod-gal-th{width:100%;height:84px;object-fit:cover;object-position:50% 22%;border-radius:9px;display:block}
 .pod-gal-ph{width:100%;height:84px;display:flex;align-items:center;justify-content:center;font-size:30px;opacity:.5;background:rgba(127,127,127,.1);border-radius:9px}
 .pod-gal-cap{font-weight:600}
+.pod-gal-b{position:relative}
+.pod-gal-del{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:2}
 .qbg-x{position:absolute;top:14px;left:14px;width:30px;height:30px;border-radius:50%;background:var(--field);border:1px solid var(--line);color:var(--muted);font-size:14px;cursor:pointer;line-height:1}
 .qbg-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
 .qbg-badge{flex:0 0 auto;width:44px;height:44px;border-radius:13px;background:rgba(224,104,95,.16);display:flex;align-items:center;justify-content:center;font-size:22px}
@@ -2040,7 +2042,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۲۳</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۲۴</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4175,24 +4177,31 @@ function podSampleSkin(img, r){
   const S=64; const c=document.createElement('canvas'); c.width=c.height=S; const g=c.getContext('2d');
   g.drawImage(img,0,0,S,S);
   const at=(nx,ny)=>{ const x=Math.max(0,Math.min(S-1,Math.round(nx*S))), y=Math.max(0,Math.min(S-1,Math.round(ny*S))); const d=g.getImageData(x,y,1,1).data; return [d[0],d[1],d[2]]; };
-  const pts=[[r.x,r.y-r.ry*2.4],[r.x-r.rx*0.55,r.y-r.ry*1.8],[r.x+r.rx*0.55,r.y-r.ry*1.8],[r.x,r.y+r.ry*2.0]];
+  const pts=[[r.x-r.rx*0.55,r.y+r.ry*2.6],[r.x+r.rx*0.55,r.y+r.ry*2.6],[r.x-r.rx*0.95,r.y+r.ry*1.4],[r.x+r.rx*0.95,r.y+r.ry*1.4],[r.x,r.y+r.ry*2.2]];
   let R=0,G=0,B=0; pts.forEach(pt=>{ const c2=at(pt[0],pt[1]); R+=c2[0];G+=c2[1];B+=c2[2]; });
   const n=pts.length; return [Math.round(R/n),Math.round(G/n),Math.round(B/n)];
 }
 function podDrawEyelids(ctx, zx,zy,zw,zh, r, amt, skin){
   if(!r||amt<=0||!skin) return;
-  const cx=zx+r.x*zw, cyTop=zy+(r.y-r.ry*1.25)*zh;
-  const halfW=r.rx*zw*1.08, fullH=r.ry*2.5*zh, h=fullH*Math.min(1,amt);
-  const x0=cx-halfW, x1=cx+halfW, y0=cyTop, y1=cyTop+h, rr=Math.max(1,Math.min(halfW*0.5, h*0.5));
+  const a=Math.min(1,amt);
+  const cx=zx+r.x*zw, mid=zy+r.y*zh;
+  const halfW=r.rx*zw*0.80, lidH=r.ry*zh*1.7*a;
+  const yTop=mid - r.ry*zh*0.85, yBot=yTop+lidH;
   ctx.save();
-  ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y0); ctx.lineTo(x1,y1-rr);
-  ctx.quadraticCurveTo(x1,y1,x1-rr,y1); ctx.lineTo(x0+rr,y1); ctx.quadraticCurveTo(x0,y1,x0,y1-rr); ctx.closePath();
-  const g=ctx.createLinearGradient(0,y0,0,y1);
-  g.addColorStop(0,`rgb(${skin[0]},${skin[1]},${skin[2]})`);
-  g.addColorStop(1,`rgb(${Math.round(skin[0]*0.9)},${Math.round(skin[1]*0.87)},${Math.round(skin[2]*0.85)})`);
-  ctx.fillStyle=g; ctx.shadowColor='rgba(0,0,0,0.18)'; ctx.shadowBlur=Math.max(1,zh*0.006); ctx.fill();
-  if(amt>0.55){ ctx.shadowBlur=0; ctx.globalAlpha=Math.min(1,(amt-0.55)/0.45)*0.55; ctx.strokeStyle='rgba(60,40,38,0.9)';
-    ctx.lineWidth=Math.max(1,zh*0.006); ctx.beginPath(); ctx.moveTo(x0+rr,y1); ctx.lineTo(x1-rr,y1); ctx.stroke(); ctx.globalAlpha=1; }
+  ctx.beginPath();
+  ctx.moveTo(cx-halfW, yTop);
+  ctx.quadraticCurveTo(cx, yTop-lidH*0.22, cx+halfW, yTop);
+  ctx.quadraticCurveTo(cx+halfW, (yTop+yBot)/2, cx+halfW*0.66, yBot);
+  ctx.quadraticCurveTo(cx, yBot+lidH*0.18, cx-halfW*0.66, yBot);
+  ctx.quadraticCurveTo(cx-halfW, (yTop+yBot)/2, cx-halfW, yTop);
+  ctx.closePath();
+  const g=ctx.createLinearGradient(0,yTop,0,yBot);
+  g.addColorStop(0, `rgba(${skin[0]},${skin[1]},${skin[2]},0)`);
+  g.addColorStop(0.45,`rgba(${skin[0]},${skin[1]},${skin[2]},${(0.9*a).toFixed(2)})`);
+  g.addColorStop(1, `rgba(${Math.round(skin[0]*0.92)},${Math.round(skin[1]*0.88)},${Math.round(skin[2]*0.85)},${(0.92*a).toFixed(2)})`);
+  ctx.fillStyle=g; ctx.shadowColor='rgba(0,0,0,0.1)'; ctx.shadowBlur=Math.max(2,zh*0.014); ctx.fill();
+  if(a>0.6){ ctx.shadowBlur=0; ctx.globalAlpha=(a-0.6)/0.4*0.4; ctx.strokeStyle='rgba(70,45,42,0.75)'; ctx.lineWidth=Math.max(1,zh*0.004);
+    ctx.beginPath(); ctx.moveTo(cx-halfW*0.66,yBot); ctx.quadraticCurveTo(cx,yBot+lidH*0.14,cx+halfW*0.66,yBot); ctx.stroke(); ctx.globalAlpha=1; }
   ctx.restore();
 }
 /* دهانِ رویه‌ای (فقط وقتی فریمِ ساخته‌شده نداریم): حفرهٔ تیرهٔ نرم‌لبه که با شدتِ آوا
@@ -4482,8 +4491,7 @@ function pod3dEnsureLib(cb){
 // (CORS دارد و کش می‌شود). فایل‌ها در مخزنِ اپ نیستند تا حجمِ index.html بالا نرود.
 const POD_3D_PRESETS=[
   {id:'w1', g:'female', fa:'👩 زنِ کت‌وشلوار', url:'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/brunette.glb'},
-  {id:'w2', g:'female', fa:'💁‍♀️ زنِ زیبا',     url:'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/brunette-t.glb'},
-  {id:'w3', g:'female', fa:'👓 زنِ عینکی',      url:'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/avaturn.glb'}
+  {id:'w2', g:'female', fa:'👓 زنِ عینکی',      url:'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/avaturn.glb'}
 ];
 function pod3dDefaultUrl(){ return POD_3D_PRESETS[0]?POD_3D_PRESETS[0].url:''; }
 function pod3dPickPreset(url){ podCfgSet({av3dUrl:url}); _pod3d.srcUrl=''; uiToast&&uiToast('در حالِ بارگیریِ آواتار…'); try{ renderPodcastCard(); renderPodCfg(); }catch(e){} }
@@ -4593,7 +4601,7 @@ function pod3dSetupModel(modelScene, gender, url){
     let head=null;
     modelScene.traverse(o=>{ if(!head && (o.isBone||o.type==='Bone') && /head/i.test(o.name||'') && !/(top|end|_hair)/i.test(o.name||'')) head=o; });
     if(!head) modelScene.traverse(o=>{ if(!head && /(^|:)head$/i.test(o.name||'')) head=o; });
-    if(head){ const v=new T.Vector3(); head.getWorldPosition(v); _pod3d.frameHead=true; _pod3d.frameHx=v.x; _pod3d.frameHy=v.y; _pod3d.frameViewH0=1.0; }
+    if(head){ const v=new T.Vector3(); head.getWorldPosition(v); _pod3d.frameHead=true; _pod3d.frameHx=v.x; _pod3d.frameHy=v.y; _pod3d.frameViewH0=1.12; }
     else { _pod3d.frameHead=false; _pod3d.frameHx=center.x; _pod3d.frameHy=box.max.y - size.y*0.12; _pod3d.frameViewH0=Math.max(0.3,size.y*1.25); }
     pod3dApplyFrame();
   }catch(e){}
@@ -4609,7 +4617,7 @@ function pod3dApplyFrame(){
     const fov=cam.fov||28, rad=fov*Math.PI/180;
     const viewH=(_pod3d.frameViewH0||1.0)/z;
     const hx=_pod3d.frameHx, hy=_pod3d.frameHy;
-    const aimY = _pod3d.frameHead ? (hy - viewH*0.30) : (hy - viewH*0.18);
+    const aimY = _pod3d.frameHead ? (hy - viewH*0.18) : (hy - viewH*0.15);
     const dist=Math.max(0.12,(viewH/2)/Math.tan(rad/2));
     cam.position.set(hx, aimY, dist);
     cam.near=Math.max(0.01,dist/100); cam.far=dist*100+10;
@@ -4674,16 +4682,47 @@ function pod3dSaveThumb(url, srcCanvas){
 function pod3dLoadModel(url, gender){
   pod3dEnsureGLTF((ok)=>{
     if(!ok){ uiToast&&uiToast('لودرِ سه‌بعدی لود نشد؛ چهرهٔ سادهٔ پشتیبان'); try{ pod3dInitProcedural(gender); pod3dStartLoop(); }catch(e){} return; }
-    let u=String(url||''); if(u && u.indexOf('readyplayer.me')>=0 && u.indexOf('morphTargets')<0) u+=(u.indexOf('?')<0?'?':'&')+'morphTargets=ARKit,Oculus%20Visemes';
-    pod3dLoadIdle(()=>{   // اول انیمیشنِ ایستادن (اگر شد)، بعد آواتار
-      try{
+    const fallback=()=>{ try{ pod3dInitProcedural(gender); pod3dStartLoop(); }catch(e){} };
+    const doLoad=(loadUrl, revoke)=>{ try{
         const loader=new THREE.GLTFLoader();
-        loader.load(u, (gltf)=>{ try{ pod3dSetupModel(gltf.scene||gltf.scenes[0], gender, url); pod3dStartLoop(); }catch(e){ try{console.warn('3d model setup',e)}catch(_){}; try{ pod3dInitProcedural(gender); pod3dStartLoop(); }catch(_2){} } },
+        loader.load(loadUrl, (gltf)=>{ if(revoke) try{URL.revokeObjectURL(loadUrl)}catch(_){}; try{ pod3dSetupModel(gltf.scene||gltf.scenes[0], gender, url); pod3dStartLoop(); }catch(e){ try{console.warn('3d setup',e)}catch(_){}; fallback(); } },
           undefined,
-          (err)=>{ try{console.warn('3d model load',err)}catch(_){}; uiToast&&uiToast('این آواتار لود نشد؛ یکی دیگر را امتحان کن (چهرهٔ ساده فعلاً)'); try{ pod3dInitProcedural(gender); pod3dStartLoop(); }catch(e){} });
-      }catch(e){ try{ pod3dInitProcedural(gender); pod3dStartLoop(); }catch(_){} }
+          (err)=>{ if(revoke) try{URL.revokeObjectURL(loadUrl)}catch(_){}; try{console.warn('3d load',err)}catch(_){}; uiToast&&uiToast('این آواتار لود نشد؛ یکی دیگر را امتحان کن (چهرهٔ ساده فعلاً)'); fallback(); });
+      }catch(e){ fallback(); } };
+    pod3dLoadIdle(()=>{
+      const s0=String(url||'');
+      if(s0.indexOf('idb:')===0){   // فایلِ آپلودشدهٔ کاربر (از IndexedDB)
+        podAvGet(s0.slice(4)).then(buf=>{ if(!buf){ uiToast&&uiToast('فایلِ آواتار پیدا نشد'); fallback(); return; }
+          try{ const blob=new Blob([buf],{type:'model/gltf-binary'}); doLoad(URL.createObjectURL(blob), true); }catch(e){ fallback(); } }).catch(fallback);
+      } else {
+        let u=s0; if(u && u.indexOf('readyplayer.me')>=0 && u.indexOf('morphTargets')<0) u+=(u.indexOf('?')<0?'?':'&')+'morphTargets=ARKit,Oculus%20Visemes';
+        doLoad(u, false);
+      }
     });
   });
+}
+// ---- آپلودِ فایلِ آواتارِ .glb توسطِ کاربر (ذخیره در IndexedDB، بدونِ اینترنت/CORS) ----
+function pod3dUserList(){ try{ return JSON.parse(localStorage.getItem('pod3d_user')||'[]')||[]; }catch(e){ return []; } }
+function pod3dUserSave(list){ try{ localStorage.setItem('pod3d_user', JSON.stringify(list)); }catch(e){} }
+async function pod3dUploadAvatar(input){
+  const f=input&&input.files&&input.files[0]; if(!f) return;
+  if(!/\.glb$/i.test(f.name)){ uiToast&&uiToast('فقط فایلِ .glb'); return; }
+  if(f.size>30e6){ uiToast&&uiToast('فایل خیلی بزرگ است (حداکثر ~۳۰MB)'); return; }
+  try{
+    const buf=await f.arrayBuffer(); const id='user3d:'+Date.now();
+    await podAvPut(id, buf);
+    const list=pod3dUserList(); list.push({id, name:(f.name.replace(/\.glb$/i,'')||'آواتار').slice(0,18)}); pod3dUserSave(list);
+    podCfgSet({av3dUrl:'idb:'+id}); _pod3d.srcUrl='';
+    uiToast&&uiToast('✓ آواتار اضافه شد؛ در حالِ بارگیری…');
+    try{ renderPodcastCard(); renderPodCfg(); }catch(e){}
+  }catch(e){ uiToast&&uiToast('بارگذاریِ فایل نشد'); }
+}
+async function pod3dDeleteUser(id){
+  const list=pod3dUserList().filter(x=>x.id!==id); pod3dUserSave(list);
+  try{ await podAvPut(id, null); }catch(e){}
+  try{ localStorage.removeItem('pod3dthumb:idb:'+id); }catch(e){}
+  if(podCfg().av3dUrl==='idb:'+id){ podCfgSet({av3dUrl:''}); _pod3d.srcUrl=''; }
+  try{ renderPodcastCard(); renderPodCfg(); }catch(e){}
 }
 function pod3dStopLoop(){ if(_pod3d.raf){ cancelAnimationFrame(_pod3d.raf); _pod3d.raf=0; } }
 function pod3dStartLoop(){
@@ -4892,14 +4931,22 @@ function renderPodCfg(){
       const curUrl=c.av3dUrl||pod3dDefaultUrl();
       h+=`<div class="qbg-sub" style="margin-top:4px">با همان صدا/متن لب می‌زند، پلک می‌زند و بدنش حرکتِ طبیعی دارد. بارِ اول به اینترنت نیاز دارد، بعد کش می‌شود.</div>`;
       h+=`<label class="qbg-lbl" style="margin-top:8px">گالریِ چهره‌ها (یک لمس)</label>`;
-      h+=`<div class="pod-gal">`+POD_3D_PRESETS.map(pr=>{ const th=pod3dGetThumb(pr.url);
+      const galBtn=(url,fa,delId)=>{ const th=pod3dGetThumb(url);
         const inner=th?`<img class="pod-gal-th" src="${th}" alt="">`:`<span class="pod-gal-ph">🧑</span>`;
-        return `<button class="pod-gal-b ${curUrl===pr.url?'on':''}" onclick="pod3dPickPreset('${pr.url}')">${inner}<span class="pod-gal-cap">${pr.fa}</span></button>`; }).join('')+`</div>`;
+        const del=delId?`<span class="pod-gal-del" onclick="event.stopPropagation();pod3dDeleteUser('${delId}')">✕</span>`:'';
+        return `<button class="pod-gal-b ${curUrl===url?'on':''}" onclick="pod3dPickPreset('${url}')">${del}${inner}<span class="pod-gal-cap">${fa}</span></button>`; };
+      let gal=POD_3D_PRESETS.map(pr=>galBtn(pr.url,pr.fa,null)).join('');
+      pod3dUserList().forEach(u=>{ gal+=galBtn('idb:'+u.id, '📁 '+escVision(u.name), u.id); });
+      h+=`<div class="pod-gal">${gal}</div>`;
       h+=`<div class="qbg-sub" style="margin-top:4px">تصویرِ هر چهره بعد از یک‌بار دیدنش اینجا نشان داده می‌شود.</div>`;
-      h+=`<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12px;color:var(--teal)">افزودنِ چهرهٔ دلخواه با لینکِ .glb (اختیاری)</summary>`;
-      h+=`<input id="pod3dUrlInput" class="pod-3d-url" value="${escVision(c.av3dUrl||'')}" placeholder="https://…/model.glb" autocomplete="off" autocapitalize="off" spellcheck="false">`;
-      h+=`<div class="pod-seg" style="margin-top:6px"><button onclick="pod3dApplyUrl()">✅ اعمالِ لینک</button><button onclick="pod3dClearUrl()">↺ پیش‌فرض</button></div>`;
-      h+=`<div class="qbg-sub" style="margin-top:6px">هر فایلِ <b style="direction:ltr;display:inline-block">.glb</b> با مورف‌تارگتِ چهره (ARKit یا Oculus Visemes) کار می‌کند.</div></details>`;
+      // آپلودِ فایلِ آواتارِ خودت
+      h+=`<label class="qbg-lbl" style="margin-top:10px">افزودنِ چهرهٔ جدید (آپلودِ فایلِ .glb)</label>`;
+      h+=`<div class="pod-seg"><button onclick="document.getElementById('pod3dUpFile').click()">⬆️ آپلودِ فایلِ آواتار</button></div>`;
+      h+=`<input type="file" id="pod3dUpFile" accept=".glb,model/gltf-binary" style="display:none" onchange="pod3dUploadAvatar(this)">`;
+      h+=`<details style="margin-top:6px"><summary style="cursor:pointer;font-size:12px;color:var(--teal)">از کجا فایلِ آواتار پیدا کنم؟</summary><div class="qbg-sub" style="margin-top:6px;line-height:2">فایل باید <b style="direction:ltr;display:inline-block">.glb</b> باشد و مورف‌تارگتِ چهره داشته باشد (ARKit یا Oculus Visemes). بهترین منبع:<br>۱) <b style="color:var(--teal)">readyplayer.me</b> → یک آواتار بساز → لینکِ <span style="direction:ltr">.glb</span> را با <span style="direction:ltr">?morphTargets=ARKit,Oculus Visemes</span> باز کن و فایل را ذخیره کن.<br>۲) در گوگل جست‌وجو کن: <b style="direction:ltr;display:inline-block">"ready player me" glb download</b> یا <b style="direction:ltr;display:inline-block">avatar glb ARKit blendshapes</b>.<br>۳) در <b style="color:var(--teal)">Sketchfab</b> با فیلترِ Downloadable و کلمهٔ <span style="direction:ltr">rigged avatar visemes</span> بگرد.<br>سپس فایل را اینجا «آپلود» کن — روی همین گوشی ذخیره می‌شود و بدونِ اینترنت کار می‌کند.</div></details>`;
+      h+=`<details style="margin-top:6px"><summary style="cursor:pointer;font-size:12px;color:var(--teal)">یا افزودن با لینکِ .glb</summary>`;
+      h+=`<input id="pod3dUrlInput" class="pod-3d-url" value="${escVision((c.av3dUrl&&c.av3dUrl.indexOf('idb:')<0)?c.av3dUrl:'')}" placeholder="https://…/model.glb" autocomplete="off" autocapitalize="off" spellcheck="false">`;
+      h+=`<div class="pod-seg" style="margin-top:6px"><button onclick="pod3dApplyUrl()">✅ اعمالِ لینک</button><button onclick="pod3dClearUrl()">↺ پیش‌فرض</button></div></details>`;
     } else {
       h+=`<label class="qbg-lbl" style="margin-top:8px">چهرهٔ مجری</label>`;
       const th=_pod.avThumbs||{};
