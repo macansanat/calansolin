@@ -2042,7 +2042,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۲۴</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۲۵</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3322,6 +3322,9 @@ function dashAiDoctorCard(){
    TTS ابریِ باکیفیت، وگرنه صدای گوشی (speechSynthesis). موزیکِ محیطیِ نرم
    با Web Audio زیر صدا پخش می‌شود. */
 const POD_KEY='podcast_v1', POD_CFG_KEY='pod_cfg_v1';
+// ⭐ نامِ نرم‌افزار — منبعِ واحد. برای تغییرِ نامِ اپ فقط همین‌جا را عوض کن؛ کلِ برنامه از آن پیروی می‌کند.
+const APP_NAME='دستیار دیابت';
+try{ document.title=APP_NAME; const _b1=document.querySelector('.brand-text h1'); if(_b1) _b1.textContent=APP_NAME; }catch(e){}
 let _pod={ mode:'idle', cloud:false, ttsProv:'', music:null,
   utterQueue:[], uIdx:0, utter:null, faVoice:null,
   t0:0, estDur:0, timer:0, prep:false, seeking:false, voiceGain:null, srcNode:null,
@@ -3406,7 +3409,7 @@ function podPrompt(mins){
   mins=mins||podCfg().minutes||5; const words=mins*150;
   let snap=''; try{ snap=(buildHealthSnapshot('daily')||{}).text||''; }catch(e){}
   const jd=_jLabel(new Date());
-  return "تو گویندهٔ یک پادکستِ روزانهٔ دیابت به فارسی هستی به نام «همدمِ دیابت». یک متنِ گفتاری بنویس که وقتی با صدا خوانده شود حدود "+mins+" دقیقه (تقریباً "+words+" کلمه) شود. حتماً به همین اندازه بلند و پرمحتوا باشد.\n"+
+  return "تو گویندهٔ پادکستِ روزانهٔ نرم‌افزارِ «"+APP_NAME+"» (یک اپِ آموزشیِ دیابت) به فارسی هستی. نامِ نرم‌افزار دقیقاً «"+APP_NAME+"» است؛ اگر خواستی خوشامد بگویی همین نام را به کار ببر و هرگز نامِ دیگری برای اپ نساز. یک متنِ گفتاری بنویس که وقتی با صدا خوانده شود حدود "+mins+" دقیقه (تقریباً "+words+" کلمه) شود. حتماً به همین اندازه بلند و پرمحتوا باشد.\n"+
   "لحن: گرم، آرام، انسانی، دلگرم‌کننده و جذاب — انگار داری با یک دوستِ صمیمی حرف می‌زنی. جوری بنویس که شنونده جذب شود و تا آخر گوش بدهد.\n"+
   "ساختار (پیوسته و روان، بدونِ نوشتنِ تیتر یا شماره): ۱) یک سلامِ گرم و اشاره به امروز («امروز "+jd+"»). ۲) مرورِ کوتاه و مثبتِ عملکردِ امروزِ کاربر از روی داده‌ها — غذا و کربوهیدرات، ورزش، آرامش و حالِ روحی، قند و وضعیتِ متابولیک؛ به عددهای واقعی اشاره کن، تشویق کن و اگر جایی خوب نبود با مهربانی و بدونِ سرزنش راهنمایی کن. ۳) یک نکتهٔ آموزشیِ مفیدِ امروز دربارهٔ دیابت یا متابولیسم که هر روز متفاوت و کاربردی باشد. ۴) یک قدمِ کوچکِ عملی برای امروز یا فردا. ۵) یک جملهٔ پایانیِ کوتاهِ دلگرم‌کننده و خداحافظی.\n"+
   "قواعدِ مهم: فقط فارسی بنویس. فقط متنِ گفتاری بده — بدونِ تیتر، بدونِ ستاره یا علامتِ مارک‌داون، بدونِ توضیحِ صحنه یا براکت، بدونِ شکلک. جمله‌ها کوتاه و روان تا خوب خوانده شوند. هرگز دوزِ قطعیِ انسولین/دارو یا تشخیصِ قطعی نده. مهم: در متنِ گفتار هیچ جمله‌ی سلبِ مسئولیت نگو (مثلِ «این آموزشی است» یا «جایگزینِ پزشک نیست») — این پیام جای دیگری نشان داده می‌شود؛ فقط گرم و طبیعی صحبت کن.\n\n"+
@@ -4165,7 +4168,6 @@ async function podAvBuildLayers(){
     }catch(e){}
   }
   try{ L.baseMouth=podAvSoftMasked(base, regs.mouth); }catch(e){}   // حالتِ «دهانِ بسته» برای گذارِ نرم
-  try{ L.eyeSkin=podSampleSkin(base, regs.eyes); }catch(e){}         // رنگِ پوست برای پلکِ رویه‌ای
   _pod.avBad=Object.keys(L.bad);
   _pod.avLayers=L; _pod.avLayersFor=_pod.avImg; return L;
 }
@@ -4308,10 +4310,10 @@ function podAvDraw(){
     // فریمِ قابل‌استفاده نداریم → دهانِ رویه‌ای: حرکتِ پیوسته و همیشه هم‌تراز (نرم، بدونِ پرش)
     try{ podDrawMouthProc(ctx, zx,zy,zw,zh, podRegions().mouth, mo, M.vis); }catch(e){}
   }
-  // پلک: رویه‌ای (مطمئن، از رنگِ پوستِ خودِ عکس؛ روی ناحیهٔ تنظیم‌پذیرِ چشم)
-  if((w.BL||0)>0.02){ try{ podDrawEyelids(ctx, zx,zy,zw,zh, podRegions().eyes, Math.min(1,w.BL), L.eyeSkin||[210,175,150]); }catch(e){} }
-  // ابرو: اگر فریمِ آن ساخته شده باشد
-  { const lay=L.frames.BR; if(lay){ const a=Math.min(1,(w.BR||0)*1.7); if(a>0.012){ ctx.globalAlpha=a; ctx.drawImage(lay, zx,zy,zw,zh); ctx.globalAlpha=1; } } }
+  // پلک و ابرو: فقط با فریمِ AI (BL/BR) — همان روشِ سالمِ قبلی. پلکِ رویه‌ای حذف شد (سایه می‌انداخت).
+  for(const id of POD_SOLO_IDS){ const lay=L.frames[id]; if(!lay) continue;
+    const a=Math.min(1,(w[id]||0)*(id==='BR'?1.7:1));
+    if(a>0.012){ ctx.globalAlpha=a; ctx.drawImage(lay, zx,zy,zw,zh); ctx.globalAlpha=1; } }
   ctx.restore();
 }
 // نگاشتِ cover/zoom برای یک canvasِ دلخواه (برای پیش‌نمایشِ چشم در تنظیمات)
@@ -4987,11 +4989,6 @@ function renderPodCfg(){
       const _mt=podMouthCfg();
       h+=`<div class="qbg-sub" style="margin-top:4px">دهانِ «${c.avGender==='male'?'مرد':'زن'}» — عمودی: ${faDigits(String(Math.round((_mt.dy||0)*1000)/10))}٪ · افقی: ${faDigits(String(Math.round((_mt.dx||0)*1000)/10))}٪ · اندازه: ${faDigits(String(Math.round((_mt.k||1)*100)))}٪ (تنظیمِ مرد و زن جداست). بهترین کار: پخش کن و همین‌جا تنظیم کن.</div>`;
       // ---- چشم/پلک/ابرو: تنظیمِ جای ناحیه + تستِ پلک ----
-      h+=`<label class="qbg-lbl" style="margin-top:10px">جای چشم (برای پلک و ابرو)</label>`;
-      h+=`<div class="pod-seg"><button onclick="podEyeNudge(-0.01,0,0)">⬆️ بالا</button><button onclick="podEyeNudge(0.01,0,0)">⬇️ پایین</button><button onclick="podEyeNudge(0,0,-0.01)">⬅️ چپ</button><button onclick="podEyeNudge(0,0,0.01)">➡️ راست</button></div>`;
-      h+=`<div class="pod-seg" style="margin-top:6px"><button onclick="podEyeNudge(0,0.06,0)">➕ بزرگ‌تر</button><button onclick="podEyeNudge(0,-0.06,0)">➖ کوچک‌تر</button><button onclick="podEyeReset()">↺ ریست</button><button onclick="podBlinkTest()">👁 تستِ پلک</button></div>`;
-      h+=`<canvas id="podEyePrev" class="pod-eyeprev"></canvas>`;
-      h+=`<div class="qbg-sub" style="margin-top:4px">عمودی: ${faDigits(String(Math.round((_c.eDy||0)*1000)/10))}٪ · افقی: ${faDigits(String(Math.round((_c.eDx||0)*1000)/10))}٪ · اندازه: ${faDigits(String(Math.round((_c.eScale||1)*100)))}٪ — «👁 تستِ پلک» را بزن و **همین بالا در پیش‌نمایش** ببین؛ اگر پلک سرِ جای چشم نبود با این دکمه‌ها میخش کن. (پلک دیگر به عکسِ AI وابسته نیست.)</div>`;
       if(_pod.avStripURL){ h+=`<div class="qbg-sub" style="margin-top:6px">اگر دهانِ «آ/ای/او» زیر واقعاً باز نیست، مشکل از عکس‌های AI است (نه موتور). این تصویر را برایم بفرست:</div>`;
         h+=`<div style="margin-top:6px;overflow-x:auto;-webkit-overflow-scrolling:touch"><img src="${_pod.avStripURL}" style="height:150px;max-width:none;border-radius:8px" alt="حالت‌های چهره"></div>`; }
       h+=`<div class="qbg-sub" style="margin-top:4px">🧪 تستِ موتور: دهانِ آشکارا باز را (بدونِ هزینه) جایگزین می‌کند؛ «پخش» کن — اگر لب‌ها باز/بسته شد، موتور سالم است. با رفرش به عکس‌های واقعی برمی‌گردد.</div>`;
@@ -5006,7 +5003,6 @@ function renderPodCfg(){
     }   // پایانِ if(c.avMode!=='3d')
   }
   box.innerHTML=h;
-  try{ if(_pod.avLayers && document.getElementById('podEyePrev')) setTimeout(()=>podEyePreviewDraw(0),0); }catch(e){}
 }
 // جابه‌جایی/اندازهٔ ناحیهٔ دهان را تغییر می‌دهد و لایه‌ها را با ناحیهٔ تازه از نو می‌سازد
 async function podMouthNudge(dy, ds, dx){
@@ -11139,7 +11135,7 @@ document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==
 // نمایش کنترل روی صفحه‌ی قفل (تا حدی که مرورگر اجازه دهد)
 function wkMediaSession(on){
   try{ if(!('mediaSession' in navigator)) return;
-    if(on){ navigator.mediaSession.metadata=new MediaMetadata({title:'تمرین در حال اجرا',artist:'دستیار دیابت'}); navigator.mediaSession.playbackState='playing';
+    if(on){ navigator.mediaSession.metadata=new MediaMetadata({title:'تمرین در حال اجرا',artist:APP_NAME}); navigator.mediaSession.playbackState='playing';
       navigator.mediaSession.setActionHandler('pause',()=>wkPause());
       navigator.mediaSession.setActionHandler('stop',()=>wkStop());
     } else { navigator.mediaSession.playbackState='none'; }
@@ -13820,7 +13816,7 @@ function renderAiCards(data){
   const col=aiScoreColor(score);
   let h=`<div class="aiadv"><div class="aiadv-hero">
       <div class="aiadv-robot">${aiRobotSVG()}</div>
-      <div class="aiadv-htext"><div class="aiadv-headline">${esc(data.headline||'تحلیل هوشمند آماده است')}</div><div class="aiadv-sub">🤖 دیابوت · دستیار دیابت</div>`
+      <div class="aiadv-htext"><div class="aiadv-headline">${esc(data.headline||'تحلیل هوشمند آماده است')}</div><div class="aiadv-sub">🤖 دیابوت · ${APP_NAME}</div>`
       +(hasScore&&data.scoreLabel?`<span class="aiadv-chip" style="background:${col}22;color:${col}">${esc(data.scoreLabel)}</span>`:'')+
       `</div>`;
   if(hasScore) h+=`<div class="aiadv-score"><div class="aiadv-ring" style="background:conic-gradient(${col} ${score*3.6}deg, rgba(255,255,255,.08) 0)"></div><div class="aiadv-scnum"><span style="color:${col}">${faDigits(score)}</span><span class="aiadv-sclbl">امتیاز</span></div></div>`;
