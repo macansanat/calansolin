@@ -2033,7 +2033,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۲۰</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۲۱</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4474,12 +4474,12 @@ function pod3dEnsureLib(cb){
 // گالریِ آواتارهای آماده (رایگان، ریگ‌شده با ویزم/پلک) — از مخزن‌های عمومیِ GitHub با jsDelivr
 // (CORS دارد و کش می‌شود). فایل‌ها در مخزنِ اپ نیستند تا حجمِ index.html بالا نرود.
 const POD_3D_PRESETS=[
-  {id:'man1',   g:'male',   fa:'👨 مردِ واقعی',   url:'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/models/gltf/facecap.glb'},
-  {id:'woman1', g:'female', fa:'👩 زنِ زیبا',     url:'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/brunette.glb'},
-  {id:'woman2', g:'female', fa:'💁‍♀️ زنِ زیبا ۲',  url:'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/brunette-t.glb'},
-  {id:'person', g:'male',   fa:'🧑 چهرهٔ کامل',   url:'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/avaturn.glb'}
+  {id:'w1', g:'female', fa:'👩 زنِ کت‌وشلوار', url:'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/brunette.glb'},
+  {id:'w2', g:'female', fa:'💁‍♀️ زنِ زیبا',     url:'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/brunette-t.glb'},
+  {id:'w3', g:'female', fa:'👓 زنِ عینکی',      url:'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/avaturn.glb'},
+  {id:'m1', g:'male',   fa:'👨 چهرهٔ مردِ واقعی', url:'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/models/gltf/facecap.glb'}
 ];
-function pod3dDefaultUrl(gender){ const p=POD_3D_PRESETS.find(x=>x.g===gender)||POD_3D_PRESETS[1]; return p?p.url:''; }
+function pod3dDefaultUrl(gender){ const p=POD_3D_PRESETS.find(x=>x.g===gender)||POD_3D_PRESETS[0]; return p?p.url:''; }
 // یک آواتارِ گالری را برای جنسیتِ فعلی انتخاب و اعمال می‌کند
 function pod3dPickPreset(url){ const g=podCfg().avGender; podCfgSet(g==='male'?{av3dUrlM:url}:{av3dUrlF:url}); _pod3d.gender=''; _pod3d.srcUrl=''; uiToast&&uiToast('در حالِ بارگیریِ آواتار…'); try{ renderPodcastCard(); renderPodCfg(); }catch(e){} }
 // GLTFLoader را (برای آواتارِ Ready Player Me) در صورتِ نیاز لود می‌کند
@@ -4565,15 +4565,31 @@ function pod3dSetupModel(modelScene, gender, url){
   _pod3d.root.add(modelScene); _pod3d.modelRoot=modelScene;
   const morphs=[]; modelScene.traverse(o=>{ if(o.morphTargetDictionary&&o.morphTargetInfluences){ morphs.push({dict:o.morphTargetDictionary, infl:o.morphTargetInfluences}); if(o.frustumCulled!=null) o.frustumCulled=false; } });
   _pod3d.morphs=morphs;
-  // قابِ دوربین روی سر
+  // دست‌ها را از حالتِ T پایین بیاور (اسکلتِ Mixamo/RPM: LeftArm/RightArm)
+  try{ modelScene.traverse(o=>{ const n=o.name||''; if(!(o.isBone||o.type==='Bone')&&!o.rotation) return;
+    if(/(^|:)(LeftArm|mixamorigLeftArm|LeftUpperArm)$/i.test(n)) o.rotation.z=-1.05;
+    else if(/(^|:)(RightArm|mixamorigRightArm|RightUpperArm)$/i.test(n)) o.rotation.z=1.05;
+    else if(/(^|:)(LeftForeArm|LeftLowerArm)$/i.test(n)) o.rotation.z=-0.2;
+    else if(/(^|:)(RightForeArm|RightLowerArm)$/i.test(n)) o.rotation.z=0.2;
+  }); }catch(e){}
+  // قابِ دوربین: تنگ روی سر (نه کلِ بدنِ تمام‌قد)
   try{
+    if(modelScene.updateMatrixWorld) modelScene.updateMatrixWorld(true);
+    if(_pod3d.root&&_pod3d.root.updateMatrixWorld) _pod3d.root.updateMatrixWorld(true);
     const box=new T.Box3().setFromObject(modelScene); const size=box.getSize(new T.Vector3()); const center=box.getCenter(new T.Vector3());
-    let head=null; modelScene.traverse(o=>{ if(!head && /head/i.test(o.name||'') && !/(mesh|wolf3d|geo)/i.test(o.name||'')) head=o; });
-    let hy=box.max.y - Math.max(size.y*0.07, size.x*0.16);
-    if(head){ const v=new T.Vector3(); head.getWorldPosition&&head.getWorldPosition(v); if(v.y) hy=v.y+size.x*0.03; }
-    const dist=Math.max(0.5, size.x*3.0);
-    _pod3d.cam.position.set(center.x, hy, dist); _pod3d.cam.near=dist/50; _pod3d.cam.far=dist*50; _pod3d.cam.updateProjectionMatrix&&_pod3d.cam.updateProjectionMatrix(); _pod3d.cam.lookAt&&_pod3d.cam.lookAt(center.x, hy, 0);
-    _pod3d.headY=hy; _pod3d.centerX=center.x;
+    let head=null;
+    modelScene.traverse(o=>{ if(!head && (o.isBone||o.type==='Bone') && /head/i.test(o.name||'') && !/(top|end|_hair)/i.test(o.name||'')) head=o; });
+    if(!head) modelScene.traverse(o=>{ if(!head && /(^|:)head$/i.test(o.name||'')) head=o; });
+    const fov=_pod3d.cam.fov||28, rad=(fov*Math.PI/180);
+    let hx=center.x, hy, viewH, aimY;
+    if(head){ const v=new T.Vector3(); head.getWorldPosition(v); hx=v.x; hy=v.y; viewH=0.36; aimY=hy-0.05; }   // سر + کمی شانه
+    else { hy=box.max.y - size.y*0.12; viewH=Math.max(0.25,size.y*1.2); aimY=hy - viewH*0.18; }                 // facecap: مدل فقط سر است
+    const dist=Math.max(0.12, (viewH/2)/Math.tan(rad/2));
+    _pod3d.cam.position.set(hx, aimY, dist);
+    _pod3d.cam.near=Math.max(0.01,dist/100); _pod3d.cam.far=dist*100+10;
+    _pod3d.cam.updateProjectionMatrix&&_pod3d.cam.updateProjectionMatrix();
+    _pod3d.cam.lookAt&&_pod3d.cam.lookAt(hx, aimY, 0);
+    _pod3d.headY=aimY; _pod3d.centerX=hx;
   }catch(e){}
   _pod3d.gltf=true; _pod3d.gender=gender; _pod3d.srcUrl=url;
   pod3dBadge(_pod3d.host, gender==='male'?'مردِ سه‌بعدی':'زنِ سه‌بعدی');
@@ -4675,7 +4691,7 @@ function pod3dApplyUrl(){
 function pod3dClearUrl(){ const g=podCfg().avGender; podCfgSet(g==='male'?{av3dUrlM:''}:{av3dUrlF:''}); _pod3d.gender=''; _pod3d.srcUrl=''; try{ renderPodcastCard(); renderPodCfg(); }catch(e){} }
 // چهرهٔ واقعیِ نمونه (facecap.glb روی سرورِ رسمیِ three.js — دائمی و رایگان، دارای مورف‌های ARKit)
 function pod3dUseSample(){
-  const url='https://threejs.org/examples/models/gltf/facecap.glb';
+  const url='https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/models/gltf/facecap.glb';
   const g=podCfg().avGender; podCfgSet(g==='male'?{av3dUrlM:url}:{av3dUrlF:url});
   _pod3d.gender=''; _pod3d.srcUrl='';
   uiToast&&uiToast('در حالِ بارگیریِ چهرهٔ نمونه…');
