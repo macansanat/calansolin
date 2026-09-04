@@ -221,6 +221,11 @@ body.nav-bottom{padding-bottom:100px}
 .pod-tabs{display:flex;gap:6px;margin:2px 0 14px;position:sticky;top:0;z-index:3;background:var(--card,#0f1720);padding:6px 0}
 .pod-tabs button{flex:1;background:transparent;border:none;border-bottom:2.5px solid var(--line);color:var(--muted);padding:9px 4px;font-family:inherit;font-weight:800;font-size:13.5px;cursor:pointer;transition:all .15s}
 .pod-tabs button.on{color:var(--teal);border-bottom-color:var(--teal)}
+.pod-togs{display:flex;flex-direction:column;gap:7px;margin-top:8px}
+.pod-tog{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:12px;padding:11px 13px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s;text-align:right}
+.pod-tog.on{border-color:var(--teal);color:#eafff8;background:var(--teal-dim)}
+.pod-tog-sw{flex:0 0 auto;font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:20px;background:rgba(127,127,127,.18);color:var(--muted)}
+.pod-tog.on .pod-tog-sw{background:var(--teal);color:#03201d}
 .pod-seg{display:flex;gap:7px;flex-wrap:wrap}
 .pod-seg button{flex:1;min-width:64px;background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:10px 6px;font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;transition:all .15s}
 .pod-seg button.on{background:var(--teal-dim);border-color:var(--teal);color:#eafff8}
@@ -2050,7 +2055,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۲۷</b> · انتشار: ۱۴۰۵/۰۶/۱۳ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۲۸</b> · انتشار: ۱۴۰۵/۰۶/۱۳ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3353,7 +3358,14 @@ function podCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(POD_CFG_KEY)
     av3dUrl:(typeof o.av3dUrl==='string'?o.av3dUrl:''), av3dZoom:(typeof o.av3dZoom==='number'?o.av3dZoom:1),
     mDx:(typeof o.mDx==='number'?o.mDx:0), mDy:(typeof o.mDy==='number'?o.mDy:0), mScale:(typeof o.mScale==='number'?o.mScale:1),
     mDxM:(typeof o.mDxM==='number'?o.mDxM:0), mDyM:(typeof o.mDyM==='number'?o.mDyM:0), mScaleM:(typeof o.mScaleM==='number'?o.mScaleM:1),
-    eDx:(typeof o.eDx==='number'?o.eDx:0), eDy:(typeof o.eDy==='number'?o.eDy:0), eScale:(typeof o.eScale==='number'?o.eScale:1) }; }
+    eDx:(typeof o.eDx==='number'?o.eDx:0), eDy:(typeof o.eDy==='number'?o.eDy:0), eScale:(typeof o.eScale==='number'?o.eScale:1),
+    content:podContentCfg(o.content) }; }
+// تنظیماتِ محتوایِ پادکست: کدام موضوع‌ها بحث شوند (هر کدام قابلِ فعال/غیرفعال) + بازهٔ مرورِ قند
+function podContentCfg(cc){ cc=cc||{};
+  const dflt={glucose:true,meals:true,insulin:true,meds:true,exercise:true,sleep:true,vitals:true,mood:true,labs:true,tip:true,step:true};
+  const r={}; for(const k in dflt) r[k]=(cc[k]!==false);
+  r.glucoseRange=cc.glucoseRange||'today'; return r; }
+function podContentSet(key,val){ const c=podCfg().content; c[key]=val; podCfgSet({content:c}); try{ renderPodCfg(); }catch(e){} }
 function podCfgSet(patch){ const n=Object.assign(podCfg(), patch||{}); try{ localStorage.setItem(POD_CFG_KEY, JSON.stringify(n)); }catch(e){} return n; }
 // کتابخانهٔ نکاتِ آموزشیِ چرخشی (آموزشی و عمومی — بدون دوز/تشخیص)
 const POD_TOPICS=[
@@ -3413,15 +3425,57 @@ function podOfflineScript(mins){
   s+= 'تو داری خوب پیش می‌ری؛ مراقبِ خودت باش، و فردا دوباره همین‌جا کنارتم. خداحافظ.';
   return s;
 }
+// هر خطِ خلاصهٔ سلامت را به یک «موضوع» نگاشت می‌کند (برای فیلترِ محتوا)
+function podLineKind(l){
+  if(/^قند/.test(l)) return 'glucose';
+  if(/^(تغذیه|خوراکی‌های)/.test(l)) return 'meals';
+  if(/^(انسولین|نکته‌ی ثبت)/.test(l)) return 'insulin';
+  if(/^داروها/.test(l)) return 'meds';
+  if(/^ورزش/.test(l)) return 'exercise';
+  if(/^خواب/.test(l)) return 'sleep';
+  if(/^فشار و ضربان/.test(l)) return 'vitals';
+  if(/^(دفترچه‌ی روزانه|📌|مشاهدات اخیرِ)/.test(l)) return 'mood';
+  if(/^آخرین آزمایش/.test(l)) return 'labs';
+  return 'keep';   // پروفایل و خطِ بازه — همیشه بماند
+}
+// خلاصهٔ قند برای بازهٔ دلخواه (روز): بازهٔ گزارشِ کلی را موقتاً عوض و برمی‌گرداند
+function podGlucoseWindowSnap(days){ const save=_ovRange; _ovRange=days; let t='';
+  try{ t=(buildHealthSnapshot('overview')||{}).text||''; }catch(e){} _ovRange=save; return t; }
 function podPrompt(mins){
   mins=mins||podCfg().minutes||5; const words=mins*150;
+  const C=podCfg().content||podContentCfg();
   let snap=''; try{ snap=(buildHealthSnapshot('daily')||{}).text||''; }catch(e){}
+  // فیلترِ موضوع‌ها طبقِ تنظیماتِ کاربر
+  let lines=snap.split('\n').filter(l=>{ const k=podLineKind(l); return k==='keep'||C[k]; });
+  // بازهٔ مرورِ قند (امروز / ۷ / ۱۴ / ۳۰ / ۹۰ روز)
+  if(C.glucose && C.glucoseRange && C.glucoseRange!=='today'){
+    const days=+C.glucoseRange||7; const gline=(podGlucoseWindowSnap(days).split('\n').find(l=>podLineKind(l)==='glucose'))||'';
+    if(gline){ lines=lines.filter(l=>podLineKind(l)!=='glucose'); lines.push('قندِ '+faDigits(days)+' روزِ اخیر — '+gline.replace(/^قند[^:]*:\s*/,'')); }
+  }
+  const snapF=lines.join('\n');
+  // ساختارِ پویا: فقط موضوع‌هایِ فعال
+  const cover=[];
+  if(C.glucose) cover.push('وضعیتِ قند خون'+(C.glucoseRange&&C.glucoseRange!=='today'?(' در '+faDigits(+C.glucoseRange)+' روزِ اخیر و روندش'):' امروز'));
+  if(C.meals) cover.push('وعده‌های غذایی و کربوهیدرات، و یک پیشنهادِ کوچک برای بهترشدنشان');
+  if(C.insulin) cover.push('انسولین و پایبندی به ثبت');
+  if(C.meds) cover.push('داروها');
+  if(C.exercise) cover.push('ورزش و فعالیتِ بدنی');
+  if(C.sleep) cover.push('خواب');
+  if(C.vitals) cover.push('فشار خون و ضربان');
+  if(C.mood) cover.push('حالِ روحی و یادداشت‌های دفترچه');
+  if(C.labs) cover.push('نتایجِ آخرین آزمایش‌ها و مواردِ نیازمندِ توجه');
   const jd=_jLabel(new Date());
+  let struct="ساختار (پیوسته و روان، بدونِ نوشتنِ تیتر یا شماره): یک سلامِ گرم و اشاره به امروز («امروز "+jd+"»). ";
+  if(cover.length) struct+="سپس فقط همین موضوع‌ها را مرور کن (نه بیشتر، و هر کدام که داده‌اش نبود سراغش نرو): "+cover.join('؛ ')+". به عددهای واقعی اشاره کن، تشویق کن و اگر جایی خوب نبود با مهربانی و بدونِ سرزنش راهنمایی کن. ";
+  else struct+="چون کاربر مرورِ داده را خاموش کرده، سراغِ عددها نرو و فقط گرم و آموزشی صحبت کن. ";
+  if(C.tip) struct+="یک نکتهٔ آموزشیِ مفیدِ امروز دربارهٔ دیابت یا متابولیسم که هر روز متفاوت و کاربردی باشد. ";
+  if(C.step) struct+="یک قدمِ کوچکِ عملی برای امروز یا فردا. ";
+  struct+="در پایان یک جملهٔ کوتاهِ دلگرم‌کننده و خداحافظی.\n";
   return "تو گویندهٔ پادکستِ روزانهٔ نرم‌افزارِ «"+APP_NAME+"» (یک اپِ آموزشیِ دیابت) به فارسی هستی. نامِ نرم‌افزار دقیقاً «"+APP_NAME+"» است؛ اگر خواستی خوشامد بگویی همین نام را به کار ببر و هرگز نامِ دیگری برای اپ نساز. یک متنِ گفتاری بنویس که وقتی با صدا خوانده شود حدود "+mins+" دقیقه (تقریباً "+words+" کلمه) شود. حتماً به همین اندازه بلند و پرمحتوا باشد.\n"+
   "لحن: گرم، آرام، انسانی، دلگرم‌کننده و جذاب — انگار داری با یک دوستِ صمیمی حرف می‌زنی. جوری بنویس که شنونده جذب شود و تا آخر گوش بدهد.\n"+
-  "ساختار (پیوسته و روان، بدونِ نوشتنِ تیتر یا شماره): ۱) یک سلامِ گرم و اشاره به امروز («امروز "+jd+"»). ۲) مرورِ کوتاه و مثبتِ عملکردِ امروزِ کاربر از روی داده‌ها — غذا و کربوهیدرات، ورزش، آرامش و حالِ روحی، قند و وضعیتِ متابولیک؛ به عددهای واقعی اشاره کن، تشویق کن و اگر جایی خوب نبود با مهربانی و بدونِ سرزنش راهنمایی کن. ۳) یک نکتهٔ آموزشیِ مفیدِ امروز دربارهٔ دیابت یا متابولیسم که هر روز متفاوت و کاربردی باشد. ۴) یک قدمِ کوچکِ عملی برای امروز یا فردا. ۵) یک جملهٔ پایانیِ کوتاهِ دلگرم‌کننده و خداحافظی.\n"+
+  struct+
   "قواعدِ مهم: فقط فارسی بنویس. فقط متنِ گفتاری بده — بدونِ تیتر، بدونِ ستاره یا علامتِ مارک‌داون، بدونِ توضیحِ صحنه یا براکت، بدونِ شکلک. جمله‌ها کوتاه و روان تا خوب خوانده شوند. هرگز دوزِ قطعیِ انسولین/دارو یا تشخیصِ قطعی نده. مهم: در متنِ گفتار هیچ جمله‌ی سلبِ مسئولیت نگو (مثلِ «این آموزشی است» یا «جایگزینِ پزشک نیست») — این پیام جای دیگری نشان داده می‌شود؛ فقط گرم و طبیعی صحبت کن.\n\n"+
-  "دادهٔ عملکردِ امروزِ کاربر (برای شخصی‌سازی — عین‌به‌عین نخوان، طبیعی و انتخابی استفاده کن):\n"+(snap||'دادهٔ امروز کم است؛ عمومی و دلگرم‌کننده صحبت کن.');
+  "دادهٔ عملکردِ کاربر (برای شخصی‌سازی — عین‌به‌عین نخوان، طبیعی و انتخابی استفاده کن):\n"+(snapF||'دادهٔ کافی نیست؛ عمومی و دلگرم‌کننده صحبت کن.');
 }
 async function podcastGenerate(force){
   const today=podTodayKey(); const cur=podLoad(); const mins=podCfg().minutes;
@@ -4633,6 +4687,30 @@ function pod3dInitProcedural(gender){
   _pod3d.headGroup=headGroup; _pod3d.parts=headGroup.userData; _pod3d.gltf=false; _pod3d.gender=gender; _pod3d.srcUrl='';
   pod3dBadge(_pod3d.host,'نمونهٔ سه‌بعدی');
 }
+// تشخیصِ T-pose: اگر فاصلهٔ دو مچ‌دست خیلی بیشتر از فاصلهٔ دو شانه باشد، دست‌ها افقی‌اند (T)
+function pod3dBone(model,name){ let r=null; model.traverse(o=>{ if(!r&&o.name===name) r=o; }); return r; }
+function pod3dIsTpose(model){
+  try{ const T=THREE; if(model.updateMatrixWorld) model.updateMatrixWorld(true);
+    const lh=pod3dBone(model,'LeftHand'), rh=pod3dBone(model,'RightHand'), ls=pod3dBone(model,'LeftShoulder')||pod3dBone(model,'LeftArm'), rs=pod3dBone(model,'RightShoulder')||pod3dBone(model,'RightArm');
+    if(!lh||!rh||!ls||!rs) return false;
+    const wp=(o)=>{ const v=new T.Vector3(); o.getWorldPosition(v); return v; };
+    const hs=Math.abs(wp(lh).x-wp(rh).x), ss=Math.max(1e-4,Math.abs(wp(ls).x-wp(rs).x));
+    return (hs/ss)>2.5;   // مچ‌ها بیش از ۲.۵ برابرِ شانه‌ها باز → T-pose
+  }catch(e){ return false; }
+}
+// دست را از T-pose به‌شکلِ طبیعی پایین می‌آورد: چرخشِ delta در فضایِ جهانی (مستقل از محورِ استخوان)
+function pod3dPoseArmsDown(model, armName, childName, targetDir){
+  const T=THREE; const B=pod3dBone(model,armName), C=pod3dBone(model,childName);
+  if(!B||!C) return false;
+  model.updateMatrixWorld&&model.updateMatrixWorld(true);
+  const bp=new T.Vector3(),cp=new T.Vector3(); B.getWorldPosition(bp); C.getWorldPosition(cp);
+  const cur=cp.clone().sub(bp).normalize(); const tgt=targetDir.clone().normalize();
+  const delta=new T.Quaternion().setFromUnitVectors(cur,tgt);
+  const pw=new T.Quaternion(); B.parent.getWorldQuaternion(pw); const pwi=pw.clone().invert();
+  const nl=pwi.clone().multiply(delta).multiply(pw).multiply(B.quaternion.clone());
+  B.quaternion.copy(nl); B.updateMatrixWorld&&B.updateMatrixWorld(true);
+  return true;
+}
 // آواتارِ Ready Player Me: مدل را اضافه، مورف‌ها را جمع و دوربین را روی سر تنظیم می‌کند
 function pod3dSetupModel(modelScene, gender, url){
   pod3dClearRoot(); const T=THREE;
@@ -4650,13 +4728,21 @@ function pod3dSetupModel(modelScene, gender, url){
       for(const sk in defs){ if(defs[sk].some(t=>kl.indexOf(t)>=0)) slots[sk].push([m.infl, m.dict[key]]); } } }
     _pod3d.slots=slots;
   }catch(e){ _pod3d.slots=null; }
-  // انیمیشنِ ایستادنِ طبیعی را روی همین اسکلت پخش کن (دست‌ها پایین + حرکتِ زندهٔ بدن)
-  _pod3d.mixer=null; _pod3d.action=null;
-  try{ if(_pod3d.idleClip && T.AnimationMixer){
-    _pod3d.mixer=new T.AnimationMixer(modelScene);
-    _pod3d.action=_pod3d.mixer.clipAction(_pod3d.idleClip); _pod3d.action.play();
-    _pod3d.mixer.update(0.2);   // از T-pose عبور کن
-  } }catch(e){}
+  // آواتارهای T-pose (مثلِ VALID) اگر انیمیشنِ RPM بگیرند بدن‌شان کج می‌شود (rest-pose فرق دارد).
+  // پس اول تشخیص می‌دهیم؛ اگر T-pose بود دست‌ها را دستی و تمیز پایین می‌آوریم و انیمیشن نمی‌زنیم.
+  _pod3d.mixer=null; _pod3d.action=null; _pod3d.posed=false;
+  const isTpose=pod3dIsTpose(modelScene);
+  if(isTpose){
+    try{ pod3dPoseArmsDown(modelScene, 'LeftArm','LeftForeArm', new T.Vector3(0.25,-1,0.08));
+         pod3dPoseArmsDown(modelScene, 'RightArm','RightForeArm', new T.Vector3(-0.25,-1,0.08));
+         modelScene.updateMatrixWorld&&modelScene.updateMatrixWorld(true); _pod3d.posed=true; }catch(e){}
+  } else {
+    try{ if(_pod3d.idleClip && T.AnimationMixer){
+      _pod3d.mixer=new T.AnimationMixer(modelScene);
+      _pod3d.action=_pod3d.mixer.clipAction(_pod3d.idleClip); _pod3d.action.play();
+      _pod3d.mixer.update(0.2);   // از T-pose عبور کن
+    } }catch(e){}
+  }
   // قابِ دوربین: نیم‌تنه (سر + شانه + کمی سینه) تا بدن و حرکتش دیده شود
   try{
     if(modelScene.updateMatrixWorld) modelScene.updateMatrixWorld(true);
@@ -4967,10 +5053,20 @@ function renderPodCfg(){
   const provOpts=[['auto','خودکار'],['gemini','Gemini'],['openai','ChatGPT'],['device','صدای گوشی']];
   let h=`<div class="qbg-head"><span class="qbg-badge" style="background:rgba(154,134,224,.18)">🎧</span><div><div class="qbg-title">تنظیماتِ پادکست</div><div class="qbg-sub">مدت، سرویسِ صدا و لحن را انتخاب کن؛ هر صدا را با ▶ تست کن.</div></div></div>`;
   // تب‌بندی برای شلوغ‌نشدن: صدا / مجریِ تصویری
-  const tab=_pod.cfgTab||'sound';
-  h+=`<div class="pod-tabs">`+[['sound','🎧 صدا'],['avatar','🎭 مجریِ تصویری']].map(t=>`<button class="${tab===t[0]?'on':''}" onclick="podCfgTab('${t[0]}')">${t[1]}</button>`).join('')+`</div>`;
-  if(tab==='sound'){
+  const tab=_pod.cfgTab||'content';
+  h+=`<div class="pod-tabs">`+[['content','📋 محتوا'],['sound','🎧 صدا'],['avatar','🎭 مجری']].map(t=>`<button class="${tab===t[0]?'on':''}" onclick="podCfgTab('${t[0]}')">${t[1]}</button>`).join('')+`</div>`;
+  if(tab==='content'){
+  const C=c.content||podContentCfg();
   h+=`<label class="qbg-lbl">مدتِ پادکست</label><div class="pod-seg">`+POD_LENS.map(m=>`<button class="${c.minutes===m?'on':''}" onclick="podCfgPick('minutes',${m})">${faDigits(m)} دقیقه</button>`).join('')+`</div>`;
+  h+=`<div class="qbg-sub" style="margin-top:10px;line-height:1.9">انتخاب کن پادکستِ امروز راجع‌به چه چیزهایی حرف بزند. هر مورد که خاموش باشد در پادکست نمی‌آید.</div>`;
+  h+=`<label class="qbg-lbl" style="margin-top:10px">🩸 بازهٔ بررسیِ قند</label>`;
+  const grOpts=[['today','امروز'],['7','۷ روز'],['14','۱۴ روز'],['30','۳۰ روز'],['90','۹۰ روز']];
+  h+=`<div class="pod-seg">`+grOpts.map(o=>`<button class="${C.glucoseRange===o[0]?'on':''}" ${C.glucose?'':'disabled'} onclick="podContentSet('glucoseRange','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
+  const tog=[['glucose','🩸 بررسیِ قند خون'],['meals','🍽️ وعده‌های غذایی و پیشنهادها'],['insulin','💉 انسولین و پایبندی'],['meds','💊 داروها'],['exercise','🏃 ورزش و فعالیت'],['sleep','😴 خواب'],['vitals','❤️ فشار خون و ضربان'],['mood','🙂 حالِ روحی و دفترچه'],['labs','🧪 نتایجِ آزمایش‌ها'],['tip','💡 نکتهٔ آموزشیِ روز'],['step','✅ یک قدمِ عملی']];
+  h+=`<div class="pod-togs">`+tog.map(t=>`<button class="pod-tog ${C[t[0]]?'on':''}" onclick="podContentSet('${t[0]}',${C[t[0]]?'false':'true'})"><span>${t[1]}</span><span class="pod-tog-sw">${C[t[0]]?'روشن':'خاموش'}</span></button>`).join('')+`</div>`;
+  h+=`<div class="qbg-sub" style="margin-top:8px">اگر می‌خواهی پادکست کوتاه و متمرکز باشد، فقط چند موردِ مهم را روشن بگذار.</div>`;
+  }
+  if(tab==='sound'){
   h+=`<label class="qbg-lbl" style="margin-top:8px">سرویسِ صدا</label><div class="pod-seg">`+provOpts.map(o=>`<button class="${c.prov===o[0]?'on':''}" onclick="podCfgPick('prov','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
   const eff = c.prov==='auto' ? (hasAnyKey('gemini')?'gemini':(hasAnyKey('openai')?'openai':'device')) : c.prov;
   if(eff==='gemini'||eff==='openai'){
