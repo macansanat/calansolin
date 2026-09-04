@@ -2065,7 +2065,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۳۴</b> · انتشار: ۱۴۰۵/۰۶/۱۴ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۳۵</b> · انتشار: ۱۴۰۵/۰۶/۱۴ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3485,21 +3485,27 @@ function podLineKind(l){
 // خلاصهٔ قند برای بازهٔ دلخواه (روز): بازهٔ گزارشِ کلی را موقتاً عوض و برمی‌گرداند
 function podGlucoseWindowSnap(days){ const save=_ovRange; _ovRange=days; let t='';
   try{ t=(buildHealthSnapshot('overview')||{}).text||''; }catch(e){} _ovRange=save; return t; }
+// خلاصهٔ کاملِ یک روزِ مشخص (offset=۰ امروز، ۱- دیروز): تاریخِ روزانه را موقتاً جابه‌جا می‌کند
+function podDaySnap(offset){ const save=_dailyDate; try{ const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()+(offset||0)); _dailyDate=d; }catch(e){}
+  let t=''; try{ t=(buildHealthSnapshot('daily')||{}).text||''; }catch(e){} _dailyDate=save; return t; }
 function podPrompt(mins){
   mins=mins||podCfg().minutes||5; const words=mins*150;
   const C=podCfg().content||podContentCfg();
-  let snap=''; try{ snap=(buildHealthSnapshot('daily')||{}).text||''; }catch(e){}
+  const gr=C.glucoseRange||'today';
+  const yest=(gr==='yesterday');
+  // پایهٔ داده: اگر «دیروز» انتخاب شده، کلِ دادهٔ روزِ کاملِ دیروز؛ وگرنه امروز
+  let snap=''; try{ snap=(yest? podDaySnap(-1) : (buildHealthSnapshot('daily')||{}).text)||''; }catch(e){}
   // فیلترِ موضوع‌ها طبقِ تنظیماتِ کاربر
   let lines=snap.split('\n').filter(l=>{ const k=podLineKind(l); return k==='keep'||C[k]; });
-  // بازهٔ مرورِ قند (امروز / ۷ / ۱۴ / ۳۰ / ۹۰ روز)
-  if(C.glucose && C.glucoseRange && C.glucoseRange!=='today'){
-    const days=+C.glucoseRange||7; const gline=(podGlucoseWindowSnap(days).split('\n').find(l=>podLineKind(l)==='glucose'))||'';
+  // بازهٔ مرورِ قند: بازه‌های چندروزه فقط خطِ قند را با روند جایگزین می‌کنند (دیروز/امروز از پایه می‌آید)
+  if(C.glucose && gr!=='today' && gr!=='yesterday'){
+    const days=+gr||7; const gline=(podGlucoseWindowSnap(days).split('\n').find(l=>podLineKind(l)==='glucose'))||'';
     if(gline){ lines=lines.filter(l=>podLineKind(l)!=='glucose'); lines.push('قندِ '+faDigits(days)+' روزِ اخیر — '+gline.replace(/^قند[^:]*:\s*/,'')); }
   }
-  const snapF=lines.join('\n');
+  const snapF=(yest?'⚠️ این داده‌ها مربوط به «دیروز» (روزِ کاملِ گذشته) است — مرورِ دیروز را بگو، نه امروز.\n':'')+lines.join('\n');
   // ساختارِ پویا: فقط موضوع‌هایِ فعال
   const cover=[];
-  if(C.glucose) cover.push('وضعیتِ قند خون'+(C.glucoseRange&&C.glucoseRange!=='today'?(' در '+faDigits(+C.glucoseRange)+' روزِ اخیر و روندش'):' امروز'));
+  if(C.glucose) cover.push('وضعیتِ قند خون'+(yest?' دیروز':(gr!=='today'?(' در '+faDigits(+gr)+' روزِ اخیر و روندش'):' امروز')));
   if(C.meals) cover.push('وعده‌های غذایی و کربوهیدرات، و یک پیشنهادِ کوچک برای بهترشدنشان');
   if(C.insulin) cover.push('انسولین و پایبندی به ثبت');
   if(C.meds) cover.push('داروها');
@@ -3510,7 +3516,7 @@ function podPrompt(mins){
   if(C.labs) cover.push('نتایجِ آخرین آزمایش‌ها و مواردِ نیازمندِ توجه');
   const jd=_jLabel(new Date());
   let struct="ساختار (پیوسته و روان، بدونِ نوشتنِ تیتر یا شماره): یک سلامِ گرم و اشاره به امروز («امروز "+jd+"»). ";
-  if(cover.length) struct+="سپس فقط همین موضوع‌ها را مرور کن (نه بیشتر، و هر کدام که داده‌اش نبود سراغش نرو): "+cover.join('؛ ')+". به عددهای واقعی اشاره کن، تشویق کن و اگر جایی خوب نبود با مهربانی و بدونِ سرزنش راهنمایی کن. ";
+  if(cover.length) struct+="سپس "+(yest?'مرورِ کاملِ «دیروز» را بگو (چون امروز هنوز کامل نشده، دیروز را مرور می‌کنیم) و فقط ':'فقط ')+"همین موضوع‌ها را مرور کن (نه بیشتر، و هر کدام که داده‌اش نبود سراغش نرو): "+cover.join('؛ ')+". به عددهای واقعی اشاره کن، تشویق کن و اگر جایی خوب نبود با مهربانی و بدونِ سرزنش راهنمایی کن. ";
   else struct+="چون کاربر مرورِ داده را خاموش کرده، سراغِ عددها نرو و فقط گرم و آموزشی صحبت کن. ";
   if(C.tip) struct+="یک نکتهٔ آموزشیِ مفیدِ امروز دربارهٔ دیابت یا متابولیسم که هر روز متفاوت و کاربردی باشد. ";
   if(C.step) struct+="یک قدمِ کوچکِ عملی برای امروز یا فردا. ";
@@ -5120,9 +5126,10 @@ function renderPodCfg(){
   h+=`<div class="pod-seg">`+[['casual','😊 محاوره‌ای (خودمونی)'],['formal','🎩 رسمی']].map(o=>`<button class="${C.tone===o[0]?'on':''}" onclick="podContentSet('tone','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
   h+=`<div class="qbg-sub" style="margin-top:4px">«محاوره‌ای» متن و صدا را مثلِ حرف‌زدنِ عادیِ روزمره می‌کند (می‌ره، می‌گه…) تا طبیعی‌تر و صمیمی‌تر باشد.</div>`;
   h+=`<div class="qbg-sub" style="margin-top:10px;line-height:1.9">انتخاب کن پادکستِ امروز راجع‌به چه چیزهایی حرف بزند. هر مورد که خاموش باشد در پادکست نمی‌آید.</div>`;
-  h+=`<label class="qbg-lbl" style="margin-top:10px">🩸 بازهٔ بررسیِ قند</label>`;
-  const grOpts=[['today','امروز'],['7','۷ روز'],['14','۱۴ روز'],['30','۳۰ روز'],['90','۹۰ روز']];
+  h+=`<label class="qbg-lbl" style="margin-top:10px">🗓️ بازهٔ مرور</label>`;
+  const grOpts=[['today','امروز'],['yesterday','دیروز'],['7','۷ روز'],['14','۱۴ روز'],['30','۳۰ روز'],['90','۹۰ روز']];
   h+=`<div class="pod-seg">`+grOpts.map(o=>`<button class="${C.glucoseRange===o[0]?'on':''}" ${C.glucose?'':'disabled'} onclick="podContentSet('glucoseRange','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
+  h+=`<div class="qbg-sub" style="margin-top:4px">«دیروز» کلِ دادهٔ روزِ کاملِ گذشته را مرور می‌کند (چون امروز شاید هنوز ناقص باشد). «امروز» = همین روز. بازه‌های چندروزه فقط روندِ قند را نشان می‌دهند.</div>`;
   const tog=[['glucose','🩸 بررسیِ قند خون'],['meals','🍽️ وعده‌های غذایی و پیشنهادها'],['insulin','💉 انسولین و پایبندی'],['meds','💊 داروها'],['exercise','🏃 ورزش و فعالیت'],['sleep','😴 خواب'],['vitals','❤️ فشار خون و ضربان'],['mood','🙂 حالِ روحی و دفترچه'],['labs','🧪 نتایجِ آزمایش‌ها'],['tip','💡 نکتهٔ آموزشیِ روز'],['step','✅ یک قدمِ عملی']];
   h+=`<div class="pod-togs">`+tog.map(t=>`<button class="pod-tog ${C[t[0]]?'on':''}" onclick="podContentSet('${t[0]}',${C[t[0]]?'false':'true'})"><span>${t[1]}</span><span class="pod-tog-sw">${C[t[0]]?'روشن':'خاموش'}</span></button>`).join('')+`</div>`;
   h+=`<div class="qbg-sub" style="margin-top:8px">اگر می‌خواهی پادکست کوتاه و متمرکز باشد، فقط چند موردِ مهم را روشن بگذار.</div>`;
