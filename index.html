@@ -218,6 +218,9 @@ body.nav-bottom{padding-bottom:100px}
 @keyframes podBreathe{0%,100%{filter:brightness(1)}50%{filter:brightness(1.03)}}
 @keyframes podSway{0%,100%{transform:scale(1.04) translate(0,0)}33%{transform:scale(1.05) translate(-1.1%,0.4%)}66%{transform:scale(1.05) translate(1%,-0.5%)}}
 @media (prefers-reduced-motion:reduce){.pod-av-img,.pod-av-ph,.pod-av-eq i{animation:none!important}}
+.pod-tabs{display:flex;gap:6px;margin:2px 0 14px;position:sticky;top:0;z-index:3;background:var(--card,#0f1720);padding:6px 0}
+.pod-tabs button{flex:1;background:transparent;border:none;border-bottom:2.5px solid var(--line);color:var(--muted);padding:9px 4px;font-family:inherit;font-weight:800;font-size:13.5px;cursor:pointer;transition:all .15s}
+.pod-tabs button.on{color:var(--teal);border-bottom-color:var(--teal)}
 .pod-seg{display:flex;gap:7px;flex-wrap:wrap}
 .pod-seg button{flex:1;min-width:64px;background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:10px 6px;font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;transition:all .15s}
 .pod-seg button.on{background:var(--teal-dim);border-color:var(--teal);color:#eafff8}
@@ -2047,7 +2050,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۲۶</b> · انتشار: ۱۴۰۵/۰۶/۱۳ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۲۷</b> · انتشار: ۱۴۰۵/۰۶/۱۳ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4541,7 +4544,7 @@ const POD_3D_IDLE_URL='https://cdn.jsdelivr.net/gh/readyplayerme/animation-libra
 function pod3dLoadIdle(cb){
   if(_pod3d.idleClip){ cb(_pod3d.idleClip); return; }
   if(!(window.THREE&&THREE.GLTFLoader)){ cb(null); return; }
-  try{ new THREE.GLTFLoader().load(POD_3D_IDLE_URL, (g)=>{ try{ _pod3d.idleClip=(g.animations&&g.animations[0])||null; }catch(e){ _pod3d.idleClip=null; } cb(_pod3d.idleClip); }, undefined, ()=>cb(null)); }
+  try{ pod3dNewLoader().load(POD_3D_IDLE_URL, (g)=>{ try{ _pod3d.idleClip=(g.animations&&g.animations[0])||null; }catch(e){ _pod3d.idleClip=null; } cb(_pod3d.idleClip); }, undefined, ()=>cb(null)); }
   catch(e){ cb(null); }
 }
 // GLTFLoader را در صورتِ نیاز لود می‌کند
@@ -4551,10 +4554,19 @@ function pod3dEnsureGLTF(cb){
   _pod3d.gltfLoading=true;
   const g=document.createElement('script');
   g.src='https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js';
-  g.onload=()=>{ _pod3d.gltfLoading=false; cb(!!(THREE&&THREE.GLTFLoader)); };
+  g.onload=()=>{
+    // دیکودرِ meshopt: بعضی آواتارها (VALID) با EXT_meshopt_compression فشرده‌اند و بدونِ این لود نمی‌شوند
+    const m=document.createElement('script');
+    m.src='https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/meshopt_decoder.js';
+    m.onload=()=>{ _pod3d.gltfLoading=false; cb(!!(THREE&&THREE.GLTFLoader)); };
+    m.onerror=()=>{ _pod3d.gltfLoading=false; cb(!!(THREE&&THREE.GLTFLoader)); };  // بدونِ meshopt هم، آواتارهای ساده لود می‌شوند
+    document.head.appendChild(m);
+  };
   g.onerror=()=>{ _pod3d.gltfLoading=false; cb(false); };
   document.head.appendChild(g);
 }
+// GLTFLoader با دیکودرهایِ لازم (meshopt) ساخته می‌شود تا آواتارهای فشرده هم لود شوند
+function pod3dNewLoader(){ const l=new THREE.GLTFLoader(); try{ if(window.MeshoptDecoder&&l.setMeshoptDecoder) l.setMeshoptDecoder(MeshoptDecoder); }catch(e){} return l; }
 function pod3dBuildHead(gender){
   const T=THREE, male=gender==='male', grp=new T.Group();
   const skinMat=new T.MeshStandardMaterial({color:male?0xd9a97e:0xf0c6a4, roughness:0.6, metalness:0.02});
@@ -4733,7 +4745,7 @@ function pod3dLoadModel(url, gender){
     if(!ok){ uiToast&&uiToast('لودرِ سه‌بعدی لود نشد؛ چهرهٔ سادهٔ پشتیبان'); try{ pod3dInitProcedural(gender); pod3dStartLoop(); }catch(e){} return; }
     const fallback=()=>{ try{ pod3dInitProcedural(gender); pod3dStartLoop(); }catch(e){} };
     const doLoad=(loadUrl, revoke)=>{ try{
-        const loader=new THREE.GLTFLoader();
+        const loader=pod3dNewLoader();
         loader.load(loadUrl, (gltf)=>{ if(revoke) try{URL.revokeObjectURL(loadUrl)}catch(_){}; try{ pod3dSetupModel(gltf.scene||gltf.scenes[0], gender, url); pod3dStartLoop(); }catch(e){ try{console.warn('3d setup',e)}catch(_){}; fallback(); } },
           undefined,
           (err)=>{ if(revoke) try{URL.revokeObjectURL(loadUrl)}catch(_){}; try{console.warn('3d load',err)}catch(_){}; uiToast&&uiToast('این آواتار لود نشد؛ یکی دیگر را امتحان کن (چهرهٔ ساده فعلاً)'); fallback(); });
@@ -4954,6 +4966,10 @@ function renderPodCfg(){
   const box=document.getElementById('podCfgBody'); if(!box) return; const c=podCfg();
   const provOpts=[['auto','خودکار'],['gemini','Gemini'],['openai','ChatGPT'],['device','صدای گوشی']];
   let h=`<div class="qbg-head"><span class="qbg-badge" style="background:rgba(154,134,224,.18)">🎧</span><div><div class="qbg-title">تنظیماتِ پادکست</div><div class="qbg-sub">مدت، سرویسِ صدا و لحن را انتخاب کن؛ هر صدا را با ▶ تست کن.</div></div></div>`;
+  // تب‌بندی برای شلوغ‌نشدن: صدا / مجریِ تصویری
+  const tab=_pod.cfgTab||'sound';
+  h+=`<div class="pod-tabs">`+[['sound','🎧 صدا'],['avatar','🎭 مجریِ تصویری']].map(t=>`<button class="${tab===t[0]?'on':''}" onclick="podCfgTab('${t[0]}')">${t[1]}</button>`).join('')+`</div>`;
+  if(tab==='sound'){
   h+=`<label class="qbg-lbl">مدتِ پادکست</label><div class="pod-seg">`+POD_LENS.map(m=>`<button class="${c.minutes===m?'on':''}" onclick="podCfgPick('minutes',${m})">${faDigits(m)} دقیقه</button>`).join('')+`</div>`;
   h+=`<label class="qbg-lbl" style="margin-top:8px">سرویسِ صدا</label><div class="pod-seg">`+provOpts.map(o=>`<button class="${c.prov===o[0]?'on':''}" onclick="podCfgPick('prov','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
   const eff = c.prov==='auto' ? (hasAnyKey('gemini')?'gemini':(hasAnyKey('openai')?'openai':'device')) : c.prov;
@@ -4970,8 +4986,10 @@ function renderPodCfg(){
     if(!show.length) h+=`<div class="qbg-sub">صدایی روی این مرورگر پیدا نشد (روی iOS صدای فارسی محدود است).</div>`;
     show.forEach((v,i)=>{ h+=`<div class="pod-vrow ${c.dVoice===v.name?'on':''}"><span class="pod-vname">${escVision(v.name)} <span style="color:var(--muted);font-weight:600;font-size:10px">${escVision(v.lang||'')}</span></span><button class="pod-vtest" onclick="podTestDevice(${i})">▶ تست</button><button class="pod-vpick" onclick="podPickDevice(${i})">${c.dVoice===v.name?'✓ انتخاب':'انتخاب'}</button></div>`; });
   }
+  } // پایانِ تبِ صدا
+  if(tab==='avatar'){
   // مجریِ تصویری (پرترهٔ AI؛ یک‌بار ساخته و برای همیشه کش می‌شود)
-  h+=`<label class="qbg-lbl" style="margin-top:12px">مجریِ تصویری بالای پلیر</label>`;
+  h+=`<label class="qbg-lbl">مجریِ تصویری بالای پلیر</label>`;
   h+=`<div class="pod-seg">`+[['on','روشن',true],['off','خاموش',false]].map(o=>`<button class="${c.avatar===o[2]?'on':''}" onclick="podCfgPick('avatar',${o[2]})">${o[1]}</button>`).join('')+`</div>`;
   if(c.avatar){
     h+=`<label class="qbg-lbl" style="margin-top:8px">حالتِ مجری</label>`;
@@ -5052,8 +5070,11 @@ function renderPodCfg(){
     }
     }   // پایانِ if(c.avMode!=='3d')
   }
+  } // پایانِ تبِ مجری
   box.innerHTML=h;
 }
+// جابه‌جاییِ تبِ تنظیماتِ پادکست (صدا / مجری) — برای شلوغ‌نشدن
+function podCfgTab(t){ _pod.cfgTab=t; try{ renderPodCfg(); }catch(e){} }
 // جابه‌جایی/اندازهٔ ناحیهٔ دهان را تغییر می‌دهد و لایه‌ها را با ناحیهٔ تازه از نو می‌سازد
 async function podMouthNudge(dy, ds, dx){
   const c=podCfg(), L=POD_TUNE_LIM, male=podCurGender()==='male';
