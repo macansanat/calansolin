@@ -2065,7 +2065,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۳۵</b> · انتشار: ۱۴۰۵/۰۶/۱۴ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۳۶</b> · انتشار: ۱۴۰۵/۰۶/۱۴ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3749,12 +3749,15 @@ function podDecode(ctx, buf){ return new Promise((res,rej)=>{ let done=false; co
 function podChunksForTTS(text){
   // قطعاتِ بزرگ‌تر = درخواستِ کمتر به سرویس (مهم برای سقفِ نرخِ رایگانِ Gemini)
   const per=(_pod.ttsProv==='gemini')?900:1600;
-  const all=podSplit(text, per);
-  if(all.length && all[0].length>160){   // قطعهٔ اول کوتاه تا صدا سریع شروع شود
-    const m=all[0].match(/^[^.!?؟…]+[.!?؟…]?/);
-    if(m && m[0].length<all[0].length){ const head=m[0].trim(), rest=all[0].slice(m[0].length).trim(); all[0]=rest; all.unshift(head); }
-  }
-  return all;
+  // قطعهٔ اول را «چند جملهٔ کامل تا ~۳۶۰ نویسه» بگیر: نه‌آنقدر کوتاه که با «سلام» تمام شود و گپ بیفتد،
+  // نه‌آنقدر بلند که شروع دیر شود. تا وقتی این قطعه پخش می‌شود، قطعهٔ بعدی آماده می‌شود (بی‌گپ).
+  const sents=(String(text).match(/[^.!?؟…\n]+[.!?؟…]?/g)||[String(text)]).map(s=>s.trim()).filter(Boolean);
+  if(!sents.length) return podSplit(text, per);
+  let first=''; let i=0;
+  for(; i<sents.length; i++){ first=(first?first+' ':'')+sents[i]; if(first.length>=360){ i++; break; } }
+  const rest=sents.slice(i).join(' ');
+  const out=[first]; if(rest) out.push(...podSplit(rest, per));
+  return out.filter(Boolean);
 }
 function podSleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 // دریافت + دیکودِ یک قطعه با تلاشِ مجدد (رفعِ خطای موقتِ نرخ/سرور)
@@ -4779,7 +4782,11 @@ function pod3dPoseArmsDown(model, armName, childName, targetDir){
 function pod3dSetupModel(modelScene, gender, url){
   pod3dClearRoot(); const T=THREE;
   _pod3d.root.add(modelScene); _pod3d.modelRoot=modelScene;
-  const morphs=[]; modelScene.traverse(o=>{ if(o.morphTargetDictionary&&o.morphTargetInfluences){ morphs.push({dict:o.morphTargetDictionary, infl:o.morphTargetInfluences}); if(o.frustumCulled!=null) o.frustumCulled=false; } });
+  const morphs=[]; modelScene.traverse(o=>{
+    if(o.isMesh||o.isSkinnedMesh){ if(o.frustumCulled!=null) o.frustumCulled=false;   // مو/مژه‌ی اسکین‌شده گاهی اشتباه کَل (cull) می‌شد و ناپدید — برای همهٔ مش‌ها خاموش
+      try{ if(o.geometry&&o.geometry.computeBoundingSphere) o.geometry.computeBoundingSphere(); }catch(e){} }
+    if(o.morphTargetDictionary&&o.morphTargetInfluences){ morphs.push({dict:o.morphTargetDictionary, infl:o.morphTargetInfluences}); }
+  });
   _pod3d.morphs=morphs;
   // درایورِ همگانیِ مورف: هر آواتاری (RPM / ARKit / VALID) با هر نام‌گذاری، به «اسلات»های معنایی نگاشت می‌شود
   try{
@@ -4796,10 +4803,14 @@ function pod3dSetupModel(modelScene, gender, url){
   // پس اول تشخیص می‌دهیم؛ اگر T-pose بود دست‌ها را دستی و تمیز پایین می‌آوریم و انیمیشن نمی‌زنیم.
   _pod3d.mixer=null; _pod3d.action=null; _pod3d.posed=false;
   const isTpose=pod3dIsTpose(modelScene);
+  _pod3d.gbones=null;
   if(isTpose){
     try{ pod3dPoseArmsDown(modelScene, 'LeftArm','LeftForeArm', new T.Vector3(0.25,-1,0.08));
          pod3dPoseArmsDown(modelScene, 'RightArm','RightForeArm', new T.Vector3(-0.25,-1,0.08));
-         modelScene.updateMatrixWorld&&modelScene.updateMatrixWorld(true); _pod3d.posed=true; }catch(e){}
+         modelScene.updateMatrixWorld&&modelScene.updateMatrixWorld(true); _pod3d.posed=true;
+         // استخوان‌ها را برای «حرکتِ زندهٔ بدن/دست/سر هنگام صحبت» ذخیره کن (کواترنیونِ پایهٔ همین ژست)
+         _pod3d.gbones={}; ['Hips','Spine','Spine1','Spine2','Neck','Head','LeftArm','RightArm','LeftForeArm','RightForeArm'].forEach(n=>{ const b=pod3dBone(modelScene,n); if(b) _pod3d.gbones[n]={b:b, q:b.quaternion.clone()}; });
+    }catch(e){}
   } else {
     try{ if(_pod3d.idleClip && T.AnimationMixer){
       _pod3d.mixer=new T.AnimationMixer(modelScene);
@@ -4856,13 +4867,15 @@ function pod3dApply(){
     // درایورِ همگانی: هر اسلات را روی همهٔ مورف‌هایِ متناظرش ست کن (مستقل از نام‌گذاری)
     const S=(k,v)=>{ const a=_pod3d.slots[k]; if(!a) return; for(let n=0;n<a.length;n++){ a[n][0][a[n][1]]=v; } };
     ['open','aa','e','o','f','pp','stretch','funnel','close'].forEach(k=>S(k,0));
-    S('open', open*0.85);
-    if(vis==='A'||vis==='AH'){ S('aa', vis==='A'?0.9:0.5); }
+    S('open', Math.min(1, open*1.12));   // بازتر تا دندان‌ها هنگام صحبت دیده شوند
+    if(vis==='A'||vis==='AH'){ S('aa', vis==='A'?0.95:0.55); }
     else if(vis==='E'){ S('e',0.85); S('stretch',0.5); }
     else if(vis==='O'){ S('o',0.9); S('funnel',0.5); }
     else if(vis==='F'){ S('f',0.85); }
     else if(vis==='MB'||vis==='X'||vis==='C'){ S('pp',0.25); S('close', open>0?0:0.12); }
     S('blink', bl); S('brow', br);
+    // حرکتِ زندهٔ بدن/دست/سر هنگام صحبت (برای آواتارهای ژست‌شده که انیمیشن ندارند)
+    pod3dGesture(open);
     const g=_pod3d.modelRoot; if(g){ const k=_pod3d.mixer?1.2:4; g.rotation.y=(sw.x||0)*k; g.rotation.x=-(sw.y||0)*(k*0.7); g.rotation.z=(sw.rot||0)*(k*0.5); }
   } else {
     const P=_pod3d.parts; if(!P) return;
@@ -4875,6 +4888,26 @@ function pod3dApply(){
   }
   try{ _pod3d.ren.render(_pod3d.scene,_pod3d.cam); }catch(e){}
   if(_pod3d.thumbGrab>0){ _pod3d.thumbGrab--; if(_pod3d.thumbGrab===0){ try{ pod3dSaveThumb(_pod3d.srcUrl, _pod3d.ren.domElement); }catch(e){} } }
+}
+// حرکتِ زندهٔ بدن/دست/سر برای آواتارهای ژست‌شده (بدونِ انیمیشن) — با انرژیِ گفتار زنده‌تر می‌شود
+function pod3dGesture(open){
+  const G=_pod3d.gbones; if(!G) return; const T=THREE;
+  _pod3d._gt=(_pod3d._gt||0)+(_pod3d.dt||0.016); const t=_pod3d._gt;
+  const speaking=(_pod.mode==='playing');
+  const energy=speaking?Math.min(1,0.28+(open||0)*0.9):0;
+  const set=(name,ex,ey,ez)=>{ const o=G[name]; if(!o) return; const q=new T.Quaternion().setFromEuler(new T.Euler(ex,ey,ez,'XYZ')); o.b.quaternion.copy(o.q).multiply(q); };
+  const sX=Math.sin(t*1.1)*0.012 + energy*Math.sin(t*2.3)*0.02;   // تنفس + تاب
+  const sY=Math.sin(t*0.5)*0.01 + energy*Math.sin(t*1.7)*0.028;
+  set('Spine',  sX*0.4, sY*0.4, Math.sin(t*0.37)*0.008);
+  set('Spine1', sX*0.4, sY*0.4, 0);
+  set('Spine2', sX*0.3, sY*0.3, 0);
+  set('Neck', -energy*Math.sin(t*3.1)*0.05, energy*Math.sin(t*1.3)*0.055, Math.sin(t*0.8)*0.01);
+  set('Head', -energy*Math.sin(t*3.1+0.6)*0.055 + Math.sin(t*0.9)*0.01, energy*Math.sin(t*1.9)*0.05, energy*Math.sin(t*2.5)*0.02);   // سر تکان می‌خورد → مو هم حرکت می‌کند
+  const swing=energy*Math.sin(t*2.0);
+  set('LeftArm',  swing*0.055+Math.sin(t*0.8)*0.01, 0,  energy*Math.sin(t*1.5)*0.05);
+  set('RightArm',-swing*0.055+Math.sin(t*0.8+1)*0.01,0, -energy*Math.sin(t*1.5+0.5)*0.05);
+  set('LeftForeArm',  energy*(Math.sin(t*2.4)*0.08+0.04), 0, 0);   // ژستِ دست هنگام صحبت
+  set('RightForeArm', energy*(Math.sin(t*2.4+0.9)*0.08+0.04), 0, 0);
 }
 // بندانگشتیِ آواتار را از رندرِ زنده می‌گیرد و کش می‌کند (برای گالریِ تنظیمات)
 function pod3dThumbKey(url){ return 'pod3dthumb:'+(url||''); }
@@ -5033,7 +5066,11 @@ async function podDownload(){
   }catch(e){ uiToast&&uiToast('مرورگر اجازهٔ دانلود نداد'); }
 }
 function podHasDownload(){ return !!((_pod.buffers&&_pod.buffers.length&&_pod.allFetched)||(_pod.rawChunks&&_pod.rawChunks.length)); }
+// نگه‌داشتن صفحه روشن حین پخشِ پادکست (از همان Wake Lockِ ورزش استفاده می‌کند)
+function podWakeSync(){ try{ if(_pod.mode==='playing'){ if(typeof wkAcquireLock==='function') wkAcquireLock(); } else if(typeof _wkRunning==='undefined' || !_wkRunning){ if(typeof wkReleaseLock==='function') wkReleaseLock(); } }catch(e){} }
+document.addEventListener('visibilitychange',()=>{ try{ if(document.visibilityState==='visible' && _pod.mode==='playing' && !_wkWakeLock && typeof wkAcquireLock==='function') wkAcquireLock(); }catch(e){} });
 function renderPodcastCard(){
+  podWakeSync();
   const box=document.getElementById('homePodcast'); if(!box) return;
   const rec=podLoad(); const c=podCfg(); const fresh=rec&&rec.dateKey===podTodayKey()&&rec.script;
   const mode=_pod.mode; const playing=mode==='playing', paused=mode==='paused', loading=mode==='loading';
