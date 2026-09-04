@@ -143,6 +143,11 @@ body.nav-bottom{padding-bottom:100px}
 .pod-cost{background:var(--field);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-top:6px}
 .pod-cost-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:3px 0}
 .pod-cost-row b{font-size:15px}
+#profileHeader{margin-bottom:14px}
+.pf-bal{width:100%;text-align:right;border:1px solid var(--line);border-radius:14px;padding:13px 15px;font-family:inherit;font-size:14px;font-weight:800;color:var(--ink);cursor:pointer;margin-bottom:12px;transition:background .3s;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.pf-tabs{display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:3px}
+.pf-tab{flex:0 0 auto;background:transparent;border:none;border-bottom:2.5px solid var(--line);color:var(--muted);padding:9px 10px;font-family:inherit;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap;transition:all .15s}
+.pf-tab.on{color:var(--teal);border-bottom-color:var(--teal)}
 .qbg-x{position:absolute;top:14px;left:14px;width:30px;height:30px;border-radius:50%;background:var(--field);border:1px solid var(--line);color:var(--muted);font-size:14px;cursor:pointer;line-height:1}
 .qbg-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
 .qbg-badge{flex:0 0 auto;width:44px;height:44px;border-radius:13px;background:rgba(224,104,95,.16);display:flex;align-items:center;justify-content:center;font-size:22px}
@@ -1880,6 +1885,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <br>💡 <b style="color:var(--teal)">Gemini 🆓</b> سطح رایگان دارد (کلید بدون کارت از aistudio.google.com). <b>DeepSeek</b> عکس ندارد و فقط برای بخش‌های متنی (تحلیل/چت) استفاده می‌شود.
       <br><b style="color:var(--red)">توجه:</b> خروجی هوش مصنوعی فقط آموزشی و تخمینی است؛ برای دوز انسولین و تصمیم درمانی حتماً با پزشک هماهنگ کن.
     </div>
+    <div id="aiCostBox"></div>
     <div id="visionSetting"></div>
   </div>
 </div>
@@ -1973,7 +1979,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
 </div>
 <div class="card coll" id="c-cgmup">
-  <h2 onclick="toggleCard('c-cgmup')"><span><span class="step-num">📈</span>تحلیل خروجی CGM</span></h2>
+  <h2 onclick="toggleCard('c-cgmup')"><span><span class="step-num">📈</span>وارد کردن فایل اکسل CGM</span></h2>
   <div class="card-body">
   <p style="font-size:13.5px;color:var(--muted);line-height:1.9;margin-bottom:14px">
     فایل خروجی اکسل دستگاه CGM را وارد کن (ستون زمان و ستون قند mg/dL).
@@ -2059,7 +2065,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۳۳</b> · انتشار: ۱۴۰۵/۰۶/۱۳ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۳۴</b> · انتشار: ۱۴۰۵/۰۶/۱۴ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3382,6 +3388,7 @@ function podCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(POD_CFG_KEY)
     mDx:(typeof o.mDx==='number'?o.mDx:0), mDy:(typeof o.mDy==='number'?o.mDy:0), mScale:(typeof o.mScale==='number'?o.mScale:1),
     mDxM:(typeof o.mDxM==='number'?o.mDxM:0), mDyM:(typeof o.mDyM==='number'?o.mDyM:0), mScaleM:(typeof o.mScaleM==='number'?o.mScaleM:1),
     eDx:(typeof o.eDx==='number'?o.eDx:0), eDy:(typeof o.eDy==='number'?o.eDy:0), eScale:(typeof o.eScale==='number'?o.eScale:1),
+    imgQuality:(['low','medium','high'].indexOf(o.imgQuality)>=0?o.imgQuality:'medium'),
     content:podContentCfg(o.content) }; }
 // تنظیماتِ محتوایِ پادکست: کدام موضوع‌ها بحث شوند (هر کدام قابلِ فعال/غیرفعال) + بازهٔ مرورِ قند
 function podContentCfg(cc){ cc=cc||{};
@@ -3395,12 +3402,15 @@ function podContentSet(key,val){ const c=podCfg().content; c[key]=val; podCfgSet
 function podCfgSet(patch){ const n=Object.assign(podCfg(), patch||{}); try{ localStorage.setItem(POD_CFG_KEY, JSON.stringify(n)); }catch(e){} return n; }
 // ── شمارندهٔ تخمینیِ هزینهٔ OpenAI (چون API موجودیِ واقعی را به اپ نمی‌دهد) ──
 // نرخ‌های تقریبی (دلار): عکسِ پایهٔ چهره (gpt-image-1 medium)، فریمِ دهان (edit low)، صدا (gpt-4o-mini-tts ~۰.۰۱۵$/دقیقه)
-const POD_COST={ img:0.04, edit:0.02, ttsPerMin:0.015 };
+const POD_COST={ img:{low:0.011, medium:0.04, high:0.17}, edit:0.02, ttsPerMin:0.015 };
 function podCostGet(){ try{ const o=JSON.parse(localStorage.getItem('pod_cost_v1')||'{}'); return { bal:(typeof o.bal==='number'?o.bal:null), used:(typeof o.used==='number'?o.used:0), at:o.at||'' }; }catch(e){ return {bal:null,used:0,at:''}; } }
 function podCostSave(o){ try{ localStorage.setItem('pod_cost_v1', JSON.stringify(o)); }catch(e){} }
-function podCostAdd(usd){ if(!(usd>0)) return; const o=podCostGet(); o.used=Math.round((o.used+usd)*1e4)/1e4; podCostSave(o); try{ if(document.getElementById('podCfgBody')) renderPodCfg(); }catch(e){} }
-function podCostSetBal(v){ const b=parseFloat(v); const o=podCostGet(); o.bal=(isNaN(b)?null:b); o.used=0; o.at=new Date().toISOString().slice(0,10); podCostSave(o); try{ renderPodCfg(); }catch(e){} }
-function podCostReset(){ const o=podCostGet(); o.used=0; o.at=new Date().toISOString().slice(0,10); podCostSave(o); try{ renderPodCfg(); }catch(e){} }
+function podCostRefresh(){ try{ if(document.getElementById('podCfgBody')) renderPodCfg(); }catch(e){}
+  try{ if(typeof renderProfileBalance==='function' && document.getElementById('profileBalBtn')) renderProfileBalance(); }catch(e){}
+  try{ if(typeof renderAICost==='function' && document.getElementById('aiCostBox')) renderAICost(); }catch(e){} }
+function podCostAdd(usd){ if(!(usd>0)) return; const o=podCostGet(); o.used=Math.round((o.used+usd)*1e4)/1e4; podCostSave(o); podCostRefresh(); }
+function podCostSetBal(v){ const b=parseFloat(v); const o=podCostGet(); o.bal=(isNaN(b)?null:b); o.used=0; o.at=new Date().toISOString().slice(0,10); podCostSave(o); podCostRefresh(); }
+function podCostReset(){ const o=podCostGet(); o.used=0; o.at=new Date().toISOString().slice(0,10); podCostSave(o); podCostRefresh(); }
 // کتابخانهٔ نکاتِ آموزشیِ چرخشی (آموزشی و عمومی — بدون دوز/تشخیص)
 const POD_TOPICS=[
   {t:'شاخصِ گلایسمیِ غذاها',b:'غذاهایی که قندشان آرام آزاد می‌شود، مثل جوِ دوسر، حبوبات و سبزیجات، قند خون را ملایم‌تر بالا می‌برند تا نان و برنجِ سفید.',tip:'یک وعده از نانِ سفید را با نانِ سبوس‌دار یا جو عوض کن و تفاوتِ قندت را ببین.'},
@@ -3822,11 +3832,12 @@ function podAvPrompt(gender){
 }
 async function podOpenAIImage(prompt){
   const key=getVisionKey('openai'); if(!key) throw new Error('no key');
-  // کیفیتِ «medium» به‌جای پیش‌فرضِ «high»: چهره برای این آواتارِ کوچک کاملاً خوب است ولی حدودِ ۴ برابر ارزان‌تر (~۰.۰۴$ به‌جای ~۰.۱۷$ هر عکس)
-  const res=await fetch('https://api.openai.com/v1/images/generations',{method:'POST',headers:{'authorization':'Bearer '+key,'content-type':'application/json'},body:JSON.stringify({model:'gpt-image-1',prompt,size:'1024x1024',quality:'medium',n:1})});
+  // کیفیت را کاربر انتخاب می‌کند (low/medium/high) — برای کنترلِ هزینه
+  const q=podCfg().imgQuality||'medium';
+  const res=await fetch('https://api.openai.com/v1/images/generations',{method:'POST',headers:{'authorization':'Bearer '+key,'content-type':'application/json'},body:JSON.stringify({model:'gpt-image-1',prompt,size:'1024x1024',quality:q,n:1})});
   if(!res.ok) throw new Error('OpenAI image '+res.status);
   const d=await res.json(); const b64=d&&d.data&&d.data[0]&&d.data[0].b64_json; if(!b64) throw new Error('OpenAI image: empty');
-  podCostAdd(POD_COST.img);
+  podCostAdd(POD_COST.img[q]||POD_COST.img.medium);
   return 'data:image/png;base64,'+b64;
 }
 async function podGeminiImage(prompt){
@@ -5132,18 +5143,7 @@ function renderPodCfg(){
     if(!show.length) h+=`<div class="qbg-sub">صدایی روی این مرورگر پیدا نشد (روی iOS صدای فارسی محدود است).</div>`;
     show.forEach((v,i)=>{ h+=`<div class="pod-vrow ${c.dVoice===v.name?'on':''}"><span class="pod-vname">${escVision(v.name)} <span style="color:var(--muted);font-weight:600;font-size:10px">${escVision(v.lang||'')}</span></span><button class="pod-vtest" onclick="podTestDevice(${i})">▶ تست</button><button class="pod-vpick" onclick="podPickDevice(${i})">${c.dVoice===v.name?'✓ انتخاب':'انتخاب'}</button></div>`; });
   }
-  // برآوردِ هزینهٔ OpenAI (تخمینی — API موجودیِ واقعی را به اپ نمی‌دهد)
-  {
-    const cost=podCostGet(); const rem=(cost.bal!=null)?Math.max(0,cost.bal-cost.used):null;
-    h+=`<label class="qbg-lbl" style="margin-top:16px">💰 برآوردِ هزینهٔ ChatGPT (تخمینی)</label>`;
-    h+=`<div class="pod-cost">`;
-    h+=`<div class="pod-cost-row"><span>مصرفِ تخمینی${cost.at?(' از '+faDigits(cost.at.replace(/-/g,'/'))):''}</span><b style="direction:ltr">$${cost.used.toFixed(2)}</b></div>`;
-    if(rem!=null) h+=`<div class="pod-cost-row"><span>باقی‌ماندهٔ تخمینی</span><b style="direction:ltr;color:${rem<0.5?'var(--amber)':'var(--teal)'}">$${rem.toFixed(2)}</b></div>`;
-    h+=`<div style="display:flex;gap:7px;margin-top:8px"><input id="podBalIn" class="qbg-in" inputmode="decimal" placeholder="موجودیِ فعلی از سایت (مثلاً 0.26)" style="direction:ltr;text-align:left;flex:1" value="${cost.bal!=null?cost.bal:''}"><button class="pod-vpick" onclick="podCostSetBal(document.getElementById('podBalIn').value)">ثبت</button></div>`;
-    h+=`<div style="display:flex;gap:7px;margin-top:6px"><button class="pod-mini-b" style="margin:0" onclick="podCostReset()">↺ صفر کردنِ مصرف</button></div>`;
-    h+=`<div class="qbg-sub" style="margin-top:6px;line-height:1.8">این عدد فقط <b>تخمین</b> است (هر عکس/صدایی که اپ می‌سازد را می‌شمارد)؛ عددِ دقیق در <span style="direction:ltr">platform.openai.com/usage</span> است. موجودیِ فعلی‌ات را وارد کن تا باقی‌مانده تخمین زده شود؛ بعد از شارژ دوباره واردش کن.</div>`;
-    h+=`</div>`;
-  }
+  h+=`<div class="qbg-sub" style="margin-top:14px">💰 برآوردِ هزینه و موجودیِ هوش مصنوعی به تبِ <b>«👤 پروفایل ← 🤖 هوش مصنوعی»</b> منتقل شد.</div>`;
   } // پایانِ تبِ صدا
   if(tab==='avatar'){
   // مجریِ تصویری (پرترهٔ AI؛ یک‌بار ساخته و برای همیشه کش می‌شود)
@@ -5192,6 +5192,10 @@ function renderPodCfg(){
     const complete = avReady && nfr>=nAll;
     const btnLbl = _pod.avBusy ? (pg?('⏳ '+faDigits(pg.done)+'/'+faDigits(pg.total)):'… در حالِ ساخت') : (complete ? '🔄 چهرهٔ نو' : (nfr>0 ? '🎨 ادامهٔ ساخت' : '🎨 ساختِ چهره'));
     const btnAct = complete ? 'podAvatarRegen(true)' : 'podAvatarRegen()';
+    // کیفیتِ ساختِ عکس — کنترلِ هزینه
+    h+=`<label class="qbg-lbl" style="margin-top:10px">کیفیتِ ساختِ چهره (هزینه)</label>`;
+    h+=`<div class="pod-seg">`+[['low','کم — ~۱ سنت'],['medium','متوسط — ~۴ سنت'],['high','بالا — ~۱۷ سنت']].map(o=>`<button class="${c.imgQuality===o[0]?'on':''}" onclick="podCfgPick('imgQuality','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
+    h+=`<div class="qbg-sub" style="margin-top:4px">هرچه کیفیت پایین‌تر، ارزان‌تر. برای این آواتارِ کوچک «کم» یا «متوسط» کافی است. (فقط عکسِ چهره؛ حالتِ سه‌بعدی رایگان است.)</div>`;
     h+=`<div class="pod-vrow" style="margin-top:8px"><span class="pod-vname">${stat}</span><button class="pod-vtest" ${(_pod.avBusy||!hasImgKey)?'disabled':''} onclick="${btnAct}">${btnLbl}</button></div>`;
     if(_pod.avBusy && pg) h+=`<div class="qbg-sub" style="margin-top:4px">این صفحه را باز نگه دار؛ هر حالت چند ثانیه طول می‌کشد. اگر بست، دوباره «ادامهٔ ساخت» را بزن — کارِ انجام‌شده کش می‌ماند.</div>`;
     if(!_pod.avBusy && nfr<nAll && _pod.avLastErr) h+=`<div class="qbg-sub" style="color:var(--amber);margin-top:4px">علتِ توقف: ${escVision(podErrHint(_pod.avLastErr))}</div>`;
@@ -7062,14 +7066,53 @@ async function renderProfileTab(){
   renderChatSuggestSetting();
   renderZoomSetting();
   renderVisionSetting();
+  try{ renderAICost(); }catch(e){}
   renderDataStats();
   setupProfileCards();
 }
 // همه‌ی باکس‌های پروفایل جمع‌شونده و پیش‌فرض بسته؛ کارت پروفایل در صدر با عنوانِ اطلاعات شخصی
+// تب‌بندیِ پروفایل (مثلِ تنظیماتِ پادکست) — گروهِ هر کارت
+const PROFILE_GROUPS={ 'c-profile':'me',
+  'c-profile-vision':'ai',
+  'c-cgmup':'import', 'c-log':'import',
+  'c-profile-nav':'app','c-profile-theme':'app','c-profile-chatlayout':'app','c-profile-zoom':'app','c-profile-audio':'app',
+  'c-profile-stats':'data','c-profile-backup':'data' };
+const PROFILE_TABS=[['me','👤 پروفایل'],['ai','🤖 هوش مصنوعی'],['import','📥 ورودِ داده'],['app','⚙️ برنامه'],['data','💾 داده']];
+let _profileTab=''; try{ _profileTab=localStorage.getItem('profile_tab')||'me'; }catch(e){ _profileTab='me'; }
+function profileTab(t){ _profileTab=t; try{ localStorage.setItem('profile_tab',t); }catch(e){}
+  const page=document.getElementById('page-profile'); if(!page) return;
+  page.querySelectorAll(':scope > .card').forEach(c=>{ const g=PROFILE_GROUPS[c.id]||'app'; c.style.display=(g===t)?'':'none'; });
+  page.querySelectorAll('.pf-tab').forEach(b=>b.classList.toggle('on', b.getAttribute('data-t')===t));
+  try{ renderProfileBalance(); }catch(e){}
+  if(t==='ai'){ try{ renderAICost(); }catch(e){} }
+}
+function renderProfileBalance(){ const b=document.getElementById('profileBalBtn'); if(!b) return;
+  const c=podCostGet(); const rem=(c.bal!=null)?Math.max(0,c.bal-c.used):null;
+  const pct=(c.bal!=null&&c.bal>0)?Math.max(2,Math.min(100,100*rem/c.bal)):100;
+  const col=(rem==null)?'rgba(63,185,163,.28)':(rem<0.5?'rgba(224,95,95,.32)':(rem<c.bal*0.25?'rgba(224,163,85,.32)':'rgba(63,185,163,.3)'));
+  b.style.background=`linear-gradient(90deg, ${col} ${pct}%, var(--field) ${pct}%)`;
+  const txt=(rem!=null)?`موجودیِ تخمینی: <b style="direction:ltr">$${rem.toFixed(2)}</b> <span style="opacity:.7">(مصرف $${c.used.toFixed(2)})</span>`:`💰 موجودیِ هوش مصنوعی — برای تنظیم بزن`;
+  b.innerHTML=`<span style="display:flex;align-items:center;gap:8px">💰 ${txt}</span>`;
+}
+function renderAICost(){ const box=document.getElementById('aiCostBox'); if(!box) return;
+  const cost=podCostGet(); const rem=(cost.bal!=null)?Math.max(0,cost.bal-cost.used):null;
+  let h=`<div class="pod-cost">`;
+  h+=`<div class="pod-cost-row"><span>مصرفِ تخمینی${cost.at?(' از '+faDigits(cost.at.replace(/-/g,'/'))):''}</span><b style="direction:ltr">$${cost.used.toFixed(2)}</b></div>`;
+  if(rem!=null) h+=`<div class="pod-cost-row"><span>باقی‌ماندهٔ تخمینی</span><b style="direction:ltr;color:${rem<0.5?'var(--amber)':'var(--teal)'}">$${rem.toFixed(2)}</b></div>`;
+  h+=`<div style="display:flex;gap:7px;margin-top:8px"><input id="aiBalIn" class="qbg-in" inputmode="decimal" placeholder="موجودیِ فعلی از سایت (مثلاً 0.26)" style="direction:ltr;text-align:left;flex:1" value="${cost.bal!=null?cost.bal:''}"><button class="mini-btn" onclick="podCostSetBal(document.getElementById('aiBalIn').value)">ثبت</button></div>`;
+  h+=`<div style="margin-top:6px"><button class="mini-btn" onclick="podCostReset()">↺ صفر کردنِ مصرف</button></div>`;
+  h+=`<div class="formula-note" style="margin-top:6px">این عدد <b>تخمینی</b> است (هر عکس/صدایی که اپ با ChatGPT می‌سازد را می‌شمارد)؛ عددِ دقیق در <span style="direction:ltr">platform.openai.com/usage</span>. موجودیِ فعلی‌ات را وارد کن تا باقی‌مانده تخمین زده شود؛ بعد از شارژ دوباره واردش کن. (سرویس‌های 🆓 رایگان مثلِ Gemini به این مصرف اضافه نمی‌شوند.)</div>`;
+  h+=`</div>`; box.innerHTML=h;
+}
 function setupProfileCards(){
   const page=document.getElementById('page-profile'); if(!page) return;
-  const pc=document.getElementById('c-profile');
-  if(pc && page.firstElementChild!==pc) page.insertBefore(pc, page.firstElementChild);
+  // هدرِ ثابت: دکمهٔ موجودی + نوارِ تب‌ها (یک‌بار ساخته می‌شود)
+  if(!document.getElementById('profileHeader')){
+    const hdr=document.createElement('div'); hdr.id='profileHeader';
+    hdr.innerHTML=`<button id="profileBalBtn" class="pf-bal" onclick="profileTab('ai')"></button>`+
+      `<div class="pf-tabs">`+PROFILE_TABS.map(t=>`<button class="pf-tab" data-t="${t[0]}" onclick="profileTab('${t[0]}')">${t[1]}</button>`).join('')+`</div>`;
+    page.insertBefore(hdr, page.firstElementChild);
+  }
   let st={}; try{ st=JSON.parse(localStorage.getItem('coll_state')||'{}'); }catch(e){}
   page.querySelectorAll(':scope > .card').forEach(card=>{
     const id=card.id; if(!id) return;
@@ -7080,6 +7123,7 @@ function setupProfileCards(){
     if(h2 && !h2.getAttribute('onclick')) h2.setAttribute('onclick', "toggleCard('"+id+"')");
   });
   updateProfileCardTitle();
+  profileTab(_profileTab||'me');   // نمایشِ تبِ فعال + به‌روزرسانیِ موجودی
 }
 function updateProfileCardTitle(){
   const pc=document.getElementById('c-profile'); if(!pc) return;
@@ -10621,6 +10665,9 @@ const AI_SECTIONS=[
   {id:'chat', label:'چت هوشمند', icon:'💬', vision:false},
   {id:'podcast', label:'پادکست روزانه', icon:'🎧', vision:false}
 ];
+// سطحِ رایگان/پولیِ هر سرویس — تا بدانیم داریم از API رایگان استفاده می‌کنیم یا پولی
+function visionTier(prov){ try{ const o=JSON.parse(localStorage.getItem('vision_tier_v1')||'{}'); if(o[prov]) return o[prov]; }catch(e){} return prov==='gemini'?'free':'paid'; }
+function toggleVisionTier(prov){ let o={}; try{ o=JSON.parse(localStorage.getItem('vision_tier_v1')||'{}'); }catch(e){} o[prov]=(visionTier(prov)==='free'?'paid':'free'); try{ localStorage.setItem('vision_tier_v1', JSON.stringify(o)); }catch(e){} if(typeof renderVisionSetting==='function') renderVisionSetting(); }
 function renderVisionSetting(){
   const box=document.getElementById('visionSetting'); if(!box) return;
   // ۱) کلیدهای چهار سرویس
@@ -10629,7 +10676,7 @@ function renderVisionSetting(){
   VISION_PROVIDERS.forEach(p=>{
     const keys=getVisionKeys(p); const n=keys.length; const has=n>0; const frozen=aiFrozen(p);
     h+=`<div style="border:1px solid ${frozen?'var(--amber)':has?'var(--teal-dim)':'var(--line)'};border-radius:11px;padding:9px 10px;margin-bottom:8px;background:${frozen?'rgba(224,163,85,.08)':has?'rgba(63,185,163,.07)':'transparent'}">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><b style="font-size:12.5px;color:${frozen?'var(--amber)':has?'var(--teal)':'var(--fg)'}">${PROVIDER_NAMES[p]}</b>${has?`<span style="font-size:10.5px;color:var(--teal)">✓ ${faDigits(String(n))} کلید</span>`:''}${frozen?'<span style="font-size:10px;color:var(--amber);font-weight:700">🧊 فریز</span>':''}${!PROVIDER_VISION[p]?'<span style="font-size:9.5px;color:var(--muted)">(بدون عکس)</span>':''}<span style="flex:1"></span>${has?`<button type="button" class="mini-btn" onclick="toggleVisionFreeze('${p}')" title="${frozen?'خارج کردن از فریز':'فریز: کلید بماند ولی استفاده نشود'}" style="${frozen?'border-color:var(--amber);color:var(--amber)':''}">${frozen?'▶️ فعال‌سازی':'🧊 فریز'}</button>`:''}</div>${frozen?'<div style="font-size:10px;color:var(--amber);line-height:1.7;margin-bottom:6px">این سرویس فریز است: کلیدش محفوظ می‌ماند ولی نه به‌عنوان فالبک صدا زده می‌شود و نه توکنی مصرف می‌کند.</div>':''}`;
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><b style="font-size:12.5px;color:${frozen?'var(--amber)':has?'var(--teal)':'var(--fg)'}">${PROVIDER_NAMES[p]}</b>${has?`<span style="font-size:10.5px;color:var(--teal)">✓ ${faDigits(String(n))} کلید</span>`:''}${frozen?'<span style="font-size:10px;color:var(--amber);font-weight:700">🧊 فریز</span>':''}${!PROVIDER_VISION[p]?'<span style="font-size:9.5px;color:var(--muted)">(بدون عکس)</span>':''}${(()=>{const t=visionTier(p);return `<button type="button" onclick="toggleVisionTier('${p}')" title="کلیک: تغییرِ رایگان/پولی" style="font-size:9.5px;font-weight:800;border:1px solid ${t==='free'?'var(--teal)':'var(--amber)'};color:${t==='free'?'var(--teal)':'var(--amber)'};background:transparent;border-radius:20px;padding:2px 8px;cursor:pointer">${t==='free'?'🆓 رایگان':'💳 پولی'}</button>`;})()}<span style="flex:1"></span>${has?`<button type="button" class="mini-btn" onclick="toggleVisionFreeze('${p}')" title="${frozen?'خارج کردن از فریز':'فریز: کلید بماند ولی استفاده نشود'}" style="${frozen?'border-color:var(--amber);color:var(--amber)':''}">${frozen?'▶️ فعال‌سازی':'🧊 فریز'}</button>`:''}</div>${frozen?'<div style="font-size:10px;color:var(--amber);line-height:1.7;margin-bottom:6px">این سرویس فریز است: کلیدش محفوظ می‌ماند ولی نه به‌عنوان فالبک صدا زده می‌شود و نه توکنی مصرف می‌کند.</div>':''}`;
     keys.forEach((k,i)=>{
       const mask=k.length>=4?('●●●●●●●● '+k.slice(-4)):('●●●● '+k);
       h+=`<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:11.5px">
