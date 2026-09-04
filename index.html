@@ -122,6 +122,9 @@ body.nav-bottom{padding-bottom:100px}
 .pod-3d-host canvas{width:100%!important;height:100%!important;display:block}
 .pod-3d-badge{position:absolute;top:8px;right:8px;z-index:3;font-size:10px;background:rgba(20,26,38,.6);color:#cfe;border-radius:8px;padding:2px 7px;pointer-events:none}
 .pod-3d-url{width:100%;box-sizing:border-box;margin-top:6px;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:var(--field);color:var(--text,#eaf0f6);font-size:12px;direction:ltr;text-align:left}
+.pod-gal{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.pod-gal-b{padding:11px 8px;border-radius:12px;border:1px solid var(--line);background:var(--field);color:var(--text,#eaf0f6);font-size:13px;cursor:pointer}
+.pod-gal-b.on{border-color:var(--teal);box-shadow:0 0 0 1.5px var(--teal);color:var(--teal)}
 .qbg-x{position:absolute;top:14px;left:14px;width:30px;height:30px;border-radius:50%;background:var(--field);border:1px solid var(--line);color:var(--muted);font-size:14px;cursor:pointer;line-height:1}
 .qbg-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
 .qbg-badge{flex:0 0 auto;width:44px;height:44px;border-radius:13px;background:rgba(224,104,95,.16);display:flex;align-items:center;justify-content:center;font-size:22px}
@@ -2030,7 +2033,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۱۹</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۲۰</b> · انتشار: ۱۴۰۵/۰۶/۱۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4468,6 +4471,17 @@ function pod3dEnsureLib(cb){
   sc.onload=()=>done(!!window.THREE); sc.onerror=()=>done(false);
   document.head.appendChild(sc);
 }
+// گالریِ آواتارهای آماده (رایگان، ریگ‌شده با ویزم/پلک) — از مخزن‌های عمومیِ GitHub با jsDelivr
+// (CORS دارد و کش می‌شود). فایل‌ها در مخزنِ اپ نیستند تا حجمِ index.html بالا نرود.
+const POD_3D_PRESETS=[
+  {id:'man1',   g:'male',   fa:'👨 مردِ واقعی',   url:'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/models/gltf/facecap.glb'},
+  {id:'woman1', g:'female', fa:'👩 زنِ زیبا',     url:'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/brunette.glb'},
+  {id:'woman2', g:'female', fa:'💁‍♀️ زنِ زیبا ۲',  url:'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/brunette-t.glb'},
+  {id:'person', g:'male',   fa:'🧑 چهرهٔ کامل',   url:'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/avaturn.glb'}
+];
+function pod3dDefaultUrl(gender){ const p=POD_3D_PRESETS.find(x=>x.g===gender)||POD_3D_PRESETS[1]; return p?p.url:''; }
+// یک آواتارِ گالری را برای جنسیتِ فعلی انتخاب و اعمال می‌کند
+function pod3dPickPreset(url){ const g=podCfg().avGender; podCfgSet(g==='male'?{av3dUrlM:url}:{av3dUrlF:url}); _pod3d.gender=''; _pod3d.srcUrl=''; uiToast&&uiToast('در حالِ بارگیریِ آواتار…'); try{ renderPodcastCard(); renderPodCfg(); }catch(e){} }
 // GLTFLoader را (برای آواتارِ Ready Player Me) در صورتِ نیاز لود می‌کند
 function pod3dEnsureGLTF(cb){
   if(window.THREE&&THREE.GLTFLoader){ cb(true); return; }
@@ -4575,17 +4589,18 @@ function pod3dApply(){
   const bl=Math.max(0,Math.min(1,w.BL||0)), br=Math.max(0,Math.min(1,w.BR||0));
   if(_pod3d.gltf && _pod3d.morphs){
     // هر دو نام‌گذاری پشتیبانی می‌شود: Oculus Visemes (RPM) و ARKit blendshapes (facecap و…)
+    // نامِ مورف را با هر دو کانونشن ست کن: RPM (…Left/Right) و facecap/ARKit (…_L/_R)
+    const setM=(n,v)=>{ pod3dSetMorph(n,v); if(/Left$/.test(n)) pod3dSetMorph(n.replace(/Left$/,'_L'),v); else if(/Right$/.test(n)) pod3dSetMorph(n.replace(/Right$/,'_R'),v); };
     ['viseme_aa','viseme_E','viseme_I','viseme_O','viseme_U','viseme_FF','viseme_PP','jawOpen','mouthOpen',
-     'mouthFunnel','mouthPucker','mouthStretchLeft','mouthStretchRight','mouthPressLeft','mouthPressRight','mouthClose'].forEach(n=>pod3dSetMorph(n,0));
-    // بازشدنِ فک (هر دو استاندارد jawOpen دارند)
-    pod3dSetMorph('jawOpen', open*0.85); pod3dSetMorph('mouthOpen', open*0.6);
-    if(vis==='A'||vis==='AH'){ pod3dSetMorph('viseme_aa', vis==='A'?0.95:0.55); }
-    else if(vis==='E'){ pod3dSetMorph('viseme_E',0.9); pod3dSetMorph('mouthStretchLeft',0.5); pod3dSetMorph('mouthStretchRight',0.5); }
-    else if(vis==='O'){ pod3dSetMorph('viseme_O',0.95); pod3dSetMorph('mouthFunnel',0.55); pod3dSetMorph('mouthPucker',0.35); }
-    else if(vis==='F'){ pod3dSetMorph('viseme_FF',0.85); pod3dSetMorph('mouthPressLeft',0.4); pod3dSetMorph('mouthPressRight',0.4); }
-    else if(vis==='MB'||vis==='X'||vis==='C'){ pod3dSetMorph('viseme_PP',0.25); pod3dSetMorph('mouthClose',open>0?0:0.15); }
-    pod3dSetMorph('eyeBlinkLeft', bl); pod3dSetMorph('eyeBlinkRight', bl);
-    pod3dSetMorph('browInnerUp', br); pod3dSetMorph('browOuterUpLeft', br*0.6); pod3dSetMorph('browOuterUpRight', br*0.6);
+     'mouthFunnel','mouthPucker','mouthStretchLeft','mouthStretchRight','mouthPressLeft','mouthPressRight','mouthClose'].forEach(n=>setM(n,0));
+    setM('jawOpen', open*0.85); setM('mouthOpen', open*0.6);
+    if(vis==='A'||vis==='AH'){ setM('viseme_aa', vis==='A'?0.95:0.55); }
+    else if(vis==='E'){ setM('viseme_E',0.9); setM('mouthStretchLeft',0.5); setM('mouthStretchRight',0.5); }
+    else if(vis==='O'){ setM('viseme_O',0.95); setM('mouthFunnel',0.55); setM('mouthPucker',0.35); }
+    else if(vis==='F'){ setM('viseme_FF',0.85); setM('mouthPressLeft',0.4); setM('mouthPressRight',0.4); }
+    else if(vis==='MB'||vis==='X'||vis==='C'){ setM('viseme_PP',0.25); setM('mouthClose',open>0?0:0.15); }
+    setM('eyeBlinkLeft', bl); setM('eyeBlinkRight', bl);
+    setM('browInnerUp', br); setM('browOuterUpLeft', br*0.6); setM('browOuterUpRight', br*0.6);
     const g=_pod3d.modelRoot; if(g){ g.rotation.y=(sw.x||0)*4; g.rotation.x=-(sw.y||0)*3; g.rotation.z=(sw.rot||0)*2; }
   } else {
     const P=_pod3d.parts; if(!P) return;
@@ -4633,7 +4648,7 @@ function pod3dStartLoop(){
 function pod3dDispose(){ pod3dStopLoop(); try{ if(_pod3d.ren){ _pod3d.ren.forceContextLoss&&_pod3d.ren.forceContextLoss(); _pod3d.ren.dispose&&_pod3d.ren.dispose(); } }catch(e){} _pod3d.ready=false; _pod3d.ren=null; _pod3d.scene=null; _pod3d.parts=null; _pod3d.headGroup=null; _pod3d.host=null; }
 function pod3dEnsure(gender){
   const host=document.getElementById('pod3dHost'); if(!host) return;
-  const c=podCfg(); const url=(gender==='male'?c.av3dUrlM:c.av3dUrlF)||'';
+  const c=podCfg(); const url=(gender==='male'?c.av3dUrlM:c.av3dUrlF)||pod3dDefaultUrl(gender);
   const fail=(msg)=>{ uiToast&&uiToast(msg); podCfgSet({avMode:'photo'}); _pod.avMode='photo'; try{ renderPodcastCard(); }catch(e){} };
   pod3dEnsureLib((ok)=>{
     if(!ok){ fail('حالتِ سه‌بعدی نیاز به اینترنت (بارِ اول) دارد؛ فعلاً حالتِ عکس'); return; }
@@ -4816,9 +4831,10 @@ function renderPodCfg(){
     if(c.avMode==='3d'){
       const gUrl=(c.avGender==='male'?c.av3dUrlM:c.av3dUrlF)||'';
       h+=`<div class="qbg-sub" style="margin-top:4px">با همان صدا/متن لب می‌زند و پلک می‌زند. بارِ اول به اینترنت نیاز دارد، بعد کش می‌شود.</div>`;
-      h+=`<label class="qbg-lbl" style="margin-top:8px">نمونهٔ آمادهٔ چهرهٔ واقعی (یک لمس، بدونِ ساختِ چیزی)</label>`;
-      h+=`<div class="pod-seg"><button onclick="pod3dUseSample()">🎭 چهرهٔ واقعیِ نمونه</button></div>`;
-      h+=`<div class="qbg-sub" style="margin-top:4px">یک چهرهٔ واقعیِ آماده روی سرورِ رسمیِ three.js. بارِ اول اینترنت لازم دارد.</div>`;
+      const curUrl=gUrl||pod3dDefaultUrl(c.avGender);
+      h+=`<label class="qbg-lbl" style="margin-top:8px">گالریِ چهره‌ها (یک لمس)</label>`;
+      h+=`<div class="pod-gal">`+POD_3D_PRESETS.map(pr=>`<button class="pod-gal-b ${curUrl===pr.url?'on':''}" onclick="pod3dPickPreset('${pr.url}')">${pr.fa}</button>`).join('')+`</div>`;
+      h+=`<div class="qbg-sub" style="margin-top:4px">چهره‌های آمادهٔ رایگان (ریگ‌شده). بارِ اول برای بارگیری به اینترنت نیاز دارد، بعد کش می‌شود. برای هر جنسیت جدا انتخاب کن.</div>`;
       h+=`<label class="qbg-lbl" style="margin-top:10px">یا لینکِ دلخواهِ آواتارِ ${c.avGender==='male'?'مرد':'زن'} (اختیاری)</label>`;
       h+=`<input id="pod3dUrlInput" class="pod-3d-url" value="${escVision(gUrl)}" placeholder="https://models.readyplayer.me/xxxx.glb" autocomplete="off" autocapitalize="off" spellcheck="false">`;
       h+=`<div class="pod-seg" style="margin-top:6px"><button onclick="pod3dApplyUrl()">✅ اعمالِ لینک</button><button onclick="pod3dClearUrl()">↺ چهرهٔ ساده</button></div>`;
