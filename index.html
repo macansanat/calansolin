@@ -2056,7 +2056,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۳۱</b> · انتشار: ۱۴۰۵/۰۶/۱۳ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۳۲</b> · انتشار: ۱۴۰۵/۰۶/۱۳ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3810,7 +3810,8 @@ function podAvPrompt(gender){
 }
 async function podOpenAIImage(prompt){
   const key=getVisionKey('openai'); if(!key) throw new Error('no key');
-  const res=await fetch('https://api.openai.com/v1/images/generations',{method:'POST',headers:{'authorization':'Bearer '+key,'content-type':'application/json'},body:JSON.stringify({model:'gpt-image-1',prompt,size:'1024x1024',n:1})});
+  // کیفیتِ «medium» به‌جای پیش‌فرضِ «high»: چهره برای این آواتارِ کوچک کاملاً خوب است ولی حدودِ ۴ برابر ارزان‌تر (~۰.۰۴$ به‌جای ~۰.۱۷$ هر عکس)
+  const res=await fetch('https://api.openai.com/v1/images/generations',{method:'POST',headers:{'authorization':'Bearer '+key,'content-type':'application/json'},body:JSON.stringify({model:'gpt-image-1',prompt,size:'1024x1024',quality:'medium',n:1})});
   if(!res.ok) throw new Error('OpenAI image '+res.status);
   const d=await res.json(); const b64=d&&d.data&&d.data[0]&&d.data[0].b64_json; if(!b64) throw new Error('OpenAI image: empty');
   return 'data:image/png;base64,'+b64;
