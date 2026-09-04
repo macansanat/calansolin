@@ -140,6 +140,9 @@ body.nav-bottom{padding-bottom:100px}
 .pod-vchip.on{border-color:var(--teal);background:var(--teal);color:#03201d;font-weight:600}
 .pod-vgal{max-height:340px;overflow-y:auto;padding:2px}
 .pod-mini-b{padding:3px 9px;border-radius:8px;border:1px solid var(--teal);background:transparent;color:var(--teal);font-size:12px;cursor:pointer;margin-right:6px}
+.pod-cost{background:var(--field);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-top:6px}
+.pod-cost-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:3px 0}
+.pod-cost-row b{font-size:15px}
 .qbg-x{position:absolute;top:14px;left:14px;width:30px;height:30px;border-radius:50%;background:var(--field);border:1px solid var(--line);color:var(--muted);font-size:14px;cursor:pointer;line-height:1}
 .qbg-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
 .qbg-badge{flex:0 0 auto;width:44px;height:44px;border-radius:13px;background:rgba(224,104,95,.16);display:flex;align-items:center;justify-content:center;font-size:22px}
@@ -2056,7 +2059,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۳۲</b> · انتشار: ۱۴۰۵/۰۶/۱۳ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۳۳</b> · انتشار: ۱۴۰۵/۰۶/۱۳ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3390,6 +3393,14 @@ function podContentCfg(cc){ cc=cc||{};
 function podContentSet(key,val){ const c=podCfg().content; c[key]=val; podCfgSet({content:c}); try{ renderPodCfg(); }catch(e){}
   uiToast&&uiToast('✓ ثبت شد — «پخش» یا «🔄 ساختِ دوباره» را بزن تا با تنظیماتِ تازه ساخته شود'); }
 function podCfgSet(patch){ const n=Object.assign(podCfg(), patch||{}); try{ localStorage.setItem(POD_CFG_KEY, JSON.stringify(n)); }catch(e){} return n; }
+// ── شمارندهٔ تخمینیِ هزینهٔ OpenAI (چون API موجودیِ واقعی را به اپ نمی‌دهد) ──
+// نرخ‌های تقریبی (دلار): عکسِ پایهٔ چهره (gpt-image-1 medium)، فریمِ دهان (edit low)، صدا (gpt-4o-mini-tts ~۰.۰۱۵$/دقیقه)
+const POD_COST={ img:0.04, edit:0.02, ttsPerMin:0.015 };
+function podCostGet(){ try{ const o=JSON.parse(localStorage.getItem('pod_cost_v1')||'{}'); return { bal:(typeof o.bal==='number'?o.bal:null), used:(typeof o.used==='number'?o.used:0), at:o.at||'' }; }catch(e){ return {bal:null,used:0,at:''}; } }
+function podCostSave(o){ try{ localStorage.setItem('pod_cost_v1', JSON.stringify(o)); }catch(e){} }
+function podCostAdd(usd){ if(!(usd>0)) return; const o=podCostGet(); o.used=Math.round((o.used+usd)*1e4)/1e4; podCostSave(o); try{ if(document.getElementById('podCfgBody')) renderPodCfg(); }catch(e){} }
+function podCostSetBal(v){ const b=parseFloat(v); const o=podCostGet(); o.bal=(isNaN(b)?null:b); o.used=0; o.at=new Date().toISOString().slice(0,10); podCostSave(o); try{ renderPodCfg(); }catch(e){} }
+function podCostReset(){ const o=podCostGet(); o.used=0; o.at=new Date().toISOString().slice(0,10); podCostSave(o); try{ renderPodCfg(); }catch(e){} }
 // کتابخانهٔ نکاتِ آموزشیِ چرخشی (آموزشی و عمومی — بدون دوز/تشخیص)
 const POD_TOPICS=[
   {t:'شاخصِ گلایسمیِ غذاها',b:'غذاهایی که قندشان آرام آزاد می‌شود، مثل جوِ دوسر، حبوبات و سبزیجات، قند خون را ملایم‌تر بالا می‌برند تا نان و برنجِ سفید.',tip:'یک وعده از نانِ سفید را با نانِ سبوس‌دار یا جو عوض کن و تفاوتِ قندت را ببین.'},
@@ -3687,6 +3698,7 @@ async function podOpenAITTS(text,voice){
     : 'به فارسی کاملاً خودمونی و محاوره‌ای صحبت کن، انگار با یک دوستِ صمیمی داری گپ می‌زنی — طبیعی، گرم، پرانرژی و بی‌تکلف؛ نه مثلِ خواندنِ متن، بلکه مثلِ حرف‌زدنِ واقعیِ روزمره با مکث‌ها و آهنگِ طبیعیِ گفتار.';
   let res=await mk({ model:'gpt-4o-mini-tts', voice, input:text, response_format:'mp3', instructions:instr });
   if(!res.ok){ res=await mk({ model:'tts-1', voice, input:text, response_format:'mp3' }); if(!res.ok) throw new Error('OpenAI TTS '+res.status); }
+  podCostAdd((Math.max(1,(text||'').length)/900)*POD_COST.ttsPerMin);   // تخمینِ دقیقهٔ صدا از طولِ متن (~۹۰۰ نویسه در دقیقه)
   return { buf:await res.arrayBuffer(), type:'audio/mpeg' };
 }
 async function podGeminiTTS(text,voice){
@@ -3814,6 +3826,7 @@ async function podOpenAIImage(prompt){
   const res=await fetch('https://api.openai.com/v1/images/generations',{method:'POST',headers:{'authorization':'Bearer '+key,'content-type':'application/json'},body:JSON.stringify({model:'gpt-image-1',prompt,size:'1024x1024',quality:'medium',n:1})});
   if(!res.ok) throw new Error('OpenAI image '+res.status);
   const d=await res.json(); const b64=d&&d.data&&d.data[0]&&d.data[0].b64_json; if(!b64) throw new Error('OpenAI image: empty');
+  podCostAdd(POD_COST.img);
   return 'data:image/png;base64,'+b64;
 }
 async function podGeminiImage(prompt){
@@ -3991,6 +4004,7 @@ async function podOpenAIEditRegion(baseDataURL, r, what){
   const res=await podFetchTO('https://api.openai.com/v1/images/edits',{method:'POST',headers:{'authorization':'Bearer '+key},body:fd}, 120000);
   if(!res.ok) throw new Error('OpenAI edit '+res.status+' '+(await podErrBody(res)));
   const d=await res.json(); const b64=d&&d.data&&d.data[0]&&d.data[0].b64_json; if(!b64) throw new Error('edit empty');
+  podCostAdd(POD_COST.edit);
   return 'data:image/png;base64,'+b64;
 }
 async function podGeminiEditRegion(baseDataURL, r, what){
@@ -5117,6 +5131,18 @@ function renderPodCfg(){
     h+=`<label class="qbg-lbl" style="margin-top:8px">صدای گوشی</label>`;
     if(!show.length) h+=`<div class="qbg-sub">صدایی روی این مرورگر پیدا نشد (روی iOS صدای فارسی محدود است).</div>`;
     show.forEach((v,i)=>{ h+=`<div class="pod-vrow ${c.dVoice===v.name?'on':''}"><span class="pod-vname">${escVision(v.name)} <span style="color:var(--muted);font-weight:600;font-size:10px">${escVision(v.lang||'')}</span></span><button class="pod-vtest" onclick="podTestDevice(${i})">▶ تست</button><button class="pod-vpick" onclick="podPickDevice(${i})">${c.dVoice===v.name?'✓ انتخاب':'انتخاب'}</button></div>`; });
+  }
+  // برآوردِ هزینهٔ OpenAI (تخمینی — API موجودیِ واقعی را به اپ نمی‌دهد)
+  {
+    const cost=podCostGet(); const rem=(cost.bal!=null)?Math.max(0,cost.bal-cost.used):null;
+    h+=`<label class="qbg-lbl" style="margin-top:16px">💰 برآوردِ هزینهٔ ChatGPT (تخمینی)</label>`;
+    h+=`<div class="pod-cost">`;
+    h+=`<div class="pod-cost-row"><span>مصرفِ تخمینی${cost.at?(' از '+faDigits(cost.at.replace(/-/g,'/'))):''}</span><b style="direction:ltr">$${cost.used.toFixed(2)}</b></div>`;
+    if(rem!=null) h+=`<div class="pod-cost-row"><span>باقی‌ماندهٔ تخمینی</span><b style="direction:ltr;color:${rem<0.5?'var(--amber)':'var(--teal)'}">$${rem.toFixed(2)}</b></div>`;
+    h+=`<div style="display:flex;gap:7px;margin-top:8px"><input id="podBalIn" class="qbg-in" inputmode="decimal" placeholder="موجودیِ فعلی از سایت (مثلاً 0.26)" style="direction:ltr;text-align:left;flex:1" value="${cost.bal!=null?cost.bal:''}"><button class="pod-vpick" onclick="podCostSetBal(document.getElementById('podBalIn').value)">ثبت</button></div>`;
+    h+=`<div style="display:flex;gap:7px;margin-top:6px"><button class="pod-mini-b" style="margin:0" onclick="podCostReset()">↺ صفر کردنِ مصرف</button></div>`;
+    h+=`<div class="qbg-sub" style="margin-top:6px;line-height:1.8">این عدد فقط <b>تخمین</b> است (هر عکس/صدایی که اپ می‌سازد را می‌شمارد)؛ عددِ دقیق در <span style="direction:ltr">platform.openai.com/usage</span> است. موجودیِ فعلی‌ات را وارد کن تا باقی‌مانده تخمین زده شود؛ بعد از شارژ دوباره واردش کن.</div>`;
+    h+=`</div>`;
   }
   } // پایانِ تبِ صدا
   if(tab==='avatar'){
