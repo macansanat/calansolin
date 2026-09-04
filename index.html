@@ -105,9 +105,10 @@ body.nav-bottom{padding-bottom:100px}
 .qbg-box{position:relative;width:100%;max-width:400px;background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 24px 64px rgba(0,0,0,.55)}
 /* مودال بلند (ثبت خوراکی): از بالا و با اسکرول داخلی تا کل فرم روی گوشی برسد */
 #customFoodModal.show{align-items:flex-start}
-#customFoodModal .qbg-box{max-height:calc(100dvh - 32px);max-height:calc(100vh - 32px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-/* مودالِ تنظیماتِ پادکست: ستون؛ فقط بدنه اسکرول شود و دکمهٔ «تمام» همیشه ته و در دسترس بماند */
-#podCfgModal .qbg-box{max-height:calc(100dvh - 24px);max-height:calc(100vh - 24px);display:flex;flex-direction:column;overflow:hidden;padding-top:18px}
+#customFoodModal .qbg-box{max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);max-height:calc(100svh - 32px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+/* مودالِ تنظیماتِ پادکست: ستون؛ فقط بدنه اسکرول شود و ✕ (بالا) و دکمهٔ «تمام» (پایین) همیشه در دسترس بمانند */
+#podCfgModal.show{align-items:flex-start}
+#podCfgModal .qbg-box{max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);max-height:calc(100svh - 32px);display:flex;flex-direction:column;overflow:hidden;padding-top:18px}
 #podCfgModal #podCfgBody{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-top:4px}
 #podCfgModal .qbg-actions{flex:0 0 auto;padding-top:12px;margin-top:10px!important;border-top:1px solid var(--line);position:sticky;bottom:0;background:linear-gradient(180deg,transparent,var(--panel) 40%)}
 /* بندانگشتیِ چهرهٔ مرد/زن در تنظیمات */
@@ -2055,7 +2056,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۳۰</b> · انتشار: ۱۴۰۵/۰۶/۱۳ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۳۱</b> · انتشار: ۱۴۰۵/۰۶/۱۳ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
