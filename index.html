@@ -2217,7 +2217,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۵۰</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۵۱</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3675,7 +3675,8 @@ function podPrompt(mins){
   if(C.tip) struct+="یک نکتهٔ آموزشیِ مفیدِ امروز دربارهٔ دیابت یا متابولیسم که هر روز متفاوت و کاربردی باشد. ";
   if(C.step) struct+="یک قدمِ کوچکِ عملی برای امروز یا فردا. ";
   struct+="در پایان یک جملهٔ کوتاهِ دلگرم‌کننده و خداحافظی.\n";
-  return "تو گویندهٔ پادکستِ روزانهٔ نرم‌افزارِ «"+APP_NAME+"» (یک اپِ آموزشیِ دیابت) به فارسی هستی. نامِ نرم‌افزار دقیقاً «"+APP_NAME+"» است؛ اگر خواستی خوشامد بگویی همین نام را به کار ببر و هرگز نامِ دیگری برای اپ نساز. یک متنِ گفتاری بنویس که وقتی با صدا خوانده شود حدود "+mins+" دقیقه (تقریباً "+words+" کلمه) شود. حتماً به همین اندازه بلند و پرمحتوا باشد.\n"+
+  return "تو گویندهٔ پادکستِ روزانهٔ نرم‌افزارِ «"+APP_NAME+"» (یک اپِ آموزشیِ دیابت) به فارسی هستی. نامِ نرم‌افزار دقیقاً «"+APP_NAME+"» است؛ اگر خواستی خوشامد بگویی همین نام را به کار ببر و هرگز نامِ دیگری برای اپ نساز. یک متنِ گفتاری بنویس که وقتی با صدا خوانده شود حدود "+mins+" دقیقه شود.\n"+
+  "طولِ متن مهم است: باید «حداقل» "+words+" کلمهٔ فارسی باشد (برای "+mins+" دقیقه گفتار). خیلی مهم: زودتر تمام نکن. هر موضوع را کامل باز کن — «چرا»یش را توضیح بده، یک مثالِ روزمره بزن، و یک نکتهٔ کاربردی اضافه کن — تا وقتی به این طول برسی. اگر حس کردی کوتاه شد، عمق و مثال بیشتری بده، نه اینکه ببندی.\n"+
   "لحن: گرم، آرام، انسانی، دلگرم‌کننده و جذاب — انگار داری با یک دوستِ صمیمی حرف می‌زنی. جوری بنویس که شنونده جذب شود و تا آخر گوش بدهد.\n"+
   (C.tone==='formal'
     ? "زبان: فارسیِ معیارِ روان و محترمانه (نوشتاری اما ساده).\n"
@@ -3692,9 +3693,11 @@ async function podcastGenerate(force){
   const anyKey=VISION_PROVIDERS.some(p=>hasAnyKey(p)&&!aiFrozen(p));
   if(online && anyKey){
     try{
-      const prompt=podPrompt(mins); const prov=sectionProvider('podcast'); const maxTok=Math.min(4096, mins*300+400);
-      // متنِ پادکست را با مدلِ ارزان بگیر (OpenAI → gpt-4o-mini) تا هزینه پایین بماند؛ پزشک/تحلیل جدا و باکیفیت‌تر می‌ماند
-      let out=await aiSectionCall('podcast',(pv,key,model)=>callAIText(pv,key,prompt,maxTok,0, model),{onProv:(pv)=>{usedProv=pv;}});
+      const prompt=podPrompt(mins); const prov=sectionProvider('podcast');
+      // فارسی در توکنایزر ~۳ توکن به‌ازای هر کلمه؛ برای «mins» دقیقه (~۱۵۰ کلمه/دقیقه) سقفِ توکن باید سخاوتمند باشد وگرنه متن وسطِ کار قطع می‌شود
+      const maxTok=Math.min(8192, mins*600+800);
+      // متنِ پادکست را با مدلِ ارزان بگیر (OpenAI → gpt-4o-mini) تا هزینه پایین بماند؛ پزشک/تحلیل جدا و باکیفیت‌تر می‌ماند. دمای کمی بالاتر ⇒ روایتِ طبیعی‌تر و طولانی‌تر
+      let out=await aiSectionCall('podcast',(pv,key,model)=>callAIText(pv,key,prompt,maxTok,0.6, model),{onProv:(pv)=>{usedProv=pv;}});
       out=podCleanScript(out);
       if(out && podWordCount(out)>=60) script=out;
     }catch(e){ script=''; }
