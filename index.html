@@ -1665,7 +1665,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div class="card coll closed" id="c-basal">
-  <h2 onclick="toggleCard('c-basal')"><span>💉 انسولین پایه‌ی این روز</span></h2>
+  <h2 onclick="toggleCard('c-basal')"><span>💉 انسولین پایه‌ی این روز (یادآوری)</span></h2>
   <div class="card-body">
   <div class="basal-card" style="background:transparent;border:none;padding:0;margin:0">
     <div class="row">
@@ -1705,8 +1705,77 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     </div>
     <label style="margin-top:12px">ساعت تزریق</label>
     <input type="time" id="basalDayTime" onchange="saveBasalDay()">
-    <div class="formula-note" style="margin-top:8px">انسولین پایه معمولاً روزی یک‌بار (شب یا صبح) زده می‌شود و مستقل از وعده‌هاست.</div>
+    <div class="formula-note" style="margin-top:8px">این فقط <b style="color:var(--teal)">یادآوریِ برنامه</b> است (دوزِ تجویزِ پزشک که باید بزنی)؛ در محاسبه‌ی I:C یا چیزِ دیگری دخالتی ندارد. ثبتِ واقعیِ انسولین را از منوی سریع ← 💉 انسولین انجام بده.</div>
   </div>
+  </div>
+</div>
+
+<div class="card coll closed" id="c-planins">
+  <h2 onclick="toggleCard('c-planins')"><span>💉 برنامه‌ریزیِ انسولینِ این روز (یادآوری)</span></h2>
+  <div class="card-body">
+  <div class="formula-note" style="margin:0 0 12px;border:none;padding:0">انسولین‌های سریعی که پزشک برای این روز تجویز کرده را به‌عنوانِ <b style="color:var(--teal)">برنامه</b> یادداشت کن. این فقط یادآوری است و در I:C یا محاسبات دخالتی ندارد.</div>
+  <div class="row">
+    <div>
+      <label>نوع انسولین</label>
+      <select id="planInsType">
+        <option value="">—</option>
+        <optgroup label="سریع‌الاثر">
+          <option value="اپیدرا">اپیدرا (گلولیزین)</option>
+          <option value="نووراپید">نووراپید / نووولاگ (آسپارت)</option>
+          <option value="هومالوگ">هومالوگ (لیسپرو)</option>
+          <option value="فیاسپ">فیاسپ (آسپارت سریع‌تر)</option>
+          <option value="لیومجو">لیومجو (لیسپرو سریع‌تر)</option>
+        </optgroup>
+        <optgroup label="کوتاه‌اثر">
+          <option value="رگولار">رگولار / اکترپید (R)</option>
+          <option value="هومولین R">هومولین R</option>
+        </optgroup>
+      </select>
+    </div>
+    <div>
+      <label>دوز (واحد)</label>
+      <div class="stepper">
+        <button type="button" onclick="stepById('planInsDose',-1,0.5)">−</button>
+        <input type="number" id="planInsDose" min="0" step="0.5" placeholder="مثلاً 6" inputmode="decimal">
+        <button type="button" onclick="stepById('planInsDose',1,0.5)">+</button>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:10px"><label>ساعت</label><input type="time" id="planInsTime"></div>
+  <button class="add-btn" style="margin-top:12px;width:100%" onclick="addPlanIns()">➕ افزودن به برنامه</button>
+  <div id="planInsList" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<div class="card coll closed" id="c-planex">
+  <h2 onclick="toggleCard('c-planex')"><span>🏃 برنامه‌ریزیِ ورزشِ این روز</span></h2>
+  <div class="card-body">
+  <div class="formula-note" style="margin:0 0 12px;border:none;padding:0">ورزش‌هایی که برای این روز برنامه‌ریزی کرده‌ای را اضافه کن. این هم فقط یادآوری/برنامه است.</div>
+  <div class="row">
+    <div>
+      <label>نوع ورزش</label>
+      <select id="planExType">
+        <option value="پیاده‌روی">پیاده‌روی</option>
+        <option value="دویدن">دویدن</option>
+        <option value="دوچرخه">دوچرخه</option>
+        <option value="شنا">شنا</option>
+        <option value="بدنسازی">بدنسازی</option>
+        <option value="یوگا/کششی">یوگا / کششی</option>
+        <option value="ورزشِ دیگر">ورزشِ دیگر</option>
+      </select>
+    </div>
+    <div>
+      <label>مدت (دقیقه)</label>
+      <div class="stepper">
+        <button type="button" onclick="stepById('planExDur',-1,5)">−</button>
+        <input type="number" id="planExDur" min="0" step="5" placeholder="مثلاً 30" inputmode="numeric">
+        <button type="button" onclick="stepById('planExDur',1,5)">+</button>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:10px"><label>ساعت</label><input type="time" id="planExTime"></div>
+  <button class="add-btn" style="margin-top:12px;width:100%" onclick="addPlanEx()">➕ افزودن به برنامه</button>
+  <div id="planExList" style="margin-top:12px"></div>
   </div>
 </div>
 
@@ -2145,7 +2214,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۴۶</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۴۷</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -8564,6 +8633,8 @@ function renderWeek(){
 function renderDay(){
   renderSavedMeals();
   loadBasalDay();
+  renderPlanIns();
+  renderPlanEx();
   updateCalibration();
   document.getElementById('planPickedFoods').innerHTML='';
   window._planPicked=[];
@@ -8588,6 +8659,70 @@ function loadBasalDay(){
   document.getElementById('basalDayType').value=b.type||'';
   document.getElementById('basalDayDose').value=b.dose||'';
   document.getElementById('basalDayTime').value=b.time||'';
+}
+
+/* ===== برنامه‌ریزیِ انسولین و ورزشِ روز (فقط یادآوری — بی‌اثر در I:C) ===== */
+function addPlanIns(){
+  const key=dayKeySel();
+  const type=document.getElementById('planInsType').value;
+  const dose=document.getElementById('planInsDose').value;
+  const time=document.getElementById('planInsTime').value;
+  if(!type && !dose && !time){ alert('نوع، دوز یا ساعتِ انسولین را وارد کن.'); return; }
+  if(!planData['_planIns']) planData['_planIns']={};
+  if(!Array.isArray(planData['_planIns'][key])) planData['_planIns'][key]=[];
+  planData['_planIns'][key].push({type,dose,time,id:Date.now()});
+  savePlan();
+  document.getElementById('planInsType').value='';
+  document.getElementById('planInsDose').value='';
+  document.getElementById('planInsTime').value='';
+  renderPlanIns();
+}
+function delPlanIns(id){
+  const key=dayKeySel();
+  const arr=(planData['_planIns']||{})[key]; if(!Array.isArray(arr)) return;
+  planData['_planIns'][key]=arr.filter(x=>x.id!==id); savePlan(); renderPlanIns();
+}
+function renderPlanIns(){
+  const c=document.getElementById('planInsList'); if(!c) return;
+  const key=dayKeySel();
+  const arr=(planData['_planIns']||{})[key]||[];
+  if(!arr.length){ c.innerHTML='<div class="empty-day">هنوز انسولینی برای این روز برنامه‌ریزی نشده.</div>'; return; }
+  const sorted=arr.slice().sort((a,b)=>(a.time||'99').localeCompare(b.time||'99'));
+  c.innerHTML=sorted.map(x=>`<div class="saved-meal"><div class="top">
+    <span class="mtype">💉 ${x.type||'انسولین'}${x.dose?` <span class="mtime">${x.dose} واحد</span>`:''}${x.time?` <span class="mtime">${x.time}</span>`:''}</span>
+    <button class="del-meal" onclick="delPlanIns(${x.id})">حذف</button>
+  </div></div>`).join('');
+}
+function addPlanEx(){
+  const key=dayKeySel();
+  const type=document.getElementById('planExType').value;
+  const dur=document.getElementById('planExDur').value;
+  const time=document.getElementById('planExTime').value;
+  if(!type && !dur && !time){ alert('نوع، مدت یا ساعتِ ورزش را وارد کن.'); return; }
+  if(!planData['_planEx']) planData['_planEx']={};
+  if(!Array.isArray(planData['_planEx'][key])) planData['_planEx'][key]=[];
+  planData['_planEx'][key].push({type,dur,time,id:Date.now()});
+  savePlan();
+  document.getElementById('planExType').value='';
+  document.getElementById('planExDur').value='';
+  document.getElementById('planExTime').value='';
+  renderPlanEx();
+}
+function delPlanEx(id){
+  const key=dayKeySel();
+  const arr=(planData['_planEx']||{})[key]; if(!Array.isArray(arr)) return;
+  planData['_planEx'][key]=arr.filter(x=>x.id!==id); savePlan(); renderPlanEx();
+}
+function renderPlanEx(){
+  const c=document.getElementById('planExList'); if(!c) return;
+  const key=dayKeySel();
+  const arr=(planData['_planEx']||{})[key]||[];
+  if(!arr.length){ c.innerHTML='<div class="empty-day">هنوز ورزشی برای این روز برنامه‌ریزی نشده.</div>'; return; }
+  const sorted=arr.slice().sort((a,b)=>(a.time||'99').localeCompare(b.time||'99'));
+  c.innerHTML=sorted.map(x=>`<div class="saved-meal"><div class="top">
+    <span class="mtype">🏃 ${x.type||'ورزش'}${x.dur?` <span class="mtime">${x.dur} دقیقه</span>`:''}${x.time?` <span class="mtime">${x.time}</span>`:''}</span>
+    <button class="del-meal" onclick="delPlanEx(${x.id})">حذف</button>
+  </div></div>`).join('');
 }
 
 /* لیست غذاهای انتخاب‌شده برای وعده‌ی در حال ساخت */
@@ -8824,7 +8959,7 @@ function saveMealEntry(){
   if(foods.length===0 && !time){ alert('حداقل یک غذا یا ساعت وارد کنید.'); return; }
   if(!planData[key]) planData[key]=[];
   if(!Array.isArray(planData[key])) planData[key]=[]; // مهاجرت از فرمت قدیمی
-  planData[key].push({type,time,insType,insDose,carb,bgBefore,bgAfter,peak,trough,foods,id:Date.now()});
+  planData[key].push({type,time,insType,insDose,carb,bgBefore,bgAfter,peak,trough,foods,planned:true,id:Date.now()});
   savePlan();
   // ریست فرم
   window._planPicked=[]; renderPickedFoods();
@@ -8837,20 +8972,16 @@ function renderSavedMeals(){
   const key=dayKey(d);
   const list=Array.isArray(planData[key])?planData[key]:[];
   const c=document.getElementById('savedMeals');
-  if(list.length===0){ c.innerHTML='<div class="empty-day">هنوز وعده‌ای برای این روز ثبت نشده.</div>'; return; }
-  const sorted=list.slice().sort((a,b)=>(a.time||'99').localeCompare(b.time||'99'));
-  c.innerHTML=sorted.map(m=>{
+  const sortT=(a,b)=>(a.time||'99').localeCompare(b.time||'99');
+  // فلگِ صریح planned؛ برای دادهٔ قدیمی (بدونِ فلگ) اگر انسولین/قند نداشت = برنامه‌ریزی‌شده تلقی می‌شود تا قابلِ ویرایش بماند
+  const isPlanned=m=>m.planned===true || (m.planned===undefined && !m.insType && !m.insDose && !m.bgBefore && !m.bgAfter && !m.peak && !m.trough);
+  const planned=list.filter(isPlanned).slice().sort(sortT);
+  const logged =list.filter(m=>!isPlanned(m)).slice().sort(sortT);
+  // کارتِ وعده‌ی برنامه‌ریزی‌شده (قابلِ ویرایش/حذف)
+  const plannedCard=m=>{
     if(window._editingMeal===m.id) return editMealForm(key,m);
     const foodsTxt=(m.foods&&m.foods.length)?m.foods.join(' + '):'—';
-    const insTxt=(m.insType||m.insDose)?`💉 <b>${m.insType||''} ${m.insDose?m.insDose+' واحد':''}</b>`:'';
-    // نمایش اطلاعات کالیبراسیون اگر موجود
-    let dataChips=[];
-    if(m.carb) dataChips.push(`کرب: ${m.carb}گ`);
-    if(m.bgBefore) dataChips.push(`قند قبل: ${m.bgBefore}`);
-    if(m.bgAfter) dataChips.push(`قند بعد: ${m.bgAfter}`);
-    if(m.peak) dataChips.push(`پیک: ${m.peak}`);
-    if(m.trough) dataChips.push(`کمترین: ${m.trough}`);
-    const chipsHtml=dataChips.length?`<div class="meal-chips">${dataChips.map(x=>`<span class="mchip">${x}</span>`).join('')}</div>`:'';
+    const carbTxt=m.carb?`<div class="meal-chips"><span class="mchip">کرب: ${m.carb}گ</span></div>`:'';
     const copyBtn=(m.foods&&m.foods.length)?`<button class="copy-meal-btn" onclick='copyFoodsToClipboard(${JSON.stringify(m.foods).replace(/'/g,"&#39;")},this)'>📋 کپی خوراکی‌ها</button>`:'';
     return `<div class="saved-meal">
       <div class="top">
@@ -8861,11 +8992,43 @@ function renderSavedMeals(){
         </div>
       </div>
       <div class="foods">${foodsTxt}</div>
-      ${insTxt?`<div class="ins">${insTxt}</div>`:''}
-      ${chipsHtml}
+      ${carbTxt}
       ${copyBtn}
     </div>`;
-  }).join('');
+  };
+  // کارتِ وعده‌ی ثبت‌شده‌ی واقعی (فقط برای مقایسه — بدونِ ویرایش/حذف)
+  const loggedCard=m=>{
+    const foodsTxt=(m.foods&&m.foods.length)?m.foods.join(' + '):'—';
+    const insTxt=(m.insType||m.insDose)?`💉 <b>${m.insType||''} ${m.insDose?m.insDose+' واحد':''}</b>`:'';
+    let dataChips=[];
+    if(m.carb) dataChips.push(`کرب: ${m.carb}گ`);
+    if(m.bgBefore) dataChips.push(`قند قبل: ${m.bgBefore}`);
+    if(m.bgAfter) dataChips.push(`قند بعد: ${m.bgAfter}`);
+    if(m.peak) dataChips.push(`پیک: ${m.peak}`);
+    if(m.trough) dataChips.push(`کمترین: ${m.trough}`);
+    const chipsHtml=dataChips.length?`<div class="meal-chips">${dataChips.map(x=>`<span class="mchip">${x}</span>`).join('')}</div>`:'';
+    return `<div class="saved-meal" style="opacity:.9">
+      <div class="top">
+        <span class="mtype">${m.type}${m.time?` <span class="mtime">${m.time}</span>`:''}</span>
+        <span style="font-size:11px;color:var(--muted)">ثبتِ واقعی</span>
+      </div>
+      <div class="foods">${foodsTxt}</div>
+      ${insTxt?`<div class="ins">${insTxt}</div>`:''}
+      ${chipsHtml}
+    </div>`;
+  };
+  let html='';
+  if(planned.length){
+    html+=`<div class="formula-note" style="margin:0 0 8px;border:none;padding:0">🗓 وعده‌های <b style="color:var(--teal)">برنامه‌ریزی‌شده</b>ی این روز:</div>`;
+    html+=planned.map(plannedCard).join('');
+  } else {
+    html+='<div class="empty-day">هنوز وعده‌ای برای این روز برنامه‌ریزی نشده. از فرمِ بالا اضافه کن.</div>';
+  }
+  if(logged.length){
+    html+=`<div class="formula-note" style="margin-top:16px">🍽 وعده‌های <b style="color:var(--amber)">ثبت‌شده‌ی واقعی</b> (فقط برای مقایسه — ویرایش/حذفشان از منوی سریع یا تایم‌لاینِ روزانه):</div>`;
+    html+=logged.map(loggedCard).join('');
+  }
+  c.innerHTML=html;
 }
 function editMealForm(key,m){
   // آماده‌سازی غذاهای در حال ویرایش
@@ -14313,12 +14476,17 @@ function buildHealthSnapshot(scope){
     const ordered=lc.lines.filter(isAbn).concat(lc.lines.filter(l=>!isAbn(l)));
     const shown=ordered.slice(0,45);   // سقفِ منطقی برای توکن
     L.push('آخرین آزمایش ('+lc.date+' — همه‌ی مقادیر ثبت‌شده'+(ordered.length>shown.length?('؛ '+shown.length+' مورد از '+ordered.length):'')+'): '+shown.join(' ؛ ')); } }catch(e){}
-  // برنامهٔ پیشِ‌روِ کاربر (وعده‌های ثبت‌شده برای روزهای آینده = برنامه‌ریزیِ غذایی) — تا هوش مصنوعی بتواند دربارهٔ برنامه هم نظر بدهد
-  try{ const t0=new Date(); t0.setHours(0,0,0,0); const up=[];
-    for(let k=0;k<=2;k++){ const d=new Date(t0); d.setDate(d.getDate()+k); const key=(typeof dayKey==='function')?dayKey(d):null; const arr=key&&planData[key];
-      if(Array.isArray(arr)&&arr.length){ const items=arr.filter(m=>m.foods&&m.foods.length).map(m=>(m.type||'وعده')+(m.time?(' '+m.time):'')+': '+m.foods.join('، ')+(m.carb?(' ('+m.carb+'گ کرب)'):''));
-        if(items.length) up.push((k===0?'امروز':k===1?'فردا':'پس‌فردا')+' — '+items.join(' | ')); } }
-    if(up.length) L.push('برنامهٔ غذاییِ پیشِ‌روِ کاربر (برنامه‌ریزی‌شده): '+up.join('؛ '));
+  // برنامهٔ پیشِ‌روِ کاربر (وعده‌ها/انسولین/ورزشِ برنامه‌ریزی‌شده برای روزهای آینده) — تا هوش مصنوعی دربارهٔ برنامه هم نظر بدهد
+  try{ const t0=new Date(); t0.setHours(0,0,0,0); const up=[]; const dn=k=>(k===0?'امروز':k===1?'فردا':'پس‌فردا');
+    const pins=planData._planIns||{}, pex=planData._planEx||{};
+    for(let k=0;k<=2;k++){ const d=new Date(t0); d.setDate(d.getDate()+k); const key=(typeof dayKey==='function')?dayKey(d):null; if(!key) continue;
+      const arr=planData[key]; const parts=[];
+      if(Array.isArray(arr)&&arr.length){ const items=arr.filter(m=>m.planned&&m.foods&&m.foods.length).map(m=>(m.type||'وعده')+(m.time?(' '+m.time):'')+': '+m.foods.join('، ')+(m.carb?(' ('+m.carb+'گ کرب)'):''));
+        if(items.length) parts.push('وعده‌ها: '+items.join(' | ')); }
+      const ins=pins[key]; if(Array.isArray(ins)&&ins.length){ parts.push('انسولین: '+ins.map(x=>(x.type||'')+(x.dose?(' '+x.dose+'و'):'')+(x.time?(' '+x.time):'')).join('، ')); }
+      const ex=pex[key]; if(Array.isArray(ex)&&ex.length){ parts.push('ورزش: '+ex.map(x=>(x.type||'')+(x.dur?(' '+x.dur+'دق'):'')+(x.time?(' '+x.time):'')).join('، ')); }
+      if(parts.length) up.push(dn(k)+' — '+parts.join(' ؛ ')); }
+    if(up.length) L.push('برنامهٔ پیشِ‌روِ کاربر (برنامه‌ریزی‌شده): '+up.join(' || '));
   }catch(e){}
   return { label:w.label, text:L.join('\n') };
 }
