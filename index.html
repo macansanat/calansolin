@@ -88,17 +88,18 @@ body.nav-bottom{padding-bottom:100px}
 .bnav-fab:hover{box-shadow:0 8px 26px rgba(63,185,163,.6)}
 .bnav-fab:active{transform:scale(.88) rotate(90deg)}
 /* شبکه‌ی ثبت سریع (bottom sheet) — باز و بسته‌ی نرم */
-.qa-overlay{position:fixed;inset:0;z-index:110;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;opacity:0;visibility:hidden;transition:opacity .26s ease,visibility .26s ease}
+.qa-overlay{position:fixed;inset:0;z-index:110;background:rgba(0,0,0,.5);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;align-items:flex-end;opacity:0;visibility:hidden;transition:opacity .26s ease,visibility .26s ease}
 .qa-overlay.show{opacity:1;visibility:visible}
-.qa-sheet{width:100%;max-width:760px;margin:0 auto;background:var(--panel);border-radius:24px 24px 0 0;border-top:1px solid var(--line);padding:14px 18px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -12px 44px rgba(0,0,0,.55);transform:translateY(105%);transition:transform .34s cubic-bezier(.22,1,.36,1)}
+.qa-sheet{width:100%;max-width:760px;margin:0 auto;background:var(--panel);background:color-mix(in srgb, var(--panel) 78%, transparent);-webkit-backdrop-filter:blur(26px) saturate(1.6);backdrop-filter:blur(26px) saturate(1.6);border-radius:26px 26px 0 0;border-top:1px solid rgba(255,255,255,.14);padding:12px 18px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -16px 50px rgba(0,0,0,.5);transform:translateY(105%);transition:transform .34s cubic-bezier(.22,1,.36,1);max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);max-height:calc(100svh - 40px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .qa-overlay.show .qa-sheet{transform:translateY(0)}
-.qa-grip{width:42px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 14px}
+.qa-grip{width:42px;height:5px;border-radius:3px;background:var(--line);opacity:.7;margin:2px auto 16px;position:sticky;top:0}
 .qa-title{font-size:15.5px;font-weight:800;text-align:center;margin-bottom:18px}
-.qa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 8px;margin-bottom:16px}
-.qa-item{display:flex;flex-direction:column;align-items:center;gap:9px;background:transparent;border:none;font-family:inherit;color:var(--ink);font-size:12.5px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.qa-item .qa-ico{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:27px;box-shadow:0 3px 12px rgba(0,0,0,.28);transition:transform .12s}
-.qa-item:active .qa-ico{transform:scale(.88)}
-.qa-cancel{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--muted);border-radius:13px;padding:13px;font-family:inherit;font-weight:700;font-size:13.5px;cursor:pointer}
+.qa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px 8px;margin-bottom:16px}
+.qa-item{display:flex;flex-direction:column;align-items:center;gap:10px;background:transparent;border:none;font-family:inherit;color:var(--ink);font-size:12.5px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.qa-item .qa-ico{position:relative;overflow:hidden;width:62px;height:62px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:27px;border:1px solid rgba(255,255,255,.12);box-shadow:0 8px 20px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.22), inset 0 -8px 16px rgba(0,0,0,.16);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:transform .14s cubic-bezier(.22,1,.36,1),box-shadow .14s}
+.qa-item .qa-ico::after{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(155deg,rgba(255,255,255,.28),rgba(255,255,255,0) 46%);pointer-events:none}
+.qa-item:active .qa-ico{transform:scale(.9) translateY(1px);box-shadow:0 4px 12px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.2)}
+.qa-cancel{width:100%;background:color-mix(in srgb, var(--panel-2) 70%, transparent);background:var(--panel-2);border:1px solid rgba(255,255,255,.1);color:var(--muted);border-radius:15px;padding:14px;font-family:inherit;font-weight:800;font-size:13.5px;cursor:pointer;position:sticky;bottom:0}
 /* فرم سریع قند خون */
 .qbg-modal{display:none;position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.6);padding:16px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
 .qbg-modal.show{display:flex;align-items:center;justify-content:center}
@@ -2104,7 +2105,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۳۸</b> · انتشار: ۱۴۰۵/۰۶/۱۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۳۹</b> · انتشار: ۱۴۰۵/۰۶/۱۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -2120,7 +2121,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 // وقتی پاپ‌آپ باز است بدنه position:fixed می‌شود تا فقط خودِ پاپ‌آپ اسکرول بخورد؛ سرِ بسته‌شدن جای اسکرول برمی‌گردد.
 (function(){
   var locked=false, savedY=0;
-  function anyOpen(){ return !!document.querySelector('.qbg-modal.show, .lab-modal.show'); }
+  function anyOpen(){ return !!document.querySelector('.qbg-modal.show, .lab-modal.show, .qa-overlay.show'); }
   function apply(){
     var open=anyOpen(), b=document.body;
     if(open&&!locked){ savedY=window.scrollY||window.pageYOffset||0;
@@ -2130,7 +2131,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   }
   function start(){
     var obs=new MutationObserver(apply);
-    document.querySelectorAll('.qbg-modal, .lab-modal').forEach(function(m){ obs.observe(m,{attributes:true,attributeFilter:['class']}); });
+    document.querySelectorAll('.qbg-modal, .lab-modal, .qa-overlay').forEach(function(m){ obs.observe(m,{attributes:true,attributeFilter:['class']}); });
     apply();
   }
   if(document.readyState!=='loading') start(); else document.addEventListener('DOMContentLoaded', start);
