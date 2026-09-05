@@ -1059,6 +1059,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <div class="qa-grid">
       <button class="qa-item" onclick="quickAdd('startworkout')"><span class="qa-ico" style="background:rgba(63,185,163,.18);color:#5fd3bd">🏃</span>شروع ورزش</button>
       <button class="qa-item" onclick="quickAdd('calc')"><span class="qa-ico" style="background:rgba(63,185,163,.14);color:#5fd3bd">🧮</span>حساب دوز</button>
+      <button class="qa-item" onclick="quickAdd('iccalib')"><span class="qa-ico" style="background:rgba(63,185,163,.18);color:#5fd3bd">🎯</span>تخمین I:C</button>
       <button class="qa-item" onclick="quickAdd('plan')"><span class="qa-ico" style="background:rgba(224,163,85,.14);color:#e9b877">📔</span>دفترچه روزانه</button>
       <button class="qa-item" onclick="quickAdd('lab')"><span class="qa-ico" style="background:rgba(154,134,224,.18);color:#c3b4f0">🧪</span>آزمایش</button>
       <button class="qa-item" onclick="quickAdd('cgmfile')"><span class="qa-ico" style="background:rgba(63,185,163,.14);color:#5fd3bd">📈</span>فایل CGM</button>
@@ -1100,6 +1101,15 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <div><label class="qbg-lbl">تاریخ (شمسی)</label><div id="qbgDateWrap"></div></div>
       <div><label class="qbg-lbl">ساعت</label><input type="time" id="qbgTimeH" class="qbg-in"></div>
     </div>
+    <label class="qbg-lbl" style="margin-top:12px">این قند برای چه زمانی است؟ <span style="color:var(--muted);font-weight:400">(کمک به تخمینِ I:C)</span></label>
+    <div class="qseg qbg-tags" id="qbgTag">
+      <button type="button" data-v="random" class="on" onclick="qbgPickTag(this)">🎲 رندم</button>
+      <button type="button" data-v="pre" onclick="qbgPickTag(this)">🍽️ قبلِ وعده</button>
+      <button type="button" data-v="post1" onclick="qbgPickTag(this)">۱ساعت بعد</button>
+      <button type="button" data-v="post2" onclick="qbgPickTag(this)">۲ساعت بعد</button>
+      <button type="button" data-v="post3" onclick="qbgPickTag(this)">۳ساعت بعد</button>
+    </div>
+    <div id="qbgMealWrap" style="display:none;margin-top:10px"><label class="qbg-lbl">کدام وعده؟</label><select id="qbgMeal" class="qbg-in"><option value="صبحانه">صبحانه</option><option value="ناهار">ناهار</option><option value="شام">شام</option><option value="میان‌وعده">میان‌وعده</option></select></div>
     <div class="qbg-actions">
       <button class="qbg-cancel" onclick="closeQuickBG()">لغو</button>
       <button class="qbg-save" onclick="saveQuickBG()">💾 ذخیره</button>
@@ -1122,9 +1132,11 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <label class="qbg-lbl">دوز (واحد)</label>
     <input type="number" id="qinsDose" class="qbg-in" inputmode="decimal" step="0.5" placeholder="مثلاً ۶" style="margin-bottom:14px">
     <div id="qinsCarbWrap">
+      <label class="qbg-lbl">برای کدام وعده؟ <span style="color:var(--muted);font-weight:400">(برای تخمینِ I:C)</span></label>
+      <select id="qinsMeal" class="qbg-in" style="margin-bottom:10px"><option value="">— انتخاب نشده —</option><option value="صبحانه">صبحانه</option><option value="ناهار">ناهار</option><option value="شام">شام</option><option value="میان‌وعده">میان‌وعده</option></select>
       <label class="qbg-lbl">کربوهیدرات وعده (اختیاری — برای محاسبه‌ی I:C)</label>
       <input type="number" id="qinsCarb" class="qbg-in" inputmode="decimal" placeholder="گرم — اگر همراه غذا بود" style="margin-bottom:6px">
-      <div class="qins-note">اگر این انسولین سریع برای یک وعده‌ی غذایی بود، کربوهیدرات آن وعده را وارد کن تا در محاسبه‌ی I:C تخمینی حساب شود.</div>
+      <div class="qins-note">اگر برای یک وعده است، «کدام وعده» را انتخاب کن تا به قند و کربوهیدراتِ همان وعده وصل و در تخمینِ I:C استفاده شود.</div>
     </div>
     <div class="qbg-grid">
       <div><label class="qbg-lbl">تاریخ (شمسی)</label><div id="qinsDateWrap"></div></div>
@@ -1575,49 +1587,55 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
         </div>
       </div>
     </div>
-    <div class="row" style="margin-top:10px">
-      <div>
-        <label>کربوهیدرات وعده (گرم)</label>
-        <div class="stepper">
-          <button type="button" onclick="stepById('mealCarb',-1,5)">−</button>
-          <input type="number" id="mealCarb" min="0" step="5" placeholder="مثلاً 55" inputmode="numeric">
-          <button type="button" onclick="stepById('mealCarb',1,5)">+</button>
-        </div>
-      </div>
-      <div>
-        <label>قند قبل غذا (mg/dL)</label>
-        <div class="stepper">
-          <button type="button" onclick="stepById('mealBGbefore',-1,5)">−</button>
-          <input type="number" id="mealBGbefore" min="20" max="600" placeholder="مثلاً 90" inputmode="numeric">
-          <button type="button" onclick="stepById('mealBGbefore',1,5)">+</button>
-        </div>
+    <div style="margin-top:10px">
+      <label>کربوهیدرات وعده (گرم)</label>
+      <div class="stepper">
+        <button type="button" onclick="stepById('mealCarb',-1,5)">−</button>
+        <input type="number" id="mealCarb" min="0" step="5" placeholder="مثلاً 55" inputmode="numeric">
+        <button type="button" onclick="stepById('mealCarb',1,5)">+</button>
       </div>
     </div>
-    <label style="margin-top:10px">قند ۲ ساعت بعد غذا (mg/dL) — برای کالیبراسیون</label>
-    <div class="stepper">
-      <button type="button" onclick="stepById('mealBGafter',-1,5)">−</button>
-      <input type="number" id="mealBGafter" min="20" max="600" placeholder="مثلاً 120" inputmode="numeric">
-      <button type="button" onclick="stepById('mealBGafter',1,5)">+</button>
-    </div>
-    <div class="row" style="margin-top:10px">
-      <div>
-        <label>پیک (بالاترین قند) — اختیاری</label>
-        <div class="stepper">
-          <button type="button" onclick="stepById('mealPeak',-1,5)">−</button>
-          <input type="number" id="mealPeak" min="20" max="600" placeholder="مثلاً 149" inputmode="numeric">
-          <button type="button" onclick="stepById('mealPeak',1,5)">+</button>
+    <details style="margin-top:12px">
+      <summary style="cursor:pointer;font-size:13px;color:var(--teal);font-weight:700">🩸 قند و کالیبراسیون (اختیاری)</summary>
+      <div class="formula-note" style="margin:8px 0">بهتره قندها را از منوی سریعِ «🩸 قند» با تگِ «قبلِ وعده» و «۲ساعت بعد» ثبت کنی تا خودکار به همین وعده وصل شوند و در تخمینِ I:C بیایند. اگر خواستی، همین‌جا هم می‌توانی مستقیم وارد کنی.</div>
+      <div class="row">
+        <div>
+          <label>قند قبل غذا (mg/dL)</label>
+          <div class="stepper">
+            <button type="button" onclick="stepById('mealBGbefore',-1,5)">−</button>
+            <input type="number" id="mealBGbefore" min="20" max="600" placeholder="مثلاً 90" inputmode="numeric">
+            <button type="button" onclick="stepById('mealBGbefore',1,5)">+</button>
+          </div>
+        </div>
+        <div>
+          <label>قند ۲ ساعت بعد (mg/dL)</label>
+          <div class="stepper">
+            <button type="button" onclick="stepById('mealBGafter',-1,5)">−</button>
+            <input type="number" id="mealBGafter" min="20" max="600" placeholder="مثلاً 120" inputmode="numeric">
+            <button type="button" onclick="stepById('mealBGafter',1,5)">+</button>
+          </div>
         </div>
       </div>
-      <div>
-        <label>کمترین قند تا ۴ ساعت — اختیاری</label>
-        <div class="stepper">
-          <button type="button" onclick="stepById('mealTrough',-1,5)">−</button>
-          <input type="number" id="mealTrough" min="20" max="600" placeholder="مثلاً 95" inputmode="numeric">
-          <button type="button" onclick="stepById('mealTrough',1,5)">+</button>
+      <div class="row" style="margin-top:10px">
+        <div>
+          <label>پیک (بالاترین قند) — اختیاری</label>
+          <div class="stepper">
+            <button type="button" onclick="stepById('mealPeak',-1,5)">−</button>
+            <input type="number" id="mealPeak" min="20" max="600" placeholder="مثلاً 149" inputmode="numeric">
+            <button type="button" onclick="stepById('mealPeak',1,5)">+</button>
+          </div>
+        </div>
+        <div>
+          <label>کمترین قند تا ۴ ساعت — اختیاری</label>
+          <div class="stepper">
+            <button type="button" onclick="stepById('mealTrough',-1,5)">−</button>
+            <input type="number" id="mealTrough" min="20" max="600" placeholder="مثلاً 95" inputmode="numeric">
+            <button type="button" onclick="stepById('mealTrough',1,5)">+</button>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="formula-note" style="margin-top:6px">💡 وارد کردن کربوهیدرات و قند قبل/بعد، به برنامه کمک می‌کند «کالیبراسیون I:C» را از تجربه‌ی واقعی بدنت یاد بگیرد. پیک و کمترین قند (اختیاری) دقت را بالا می‌برند: وعده‌های با پیک بالای ۱۸۰ یا افت زیر ۷۰ از کالیبراسیون کنار گذاشته می‌شوند.</div>
+      <div class="formula-note" style="margin-top:6px">وعده‌های با پیکِ بالای ۲۵۰ یا افتِ زیر ۶۰ از کالیبراسیون کنار گذاشته می‌شوند.</div>
+    </details>
     <button class="add-btn" style="margin-top:14px;width:100%" onclick="saveMealEntry()">💾 ذخیره‌ی وعده</button>
   </div>
   </div>
@@ -2086,7 +2104,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۳۷</b> · انتشار: ۱۴۰۵/۰۶/۱۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۳۸</b> · انتشار: ۱۴۰۵/۰۶/۱۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -6299,6 +6317,7 @@ function quickAdd(type){
   else if(type==='lab') go('labs','c-labs-entry');
   else if(type==='cgmfile') go('profile','c-cgmup');
   else if(type==='calc'){ switchTab('calc'); }
+  else if(type==='iccalib'){ go('plan','c-calib'); setTimeout(()=>{ try{ updateCalibration(); }catch(e){} },120); }
   else if(type==='plan'){ switchTab('plan'); }
   else if(type==='chat'){ switchTab('chat'); }
   else if(type==='aihistory'){ switchTab('aihistory'); }
@@ -6783,8 +6802,9 @@ function saveQuickInsulin(){
   }else{
     const carbRaw=faToEnDigits((document.getElementById('qinsCarb').value||'').trim());
     const carb=carbRaw?parseFloat(carbRaw):'';
+    const insMeal=(document.getElementById('qinsMeal')||{}).value||'';
     if(!Array.isArray(planData[key])) planData[key]=[];
-    planData[key].push({type:(carb?'انسولین + وعده':'انسولین سریع'), time:tstr, insType:name, insDose:String(dose), carb:(carb||''), bgBefore:'', bgAfter:'', peak:'', trough:'', foods:[], id:Date.now()});
+    planData[key].push({type:(carb?'انسولین + وعده':'انسولین سریع'), time:tstr, insType:name, insDose:String(dose), carb:(carb||''), mealType:insMeal, bgBefore:'', bgAfter:'', peak:'', trough:'', foods:[], id:Date.now()});
   }
   savePlan();
   closeQEntry('qinsModal');
@@ -6795,6 +6815,8 @@ function saveQuickInsulin(){
   try{ if(typeof renderWeek==='function'){ const pp=document.getElementById('page-plan'); if(pp&&pp.classList.contains('active')) renderWeek(); } }catch(e){}
 }
 /* فرم سریع قند خون دستی → bg_manual_v1 */
+let _qbgTag='random';
+function qbgPickTag(btn){ _qbgTag=btn.getAttribute('data-v'); document.querySelectorAll('#qbgTag button').forEach(b=>b.classList.toggle('on',b===btn)); const w=document.getElementById('qbgMealWrap'); if(w) w.style.display=(_qbgTag==='random')?'none':'block'; }
 function openQuickBG(){
   const m=document.getElementById('qbgModal'); if(!m) return;
   const d=new Date(); const p=n=>String(n).padStart(2,'0');
@@ -6802,6 +6824,7 @@ function openQuickBG(){
   document.getElementById('qbgDateWrap').innerHTML=jDateFieldHTML('qbgDate', jDateStr(j[0],j[1],j[2]));
   document.getElementById('qbgTimeH').value=`${p(d.getHours())}:${p(d.getMinutes())}`;
   document.getElementById('qbgVal').value='';
+  _qbgTag='random'; document.querySelectorAll('#qbgTag button').forEach(b=>b.classList.toggle('on',b.getAttribute('data-v')==='random')); { const w=document.getElementById('qbgMealWrap'); if(w) w.style.display='none'; }
   m.classList.add('show');
   setTimeout(()=>document.getElementById('qbgVal').focus(),50);
 }
@@ -6819,8 +6842,9 @@ function saveQuickBG(){
   if(isNaN(d.getTime())){ alert('زمان معتبر نیست.'); return; }
   const p=n=>String(n).padStart(2,'0');
   const shStr=`${jDateStr(pj[0],pj[1],pj[2])} ${p(hh)}:${p(mm)}`;
+  const bgMeal=(_qbgTag!=='random')?((document.getElementById('qbgMeal')||{}).value||''):'';
   let arr=loadBG();
-  if(!arr.some(x=>x.iso===d.toISOString())) arr.push({time:shStr, iso:d.toISOString(), glu:v, manual:true});
+  if(!arr.some(x=>x.iso===d.toISOString())) arr.push({time:shStr, iso:d.toISOString(), glu:v, manual:true, tag:_qbgTag, meal:bgMeal});
   try{ localStorage.setItem(BGKEY,JSON.stringify(arr)); }catch(e){}
   closeQuickBG();
   uiToast(`✓ قند ${faDigits(String(v))} ثبت شد`);
@@ -8802,11 +8826,15 @@ function collectReviewMeals(){
     list.forEach((m,idx)=>{
       if(m.excludeCalib) return; // کاربر این وعده را کنار گذاشته — در بررسی هم نیاید
       const hasFood = Array.isArray(m.foods) && m.foods.length>0;
-      const carb=parseFloat(m.carb), ins=parseFloat(m.insDose);
+      const R=calibResolveMeal(m,key);   // انسولینِ تگ‌دار جدا هم لحاظ شود تا وعده اشتباهاً «بی‌انسولین» نشود
+      const carb=parseFloat(m.carb), ins=parseFloat(R.insDose);
       const hasIns = !isNaN(ins) && ins>0;
       const foodsTxt=(m.foods||[]).join('، ');
+      // ردیفِ انسولینِ لینک‌شده به یک وعده (بدونِ غذا ولی mealType دارد و وعدهٔ غذاییِ همان اسلات هست) → مشکل نیست
+      const linkedInsRow = !hasFood && (m.mealType||'') && Array.isArray(list) && list.some(x=>x!==m && (x.mealType||'')===(m.mealType||'') && Array.isArray(x.foods) && x.foods.length>0);
       let issue=null;
-      if(hasIns && !hasFood){
+      if(linkedInsRow){ issue=null; }
+      else if((!isNaN(parseFloat(m.insDose))&&parseFloat(m.insDose)>0) && !hasFood){
         issue={type:'no-food', msg:'انسولین زده شده ولی غذا ثبت نشده'};
       } else if(hasFood && !hasIns && ['صبحانه','ناهار','شام'].includes(m.type)){
         // فقط وعده‌های اصلی که انسولین ندارند مهم‌اند — میان‌وعده‌ها طبیعتاً انسولین ندارند
@@ -8962,6 +8990,30 @@ function faToEn(s){
 function getLowCarbCut(){
   return getCalibFilters().lowCarb ? 20 : 0;
 }
+// کلیدِ روز (YYYY-MM-DD) هم‌شکل با کلیدهای planData
+function _ymdKey(d){ const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+// resolver افزایشی: قند/انسولینِ وعده را — فقط اگر خودِ وعده نداشت — از ثبت‌های تگ‌دارِ همان روز+وعده پر می‌کند.
+// عملکردِ IC برای وعده‌هایی که داده‌ی درون‌خطی دارند، دقیقاً بدون تغییر می‌ماند.
+function calibResolveMeal(m, dayKey){
+  let bgB=m.bgBefore, bgA=m.bgAfter, ins=m.insDose, peak=m.peak, trough=m.trough;
+  const slot=m.mealType||'';
+  if(slot){
+    // انسولینِ همان وعده از ثبتِ جداگانه (اگر خودِ وعده انسولین نداشت)
+    if(!(parseFloat(ins)>0)){ const list=planData[dayKey]||[];
+      for(const x of list){ if(x===m) continue; if((x.mealType||'')===slot && parseFloat(x.insDose)>0){ ins=x.insDose; break; } } }
+    // قندِ قبل/بعد از قندهای تگ‌دار (اگر خالی بودند)
+    if(isNaN(parseFloat(bgB))||isNaN(parseFloat(bgA))||isNaN(parseFloat(peak))||isNaN(parseFloat(trough))){
+      let bgs=[]; try{ bgs=(loadBG()||[]).filter(b=>b&&b.iso&&b.meal===slot&&_ymdKey(new Date(b.iso))===dayKey); }catch(e){}
+      if(bgs.length){
+        if(isNaN(parseFloat(bgB))){ const pre=bgs.filter(b=>b.tag==='pre'); if(pre.length) bgB=pre[pre.length-1].glu; }
+        if(isNaN(parseFloat(bgA))){ const p2=bgs.filter(b=>b.tag==='post2'); if(p2.length) bgA=p2[p2.length-1].glu; }
+        const posts=bgs.filter(b=>/^post/.test(b.tag||'')).map(b=>parseFloat(b.glu)).filter(x=>!isNaN(x));
+        if(posts.length){ if(isNaN(parseFloat(peak))) peak=Math.max.apply(0,posts); if(isNaN(parseFloat(trough))) trough=Math.min.apply(0,posts); }
+      }
+    }
+  }
+  return {bgBefore:bgB, bgAfter:bgA, insDose:ins, peak:peak, trough:trough};
+}
 function collectCalibMeals(){
   const out=[];
   const filters = getCalibFilters();
@@ -9008,9 +9060,10 @@ function collectCalibMeals(){
     if(rangeStart&&rangeEnd&&!rangeCutoff){ const d=new Date(key); if(d<rangeStart||d>rangeEnd) continue; }
     list.forEach(m=>{
       if(m.excludeCalib) return; // کاربر این وعده را از محاسبه کنار گذاشته
-      const carb=parseFloat(m.carb), ins=parseFloat(m.insDose);
-      const bgB=parseFloat(m.bgBefore), bgA=parseFloat(m.bgAfter);
-      const peak=parseFloat(m.peak), trough=parseFloat(m.trough);
+      const R=calibResolveMeal(m,key);   // قند/انسولینِ تگ‌دار را فقط اگر وعده نداشت پر می‌کند (IC بدونِ تغییر برای داده‌ی موجود)
+      const carb=parseFloat(m.carb), ins=parseFloat(R.insDose);
+      const bgB=parseFloat(R.bgBefore), bgA=parseFloat(R.bgAfter);
+      const peak=parseFloat(R.peak), trough=parseFloat(R.trough);
       // وعده باید غذای ثبت‌شده داشته باشد — اگر غذا فراموش شده، کرب نامعلوم است و نباید در کالیبراسیون بیاید
       const hasFood = Array.isArray(m.foods) && m.foods.length>0;
       if(hasFood && carb>0 && ins>0 && !isNaN(bgA) && !isNaN(bgB)){
