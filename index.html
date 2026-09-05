@@ -1206,6 +1206,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <div class="qbg-box">
     <button class="qbg-x" onclick="closeQEntry('qmedModal')" title="بستن">✕</button>
     <div class="qbg-head"><span class="qbg-badge" style="background:rgba(154,134,224,.18)">💊</span><div><div class="qbg-title">ثبت دارو</div><div class="qbg-sub">داروی مصرف‌شده را ثبت کن تا سابقه‌اش را داشته باشی.</div></div></div>
+    <div id="qmedSaved" style="display:none"></div>
     <label class="qbg-lbl">نام دارو <span style="color:var(--muted);font-weight:400">(جست‌وجو در کتابخانه یا تایپ دستی)</span></label>
     <div class="food-search-wrap" style="margin-bottom:14px">
       <input type="text" id="qmedName" class="qbg-in" placeholder="مثلاً متفورمین…" autocomplete="off" oninput="medDoSearch('qmed')" onfocus="medDoSearch('qmed')">
@@ -1785,17 +1786,19 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 <div id="cgmResult"></div>
 <div class="card coll closed" id="c-cgmcal">
-  <h2 onclick="toggleCard('c-cgmcal')"><span>🎯 کالیبراسیون CGM با گلوکومتر</span></h2>
+  <h2 onclick="toggleCard('c-cgmcal')"><span>🎯 دقیق‌ترکردنِ قندِ CGM با گلوکومتر</span></h2>
   <div class="card-body">
     <div style="font-size:12.5px;color:var(--muted);margin-bottom:12px;line-height:1.9">
-      دستگاه CGM با گلوکومتر (قند خون انگشتی) کمی تفاوت دارد. این بخش تفاوت را از روی اندازه‌گیری‌های دستی‌ات پیدا می‌کند و یک «افست» پیشنهاد می‌دهد تا قند CGM به واقعیت نزدیک‌تر شود.
+      <b style="color:var(--teal)">این چیست؟</b> سنسورِ CGM معمولاً چند واحد با گلوکومترِ انگشتی فرق دارد. این بخش از روی اندازه‌گیری‌های <b>گلوکومترِ خودت</b> که در همین اپ ثبت کرده‌ای (منوی سریع ← 🩸 قند خون) خطای سنسور را پیدا می‌کند و یک «افست» پیشنهاد می‌دهد تا اعدادِ CGM به واقعیت نزدیک‌تر شوند.
+      <br><span style="color:var(--amber)">توجه:</span> این به I:C ربطی ندارد — فقط <b>دقتِ نمایشِ قند</b> را بهتر می‌کند. (تخمینِ I:C جای دیگری است: منوی سریع ← 🎯 تخمین I:C.)
     </div>
     <div id="cgmCalBody"></div>
   </div>
 </div>
 <div class="card coll closed" id="c-expcalib">
-  <h2 onclick="toggleCard('c-expcalib')"><span>⚗️ کشف رابطه‌ی CGM و گلوکومتر (آزمایشی)</span></h2>
+  <h2 onclick="toggleCard('c-expcalib')"><span>⚗️ کشف رابطه‌ی CGM و گلوکومتر (پیشرفته/آزمایشی)</span></h2>
   <div class="card-body">
+    <div class="formula-note" style="margin-bottom:10px">این نسخهٔ پیشرفتهٔ همان تصحیحِ بالاست (با مدل‌های ریاضیِ مختلف). اگر بخشِ بالا برایت کافی است، به این نیازی نداری.</div>
     <div id="expCalibBody"></div>
   </div>
 </div>
@@ -2072,6 +2075,25 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
   </div>
 </div>
+<div class="card coll" id="c-profile-meds">
+  <h2 onclick="toggleCard('c-profile-meds')"><span>💊 داروهای ثابتِ من</span></h2>
+  <div class="card-body">
+    <div class="formula-note" style="margin-bottom:10px">داروهایی که هر روز مصرف می‌کنی را از کتابخانه اضافه کن و زمانِ تجویزِ پزشک را مشخص کن. بعد در منوی سریع ← 💊 دارو، با یک لمس و بدونِ تایپ ثبتشان می‌کنی. این داروها به هوش مصنوعی هم داده می‌شوند.</div>
+    <div id="myMedsList" style="margin-bottom:12px"></div>
+    <div style="border:1px dashed var(--line);border-radius:12px;padding:12px">
+      <label class="qbg-lbl">افزودنِ دارو</label>
+      <div class="food-search-wrap" style="margin-bottom:10px">
+        <input type="text" id="pmedName" class="qbg-in" placeholder="🔍 جست‌وجو در کتابخانه یا تایپِ دستی…" autocomplete="off" oninput="medDoSearch('pmed')" onfocus="medDoSearch('pmed')">
+        <div class="search-results" id="pmedResults"></div>
+      </div>
+      <input type="text" id="pmedDose" class="qbg-in" placeholder="دوز/تعداد (مثلاً ۵۰۰م‌گ — ۱ قرص)" style="margin-bottom:10px">
+      <label class="qbg-lbl">زمانِ تجویزِ پزشک</label>
+      <div id="pmedTimeChips" class="cond-wrap" style="margin-bottom:8px"></div>
+      <input type="text" id="pmedTiming" class="qbg-in" placeholder="زمان (با لمسِ بالا یا تایپ)" style="margin-bottom:10px">
+      <button class="add-btn" style="width:100%" onclick="myMedsAdd()">➕ افزودن به داروهای من</button>
+    </div>
+  </div>
+</div>
 <div class="card coll" id="c-cgmup">
   <h2 onclick="toggleCard('c-cgmup')"><span><span class="step-num">📈</span>وارد کردن فایل اکسل CGM</span></h2>
   <div class="card-body">
@@ -2159,7 +2181,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۴۳</b> · انتشار: ۱۴۰۵/۰۶/۱۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۴۴</b> · انتشار: ۱۴۰۵/۰۶/۱۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -6377,7 +6399,7 @@ function quickAdd(type){
   else if(type==='chat'){ switchTab('chat'); }
   else if(type==='aihistory'){ switchTab('aihistory'); }
   else if(type==='bg') openQuickBG();
-  else if(type==='med'){ openQEntry('qmedModal','qmedDateWrap','qmedTime',['qmedName','qmedDose','qmedTiming'],'qmedName'); const rb=document.getElementById('qmedResults'); if(rb){ rb.classList.remove('show'); rb.innerHTML=''; } }
+  else if(type==='med'){ openQEntry('qmedModal','qmedDateWrap','qmedTime',['qmedName','qmedDose','qmedTiming'],'qmedName'); const rb=document.getElementById('qmedResults'); if(rb){ rb.classList.remove('show'); rb.innerHTML=''; } try{ renderQmedSaved(); }catch(e){} }
   else if(type==='sleep') openQEntry('qsleepModal','qsleepDateWrap',null,['qsleepHours'],'qsleepHours','qsleepQual');
   else if(type==='mood') openQEntry('qmoodModal','qmoodDateWrap','qmoodTime',['qmoodNote'],null,'qmoodPick');
   else if(type==='vitals') openQEntry('qvitModal','qvitDateWrap','qvitTime',['qvitSys','qvitDia','qvitHr'],'qvitSys');
@@ -7267,6 +7289,26 @@ function renderCondPicker(){ const box=document.getElementById('condPicker'); if
   h+=`<div style="display:flex;gap:6px;margin-top:8px"><input id="condCustomIn" placeholder="بیماریِ دیگر… (تایپ و افزودن)" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();condAddCustom();}"><button type="button" class="mini-btn" onclick="condAddCustom()">➕ افزودن</button></div>`;
   box.innerHTML=h;
 }
+// ── داروهای ثابتِ کاربر (کتابخانه‌محور + زمانِ تجویز) ──
+const PMED_TIMES=['صبح','ظهر','عصر','شب','سرِ خواب','ناشتا','با صبحانه','با ناهار','با شام','هر ۸ ساعت','هر ۱۲ ساعت'];
+function renderPmedTimeChips(){ const box=document.getElementById('pmedTimeChips'); if(!box) return;
+  const cur=((document.getElementById('pmedTiming')||{}).value||'').split('،').map(s=>s.trim()).filter(Boolean);
+  box.innerHTML=PMED_TIMES.map(t=>`<button type="button" class="cond-chip ${cur.indexOf(t)>=0?'on':''}" onclick="pmedToggleTime('${t}')">${t}</button>`).join(''); }
+function pmedToggleTime(t){ const inp=document.getElementById('pmedTiming'); if(!inp) return; let cur=(inp.value||'').split('،').map(s=>s.trim()).filter(Boolean); const i=cur.indexOf(t); if(i>=0)cur.splice(i,1); else cur.push(t); inp.value=cur.join('، '); renderPmedTimeChips(); }
+function myMedsGet(){ try{ return JSON.parse(localStorage.getItem('my_meds_v1')||'[]')||[]; }catch(e){ return []; } }
+function myMedsSave(a){ try{ localStorage.setItem('my_meds_v1', JSON.stringify(a)); }catch(e){} }
+function renderMyMeds(){ const box=document.getElementById('myMedsList'); if(!box) return; const a=myMedsGet();
+  if(!a.length){ box.innerHTML='<div class="qbg-sub" style="color:var(--muted)">هنوز دارویی اضافه نکرده‌ای.</div>'; return; }
+  box.innerHTML=a.map((m,i)=>`<div class="qmeal-frow" style="margin-bottom:8px"><div class="qmeal-fname">💊 ${escVision(m.name)}<button class="qmeal-del" onclick="myMedsRemove(${i})">×</button></div><div class="qbg-sub" style="color:var(--muted);margin-top:2px">${escVision([m.dose,m.timing].filter(Boolean).join(' · '))||'—'}</div></div>`).join(''); }
+function myMedsAdd(){ const name=((document.getElementById('pmedName')||{}).value||'').trim(); if(!name){ alert('نام دارو را وارد کن یا از کتابخانه انتخاب کن.'); return; }
+  const a=myMedsGet(); a.push({name, dose:((document.getElementById('pmedDose')||{}).value||'').trim(), timing:((document.getElementById('pmedTiming')||{}).value||'').trim()}); myMedsSave(a);
+  document.getElementById('pmedName').value=''; document.getElementById('pmedDose').value=''; document.getElementById('pmedTiming').value=''; renderPmedTimeChips(); renderMyMeds(); uiToast&&uiToast('✓ دارو اضافه شد'); }
+function myMedsRemove(i){ const a=myMedsGet(); a.splice(i,1); myMedsSave(a); renderMyMeds(); }
+// چیپ‌های داروهای ذخیره‌شده در مودالِ سریعِ دارو (ثبتِ بی‌تایپ)
+function renderQmedSaved(){ const box=document.getElementById('qmedSaved'); if(!box) return; const a=myMedsGet();
+  if(!a.length){ box.innerHTML=''; box.style.display='none'; return; } box.style.display='block';
+  box.innerHTML=`<label class="qbg-lbl">داروهای من (یک لمس)</label><div class="cond-wrap" style="margin-bottom:12px">`+a.map((m,i)=>`<button type="button" class="cond-chip" onclick="qmedUseSaved(${i})">💊 ${escVision(m.name)}</button>`).join('')+`</div>`; }
+function qmedUseSaved(i){ const m=myMedsGet()[i]; if(!m) return; const nm=document.getElementById('qmedName'); if(nm) nm.value=m.name; const ds=document.getElementById('qmedDose'); if(ds) ds.value=m.dose||''; const tm=document.getElementById('qmedTiming'); if(tm) tm.value=m.timing||''; const rb=document.getElementById('qmedResults'); if(rb){ rb.classList.remove('show'); rb.innerHTML=''; } uiToast&&uiToast('✓ پر شد — ذخیره را بزن'); }
 async function saveProfile(){
   const p={diabetesType:val('diabetesType'),basalInsulin:val('basalInsulin'),insulinType:val('insulinType'),age:val('age'),weight:val('weight'),gender:val('gender'),tdd:val('tdd'),ic:val('icRatio'),isf:val('isf'),
     firstName:val('pfFirst').trim(),lastName:val('pfLast').trim(),mobile:val('pfMobile').trim(),email:val('pfEmail').trim(),
@@ -7380,13 +7422,14 @@ async function renderProfileTab(){
   renderVisionSetting();
   try{ renderAICost(); }catch(e){}
   try{ renderCondPicker(); updateInsSection(); }catch(e){}
+  try{ renderMyMeds(); renderPmedTimeChips(); }catch(e){}
   try{ renderLabSchedule(); }catch(e){}
   renderDataStats();
   setupProfileCards();
 }
 // همه‌ی باکس‌های پروفایل جمع‌شونده و پیش‌فرض بسته؛ کارت پروفایل در صدر با عنوانِ اطلاعات شخصی
 // تب‌بندیِ پروفایل (مثلِ تنظیماتِ پادکست) — گروهِ هر کارت
-const PROFILE_GROUPS={ 'c-profile':'me',
+const PROFILE_GROUPS={ 'c-profile':'me', 'c-profile-meds':'me',
   'c-profile-vision':'ai',
   'c-cgmup':'import', 'c-log':'import',
   'c-profile-nav':'app','c-profile-theme':'app','c-profile-chatlayout':'app','c-profile-zoom':'app','c-profile-audio':'app',
@@ -14212,6 +14255,8 @@ function buildHealthSnapshot(scope){
     // بیماری‌ها/وضعیت‌ها — کلِ هوش مصنوعی باید نسبت به این‌ها حساس باشد
     try{ const cf=(typeof COND_FA!=='undefined')?COND_FA:{}; const cs=[]; (p.conditions||[]).forEach(c=>cs.push(cf[c]||c)); (p.condCustom||[]).forEach(c=>cs.push(c));
       if(cs.length) L.push('بیماری‌ها/وضعیت‌های کاربر (در همهٔ توصیه‌ها و تحلیل‌ها این‌ها را در نظر بگیر و نسبت به آن‌ها محتاط و دقیق باش): '+cs.join('، ')); }catch(e){}
+    // داروهای ثابتِ کاربر
+    try{ const mm=JSON.parse(localStorage.getItem('my_meds_v1')||'[]')||[]; if(mm.length) L.push('داروهای ثابتِ کاربر: '+mm.map(m=>m.name+(m.timing?(' ('+m.timing+')'):'')).join('؛ ')); }catch(e){}
   }catch(e){}
   // قند خون
   try{
