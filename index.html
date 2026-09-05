@@ -1118,6 +1118,39 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
 </div>
 
+<!-- فرم سریع وعده (فقط غذا — ساده و سریع) -->
+<div class="qbg-modal" id="qmealModal" onclick="if(event.target===this)closeQEntry('qmealModal')">
+  <div class="qbg-box">
+    <button class="qbg-x" onclick="closeQEntry('qmealModal')" title="بستن">✕</button>
+    <div class="qbg-head"><span class="qbg-badge" style="background:rgba(224,163,85,.18)">🍽️</span><div><div class="qbg-title">ثبتِ سریعِ وعده</div><div class="qbg-sub">غذایی که خوردی را سریع ثبت کن. (انسولین و قند را جدا از منوی سریع ثبت کن.)</div></div></div>
+    <label class="qbg-lbl">نوع وعده</label>
+    <select id="qmealType" class="qbg-in" style="margin-bottom:12px">
+      <option value="صبحانه">صبحانه</option>
+      <option value="میان‌وعده صبح">میان‌وعده صبح</option>
+      <option value="ناهار">ناهار</option>
+      <option value="میان‌وعده عصر">میان‌وعده عصر</option>
+      <option value="شام">شام</option>
+      <option value="میان‌وعده شب">میان‌وعده شب</option>
+      <option value="میان‌وعده">میان‌وعده</option>
+    </select>
+    <div class="qbg-grid">
+      <div><label class="qbg-lbl">تاریخ (شمسی)</label><div id="qmealDateWrap"></div></div>
+      <div><label class="qbg-lbl">ساعت</label><input type="time" id="qmealTime" class="qbg-in"></div>
+    </div>
+    <label class="qbg-lbl" style="margin-top:12px">غذاها</label>
+    <div class="food-search-wrap">
+      <input type="text" class="food-search" id="qmealFoodSearch" placeholder="🔍 جست‌وجوی غذا…" oninput="qmealSearch(this)" onfocus="qmealSearch(this)" autocomplete="off">
+      <div class="search-results" id="qmealResults"></div>
+    </div>
+    <div id="qmealPicked" class="picked-foods" style="margin-top:8px"></div>
+    <label class="qbg-lbl" style="margin-top:12px">کربوهیدرات (گرم) — اختیاری <span style="color:var(--muted);font-weight:400">(برای دقتِ I:C)</span></label>
+    <input type="number" id="qmealCarb" class="qbg-in" inputmode="numeric" placeholder="مثلاً ۵۵" style="margin-bottom:12px">
+    <label class="qbg-lbl">یادداشت — اختیاری</label>
+    <input type="text" id="qmealNote" class="qbg-in" placeholder="مثلاً کمی سنگین بود" style="margin-bottom:6px">
+    <div class="qbg-actions"><button class="qbg-cancel" onclick="closeQEntry('qmealModal')">لغو</button><button class="qbg-save" onclick="saveQuickMeal()">💾 ذخیره</button></div>
+  </div>
+</div>
+
 <!-- فرم سریع انسولین -->
 <div class="qbg-modal" id="qinsModal" onclick="if(event.target===this)closeQEntry('qinsModal')">
   <div class="qbg-box">
@@ -2105,7 +2138,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۴۰</b> · انتشار: ۱۴۰۵/۰۶/۱۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۴۱</b> · انتشار: ۱۴۰۵/۰۶/۱۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -6311,7 +6344,7 @@ function quickAdd(type){
       if(c){ c.classList.remove('closed'); c.scrollIntoView({behavior:'smooth',block:'start'}); }
     },80);
   };
-  if(type==='meal') go('plan','c-addmeal');
+  if(type==='meal') openQuickMeal();
   else if(type==='insulin') openQuickInsulin();
   else if(type==='exercise') go('exercise','c-ex-log');
   else if(type==='startworkout') go('exercise','c-ex-workout');
@@ -6814,6 +6847,49 @@ function saveQuickInsulin(){
   const dl=document.getElementById('page-daily'); if(dl&&dl.classList.contains('active')) renderDailyReport();
   try{ if(typeof updateCalibration==='function') updateCalibration(); }catch(e){}
   try{ if(typeof renderWeek==='function'){ const pp=document.getElementById('page-plan'); if(pp&&pp.classList.contains('active')) renderWeek(); } }catch(e){}
+}
+/* ── فرم سریعِ وعده (فقط غذا) ── */
+function openQuickMeal(){
+  const m=document.getElementById('qmealModal'); if(!m) return;
+  window._qmealPicked=[];
+  const d=new Date(); const p=n=>String(n).padStart(2,'0'); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate());
+  document.getElementById('qmealDateWrap').innerHTML=jDateFieldHTML('qmealDate', jDateStr(j[0],j[1],j[2]));
+  document.getElementById('qmealTime').value=`${p(d.getHours())}:${p(d.getMinutes())}`;
+  const hr=d.getHours(); let dft='میان‌وعده'; if(hr<11)dft='صبحانه'; else if(hr<16)dft='ناهار'; else if(hr<22)dft='شام';
+  document.getElementById('qmealType').value=dft;
+  document.getElementById('qmealCarb').value=''; document.getElementById('qmealNote').value='';
+  const s=document.getElementById('qmealFoodSearch'); s.value=''; const rb=document.getElementById('qmealResults'); rb.classList.remove('show'); rb.innerHTML='';
+  qmealRenderPicked();
+  m.classList.add('show');
+  setTimeout(()=>s.focus(),60);
+}
+function qmealSearch(input){ const box=document.getElementById('qmealResults'); const q=normalizeFa(input.value);
+  if(!q){ box.classList.remove('show'); box.innerHTML=''; return; }
+  const matches=SEARCH_INDEX.filter(x=>x.norm.includes(q)).slice(0,40);
+  if(!matches.length){ box.innerHTML='<div class="search-empty">موردی پیدا نشد</div>'; box.classList.add('show'); return; }
+  box.innerHTML=matches.map(m=>`<div class="search-item" onclick="qmealPick('${m.cat.replace(/'/g,"\\'")}','${m.item.replace(/'/g,"\\'")}')"><span>${itemEmoji(m.cat,m.item)} ${m.item}</span><span class="cat">${(CAT_EMOJI[m.cat]||'')} ${m.cat}</span></div>`).join('');
+  box.classList.add('show'); }
+function qmealPick(cat,item){ window._qmealPicked=window._qmealPicked||[]; window._qmealPicked.push(itemEmoji(cat,item)+' '+item); document.getElementById('qmealResults').classList.remove('show'); document.getElementById('qmealFoodSearch').value=''; qmealRenderPicked(); }
+function qmealRenderPicked(){ const c=document.getElementById('qmealPicked'); if(!c) return; c.innerHTML=(window._qmealPicked||[]).map((f,i)=>`<span class="picked-chip">${f}<span class="x" onclick="qmealRemove(${i})">×</span></span>`).join(''); }
+function qmealRemove(i){ (window._qmealPicked||[]).splice(i,1); qmealRenderPicked(); }
+function saveQuickMeal(){
+  const foods=(window._qmealPicked||[]).slice();
+  const note=(document.getElementById('qmealNote').value||'').trim();
+  if(!foods.length && !note){ alert('حداقل یک غذا انتخاب کن یا یادداشت بنویس.'); return; }
+  const pj=parseJDate((document.getElementById('qmealDate')||{}).value||''); if(!pj){ alert('تاریخ را انتخاب کن.'); return; }
+  const g=j2g(pj[0],pj[1],pj[2]); const p=n=>String(n).padStart(2,'0'); const key=`${g[0]}-${p(g[1])}-${p(g[2])}`;
+  const type=document.getElementById('qmealType').value;
+  const time=document.getElementById('qmealTime').value||'';
+  const carb=(faToEnDigits(document.getElementById('qmealCarb').value||'')).trim();
+  if(!Array.isArray(planData[key])) planData[key]=[];
+  planData[key].push({type, time, carb, note, foods, insType:'', insDose:'', bgBefore:'', bgAfter:'', peak:'', trough:'', id:Date.now()});
+  savePlan();
+  closeQEntry('qmealModal');
+  uiToast('✓ وعده ثبت شد');
+  try{ if(typeof renderDashboard==='function') renderDashboard(); }catch(e){}
+  try{ const pp=document.getElementById('page-plan'); if(pp&&pp.classList.contains('active')&&typeof renderWeek==='function') renderWeek(); }catch(e){}
+  try{ const dl=document.getElementById('page-daily'); if(dl&&dl.classList.contains('active')&&typeof renderDailyReport==='function') renderDailyReport(); }catch(e){}
+  try{ if(typeof updateCalibration==='function') updateCalibration(); }catch(e){}
 }
 /* فرم سریع قند خون دستی → bg_manual_v1 */
 let _qbgTag='random';
@@ -8832,7 +8908,7 @@ function collectReviewMeals(){
       const hasIns = !isNaN(ins) && ins>0;
       const foodsTxt=(m.foods||[]).join('، ');
       // ردیفِ انسولینِ لینک‌شده به یک وعده (بدونِ غذا ولی mealType دارد و وعدهٔ غذاییِ همان اسلات هست) → مشکل نیست
-      const linkedInsRow = !hasFood && (m.mealType||'') && Array.isArray(list) && list.some(x=>x!==m && (x.mealType||'')===(m.mealType||'') && Array.isArray(x.foods) && x.foods.length>0);
+      const linkedInsRow = !hasFood && mealSlot(m) && Array.isArray(list) && list.some(x=>x!==m && mealSlot(x)===mealSlot(m) && Array.isArray(x.foods) && x.foods.length>0);
       let issue=null;
       if(linkedInsRow){ issue=null; }
       else if((!isNaN(parseFloat(m.insDose))&&parseFloat(m.insDose)>0) && !hasFood){
@@ -8995,13 +9071,14 @@ function getLowCarbCut(){
 function _ymdKey(d){ const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
 // resolver افزایشی: قند/انسولینِ وعده را — فقط اگر خودِ وعده نداشت — از ثبت‌های تگ‌دارِ همان روز+وعده پر می‌کند.
 // عملکردِ IC برای وعده‌هایی که داده‌ی درون‌خطی دارند، دقیقاً بدون تغییر می‌ماند.
+function mealSlot(m){ return (m&&(m.mealType||m.type))||''; }   // اسلاتِ وعده: وعده‌های عادی در type، انسولینِ سریع در mealType
 function calibResolveMeal(m, dayKey){
   let bgB=m.bgBefore, bgA=m.bgAfter, ins=m.insDose, peak=m.peak, trough=m.trough;
-  const slot=m.mealType||'';
+  const slot=mealSlot(m);
   if(slot){
     // انسولینِ همان وعده از ثبتِ جداگانه (اگر خودِ وعده انسولین نداشت)
     if(!(parseFloat(ins)>0)){ const list=planData[dayKey]||[];
-      for(const x of list){ if(x===m) continue; if((x.mealType||'')===slot && parseFloat(x.insDose)>0){ ins=x.insDose; break; } } }
+      for(const x of list){ if(x===m) continue; if(mealSlot(x)===slot && parseFloat(x.insDose)>0){ ins=x.insDose; break; } } }
     // قندِ قبل/بعد از قندهای تگ‌دار (اگر خالی بودند)
     if(isNaN(parseFloat(bgB))||isNaN(parseFloat(bgA))||isNaN(parseFloat(peak))||isNaN(parseFloat(trough))){
       let bgs=[]; try{ bgs=(loadBG()||[]).filter(b=>b&&b.iso&&b.meal===slot&&_ymdKey(new Date(b.iso))===dayKey); }catch(e){}
