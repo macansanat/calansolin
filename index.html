@@ -1151,6 +1151,15 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
 </div>
 
+<!-- پاپ‌آپِ تخمینِ I:C (کارت‌های کالیبراسیون/بررسی به اینجا منتقل می‌شوند) -->
+<div class="qbg-modal" id="icModal" onclick="if(event.target===this)closeQEntry('icModal')">
+  <div class="qbg-box" style="max-width:520px">
+    <button class="qbg-x" onclick="closeQEntry('icModal')" title="بستن">✕</button>
+    <div class="qbg-head"><span class="qbg-badge" style="background:rgba(63,185,163,.18)">🎯</span><div><div class="qbg-title">تخمینِ I:C از تجربه</div><div class="qbg-sub">از روی وعده‌ها و انسولین‌های ثبت‌شده در پس‌زمینه حساب می‌شود.</div></div></div>
+    <div id="icModalBody"></div>
+  </div>
+</div>
+
 <!-- فرم سریع انسولین -->
 <div class="qbg-modal" id="qinsModal" onclick="if(event.target===this)closeQEntry('qinsModal')">
   <div class="qbg-box">
@@ -2138,7 +2147,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۴۱</b> · انتشار: ۱۴۰۵/۰۶/۱۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۴۲</b> · انتشار: ۱۴۰۵/۰۶/۱۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -6351,7 +6360,7 @@ function quickAdd(type){
   else if(type==='lab') go('labs','c-labs-entry');
   else if(type==='cgmfile') go('profile','c-cgmup');
   else if(type==='calc'){ switchTab('calc'); }
-  else if(type==='iccalib'){ go('plan','c-calib'); setTimeout(()=>{ try{ updateCalibration(); }catch(e){} },120); }
+  else if(type==='iccalib'){ openICModal(); }
   else if(type==='plan'){ switchTab('plan'); }
   else if(type==='chat'){ switchTab('chat'); }
   else if(type==='aihistory'){ switchTab('aihistory'); }
@@ -6848,6 +6857,11 @@ function saveQuickInsulin(){
   try{ if(typeof updateCalibration==='function') updateCalibration(); }catch(e){}
   try{ if(typeof renderWeek==='function'){ const pp=document.getElementById('page-plan'); if(pp&&pp.classList.contains('active')) renderWeek(); } }catch(e){}
 }
+/* ── پاپ‌آپِ تخمینِ I:C: کارت‌های کالیبراسیون/بررسی از صفحهٔ وعده به مودال منتقل می‌شوند ── */
+function icMoveCards(){ const body=document.getElementById('icModalBody'); if(!body) return;
+  ['c-calib','c-review','c-ignored'].forEach(id=>{ const c=document.getElementById(id); if(c && c.parentElement!==body){ c.classList.remove('coll','closed'); const h=c.querySelector('h2'); if(h){ h.style.cursor='default'; h.removeAttribute('onclick'); } body.appendChild(c); } }); }
+function openICModal(){ icMoveCards(); const m=document.getElementById('icModal'); if(m) m.classList.add('show'); try{ updateCalibration(); }catch(e){} }
+if(document.readyState!=='loading'){ try{ icMoveCards(); }catch(e){} } else document.addEventListener('DOMContentLoaded',()=>{ try{ icMoveCards(); }catch(e){} });
 /* ── فرم سریعِ وعده (فقط غذا) ── */
 function openQuickMeal(){
   const m=document.getElementById('qmealModal'); if(!m) return;
