@@ -138,6 +138,12 @@ body.nav-bottom{padding-bottom:100px}
 .pod-vfilt{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .pod-vchip{padding:5px 11px;border-radius:20px;border:1px solid var(--line);background:var(--field);color:var(--text,#eaf0f6);font-size:12.5px;cursor:pointer;white-space:nowrap}
 .pod-vchip.on{border-color:var(--teal);background:var(--teal);color:#03201d;font-weight:600}
+.cond-wrap{display:flex;flex-wrap:wrap;gap:7px}
+.cond-chip{padding:7px 12px;border-radius:20px;border:1px solid var(--line);background:var(--field);color:var(--ink);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.cond-chip.on{border-color:var(--teal);background:var(--teal-dim);color:#eafff8}
+.lab-sch{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.lab-sch-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;font-size:13px;border-top:1px solid var(--line)}
+.lab-sch-row:first-child{border-top:none}
 .pod-vgal{max-height:340px;overflow-y:auto;padding:2px}
 .pod-mini-b{padding:3px 9px;border-radius:8px;border:1px solid var(--teal);background:transparent;color:var(--teal);font-size:12px;cursor:pointer;margin-right:6px}
 .pod-cost{background:var(--field);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-top:6px}
@@ -1739,6 +1745,10 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <div class="formula-note" style="color:var(--amber)">⚕️ این لیست‌ها فقط پیشنهاد برای گفتگو با پزشک‌اند — تشخیص یا تجویز نیستند. پزشک تصمیم می‌گیرد کدام آزمایش لازم است. محدوده‌های نرمال بین آزمایشگاه‌ها کمی فرق دارند؛ همیشه محدوده‌ی برگه‌ی آزمایشگاه خودت را معیار بگیر.</div>
     </div>
   </div>
+  <div class="card coll" id="c-labs-schedule">
+    <h2 onclick="toggleCard('c-labs-schedule')"><span>🗓️ پیگیریِ پیشنهادی بر اساسِ بیماری‌های تو</span></h2>
+    <div class="card-body"><div id="labSchedule"></div></div>
+  </div>
   <div class="card coll" id="c-labs-packages">
     <h2 onclick="toggleCard('c-labs-packages')"><span>📦 بسته‌ها و ترکیب‌های من</span></h2>
     <div class="card-body">
@@ -1896,37 +1906,47 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </h2>
   <div class="card-body">
   <div class="profile-saved" id="profileSaved">
+    <div id="s-conds" class="cond-wrap" style="margin-bottom:10px"></div>
     <div class="chips">
-      <span class="chip">دیابت: <b id="s-dtype">—</b></span>
+      <span class="chip" id="s-dtypeChip">دیابت: <b id="s-dtype">—</b></span>
       <span class="chip">سن: <b id="s-age">—</b></span>
       <span class="chip">وزن: <b id="s-weight">—</b> کیلو</span>
-      <span class="chip">انسولین: <b id="s-ins">—</b></span>
-      <span class="chip">TDD: <b id="s-tdd">—</b></span>
-      <span class="chip">I:C = 1:<b id="s-ic">—</b></span>
-      <span class="chip">ISF = <b id="s-isf">—</b></span>
+      <span class="chip dia-chip">انسولین: <b id="s-ins">—</b></span>
+      <span class="chip dia-chip">TDD: <b id="s-tdd">—</b></span>
+      <span class="chip dia-chip">I:C = 1:<b id="s-ic">—</b></span>
+      <span class="chip dia-chip">ISF = <b id="s-isf">—</b></span>
     </div>
     <div class="saved-hint">✓ مشخصات ذخیره شد و دفعه‌ی بعد خودکار می‌آید. برای تغییر، «ویرایش» را بزنید.</div>
   </div>
   <div class="profile-form" id="profileForm">
-    <div class="row-3">
-      <div>
-        <label>نوع دیابت</label>
-        <select id="diabetesType">
-          <option value="">— انتخاب —</option>
-          <option value="type1">نوع ۱</option>
-          <option value="type2">نوع ۲</option>
-          <option value="lada">LADA (خودایمنی دیررس)</option>
-          <option value="mody">MODY</option>
-          <option value="gestational">بارداری</option>
-          <option value="other">سایر / نامشخص</option>
-        </select>
-      </div>
+    <!-- هویت (اختیاری) -->
+    <div class="row"><div><label>نام (اختیاری)</label><input id="pfFirst" placeholder="نام"></div><div><label>نام خانوادگی (اختیاری)</label><input id="pfLast" placeholder="نام خانوادگی"></div></div>
+    <div class="row" style="margin-top:12px"><div><label>موبایل (اختیاری)</label><input id="pfMobile" inputmode="tel" placeholder="۰۹…" style="direction:ltr;text-align:left"></div><div><label>ایمیل (اختیاری)</label><input id="pfEmail" inputmode="email" placeholder="you@example.com" style="direction:ltr;text-align:left"></div></div>
+
+    <!-- کتابخانهٔ بیماری‌ها -->
+    <label style="margin-top:16px">بیماری‌ها / وضعیت‌ها <span style="color:var(--muted);font-weight:400">(هر تعداد داری اضافه کن)</span></label>
+    <div class="formula-note" style="margin-bottom:8px">با انتخابِ هر بیماری، کلِ نرم‌افزار و هوش مصنوعی نسبت به آن حساس‌تر می‌شود و در «آزمایش‌ها» بازهٔ استانداردِ پیگیری پیشنهاد می‌شود. اگر «دیابت» را بزنی، بخشِ انسولین و I:C باز می‌شود.</div>
+    <div id="condPicker"></div>
+
+    <div class="row-3" style="margin-top:14px">
       <div><label>سن (سال)</label><input type="number" id="age" placeholder="مثلاً 33" min="1" max="120"></div>
       <div><label>وزن (کیلوگرم)</label><input type="number" id="weight" placeholder="مثلاً 80" min="10" max="300"></div>
       <div><label>جنسیت</label><select id="gender"><option value="">—</option><option value="male">مرد</option><option value="female">زن</option></select></div>
     </div>
 
-    <label>نوع انسولین سریع (برای محاسبه‌ی زمان و نسبت‌ها)</label>
+    <div id="insSection" style="display:none">
+    <label style="margin-top:14px">نوع دیابت</label>
+    <select id="diabetesType">
+      <option value="">— انتخاب —</option>
+      <option value="type1">نوع ۱</option>
+      <option value="type2">نوع ۲</option>
+      <option value="lada">LADA (خودایمنی دیررس)</option>
+      <option value="mody">MODY</option>
+      <option value="gestational">بارداری</option>
+      <option value="other">سایر / نامشخص</option>
+    </select>
+
+    <label style="margin-top:14px">نوع انسولین سریع (برای محاسبه‌ی زمان و نسبت‌ها)</label>
     <select id="insulinType">
       <optgroup label="سریع‌الاثر (Rapid)">
         <option value="rapid">اپیدرا (گلولیزین)</option>
@@ -1974,6 +1994,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <div><label>نسبت I:C (قابل ویرایش)</label><input type="number" id="icRatio" placeholder="مثلاً 10" min="1" max="50" step="0.5" oninput="calcDose()"></div>
       <div><label>ضریب اصلاحی ISF (قابل ویرایش)</label><input type="number" id="isf" placeholder="مثلاً 50" min="5" max="200" step="1" oninput="calcDose()"></div>
     </div>
+    </div><!-- /insSection -->
     <button class="add-btn" style="margin-top:16px" onclick="saveProfile()">💾 ذخیره‌ی مشخصات</button>
   </div>
   </div>
@@ -2065,7 +2086,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۳۶</b> · انتشار: ۱۴۰۵/۰۶/۱۴ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۳۷</b> · انتشار: ۱۴۰۵/۰۶/۱۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -7054,10 +7075,84 @@ function goToToday(){
 }
 
 /* ====== پروفایل ====== */
+// ── کتابخانهٔ بیماری‌ها ──
+const PROFILE_CONDITIONS=[
+  {id:'diabetes', fa:'دیابت', dia:true},
+  {id:'prediabetes', fa:'پیش‌دیابت'},
+  {id:'hypertension', fa:'فشار خون بالا'},
+  {id:'hyperlipidemia', fa:'چربی خون بالا'},
+  {id:'thyroid', fa:'تیروئید'},
+  {id:'ckd', fa:'بیماری کلیه'},
+  {id:'fattyliver', fa:'کبد چرب'},
+  {id:'cvd', fa:'قلبی-عروقی'},
+  {id:'neuropathy', fa:'نوروپاتیِ عصبی'},
+  {id:'retinopathy', fa:'رتینوپاتیِ چشم'},
+  {id:'pcos', fa:'تخمدان پلی‌کیستیک'},
+  {id:'obesity', fa:'چاقی/اضافه‌وزن'},
+  {id:'gout', fa:'نقرس'},
+  {id:'anemia', fa:'کم‌خونی'},
+  {id:'vitd', fa:'کمبود ویتامین D'},
+  {id:'asthma', fa:'آسم/ریوی'},
+  {id:'mood', fa:'افسردگی/اضطراب'}
+];
+const COND_FA={}; PROFILE_CONDITIONS.forEach(c=>COND_FA[c.id]=c.fa);
+let _pfConds=new Set(), _pfCustom=[];
+function profHasDiabetes(){ return _pfConds.has('diabetes'); }
+function condToggle(id){ if(_pfConds.has(id)) _pfConds.delete(id); else _pfConds.add(id); renderCondPicker(); if(id==='diabetes') updateInsSection(); }
+function condAddCustom(){ const inp=document.getElementById('condCustomIn'); if(!inp) return; const v=(inp.value||'').trim().slice(0,40); if(v && _pfCustom.indexOf(v)<0){ _pfCustom.push(v); } inp.value=''; renderCondPicker(); }
+function condRemoveCustom(i){ _pfCustom.splice(i,1); renderCondPicker(); }
+function updateInsSection(){ const s=document.getElementById('insSection'); if(s) s.style.display=profHasDiabetes()?'':'none'; }
+function renderCondPicker(){ const box=document.getElementById('condPicker'); if(!box) return;
+  let h=`<div class="cond-wrap">`;
+  h+=PROFILE_CONDITIONS.map(c=>`<button type="button" class="cond-chip ${_pfConds.has(c.id)?'on':''}" onclick="condToggle('${c.id}')">${_pfConds.has(c.id)?'✓ ':''}${c.fa}</button>`).join('');
+  _pfCustom.forEach((c,i)=>{ h+=`<button type="button" class="cond-chip on" onclick="condRemoveCustom(${i})">✓ ${escVision(c)} ✕</button>`; });
+  h+=`</div>`;
+  h+=`<div style="display:flex;gap:6px;margin-top:8px"><input id="condCustomIn" placeholder="بیماریِ دیگر… (تایپ و افزودن)" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();condAddCustom();}"><button type="button" class="mini-btn" onclick="condAddCustom()">➕ افزودن</button></div>`;
+  box.innerHTML=h;
+}
 async function saveProfile(){
-  const p={diabetesType:val('diabetesType'),basalInsulin:val('basalInsulin'),insulinType:val('insulinType'),age:val('age'),weight:val('weight'),gender:val('gender'),tdd:val('tdd'),ic:val('icRatio'),isf:val('isf')};
+  const p={diabetesType:val('diabetesType'),basalInsulin:val('basalInsulin'),insulinType:val('insulinType'),age:val('age'),weight:val('weight'),gender:val('gender'),tdd:val('tdd'),ic:val('icRatio'),isf:val('isf'),
+    firstName:val('pfFirst').trim(),lastName:val('pfLast').trim(),mobile:val('pfMobile').trim(),email:val('pfEmail').trim(),
+    conditions:[..._pfConds], condCustom:_pfCustom.slice()};
   await storageSet(PKEY,JSON.stringify(p)); showSaved(p);
   if(typeof updateProfileCardTitle==='function') updateProfileCardTitle();
+  try{ if(typeof renderLabSchedule==='function') renderLabSchedule(); }catch(e){}
+}
+// ── پیگیریِ استانداردِ آزمایش‌ها بر اساسِ بیماری‌ها (آموزشی) ──
+const LAB_SCHEDULE={
+  diabetes:[{t:'HbA1c (قندِ سه‌ماهه)',m:3},{t:'قندِ ناشتا (FBS)',m:3},{t:'پروفایلِ چربی (LDL/HDL/تری‌گلیسرید)',m:12},{t:'کراتینین و eGFR (کلیه)',m:12},{t:'میکروآلبومینِ ادرار (ACR)',m:12},{t:'معاینهٔ ته‌چشم',m:12},{t:'ویتامین D',m:12},{t:'TSH (تیروئید)',m:12}],
+  prediabetes:[{t:'HbA1c یا قندِ ناشتا',m:12},{t:'پروفایلِ چربی',m:12}],
+  hypertension:[{t:'کراتینین و الکترولیت‌ها (Na/K)',m:12},{t:'پروفایلِ چربی',m:12},{t:'آزمایشِ ادرار',m:12}],
+  hyperlipidemia:[{t:'پروفایلِ چربی',m:6},{t:'آنزیم‌های کبدی (در صورتِ مصرفِ استاتین)',m:12}],
+  thyroid:[{t:'TSH',m:6},{t:'T4/T3 (طبقِ نظرِ پزشک)',m:12}],
+  ckd:[{t:'کراتینین و eGFR',m:3},{t:'میکروآلبومینِ ادرار',m:6},{t:'الکترولیت‌ها + کلسیم/فسفر',m:6},{t:'CBC (کم‌خونی)',m:6}],
+  fattyliver:[{t:'آنزیم‌های کبدی (AST/ALT)',m:6},{t:'سونوگرافیِ کبد (طبقِ نظرِ پزشک)',m:12}],
+  cvd:[{t:'پروفایلِ چربی',m:6},{t:'کراتینین',m:12}],
+  pcos:[{t:'قند و انسولینِ ناشتا',m:12},{t:'هورمون‌ها (طبقِ نظرِ پزشک)',m:12}],
+  obesity:[{t:'قندِ ناشتا و HbA1c',m:12},{t:'پروفایلِ چربی',m:12},{t:'آنزیم‌های کبدی',m:12}],
+  gout:[{t:'اسیدِ اوریک',m:6},{t:'کراتینین',m:12}],
+  anemia:[{t:'CBC',m:6},{t:'آهن/فریتین (طبقِ نظرِ پزشک)',m:12}],
+  vitd:[{t:'ویتامین D',m:6}],
+  neuropathy:[{t:'HbA1c',m:3},{t:'ویتامین B12',m:12}],
+  retinopathy:[{t:'معاینهٔ ته‌چشم',m:12},{t:'HbA1c',m:3}],
+  general:[{t:'CBC (شمارشِ کاملِ خون)',m:12},{t:'قندِ ناشتا',m:12}]
+};
+function labIntervalFa(m){ return m<=1?'ماهانه':m===2?'هر ۲ ماه':m===3?'هر ۳ ماه (فصلی)':m===6?'هر ۶ ماه':m===12?'سالانه':('هر '+faDigits(m)+' ماه'); }
+function renderLabSchedule(){ const box=document.getElementById('labSchedule'); if(!box) return;
+  let p={}; try{ p=JSON.parse(localStorage.getItem(PKEY)||'{}'); }catch(e){}
+  const conds=(p.conditions||[]); const map={}; let any=false;
+  const add=list=>list.forEach(x=>{ if(!map[x.t]||x.m<map[x.t]) map[x.t]=x.m; });
+  conds.forEach(c=>{ if(LAB_SCHEDULE[c]){ add(LAB_SCHEDULE[c]); any=true; } });
+  if(!any) add(LAB_SCHEDULE.general);
+  let lastFa=''; try{ const lc=(typeof buildLabAIContext==='function')&&buildLabAIContext(); if(lc&&lc.date) lastFa=lc.date; }catch(e){}
+  const rows=Object.keys(map).sort((a,b)=>map[a]-map[b]).map(t=>`<div class="lab-sch-row"><span>${escVision(t)}</span><b style="color:var(--teal);white-space:nowrap">${labIntervalFa(map[t])}</b></div>`).join('');
+  let h='';
+  if(!conds.length) h+=`<div class="formula-note" style="margin-bottom:8px">هنوز بیماری‌ای در پروفایل ثبت نکرده‌ای؛ این‌ها پیگیریِ عمومی است. در «👤 پروفایل» بیماری‌هایت را اضافه کن تا دقیق‌تر شود.</div>`;
+  else h+=`<div class="formula-note" style="margin-bottom:8px">بر اساسِ بیماری‌های ثبت‌شده‌ات: <b style="color:var(--teal)">${conds.map(c=>COND_FA[c]||c).join('، ')}</b></div>`;
+  h+=`<div class="lab-sch">${rows}</div>`;
+  if(lastFa) h+=`<div class="formula-note" style="margin-top:8px">آخرین برگهٔ آزمایشِ ثبت‌شده: ${escVision(lastFa)}.</div>`;
+  h+=`<div class="formula-note" style="color:var(--amber);margin-top:6px">⚕️ این بازه‌ها استانداردِ عمومی و آموزشی‌اند؛ پزشکِ تو بسته به وضعیتت ممکن است بیشتر یا کمتر بخواهد.</div>`;
+  box.innerHTML=h;
 }
 function val(id){return document.getElementById(id).value;}
 const DTYPE_FA={type1:'نوع ۱',type2:'نوع ۲',lada:'LADA',mody:'MODY',gestational:'بارداری',other:'سایر'};
@@ -7070,6 +7165,14 @@ function showSaved(p){
   document.getElementById('s-isf').textContent=p.isf||'—';
   const dt=document.getElementById('s-dtype');
   if(dt) dt.textContent=p.diabetesType?(DTYPE_FA[p.diabetesType]||p.diabetesType):'—';
+  // بیماری‌ها + پنهان‌کردنِ چیپ‌های مخصوصِ دیابت وقتی دیابت نیست
+  const dia=(Array.isArray(p.conditions)&&p.conditions.indexOf('diabetes')>=0)||!!p.diabetesType;
+  { const e=document.getElementById('s-dtypeChip'); if(e) e.style.display=dia?'':'none'; }
+  try{ document.querySelectorAll('#profileSaved .dia-chip').forEach(e=>{ e.style.display=dia?'':'none'; }); }catch(e){}
+  const scB=document.getElementById('s-conds');
+  if(scB){ const items=[]; (p.conditions||[]).forEach(c=>items.push(COND_FA[c]||c)); (p.condCustom||[]).forEach(c=>items.push(c));
+    scB.innerHTML=items.length?items.map(t=>`<span class="cond-chip on" style="cursor:default">${escVision(t)}</span>`).join(''):'';
+    scB.style.display=items.length?'':'none'; }
   document.getElementById('profileSaved').classList.add('show');
   document.getElementById('profileForm').classList.add('hide');
   document.getElementById('editBtn').style.display='inline-block';
@@ -7091,6 +7194,14 @@ async function loadProfile(){
     document.getElementById('tdd').value=p.tdd||'';
     document.getElementById('icRatio').value=p.ic||'';
     document.getElementById('isf').value=p.isf||'';
+    // هویت
+    const sv=(id,v)=>{ const e=document.getElementById(id); if(e) e.value=v||''; };
+    sv('pfFirst',p.firstName); sv('pfLast',p.lastName); sv('pfMobile',p.mobile); sv('pfEmail',p.email);
+    // بیماری‌ها (سازگاری با نسخهٔ قدیم: اگر نوعِ دیابت داشت، دیابت را فعال کن)
+    _pfConds=new Set(Array.isArray(p.conditions)?p.conditions:[]);
+    if(p.diabetesType && !_pfConds.size) _pfConds.add('diabetes');
+    _pfCustom=Array.isArray(p.condCustom)?p.condCustom.slice():[];
+    renderCondPicker(); updateInsSection();
     if(p.tdd) calcRatios(); showSaved(p); calcDose();
   }catch(e){}
 }
@@ -7111,6 +7222,8 @@ async function renderProfileTab(){
   renderZoomSetting();
   renderVisionSetting();
   try{ renderAICost(); }catch(e){}
+  try{ renderCondPicker(); updateInsSection(); }catch(e){}
+  try{ renderLabSchedule(); }catch(e){}
   renderDataStats();
   setupProfileCards();
 }
@@ -13909,6 +14022,9 @@ function buildHealthSnapshot(scope){
     if(p.age) pp.push('سن '+p.age); if(p.weight) pp.push('وزن '+p.weight+'kg');
     if(p.tdd) pp.push('TDD '+p.tdd); if(p.ic) pp.push('I:C 1:'+p.ic); if(p.isf) pp.push('ISF '+p.isf);
     if(pp.length) L.push('پروفایل: '+pp.join('، '));
+    // بیماری‌ها/وضعیت‌ها — کلِ هوش مصنوعی باید نسبت به این‌ها حساس باشد
+    try{ const cf=(typeof COND_FA!=='undefined')?COND_FA:{}; const cs=[]; (p.conditions||[]).forEach(c=>cs.push(cf[c]||c)); (p.condCustom||[]).forEach(c=>cs.push(c));
+      if(cs.length) L.push('بیماری‌ها/وضعیت‌های کاربر (در همهٔ توصیه‌ها و تحلیل‌ها این‌ها را در نظر بگیر و نسبت به آن‌ها محتاط و دقیق باش): '+cs.join('، ')); }catch(e){}
   }catch(e){}
   // قند خون
   try{
@@ -14528,6 +14644,7 @@ function renderLabHistory(){
   renderLabAiPanel();
 }
 function renderLabsTab(){
+  try{ renderLabSchedule(); }catch(e){}
   renderLabPackages();
   renderLabTemplates();
   renderLabEntry();
