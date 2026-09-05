@@ -2217,7 +2217,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۵۱</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۵۲</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3555,6 +3555,23 @@ function podCfgSet(patch){ const n=Object.assign(podCfg(), patch||{}); try{ loca
 // ── شمارندهٔ تخمینیِ هزینهٔ OpenAI (چون API موجودیِ واقعی را به اپ نمی‌دهد) ──
 // نرخ‌های تقریبی (دلار): عکسِ پایهٔ چهره (gpt-image-1 medium)، فریمِ دهان (edit low)، صدا (gpt-4o-mini-tts ~۰.۰۱۵$/دقیقه)
 const POD_COST={ img:{low:0.011, medium:0.04, high:0.17}, edit:0.02, ttsPerMin:0.015 };
+// نرخِ تقریبیِ مدل‌های متنیِ OpenAI — دلار به‌ازای هر «۱ میلیون» توکن (ورودی/خروجی).
+// 🔧 به‌روزرسانی: از platform.openai.com/docs/pricing بگیر و فقط همین جدول را عوض کن (تاریخِ این نرخ‌ها: ۱۴۰۴/۱۴۰۵).
+const OPENAI_PRICES={
+  'gpt-4o':{in:2.5,out:10}, 'gpt-4o-mini':{in:0.15,out:0.6},
+  'gpt-4.1':{in:2,out:8}, 'gpt-4.1-mini':{in:0.4,out:1.6}, 'gpt-4.1-nano':{in:0.1,out:0.4},
+  'gpt-4.5':{in:75,out:150}, 'o3':{in:2,out:8}, 'o3-mini':{in:1.1,out:4.4}, 'o4-mini':{in:1.1,out:4.4},
+  _default:{in:2.5,out:10}   // اگر مدل در جدول نبود، نرخِ gpt-4o را فرض می‌کند
+};
+function openaiPrice(model){ if(!model) return OPENAI_PRICES._default;
+  if(OPENAI_PRICES[model]) return OPENAI_PRICES[model];
+  let best=null,bl=0; for(const k in OPENAI_PRICES){ if(k==='_default') continue; if(String(model).indexOf(k)===0 && k.length>bl){ best=OPENAI_PRICES[k]; bl=k.length; } }
+  return best||OPENAI_PRICES._default; }
+function openaiUsageCost(model, usage){ if(!usage) return 0; const p=openaiPrice(model);
+  const pin=(+usage.prompt_tokens||+usage.input_tokens||0), pout=(+usage.completion_tokens||+usage.output_tokens||0);
+  return (pin/1e6)*p.in + (pout/1e6)*p.out; }
+// فقط برای OpenAI هزینه را از روی توکنِ واقعیِ پاسخ حساب و به شمارنده اضافه می‌کند (Gemini رایگان؛ DeepSeek/Claude حسابِ جدا).
+function chargeOpenAIUsage(prov, model, usage){ if(prov!=='openai') return; try{ const c=openaiUsageCost(model, usage); if(c>0) podCostAdd(c); }catch(e){} }
 function podCostGet(){ try{ const o=JSON.parse(localStorage.getItem('pod_cost_v1')||'{}'); return { bal:(typeof o.bal==='number'?o.bal:null), used:(typeof o.used==='number'?o.used:0), at:o.at||'' }; }catch(e){ return {bal:null,used:0,at:''}; } }
 function podCostSave(o){ try{ localStorage.setItem('pod_cost_v1', JSON.stringify(o)); }catch(e){} }
 function podCostRefresh(){ try{ if(document.getElementById('podCfgBody')) renderPodCfg(); }catch(e){}
@@ -7506,7 +7523,7 @@ function renderAICost(){ const box=document.getElementById('aiCostBox'); if(!box
   if(rem!=null) h+=`<div class="pod-cost-row"><span>باقی‌ماندهٔ تخمینی</span><b style="direction:ltr;color:${rem<0.5?'var(--amber)':'var(--teal)'}">$${rem.toFixed(2)}</b></div>`;
   h+=`<div style="display:flex;gap:7px;margin-top:8px"><input id="aiBalIn" class="qbg-in" inputmode="decimal" placeholder="موجودیِ فعلی از سایت (مثلاً 0.26)" style="direction:ltr;text-align:left;flex:1" value="${cost.bal!=null?cost.bal:''}"><button class="mini-btn" onclick="podCostSetBal(document.getElementById('aiBalIn').value)">ثبت</button></div>`;
   h+=`<div style="margin-top:6px"><button class="mini-btn" onclick="podCostReset()">↺ صفر کردنِ مصرف</button></div>`;
-  h+=`<div class="formula-note" style="margin-top:6px">این عدد <b>تخمینی</b> است (هر عکس/صدایی که اپ با ChatGPT می‌سازد را می‌شمارد)؛ عددِ دقیق در <span style="direction:ltr">platform.openai.com/usage</span>. موجودیِ فعلی‌ات را وارد کن تا باقی‌مانده تخمین زده شود؛ بعد از شارژ دوباره واردش کن. (سرویس‌های 🆓 رایگان مثلِ Gemini به این مصرف اضافه نمی‌شوند.)</div>`;
+  h+=`<div class="formula-note" style="margin-top:6px">این عدد <b>تخمینی</b> است و اکنون <b>همهٔ مصرفِ ChatGPT</b> را می‌شمارد: چت، تحلیل‌ها، خواندنِ برگهٔ آزمایش، و متن/صدا/عکسِ پادکست — از روی توکنِ واقعیِ هر پاسخ و نرخِ روزِ مدل‌ها. عددِ دقیق در <span style="direction:ltr">platform.openai.com/usage</span>. موجودیِ فعلی‌ات را وارد کن تا باقی‌مانده تخمین زده شود؛ بعد از شارژ دوباره واردش کن. (سرویس‌های 🆓 رایگان مثلِ Gemini به این مصرف اضافه نمی‌شوند.)</div>`;
   h+=`</div>`; box.innerHTML=h;
 }
 function setupProfileCards(){
@@ -10914,6 +10931,7 @@ async function callVision(prov, key, img, promptText, maxTok, thinkBudget, model
     });
     if(!res.ok){ throw new Error('OpenAI ('+res.status+'): '+(await res.text()).slice(0,800)); }
     const data=await res.json();
+    chargeOpenAIUsage('openai', modelOverride||VISION_MODELS.openai, data.usage);
     return (data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'';
   }
   // پیش‌فرض: Claude (Anthropic)
@@ -10941,6 +10959,7 @@ async function callAIText(prov, key, promptText, maxTok, thinkBudget, modelOverr
       body:JSON.stringify({ model, max_tokens:mt, messages:[{role:'user',content:promptText}] }) });
     if(!res.ok){ throw new Error(PROVIDER_NAMES[prov]+' ('+res.status+'): '+(await res.text()).slice(0,800)); }
     const data=await res.json();
+    chargeOpenAIUsage(prov, model, data.usage);
     return (data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'';
   }
   const res=await fetch('https://api.anthropic.com/v1/messages',{ method:'POST',
@@ -10973,6 +10992,7 @@ async function callAIChat(prov, key, systemText, messages, opts){
       body:JSON.stringify({ model, max_tokens:mt, messages:msgs }) });
     if(!res.ok){ throw new Error(PROVIDER_NAMES[prov]+' ('+res.status+'): '+(await res.text()).slice(0,800)); }
     const data=await res.json();
+    chargeOpenAIUsage(prov, model, data.usage);
     return (data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'';
   }
   // Claude
@@ -10991,17 +11011,17 @@ async function callAIChatStream(prov, key, systemText, messages, opts, onDelta){
   opts=opts||{}; const mt=opts.maxTok||1500; const emit=t=>{ if(t&&onDelta) onDelta(t); };
   const hasImg=m=>m&&Array.isArray(m.images)&&m.images.length;
   // خواننده‌ی عمومی SSE
-  async function readSSE(res, pick){
+  async function readSSE(res, pick, onObj){
     if(!res.ok){ throw new Error(PROVIDER_NAMES[prov]+' ('+res.status+'): '+(await res.text()).slice(0,800)); }
     if(!res.body||!res.body.getReader){ // بدون استریم مرورگر: کل متن
-      const txt=await res.text(); let full=''; txt.split(/\n/).forEach(line=>{ const s=line.replace(/^data:\s?/,''); if(s&&s!=='[DONE]'){ try{ const t=pick(JSON.parse(s)); if(t){ full+=t; emit(t); } }catch(e){} } }); return full;
+      const txt=await res.text(); let full=''; txt.split(/\n/).forEach(line=>{ const s=line.replace(/^data:\s?/,''); if(s&&s!=='[DONE]'){ try{ const obj=JSON.parse(s); if(onObj) onObj(obj); const t=pick(obj); if(t){ full+=t; emit(t); } }catch(e){} } }); return full;
     }
     const reader=res.body.getReader(), dec=new TextDecoder(); let buf='', full='';
     for(;;){ const {value,done}=await reader.read(); if(done) break; buf+=dec.decode(value,{stream:true});
       let idx; while((idx=buf.indexOf('\n'))>=0){ let line=buf.slice(0,idx); buf=buf.slice(idx+1); line=line.replace(/\r$/,'');
         if(!line || line.startsWith(':') || line.startsWith('event:')) continue;
         const s=line.replace(/^data:\s?/,''); if(!s||s==='[DONE]') continue;
-        try{ const t=pick(JSON.parse(s)); if(t){ full+=t; emit(t); } }catch(e){} }
+        try{ const obj=JSON.parse(s); if(onObj) onObj(obj); const t=pick(obj); if(t){ full+=t; emit(t); } }catch(e){} }
     }
     return full;
   }
@@ -11024,8 +11044,11 @@ async function callAIChatStream(prov, key, systemText, messages, opts, onDelta){
       if(hasImg(m) && prov==='openai'){ const arr=[{type:'text',text:String(m.content||'')}]; m.images.forEach(im=>arr.push({type:'image_url',image_url:{url:im.dataURL}})); msgs.push({role,content:arr}); }
       else msgs.push({role,content:String(m.content||'')}); });
     const res=await fetch(url,{ method:'POST', headers:{'content-type':'application/json','authorization':'Bearer '+key},
-      body:JSON.stringify({ model, max_tokens:mt, stream:true, messages:msgs }) });
-    return await readSSE(res, d=>(d.choices&&d.choices[0]&&d.choices[0].delta&&d.choices[0].delta.content)||'');
+      body:JSON.stringify({ model, max_tokens:mt, stream:true, stream_options:{include_usage:true}, messages:msgs }) });
+    let _usage=null;
+    const full=await readSSE(res, d=>(d.choices&&d.choices[0]&&d.choices[0].delta&&d.choices[0].delta.content)||'', o=>{ if(o&&o.usage) _usage=o.usage; });
+    chargeOpenAIUsage(prov, model, _usage);
+    return full;
   }
   // Claude
   const msgs=messages.map(m=>{ const role=m.role==='assistant'?'assistant':'user';
