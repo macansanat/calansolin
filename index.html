@@ -496,7 +496,8 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .coll-all button:hover{border-color:var(--teal);color:var(--teal)}
 .step-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:var(--teal-dim);color:#cdefe6;font-size:12px;font-weight:800;margin-left:8px;direction:ltr}
 label{display:block;font-size:13.5px;color:var(--muted);margin:14px 0 6px}
-input,select{width:100%;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px 13px;font-family:inherit;font-size:15px;max-width:100%}
+input,select{width:100%;box-sizing:border-box;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px 13px;font-family:inherit;font-size:15px;max-width:100%}
+input[type=time],input[type=date]{-webkit-appearance:none;appearance:none;min-width:0}
 input:focus,select:focus{outline:none;border-color:var(--teal)}
 select{cursor:pointer;text-overflow:ellipsis;padding-right:10px;padding-left:28px;background-position:left 10px center}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -1568,7 +1569,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 <div class="card">
   <div class="week-nav">
     <button class="mini-btn" onclick="changeWeek(-1)">‹ هفته‌ی قبل</button>
-    <span class="today" id="weekLabel">—</span>
+    <span class="today" id="weekLabel" onclick="openPlanCal()" style="cursor:pointer" title="انتخابِ تاریخ">📅 —</span>
     <button class="mini-btn" onclick="changeWeek(1)">هفته‌ی بعد ›</button>
   </div>
   <div class="day-tabs" id="dayTabs"></div>
@@ -1616,7 +1617,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <div class="search-results" id="planSearchResults"></div>
     </div>
     <div id="planPickedFoods" class="picked-foods"></div>
-    <div class="row" style="margin-top:12px">
+    <div class="row" id="mealInsRow" style="margin-top:12px;display:none">
       <div>
         <label>نوع انسولین</label>
         <select id="mealInsulinType">
@@ -2004,11 +2005,15 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <div class="formula-note" style="margin-bottom:8px">با انتخابِ هر بیماری، کلِ نرم‌افزار و هوش مصنوعی نسبت به آن حساس‌تر می‌شود و در «آزمایش‌ها» بازهٔ استانداردِ پیگیری پیشنهاد می‌شود. اگر «دیابت» را بزنی، بخشِ انسولین و I:C باز می‌شود.</div>
     <div id="condPicker"></div>
 
-    <div class="row-3" style="margin-top:14px">
+    <div class="row" style="margin-top:14px">
       <div><label>سن (سال)</label><input type="number" id="age" placeholder="مثلاً 33" min="1" max="120"></div>
-      <div><label>وزن (کیلوگرم)</label><input type="number" id="weight" placeholder="مثلاً 80" min="10" max="300"></div>
       <div><label>جنسیت</label><select id="gender"><option value="">—</option><option value="male">مرد</option><option value="female">زن</option></select></div>
     </div>
+    <div class="row" style="margin-top:12px">
+      <div><label>وزنِ اولیه (کیلو)</label><input type="number" id="weightStart" placeholder="شروع" min="10" max="400"></div>
+      <div><label>وزنِ فعلی (کیلو)</label><input type="number" id="weight" placeholder="اکنون" min="10" max="400"></div>
+    </div>
+    <div class="formula-note" style="margin-top:6px">«وزنِ اولیه» = وقتی برنامه را نصب کردی. با رژیم/ورزش، «وزنِ فعلی» را هر چند وقت به‌روز کن تا روندِ کاهش/افزایش را ببینی و هوش مصنوعی از آن باخبر باشد.</div>
 
     <div id="insSection" style="display:none">
     <label style="margin-top:14px">نوع دیابت</label>
@@ -2181,7 +2186,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۴۴</b> · انتشار: ۱۴۰۵/۰۶/۱۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۴۵</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -7310,7 +7315,7 @@ function renderQmedSaved(){ const box=document.getElementById('qmedSaved'); if(!
   box.innerHTML=`<label class="qbg-lbl">داروهای من (یک لمس)</label><div class="cond-wrap" style="margin-bottom:12px">`+a.map((m,i)=>`<button type="button" class="cond-chip" onclick="qmedUseSaved(${i})">💊 ${escVision(m.name)}</button>`).join('')+`</div>`; }
 function qmedUseSaved(i){ const m=myMedsGet()[i]; if(!m) return; const nm=document.getElementById('qmedName'); if(nm) nm.value=m.name; const ds=document.getElementById('qmedDose'); if(ds) ds.value=m.dose||''; const tm=document.getElementById('qmedTiming'); if(tm) tm.value=m.timing||''; const rb=document.getElementById('qmedResults'); if(rb){ rb.classList.remove('show'); rb.innerHTML=''; } uiToast&&uiToast('✓ پر شد — ذخیره را بزن'); }
 async function saveProfile(){
-  const p={diabetesType:val('diabetesType'),basalInsulin:val('basalInsulin'),insulinType:val('insulinType'),age:val('age'),weight:val('weight'),gender:val('gender'),tdd:val('tdd'),ic:val('icRatio'),isf:val('isf'),
+  const p={diabetesType:val('diabetesType'),basalInsulin:val('basalInsulin'),insulinType:val('insulinType'),age:val('age'),weight:val('weight'),weightStart:val('weightStart'),gender:val('gender'),tdd:val('tdd'),ic:val('icRatio'),isf:val('isf'),
     firstName:val('pfFirst').trim(),lastName:val('pfLast').trim(),mobile:val('pfMobile').trim(),email:val('pfEmail').trim(),
     conditions:[..._pfConds], condCustom:_pfCustom.slice()};
   await storageSet(PKEY,JSON.stringify(p)); showSaved(p);
@@ -7389,6 +7394,7 @@ async function loadProfile(){
     document.getElementById('insulinType').value=p.insulinType||'rapid';
     document.getElementById('age').value=p.age||'';
     document.getElementById('weight').value=p.weight||'';
+    { const ws=document.getElementById('weightStart'); if(ws) ws.value=p.weightStart||p.weight||''; }
     { const gs=document.getElementById('gender'); if(gs) gs.value=p.gender||''; }
     document.getElementById('tdd').value=p.tdd||'';
     document.getElementById('icRatio').value=p.ic||'';
@@ -8572,9 +8578,18 @@ function changeWeek(dir){
   curWeekStart.setDate(curWeekStart.getDate()+dir*7);
   curWeekStart=new Date(curWeekStart); renderWeek();
 }
+// تقویمِ پاپ‌آپ روی تاریخِ بالای برنامه — پرش به هر روز
+function openPlanCal(){
+  let inp=document.getElementById('planJumpDate');
+  if(!inp){ inp=document.createElement('input'); inp.type='hidden'; inp.id='planJumpDate'; document.body.appendChild(inp); }
+  const d=new Date(curWeekStart); d.setDate(d.getDate()+(typeof selectedDayIdx==='number'?selectedDayIdx:0));
+  const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); inp.value=jDateStr(j[0],j[1],j[2]);
+  openJCal('planJumpDate', function(str){ const pj=parseJDate(str); if(!pj) return; const g=j2g(pj[0],pj[1],pj[2]); const nd=new Date(g[0],g[1]-1,g[2]); nd.setHours(0,0,0,0);
+    curWeekStart=weekStart(nd); const diff=Math.round((nd-curWeekStart)/86400000); selectedDayIdx=Math.max(0,Math.min(6,diff)); renderWeek(); });
+}
 function renderWeek(){
   const end=new Date(curWeekStart); end.setDate(end.getDate()+6);
-  document.getElementById('weekLabel').textContent=jalaliShort(curWeekStart)+" تا "+jalaliShort(end);
+  document.getElementById('weekLabel').textContent="📅 "+jalaliShort(curWeekStart)+" تا "+jalaliShort(end);
   const tabs=document.getElementById('dayTabs'); tabs.innerHTML='';
   for(let i=0;i<7;i++){
     const d=new Date(curWeekStart); d.setDate(d.getDate()+i);
@@ -14247,9 +14262,11 @@ function buildHealthSnapshot(scope){
   const L=[];
   let minD=null,maxD=null; const seen=d=>{ if(d&&!isNaN(d)){ if(!minD||d<minD)minD=d; if(!maxD||d>maxD)maxD=d; } };
   try{ const p=JSON.parse(localStorage.getItem(PKEY)||'{}'); const pp=[];
+    if(p.firstName) pp.push('نامِ کاربر: '+p.firstName+' (می‌توانی گاهی با اسمِ کوچک صدایش کنی)');
     if(p.diabetesType) pp.push('دیابت '+(DTYPE_FA[p.diabetesType]||p.diabetesType));
     if(p.gender) pp.push(p.gender==='male'?'مرد':p.gender==='female'?'زن':p.gender);
-    if(p.age) pp.push('سن '+p.age); if(p.weight) pp.push('وزن '+p.weight+'kg');
+    if(p.age) pp.push('سن '+p.age);
+    if(p.weight){ let w='وزنِ فعلی '+p.weight+'kg'; if(p.weightStart && +p.weightStart!==+p.weight){ const d=Math.round((+p.weight-+p.weightStart)*10)/10; w+=' (از '+p.weightStart+'kg شروع؛ '+(d<0?('کاهشِ '+Math.abs(d)):('افزایشِ '+d))+'kg)'; } pp.push(w); }
     if(p.tdd) pp.push('TDD '+p.tdd); if(p.ic) pp.push('I:C 1:'+p.ic); if(p.isf) pp.push('ISF '+p.isf);
     if(pp.length) L.push('پروفایل: '+pp.join('، '));
     // بیماری‌ها/وضعیت‌ها — کلِ هوش مصنوعی باید نسبت به این‌ها حساس باشد
@@ -14337,6 +14354,13 @@ function buildHealthSnapshot(scope){
     const ordered=lc.lines.filter(isAbn).concat(lc.lines.filter(l=>!isAbn(l)));
     const shown=ordered.slice(0,45);   // سقفِ منطقی برای توکن
     L.push('آخرین آزمایش ('+lc.date+' — همه‌ی مقادیر ثبت‌شده'+(ordered.length>shown.length?('؛ '+shown.length+' مورد از '+ordered.length):'')+'): '+shown.join(' ؛ ')); } }catch(e){}
+  // برنامهٔ پیشِ‌روِ کاربر (وعده‌های ثبت‌شده برای روزهای آینده = برنامه‌ریزیِ غذایی) — تا هوش مصنوعی بتواند دربارهٔ برنامه هم نظر بدهد
+  try{ const t0=new Date(); t0.setHours(0,0,0,0); const up=[];
+    for(let k=0;k<=2;k++){ const d=new Date(t0); d.setDate(d.getDate()+k); const key=(typeof dayKey==='function')?dayKey(d):null; const arr=key&&planData[key];
+      if(Array.isArray(arr)&&arr.length){ const items=arr.filter(m=>m.foods&&m.foods.length).map(m=>(m.type||'وعده')+(m.time?(' '+m.time):'')+': '+m.foods.join('، ')+(m.carb?(' ('+m.carb+'گ کرب)'):''));
+        if(items.length) up.push((k===0?'امروز':k===1?'فردا':'پس‌فردا')+' — '+items.join(' | ')); } }
+    if(up.length) L.push('برنامهٔ غذاییِ پیشِ‌روِ کاربر (برنامه‌ریزی‌شده): '+up.join('؛ '));
+  }catch(e){}
   return { label:w.label, text:L.join('\n') };
 }
 function HEALTH_AI_PROMPT(scope, snap){
