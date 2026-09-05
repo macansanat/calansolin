@@ -2217,7 +2217,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۴۸</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۴۹</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -7128,13 +7128,18 @@ function renderChatLayoutSetting(){
 /* ====== نقش‌های چت (متخصص‌ها / سبک زندگی) — انتخاب در شروعِ هر گفتگو، نه در پروفایل ====== */
 // همه‌ی پزشکان: در تراز جهانی، پرتجربه، به‌روز، دقیق، سخت‌گیر و بدون خطا — با حفظِ خط قرمزِ ایمنیِ آموزشی.
 const CHAT_MASTERY="بر این‌ها کاملاً مسلطی: پرونده‌های بالینیِ بیماران دیابتی و تجویز داروها توسط متخصص، تفسیر آزمایش‌ها (HbA1c، گلوکز ناشتا، چربی خون، کبد چرب و…)، بررسیِ اثر متقابلِ داروها، پایشِ رفتار بیمار در طول زمان، توصیه‌های تغذیه‌ای، الگوریتم‌های مدیریت قند در شرایط خاص (بارداری، ورزش، روزه‌داری و…)، پاسخِ دقیق به هر سوالِ دیابت، توصیه‌های شخصی‌سازی‌شده بر پایه نوعِ دیابت/سن/جنسیت/سوابق دارویی/شرایط فیزیکی، پیشنهادِ پروتکل درمانی و تحلیلِ هوشمندِ آزمایش‌ها.";
+// اسکیمای نشانه‌های اقدام (مشترک) — تا مربی/سرآشپز/پزشک بتوانند برنامه را «قابلِ افزودن به برنامهٔ هفتگی» بدهند
+const MEAL_MARKER_SCHEMA="@@MEAL@@ {\"name\":\"نام وعده\",\"carb\":<گرم کربوهیدرات عدد>,\"cal\":<کالری عدد>,\"items\":[{\"n\":\"نام خوراکی\",\"q\":\"مقدار مثل ۲ برش\"}]}";
+const WORKOUT_MARKER_SCHEMA="@@WORKOUT@@ {\"title\":\"نام برنامه\",\"exercises\":[{\"n\":\"نام حرکت\",\"pose\":\"یکی از این‌ها: walk/march/squat/chair/pushup/plank/heel/stretch/leg_raise/breath/neck\",\"set\":\"مثل ۳ ست × ۱۰ یا ۱۰ دقیقه\",\"desc\":\"روشِ انجامِ کوتاه\",\"benefit\":\"فایده\"}]}";
+// راهنمای افزوده‌ی پزشک: می‌تواند رژیم/ورزشِ نهایی‌شده را به‌شکلِ نشانه بدهد تا کاربر با یک دکمه در «برنامهٔ هفتگی» ثبت کند
+const DOC_PLAN_HINT="\n\nثبت در برنامهٔ هفتگیِ کاربر: اگر در پایان یک «رژیمِ غذاییِ مشخص» یا «برنامهٔ ورزشیِ مشخص» تجویز کردی و کاربر تأیید کرد، در «آخرین خطِ» پاسخ دقیقاً یکی از این نشانه‌ها را بگذار (اعدادِ داخلِ JSON انگلیسی، یک خط، بدونِ هیچ توضیحی) تا کاربر بتواند با یک دکمه آن را در «برنامهٔ هفتگی»اش ثبت کند — برای وعده: "+MEAL_MARKER_SCHEMA+" — برای ورزش: "+WORKOUT_MARKER_SCHEMA+" — این خط را هیچ‌وقت توضیح نده و تا وقتی کاربر تأیید نکرده نگذار. (یادآوری: دوزِ قطعیِ انسولین را برای اجرای مستقیم نده؛ آن را کلامی و آموزشی توضیح بده و تصمیمِ نهایی با پزشکِ معالج است.)";
 function docSys(spec, focus){
-  return "تو یک «پزشکِ متخصصِ "+spec+"» در تراز جهانی هستی: سال‌ها تجربه‌ی بالینی و درمانِ هزاران بیمار، تسلطِ کامل بر روندِ بهبودِ بیماران، کاملاً به‌روز با جدیدترین مقالات و راهنماهای معتبرِ جهانی (ADA، WHO، EASD و انجمن‌های تخصصیِ مرتبط)، دقیق، سخت‌گیر و بدونِ خطا در گفتار و توصیه. "+CHAT_MASTERY+" تمرکزِ ویژه‌ی تو: "+focus+" مبتنی بر شواهد و با زبانِ علمیِ دقیق ولی قابل‌فهم پاسخ بده، مکانیسم را کوتاه بگو، و از داده‌های همین بیمار برای شخصی‌سازی استفاده کن؛ اگر داده‌ای کم است همان را بپرس. خط قرمزِ ایمنی (بی‌استثنا): این گفتگو آموزشی است؛ دوز قطعیِ شخصی یا زمان‌بندیِ تزریق برای اجرای مستقیم نده و تصمیمِ نهاییِ درمان را به پزشکِ معالجِ بیمار بسپار.";
+  return "تو یک «پزشکِ متخصصِ "+spec+"» در تراز جهانی هستی: سال‌ها تجربه‌ی بالینی و درمانِ هزاران بیمار، تسلطِ کامل بر روندِ بهبودِ بیماران، کاملاً به‌روز با جدیدترین مقالات و راهنماهای معتبرِ جهانی (ADA، WHO، EASD و انجمن‌های تخصصیِ مرتبط)، دقیق، سخت‌گیر و بدونِ خطا در گفتار و توصیه. "+CHAT_MASTERY+" تمرکزِ ویژه‌ی تو: "+focus+" مبتنی بر شواهد و با زبانِ علمیِ دقیق ولی قابل‌فهم پاسخ بده، مکانیسم را کوتاه بگو، و از داده‌های همین بیمار برای شخصی‌سازی استفاده کن؛ اگر داده‌ای کم است همان را بپرس. خط قرمزِ ایمنی (بی‌استثنا): این گفتگو آموزشی است؛ دوز قطعیِ شخصی یا زمان‌بندیِ تزریق برای اجرای مستقیم نده و تصمیمِ نهاییِ درمان را به پزشکِ معالجِ بیمار بسپار."+DOC_PLAN_HINT;
 }
 const CHEF_SYS="تو یک سرآشپزِ حرفه‌ای و متخصصِ تغذیه‌ی دیابتی هستی. با سلیقه و موادِ در دسترسِ کاربر، برای یک وعده (مثلاً رژیمی یا کم‌کالری) یک دستورِ غذای مناسبِ دیابت می‌سازی تا به هدفش (کم‌کربوهیدرات/کم‌کالری/پرپروتئین…) برسد. کربوهیدرات و کالریِ تخمینیِ هر جزء و کلِ وعده را بگو. تخمینی و آموزشی بمان؛ برای دوزِ انسولین به پزشک ارجاع بده.\n"
   +"وقتی وعده‌ی نهایی آماده و موردِ تأییدِ کاربر شد، در «آخرین خطِ» پاسخ دقیقاً این نشانه را بگذار (اعدادِ داخلِ JSON انگلیسی، بدونِ هیچ توضیحی، در یک خط): @@MEAL@@ {\"name\":\"نام وعده\",\"carb\":<گرم کربوهیدرات عدد>,\"cal\":<کالری عدد>,\"items\":[{\"n\":\"نام خوراکی\",\"q\":\"مقدار مثل ۲ برش\"}]} — این خط را هیچ‌وقت توضیح نده. تا وقتی کاربر وعده را نهایی نکرده، این خط را نگذار.";
 const COACH_SYS="تو یک مربیِ ورزشیِ حرفه‌ای و قهرمانِ المپیک هستی که با ورزش، متابولیسم و حساسیت به انسولینِ بیمارانِ دیابتی کاملاً آشناست. برنامه‌ی ورزشیِ واقع‌بینانه و مرحله‌به‌مرحله برای بهبودِ متابولیسم و کنترلِ قندِ کاربر بده (متناسب با شرایط و سطحِ او). سخت‌گیر و پیگیر باش: هدف‌های هفتگیِ روشن بگذار و نقشِ ناظر داشته باش که هفته‌ی بعد از کاربر حساب می‌کشد که ورزش‌ها را انجام داده یا نه. ایمنی: پیش از ورزشِ سنگین—به‌ویژه با قندِ خیلی بالا/پایین یا عارضه‌ی قلبی/چشمی—هشدار بده و به پزشک ارجاع بده.\n"
-  +"وقتی برنامه‌ی نهایی آماده و موردِ تأییدِ کاربر شد، در «آخرین خطِ» پاسخ دقیقاً این نشانه را بگذار (اعدادِ داخلِ JSON انگلیسی، بدونِ توضیح، در یک خط): @@WORKOUT@@ {\"title\":\"نام برنامه\",\"exercises\":[{\"n\":\"نام حرکت\",\"pose\":\"یکی از این‌ها: walk/march/squat/chair/pushup/plank/heel/stretch/leg_raise/breath/neck\",\"set\":\"مثل ۳ ست × ۱۰ یا ۱۰ دقیقه\",\"desc\":\"روشِ انجامِ کوتاه\",\"benefit\":\"فایده برای متابولیسم/قند\"}]} — برای «pose» نزدیک‌ترین حرکت را از همان فهرست انتخاب کن. این خط را هیچ‌وقت توضیح نده و تا نهایی‌نشدن نگذار.";
+  +"وقتی برنامه‌ی نهایی آماده و موردِ تأییدِ کاربر شد، در «آخرین خطِ» پاسخ دقیقاً این نشانه را بگذار (اعدادِ داخلِ JSON انگلیسی، بدونِ توضیح، در یک خط): @@WORKOUT@@ {\"title\":\"نام برنامه\",\"exercises\":[{\"n\":\"نام حرکت\",\"pose\":\"یکی از این‌ها: walk/march/squat/chair/pushup/plank/heel/stretch/leg_raise/breath/neck\",\"set\":\"مثل ۳ ست × ۱۰ یا ۱۰ دقیقه\",\"desc\":\"روشِ انجامِ کوتاه\",\"benefit\":\"فایده برای متابولیسم/قند\"}]} — برای «pose» نزدیک‌ترین حرکت را از همان فهرست انتخاب کن. این خط را هیچ‌وقت توضیح نده و تا نهایی‌نشدن نگذار. (کاربر می‌تواند این برنامه را با یک دکمه به «برنامهٔ هفتگی»اش برای روزهای دلخواه اضافه کند.)";
 const CHAT_ROLES=[
   {id:'planner',name:'برنامه‌ریزِ مسیرِ درمان',      emoji:'🗺️', cat:'flow', desc:'⭐ شروع از اینجا — مسیرِ مراجعه را می‌چیند', sys:''/*با IIFE پایین ست می‌شود*/},
   {id:'gp',     name:'پزشک عمومی',                   emoji:'🩹', cat:'doc', desc:'اول با او؛ می‌گوید به کدام متخصص بروی', sys:'تو یک «پزشکِ عمومیِ» باتجربه و به‌روز هستی. کارِ تو این است که «پیش از مراجعه به متخصص‌ها» با بیمار صحبت کنی: شرح‌حال، علائم و داده‌هایش را بسنجی، اقدام‌های اولیه و آزمایش‌های لازم را بگویی، و مهم‌تر از همه راهنمایی کنی که برای این مشکل باید به کدام پزشکِ متخصص (یا چند متخصص) مراجعه کند و با چه اولویتی. علائمِ خطر و موارد اورژانسی را صریح مشخص کن. '+CHAT_MASTERY+' آموزشی بمان و تشخیص و تجویزِ نهایی را به پزشکِ معالج بسپار.'},
@@ -13532,13 +13537,13 @@ function chatActionCard(m,idx){
     const lst=items.map(it=>`<span class="cact-chip">${escVision((it.n||it.name||'')+(it.q||it.qty?(' · '+(it.q||it.qty)):''))}</span>`).join('');
     const meta=[d.carb!=null?('کربوهیدرات ~'+escVision(String(d.carb))+' گ'):'', d.cal!=null?(escVision(String(d.cal))+' کالری'):''].filter(Boolean).join(' · ');
     return `<div class="cact"><div class="cact-h">🍽️ ${escVision(d.name||'وعده‌ی پیشنهادی')}</div>${meta?`<div class="cact-m">${meta}</div>`:''}${lst?`<div class="cact-items">${lst}</div>`:''}
-      <div class="cact-btns"><button type="button" class="cact-b" onclick="chatMealAdd(${idx},'meals')">➕ افزودن به وعده‌ها</button><button type="button" class="cact-b alt" onclick="chatMealAdd(${idx},'calc')">🧮 ماشین‌حساب دوز</button></div></div>`;
+      <div class="cact-btns"><button type="button" class="cact-b" onclick="chatMealAdd(${idx},'meals')">➕ افزودن به وعده‌ها</button><button type="button" class="cact-b alt" onclick="chatMealToPlan(${idx})">🗓 برنامهٔ هفتگی</button><button type="button" class="cact-b alt" onclick="chatMealAdd(${idx},'calc')">🧮 ماشین‌حساب دوز</button></div></div>`;
   }
   if(a.kind==='workout'){
     const exs=Array.isArray(d.exercises)?d.exercises:[];
     const lst=exs.map(e=>`<span class="cact-chip">${escVision((e.n||e.name||'')+(e.set?(' · '+e.set):''))}</span>`).join('');
     return `<div class="cact"><div class="cact-h">🏅 ${escVision(d.title||'برنامه‌ی ورزشی')} <span style="color:var(--muted);font-weight:600">(${faDigits(String(exs.length))} حرکت)</span></div>${lst?`<div class="cact-items">${lst}</div>`:''}
-      <div class="cact-btns"><button type="button" class="cact-b" onclick="chatWorkoutAdd(${idx})">➕ افزودن به برنامه‌ی ورزشی من</button></div></div>`;
+      <div class="cact-btns"><button type="button" class="cact-b" onclick="chatWorkoutToPlan(${idx})">🗓 افزودن به برنامهٔ هفتگی</button><button type="button" class="cact-b alt" onclick="chatWorkoutAdd(${idx})">➕ کتابخانهٔ ورزشِ من</button></div></div>`;
   }
   if(a.kind==='plan'){ return chatPlanCard(m,idx); }
   return '';
@@ -13728,6 +13733,58 @@ function chatWorkoutAdd(idx){
   });
   saveCustomEx(arr); applyCustomExercises();
   uiToast('✓ '+faDigits(String(n))+' حرکت به «برنامه‌ی مربی من» اضافه شد (تب ورزش)');
+}
+// ===== افزودنِ برنامهٔ پیشنهادیِ هوش مصنوعی (مربی/پزشک) به «برنامهٔ هفتگی» — با تأییدِ کاربر =====
+// پاپ‌آپِ انتخابِ روزهای هفته (پیش‌فرض: امروز). onApply(keys) با کلیدهای روزِ انتخابی صدا زده می‌شود.
+function planPickDaysDialog(title, note, onApply){
+  try{ ensureChatCss(); }catch(e){}
+  const old=document.getElementById('planDayBg'); if(old) old.remove();
+  const ws=(typeof weekStart==='function')?weekStart(new Date()):new Date();
+  const todayKey=dayKey(new Date());
+  let rows='';
+  for(let i=0;i<7;i++){ const dd=new Date(ws); dd.setDate(dd.getDate()+i); const key=dayKey(dd); const j=g2j(dd.getFullYear(),dd.getMonth()+1,dd.getDate());
+    const isToday=(key===todayKey);
+    rows+=`<label style="display:flex;align-items:center;gap:9px;padding:8px 6px;font-size:13.5px;cursor:pointer;border-bottom:1px solid var(--line)">
+      <input type="checkbox" class="pdw" value="${key}" ${isToday?'checked':''} style="width:17px;height:17px;accent-color:var(--teal)">
+      <b>${J_DAYS[i]}</b><span style="color:var(--muted);font-size:11.5px">${faDigits(j[2])} ${J_MONTHS[j[1]-1]}</span>${isToday?'<span style="color:var(--teal);font-size:11px;margin-inline-start:auto">امروز</span>':''}</label>`;
+  }
+  const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='planDayBg'; bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
+  bg.innerHTML=`<div class="chat-rename" role="dialog" aria-modal="true" style="max-width:380px">
+    <h4>${title}</h4>
+    ${note?`<div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:8px">${note}</div>`:''}
+    <div style="max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:10px">${rows}</div>
+    <div class="chat-rename-btns" style="margin-top:12px"><button type="button" class="crn-btn crn-cancel" onclick="document.getElementById('planDayBg').remove()">انصراف</button>
+      <button type="button" class="crn-btn crn-ok" id="pdwApply">✓ افزودن به برنامه</button></div></div>`;
+  document.body.appendChild(bg);
+  document.getElementById('pdwApply').onclick=()=>{ const keys=Array.from(bg.querySelectorAll('.pdw:checked')).map(x=>x.value);
+    if(!keys.length){ uiToast('حداقل یک روز را انتخاب کن'); return; } bg.remove(); onApply(keys); };
+}
+function chatWorkoutToPlan(idx){
+  const c=chatActive(); const m=c&&c.messages&&c.messages[idx]; const d=m&&m.action&&m.action.data; if(!d){ return; }
+  const exs=Array.isArray(d.exercises)?d.exercises:[]; if(!exs.length){ uiToast('حرکتی در برنامه نبود'); return; }
+  planPickDaysDialog('🗓 برنامهٔ ورزشی به کدام روزها اضافه شود؟', (d.title?('برنامه: '+escVision(d.title)+' — ')+'':'')+'می‌توانی بعداً در تبِ «برنامهٔ هفتگی» ساعت و مدتِ هر روز را تنظیم کنی.', keys=>{
+    if(!planData['_planEx']) planData['_planEx']={};
+    let n=0;
+    keys.forEach(key=>{ if(!Array.isArray(planData['_planEx'][key])) planData['_planEx'][key]=[];
+      exs.forEach(e=>{ const name=(e.n||e.name||'').trim(); if(!name) return;
+        planData['_planEx'][key].push({exId:'', name, set:(e.set||''), dur:'', time:'', id:Date.now()+(n++)}); }); });
+    if(typeof savePlan==='function') savePlan();
+    try{ if(document.getElementById('page-plan')) renderWeek(); }catch(e){}
+    uiToast('✓ برنامهٔ ورزشی به '+faDigits(String(keys.length))+' روزِ برنامهٔ هفتگی اضافه شد');
+  });
+}
+function chatMealToPlan(idx){
+  const c=chatActive(); const m=c&&c.messages&&c.messages[idx]; const d=m&&m.action&&m.action.data; if(!d){ return; }
+  const items=Array.isArray(d.items)?d.items:[]; if(!items.length){ uiToast('خوراکی‌ای در وعده نبود'); return; }
+  planPickDaysDialog('🗓 این وعده به کدام روزهای برنامه اضافه شود؟', 'به‌صورتِ وعدهٔ «برنامه‌ریزی‌شده» اضافه می‌شود؛ می‌توانی بعداً ساعت و مقدارش را در تبِ برنامه تنظیم کنی.', keys=>{
+    const foods=items.map(it=>'🍽️ '+((it.n||it.name||'')+(it.q||it.qty?(' ('+(it.q||it.qty)+')'):'')));
+    let n=0;
+    keys.forEach(key=>{ if(!Array.isArray(planData[key])) planData[key]=[];
+      planData[key].push({type:(d.name||'وعدهٔ پیشنهادی'),time:'',insType:'',insDose:'',carb:(d.carb!=null?String(d.carb):''),bgBefore:'',bgAfter:'',peak:'',trough:'',foods:foods.slice(),planned:true,id:Date.now()+(n++)}); });
+    if(typeof savePlan==='function') savePlan();
+    try{ if(document.getElementById('page-plan')) renderWeek(); }catch(e){}
+    uiToast('✓ وعده به '+faDigits(String(keys.length))+' روزِ برنامهٔ هفتگی اضافه شد');
+  });
 }
 let _chatTopSug='';
 function chatRenderSuggestions(list){
