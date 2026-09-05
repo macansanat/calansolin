@@ -2217,7 +2217,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۴۹</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۵۰</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3544,7 +3544,7 @@ function podCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(POD_CFG_KEY)
     content:podContentCfg(o.content) }; }
 // تنظیماتِ محتوایِ پادکست: کدام موضوع‌ها بحث شوند (هر کدام قابلِ فعال/غیرفعال) + بازهٔ مرورِ قند
 function podContentCfg(cc){ cc=cc||{};
-  const dflt={glucose:true,meals:true,insulin:true,meds:true,exercise:true,sleep:true,vitals:true,mood:true,labs:true,tip:true,step:true};
+  const dflt={glucose:true,meals:true,insulin:true,meds:true,exercise:true,sleep:true,vitals:true,mood:true,labs:true,plan:true,tip:true,step:true};
   const r={}; for(const k in dflt) r[k]=(cc[k]!==false);
   r.glucoseRange=cc.glucoseRange||'today';
   r.tone=(cc.tone==='formal'?'formal':'casual');   // لحنِ گفتار: محاوره‌ای (پیش‌فرض) یا رسمی
@@ -3632,6 +3632,7 @@ function podLineKind(l){
   if(/^فشار و ضربان/.test(l)) return 'vitals';
   if(/^(دفترچه‌ی روزانه|📌|مشاهدات اخیرِ)/.test(l)) return 'mood';
   if(/^آخرین آزمایش/.test(l)) return 'labs';
+  if(/^برنامهٔ پیشِ‌رو/.test(l)) return 'plan';
   return 'keep';   // پروفایل و خطِ بازه — همیشه بماند
 }
 // خلاصهٔ قند برای بازهٔ دلخواه (روز): بازهٔ گزارشِ کلی را موقتاً عوض و برمی‌گرداند
@@ -3666,6 +3667,7 @@ function podPrompt(mins){
   if(C.vitals) cover.push('فشار خون و ضربان');
   if(C.mood) cover.push('حالِ روحی و یادداشت‌های دفترچه');
   if(C.labs) cover.push('نتایجِ آخرین آزمایش‌ها و مواردِ نیازمندِ توجه');
+  if(C.plan) cover.push('برنامهٔ هفتگیِ پیشِ‌رو (وعده/انسولین/ورزشِ برنامه‌ریزی‌شده) و یادآوریِ آن');
   const jd=_jLabel(new Date());
   let struct="ساختار (پیوسته و روان، بدونِ نوشتنِ تیتر یا شماره): یک سلامِ گرم و اشاره به امروز («امروز "+jd+"»). ";
   if(cover.length) struct+="سپس "+(yest?'مرورِ کاملِ «دیروز» را بگو (چون امروز هنوز کامل نشده، دیروز را مرور می‌کنیم) و فقط ':'فقط ')+"همین موضوع‌ها را مرور کن (نه بیشتر، و هر کدام که داده‌اش نبود سراغش نرو): "+cover.join('؛ ')+". به عددهای واقعی اشاره کن، تشویق کن و اگر جایی خوب نبود با مهربانی و بدونِ سرزنش راهنمایی کن. ";
@@ -5319,7 +5321,7 @@ function renderPodCfg(){
   const grOpts=[['today','امروز'],['yesterday','دیروز'],['7','۷ روز'],['14','۱۴ روز'],['30','۳۰ روز'],['90','۹۰ روز']];
   h+=`<div class="pod-seg">`+grOpts.map(o=>`<button class="${C.glucoseRange===o[0]?'on':''}" ${C.glucose?'':'disabled'} onclick="podContentSet('glucoseRange','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
   h+=`<div class="qbg-sub" style="margin-top:4px">«دیروز» کلِ دادهٔ روزِ کاملِ گذشته را مرور می‌کند (چون امروز شاید هنوز ناقص باشد). «امروز» = همین روز. بازه‌های چندروزه فقط روندِ قند را نشان می‌دهند.</div>`;
-  const tog=[['glucose','🩸 بررسیِ قند خون'],['meals','🍽️ وعده‌های غذایی و پیشنهادها'],['insulin','💉 انسولین و پایبندی'],['meds','💊 داروها'],['exercise','🏃 ورزش و فعالیت'],['sleep','😴 خواب'],['vitals','❤️ فشار خون و ضربان'],['mood','🙂 حالِ روحی و دفترچه'],['labs','🧪 نتایجِ آزمایش‌ها'],['tip','💡 نکتهٔ آموزشیِ روز'],['step','✅ یک قدمِ عملی']];
+  const tog=[['glucose','🩸 بررسیِ قند خون'],['meals','🍽️ وعده‌های غذایی و پیشنهادها'],['insulin','💉 انسولین و پایبندی'],['meds','💊 داروها'],['exercise','🏃 ورزش و فعالیت'],['sleep','😴 خواب'],['vitals','❤️ فشار خون و ضربان'],['mood','🙂 حالِ روحی و دفترچه'],['labs','🧪 نتایجِ آزمایش‌ها'],['plan','🗓 برنامهٔ هفتگی'],['tip','💡 نکتهٔ آموزشیِ روز'],['step','✅ یک قدمِ عملی']];
   h+=`<div class="pod-togs">`+tog.map(t=>`<button class="pod-tog ${C[t[0]]?'on':''}" onclick="podContentSet('${t[0]}',${C[t[0]]?'false':'true'})"><span>${t[1]}</span><span class="pod-tog-sw">${C[t[0]]?'روشن':'خاموش'}</span></button>`).join('')+`</div>`;
   h+=`<div class="qbg-sub" style="margin-top:8px">اگر می‌خواهی پادکست کوتاه و متمرکز باشد، فقط چند موردِ مهم را روشن بگذار.</div>`;
   }
@@ -7131,8 +7133,9 @@ const CHAT_MASTERY="بر این‌ها کاملاً مسلطی: پرونده‌�
 // اسکیمای نشانه‌های اقدام (مشترک) — تا مربی/سرآشپز/پزشک بتوانند برنامه را «قابلِ افزودن به برنامهٔ هفتگی» بدهند
 const MEAL_MARKER_SCHEMA="@@MEAL@@ {\"name\":\"نام وعده\",\"carb\":<گرم کربوهیدرات عدد>,\"cal\":<کالری عدد>,\"items\":[{\"n\":\"نام خوراکی\",\"q\":\"مقدار مثل ۲ برش\"}]}";
 const WORKOUT_MARKER_SCHEMA="@@WORKOUT@@ {\"title\":\"نام برنامه\",\"exercises\":[{\"n\":\"نام حرکت\",\"pose\":\"یکی از این‌ها: walk/march/squat/chair/pushup/plank/heel/stretch/leg_raise/breath/neck\",\"set\":\"مثل ۳ ست × ۱۰ یا ۱۰ دقیقه\",\"desc\":\"روشِ انجامِ کوتاه\",\"benefit\":\"فایده\"}]}";
-// راهنمای افزوده‌ی پزشک: می‌تواند رژیم/ورزشِ نهایی‌شده را به‌شکلِ نشانه بدهد تا کاربر با یک دکمه در «برنامهٔ هفتگی» ثبت کند
-const DOC_PLAN_HINT="\n\nثبت در برنامهٔ هفتگیِ کاربر: اگر در پایان یک «رژیمِ غذاییِ مشخص» یا «برنامهٔ ورزشیِ مشخص» تجویز کردی و کاربر تأیید کرد، در «آخرین خطِ» پاسخ دقیقاً یکی از این نشانه‌ها را بگذار (اعدادِ داخلِ JSON انگلیسی، یک خط، بدونِ هیچ توضیحی) تا کاربر بتواند با یک دکمه آن را در «برنامهٔ هفتگی»اش ثبت کند — برای وعده: "+MEAL_MARKER_SCHEMA+" — برای ورزش: "+WORKOUT_MARKER_SCHEMA+" — این خط را هیچ‌وقت توضیح نده و تا وقتی کاربر تأیید نکرده نگذار. (یادآوری: دوزِ قطعیِ انسولین را برای اجرای مستقیم نده؛ آن را کلامی و آموزشی توضیح بده و تصمیمِ نهایی با پزشکِ معالج است.)";
+const INSULIN_MARKER_SCHEMA="@@INSULIN@@ {\"title\":\"نام برنامه\",\"items\":[{\"kind\":\"basal یا rapid\",\"name\":\"مثل لانتوس یا اپیدرا\",\"dose\":<واحد عدد>,\"time\":\"HH:MM\"}]}";
+// راهنمای افزوده‌ی پزشک: می‌تواند رژیم/ورزش/یادآوریِ انسولینِ نهایی‌شده را به‌شکلِ نشانه بدهد تا کاربر با یک دکمه در «برنامهٔ هفتگی» ثبت کند
+const DOC_PLAN_HINT="\n\nثبت در برنامهٔ هفتگیِ کاربر: اگر در پایان یک «رژیمِ غذاییِ مشخص»، «برنامهٔ ورزشیِ مشخص»، یا «یادآوریِ برنامهٔ انسولین» تجویز کردی و کاربر تأیید کرد، در «آخرین خطِ» پاسخ دقیقاً یکی از این نشانه‌ها را بگذار (اعدادِ داخلِ JSON انگلیسی، یک خط، بدونِ هیچ توضیحی) تا کاربر بتواند با یک دکمه آن را در «برنامهٔ هفتگی»اش ثبت کند — برای وعده: "+MEAL_MARKER_SCHEMA+" — برای ورزش: "+WORKOUT_MARKER_SCHEMA+" — برای انسولین: "+INSULIN_MARKER_SCHEMA+" — این خط را هیچ‌وقت توضیح نده و تا وقتی کاربر تأیید نکرده نگذار. (نشانهٔ انسولین فقط «یادآوریِ برنامه» برای کاربر است و در محاسبهٔ I:C دخالتی ندارد؛ تصمیمِ نهایی با پزشکِ معالج است.)";
 function docSys(spec, focus){
   return "تو یک «پزشکِ متخصصِ "+spec+"» در تراز جهانی هستی: سال‌ها تجربه‌ی بالینی و درمانِ هزاران بیمار، تسلطِ کامل بر روندِ بهبودِ بیماران، کاملاً به‌روز با جدیدترین مقالات و راهنماهای معتبرِ جهانی (ADA، WHO، EASD و انجمن‌های تخصصیِ مرتبط)، دقیق، سخت‌گیر و بدونِ خطا در گفتار و توصیه. "+CHAT_MASTERY+" تمرکزِ ویژه‌ی تو: "+focus+" مبتنی بر شواهد و با زبانِ علمیِ دقیق ولی قابل‌فهم پاسخ بده، مکانیسم را کوتاه بگو، و از داده‌های همین بیمار برای شخصی‌سازی استفاده کن؛ اگر داده‌ای کم است همان را بپرس. خط قرمزِ ایمنی (بی‌استثنا): این گفتگو آموزشی است؛ دوز قطعیِ شخصی یا زمان‌بندیِ تزریق برای اجرای مستقیم نده و تصمیمِ نهاییِ درمان را به پزشکِ معالجِ بیمار بسپار."+DOC_PLAN_HINT;
 }
@@ -11419,6 +11422,35 @@ function stickFigure(pose, animate){
       ['limb',[50,52,42,80],[50,52,42,80]],
       ['limb',[50,52,58,80],[50,52,58,80]],
     ]},
+    situp:{ head:[[30,58],[44,46]], parts:[
+      ['limb',[56,72,30,58],[56,72,44,48]],
+      ['limb',[56,72,70,60],[56,72,70,60]],
+      ['limb',[70,60,68,80],[70,60,68,80]],
+      ['limb',[30,58,22,50],[44,48,40,40]],
+      ['rect',[20,82,80,82]],
+    ]},
+    lunge:{ head:[[50,15],[50,19]], parts:[
+      ['limb',[50,22,50,50],[50,26,50,54]],
+      ['limb',[50,30,40,42],[50,34,40,46]],
+      ['limb',[50,30,60,42],[50,34,60,46]],
+      ['limb',[50,50,38,64],[50,54,36,66]],
+      ['limb',[38,64,38,82],[36,66,36,82]],
+      ['limb',[50,50,64,66],[50,54,66,70]],
+      ['limb',[64,66,72,82],[66,70,74,82]],
+    ]},
+    jumpingjack:{ head:[[50,14],[50,12]], parts:[
+      ['limb',[50,21,50,52],[50,19,50,50]],
+      ['limb',[50,26,42,40],[50,24,32,22]],
+      ['limb',[50,26,58,40],[50,24,68,22]],
+      ['limb',[50,52,46,80],[50,50,36,80]],
+      ['limb',[50,52,54,80],[50,50,64,80]],
+    ]},
+    bridge:{ head:[[24,64],[24,64]], parts:[
+      ['limb',[30,64,58,54],[30,64,58,46]],
+      ['limb',[58,54,70,66],[58,46,70,66]],
+      ['limb',[70,66,70,82],[70,66,70,82]],
+      ['rect',[20,82,80,82]],
+    ]},
   };
   const def=P[pose]||P.stretch;
   let body='';
@@ -11432,11 +11464,29 @@ function stickFigure(pose, animate){
 }
 // کتابخانه‌ی حرکت‌ها
 const EX_LIBRARY={
+  warmup:{cat:'🔥 گرم کردن (پیش از ورزش)',items:[
+    {id:'wu_neck',name:'چرخش آرام گردن',pose:'neck',set:'۸ بار هر طرف',desc:'سر را آرام دایره‌وار بچرخان، بدون فشار. اول یک طرف، بعد طرف دیگر.',benefit:'عضلات گردن را گرم می‌کند و از گرفتگی هنگام ورزش جلوگیری می‌کند.'},
+    {id:'wu_arm',name:'چرخش شانه و بازو',pose:'stretch',set:'۲ ست × ۱۰ چرخش',desc:'دست‌ها را باز کن و از شانه دایره‌های بزرگ بزن؛ رو به جلو و بعد رو به عقب.',benefit:'مفصل شانه را روان و خون‌رسانی را زیاد می‌کند — پیشگیری از آسیب بالاتنه.'},
+    {id:'wu_twist',name:'چرخش تنه',pose:'stretch',set:'۱۰ بار هر طرف',desc:'پاها به عرض شانه، دست‌ها جلوی سینه، کمر را آرام به چپ و راست بچرخان.',benefit:'ستون فقرات و عضلات میانی را گرم می‌کند.'},
+    {id:'wu_hip',name:'چرخش لگن',pose:'stretch',set:'۱۰ بار هر طرف',desc:'دست‌ها روی کمر، لگن را دایره‌وار بچرخان انگار هولاهوپ می‌چرخانی.',benefit:'مفصل لگن و کمر را برای اسکات و لانج آماده می‌کند.'},
+    {id:'wu_knee',name:'بالا آوردن آرام زانو',pose:'march',set:'۱ دقیقه',desc:'درجا راه برو و زانوها را تا کمر بالا بیاور، آرام و ریتمیک.',benefit:'ضربان قلب را کم‌کم بالا می‌برد و پاها را گرم می‌کند.'},
+    {id:'wu_ankle',name:'چرخش مچ پا',pose:'heel',set:'۱۰ بار هر پا',desc:'روی یک پا بایست (به دیوار تکیه بده)، مچ پای دیگر را دایره‌وار بچرخان.',benefit:'مچ پا را روان می‌کند — مهم برای پیشگیری از پیچ‌خوردگی.'},
+    {id:'wu_legswing',name:'تاب دادن پا',pose:'leg_raise',set:'۱۰ بار هر پا',desc:'به دیوار تکیه بده و یک پا را آرام جلو و عقب تاب بده.',benefit:'عضلات ران و پشت پا را برای حرکات پرفشار آماده می‌کند.'},
+    {id:'wu_jack',name:'جامپینگ‌جکِ سبک',pose:'jumpingjack',set:'۳۰-۴۵ ثانیه',desc:'آرام و کنترل‌شده جامپینگ‌جک بزن تا کلِ بدن گرم شود.',benefit:'کل بدن را گرم و قلب را برای ورزش اصلی آماده می‌کند.'},
+  ]},
   aerobic:{cat:'🚶 هوازی سبک',items:[
     {id:'walk_meal',name:'پیاده‌روی بعد از غذا',pose:'walk',set:'۱۰-۱۵ دقیقه، بعد از هر وعده‌ی اصلی',desc:'آرام تا متوسط قدم بزن. بهترین زمان: ۱۵-۳۰ دقیقه بعد از غذا.',benefit:'یکی از مؤثرترین کارها برای پایین آوردن قند بعد غذا و کمک به انسولین. عضله قند را مستقیم مصرف می‌کند.'},
     {id:'march',name:'درجا راه رفتن (مارش)',pose:'march',set:'۳ ست × ۱ دقیقه',desc:'سرجایت بایست و زانوها را یکی‌یکی بالا بیاور، دست‌ها همراه حرکت کنند.',benefit:'هوازی خانگی بدون نیاز به فضا. ضربان قلب و مصرف قند را بالا می‌برد.'},
     {id:'heel',name:'بالا آمدن روی پنجه‌ی پا',pose:'heel',set:'۳ ست × ۱۵ بار',desc:'صاف بایست، روی پنجه‌ها بلند شو و آرام پایین بیا. برای تعادل به دیوار تکیه بده.',benefit:'عضلات ساق را فعال می‌کند و گردش خون پا را بهتر می‌کند — در دیابت مهم است.'},
     {id:'stairs',name:'بالا و پایین رفتن از پله',pose:'walk',set:'۵-۱۰ دقیقه',desc:'اگر پله در دسترس داری، آرام بالا و پایین برو.',benefit:'هوازی قوی که قلب و عضلات بزرگ پا را درگیر می‌کند.'},
+    {id:'jumping_jack',name:'جامپینگ جک',pose:'jumpingjack',set:'۳ ست × ۳۰ ثانیه',desc:'بپر و هم‌زمان دست‌ها را بالای سر و پاها را به طرفین باز کن، بعد جمع کن.',benefit:'هوازیِ تمام‌بدن؛ قلب و مصرف قند را سریع بالا می‌برد.'},
+    {id:'high_knees',name:'دویدن درجا با زانوی بلند',pose:'march',set:'۳ ست × ۳۰ ثانیه',desc:'درجا بدو و زانوها را تند تا ارتفاع کمر بالا بیاور.',benefit:'ضربان قلب را بالا می‌برد و عضلات مرکزی و پا را فعال می‌کند.'},
+    {id:'butt_kicks',name:'لگد به باسن (درجا)',pose:'march',set:'۳ ست × ۳۰ ثانیه',desc:'درجا بدو و پاشنه‌ها را به سمت باسن بزن.',benefit:'هوازیِ سبک که پشت ران را هم گرم و فعال می‌کند.'},
+    {id:'mountain_climber',name:'کوهنورد (مانتین کلایمبر)',pose:'plank',set:'۳ ست × ۲۰ ثانیه',desc:'در حالت پلانک، زانوها را یکی‌یکی سریع به سمت سینه بیاور.',benefit:'هوازیِ شدید + تقویت مرکز بدن؛ مصرف قند بالا.'},
+    {id:'shadow_box',name:'مشت‌زنی در هوا',pose:'march',set:'۳ ست × ۱ دقیقه',desc:'پاها کمی باز، مشت‌ها را یکی‌یکی به جلو بزن و پاها را سبک تکان بده.',benefit:'هوازیِ سرگرم‌کننده که استرس را هم کم می‌کند.'},
+    {id:'dance',name:'حرکات موزون / رقص',pose:'jumpingjack',set:'۵-۱۰ دقیقه',desc:'با آهنگِ دلخواه آزادانه حرکت کن و کلِ بدن را تکان بده.',benefit:'هوازیِ لذت‌بخش که هم قند را پایین می‌آورد هم روحیه را بالا.'},
+    {id:'jump_rope',name:'طناب زدن (واقعی یا فرضی)',pose:'jumpingjack',set:'۳ ست × ۱ دقیقه',desc:'با طناب یا بدونِ آن، حرکتِ طناب‌زدن را انجام بده. برای زانوی حساس، آرام بپر.',benefit:'یکی از پرمصرف‌ترین هوازی‌ها برای قلب و کالری.'},
+    {id:'swim',name:'شنا (استخر)',pose:'stretch',set:'۲۰-۳۰ دقیقه',desc:'اگر به استخر دسترسی داری، شنای آرام تا متوسط. کم‌فشار برای مفاصل.',benefit:'هوازیِ تمام‌بدن و بسیار کم‌فشار برای زانو و کمر — عالی برای اضافه‌وزن.'},
   ]},
   strength:{cat:'💪 قدرتی با وزن بدن',items:[
     {id:'squat',name:'اسکات (نشست و برخاست)',pose:'squat',set:'۳ ست × ۱۰-۱۲ بار',desc:'پاها به عرض شانه، آرام بنشین انگار روی صندلی می‌نشینی، بعد بلند شو. زانو از نوک پا جلوتر نرود.',benefit:'بزرگ‌ترین عضلات بدن را می‌سازد — عضله بیشتر یعنی مصرف قند بیشتر و حساسیت به انسولین بهتر.'},
@@ -11444,11 +11494,38 @@ const EX_LIBRARY={
     {id:'wall_pushup',name:'شنا روی دیوار',pose:'pushup',set:'۳ ست × ۱۰ بار',desc:'رو به دیوار بایست، دست‌ها روی دیوار، بدن را جلو و عقب ببر. نسخه‌ی آسان شنا.',benefit:'عضلات بالاتنه را بدون فشار زیاد می‌سازد.'},
     {id:'plank',name:'پلانک',pose:'plank',set:'۳ ست × ۲۰-۳۰ ثانیه',desc:'روی ساعد و پنجه‌ی پا، بدن را صاف مثل تخته نگه دار. شکم را سفت کن.',benefit:'مرکز بدن را قوی می‌کند و متابولیسم را بالا می‌برد.'},
     {id:'leg_raise',name:'بالا آوردن پا (ایستاده)',pose:'leg_raise',set:'۳ ست × ۱۲ بار هر پا',desc:'به دیوار یا صندلی تکیه بده، یک پا را صاف به جلو بالا بیاور و پایین ببر.',benefit:'عضلات پا و تعادل را تقویت می‌کند.'},
+    {id:'lunge',name:'لانج (قدم بلند)',pose:'lunge',set:'۳ ست × ۱۰ بار هر پا',desc:'یک قدمِ بلند به جلو بردار و زانوها را تا ۹۰ درجه خم کن، بعد بلند شو.',benefit:'ران و باسن را قوی می‌کند و تعادل را بهبود می‌دهد.'},
+    {id:'reverse_lunge',name:'لانجِ عقب (مبتدی‌پسند)',pose:'lunge',set:'۳ ست × ۱۰ بار هر پا',desc:'یک قدم به عقب بردار و پایین برو؛ فشار کمتری روی زانو دارد.',benefit:'نسخهٔ امن‌ترِ لانج برای زانوی حساس.'},
+    {id:'glute_bridge',name:'پلِ باسن',pose:'bridge',set:'۳ ست × ۱۵ بار',desc:'به پشت دراز بکش، زانوها خم، باسن را بالا بیاور تا بدن از زانو تا شانه صاف شود.',benefit:'باسن و پشت ران و کمر را قوی می‌کند — بدون فشار به زانو.'},
+    {id:'situp',name:'دراز و نشست',pose:'situp',set:'۳ ست × ۱۵ بار',desc:'به پشت دراز بکش، زانوها خم، بالاتنه را تا نشستن بالا بیاور و آرام برگرد.',benefit:'عضلات شکم را قوی می‌کند و به کنترلِ دورِ کمر کمک می‌کند.'},
+    {id:'crunch',name:'کرانچ (نیمه‌دراز نشست)',pose:'situp',set:'۳ ست × ۲۰ بار',desc:'مثل دراز نشست ولی فقط سر و شانه‌ها را کمی بالا بیاور؛ فشار کمتر به کمر.',benefit:'نسخهٔ امن‌ترِ شکم برای کمردردی‌ها.'},
+    {id:'knee_pushup',name:'شنا روی زانو',pose:'pushup',set:'۳ ست × ۱۰ بار',desc:'در حالت شنا، زانوها را روی زمین بگذار و بالاتنه را پایین و بالا ببر.',benefit:'سینه و بازو را می‌سازد؛ پلی بین شنای دیواری و کامل.'},
+    {id:'full_pushup',name:'شنای کامل',pose:'pushup',set:'۳ ست × ۸-۱۲ بار',desc:'روی دست و پنجهٔ پا، بدن صاف، سینه را تا نزدیکِ زمین پایین ببر و بالا بیا.',benefit:'قوی‌ترین حرکتِ بالاتنه با وزنِ بدن.'},
+    {id:'wall_sit',name:'اسکاتِ ایستا روی دیوار',pose:'chair',set:'۳ ست × ۳۰-۴۵ ثانیه',desc:'پشت به دیوار سُر بخور تا ران‌ها موازی زمین شوند، انگار روی صندلیِ نامرئی نشسته‌ای.',benefit:'ران و استقامتِ پا را می‌سازد، بدون حرکت — امن برای زانو.'},
+    {id:'superman',name:'سوپرمن (تقویتِ کمر)',pose:'plank',set:'۳ ست × ۱۲ بار',desc:'روی شکم دراز بکش، دست و پاها را هم‌زمان از زمین بلند کن و نگه دار.',benefit:'عضلاتِ کمر و پشت را قوی می‌کند — تعادل با عضلاتِ شکم.'},
+    {id:'side_plank',name:'پلانکِ پهلو',pose:'plank',set:'۳ ست × ۲۰ ثانیه هر طرف',desc:'روی یک ساعد و لبهٔ پا، بدن را پهلو نگه دار و پهلو را سفت کن.',benefit:'عضلاتِ پهلو و مرکزِ بدن را تقویت می‌کند.'},
+    {id:'bird_dog',name:'سگ-پرنده',pose:'plank',set:'۳ ست × ۱۰ بار هر طرف',desc:'چهار‌دست‌وپا، دستِ راست و پای چپ را هم‌زمان صاف بکش، بعد عوض کن.',benefit:'تعادل و عضلاتِ عمقیِ کمر را قوی و کمردرد را کم می‌کند.'},
+    {id:'chair_dip',name:'دیپِ پشت‌بازو با صندلی',pose:'chair',set:'۳ ست × ۱۰ بار',desc:'دست‌ها لبهٔ صندلیِ محکم، باسن جلوی صندلی، آرنج را خم کن و بالا بیا.',benefit:'پشتِ بازو و شانه را می‌سازد — با یک صندلیِ ساده.'},
+    {id:'step_up',name:'استپ‌آپ (بالا رفتن روی سکو)',pose:'march',set:'۳ ست × ۱۲ بار هر پا',desc:'روی یک پله یا سکوی محکم، یکی‌یکی بالا برو و پایین بیا.',benefit:'ران و باسن و تعادل را تقویت می‌کند؛ هوازی هم هست.'},
+    {id:'calf_raise',name:'ساقِ پا ایستاده',pose:'heel',set:'۳ ست × ۲۰ بار',desc:'صاف بایست و روی پنجه بلند شو، آرام پایین بیا.',benefit:'ساقِ پا را قوی و گردشِ خونِ پا را بهتر می‌کند.'},
+    {id:'squat_hold',name:'اسکاتِ ایستا (نگه‌داشتن)',pose:'squat',set:'۳ ست × ۳۰ ثانیه',desc:'در نیمهٔ پایینِ اسکات بمان و نگه دار، بدونِ بالا و پایین.',benefit:'استقامتِ ران را می‌سازد؛ مصرفِ قندِ پیوسته.'},
   ]},
   flexibility:{cat:'🧘 کششی و آرام‌سازی',items:[
     {id:'stretch_full',name:'کشش کامل بدن',pose:'stretch',set:'۵ دقیقه، هر کشش ۲۰-۳۰ ثانیه',desc:'دست‌ها را بالای سر بکش، به پهلوها خم شو، آرام نفس بکش.',benefit:'استرس را کم می‌کند و انعطاف را بیشتر. استرس کمتر یعنی قند پایدارتر (کورتیزول کمتر).'},
     {id:'neck_shoulder',name:'کشش گردن و شانه',pose:'neck',set:'هر طرف ۲۰ ثانیه',desc:'سر را آرام به هر طرف خم کن، شانه‌ها را بچرخان.',benefit:'تنش گردن و شانه (که با استرس جمع می‌شود) را آزاد می‌کند.'},
     {id:'breathing',name:'تنفس عمیق (۴-۷-۸)',pose:'breath',set:'۴-۵ بار',desc:'۴ ثانیه دم بگیر، ۷ ثانیه نگه دار، ۸ ثانیه بازدم. نشسته یا دراز کشیده.',benefit:'سیستم عصبی را آرام می‌کند، استرس و ضربان قلب را پایین می‌آورد — کمک به کنترل قند و اعصاب.'},
+    {id:'side_stretch',name:'کششِ پهلو',pose:'stretch',set:'۳۰ ثانیه هر طرف',desc:'ایستاده، یک دست را بالای سر ببر و بدن را به پهلوی مخالف خم کن.',benefit:'عضلاتِ پهلو و بین‌دنده‌ای را باز می‌کند.'},
+    {id:'spine_twist',name:'چرخشِ ستون فقرات (نشسته)',pose:'neck',set:'۳۰ ثانیه هر طرف',desc:'نشسته، بالاتنه را آرام به یک طرف بچرخان و نگه دار.',benefit:'انعطافِ کمر و ستون فقرات را بیشتر می‌کند.'},
+  ]},
+  cooldown:{cat:'🧊 سرد کردن و کشش (پس از ورزش)',items:[
+    {id:'cd_walk',name:'پیاده‌رویِ آرامِ پایانی',pose:'walk',set:'۳-۵ دقیقه',desc:'بعد از ورزش، آرام قدم بزن تا ضربانِ قلب کم‌کم پایین بیاید.',benefit:'برگرداندنِ تدریجیِ ضربان و جلوگیری از سرگیجه.'},
+    {id:'cd_ham',name:'کششِ پشتِ ران',pose:'stretch',set:'۳۰ ثانیه هر پا',desc:'یک پا را جلو صاف بگذار، آرام از کمر به جلو خم شو تا کششِ پشتِ ران را حس کنی.',benefit:'انعطافِ پشتِ ران و کاهشِ گرفتگی بعد از ورزش.'},
+    {id:'cd_quad',name:'کششِ جلوی ران',pose:'heel',set:'۳۰ ثانیه هر پا',desc:'ایستاده، مچِ یک پا را از پشت بگیر و پاشنه را به باسن نزدیک کن (به دیوار تکیه بده).',benefit:'عضلهٔ جلوی ران را باز می‌کند و از کوفتگی می‌کاهد.'},
+    {id:'cd_calf',name:'کششِ ساق',pose:'leg_raise',set:'۳۰ ثانیه هر پا',desc:'رو به دیوار، یک پا عقب و پاشنه روی زمین، تا کششِ ساق را حس کنی.',benefit:'ساقِ پا را نرم می‌کند — مهم برای پیشگیری از گرفتگی.'},
+    {id:'cd_chest',name:'کششِ سینه و شانه',pose:'stretch',set:'۳۰ ثانیه',desc:'دست‌ها را پشتِ کمر در هم قفل کن و آرام به بالا/عقب بکش.',benefit:'سینه و شانه‌ای که در شنا/پلانک منقبض شده را باز می‌کند.'},
+    {id:'cd_child',name:'وضعیتِ کودک (یوگا)',pose:'plank',set:'۱ دقیقه',desc:'روی زانوها بنشین، بالاتنه را جلو و پایین ببر و دست‌ها را دراز کن، آرام نفس بکش.',benefit:'کمر و لگن را آزاد و ذهن را آرام می‌کند.'},
+    {id:'cd_catcow',name:'گربه-گاو',pose:'plank',set:'۱۰ بار آرام',desc:'چهار‌دست‌وپا، پشت را با دم قوس بده و با بازدم گرد کن.',benefit:'انعطافِ ستون فقرات و کاهشِ تنشِ کمر.'},
+    {id:'cd_breath',name:'تنفسِ عمیقِ پایانی',pose:'breath',set:'۵ بار',desc:'نشسته یا خوابیده، آرام و عمیق نفس بکش تا بدن به آرامش برگردد.',benefit:'ضربان و کورتیزول را پایین می‌آورد و ریکاوری را بهتر می‌کند.'},
   ]},
   senior:{cat:'👵 مخصوص سالمندان',items:[
     {id:'chair_march',name:'مارش نشسته روی صندلی',pose:'breath',set:'۲ ست × ۱ دقیقه',desc:'روی صندلی بنشین و پاها را یکی‌یکی مثل راه رفتن بالا بیاور.',benefit:'هوازی امن و کم‌فشار برای سالمندان یا کسانی که تعادل ضعیف دارند.'},
@@ -11484,7 +11561,7 @@ function saveExLog(d){ localStorage.setItem(EX_KEY,JSON.stringify(d)); }
 function findEx(id){ for(const g in EX_LIBRARY){ const it=EX_LIBRARY[g].items.find(x=>x.id===id); if(it) return it; } return null; }
 // حرکت‌های دلخواه/ساختِ مربی — به کتابخانه‌ی ورزش اضافه می‌شوند (با آدمک/راهنما/ست)
 const CUSTOM_EX_KEY='custom_exercises_v1';
-const EX_POSES=['walk','march','squat','chair','pushup','plank','heel','stretch','leg_raise','breath','neck'];
+const EX_POSES=['walk','march','squat','chair','pushup','plank','heel','stretch','leg_raise','breath','neck','situp','lunge','jumpingjack','bridge'];
 function loadCustomEx(){ try{ const a=JSON.parse(localStorage.getItem(CUSTOM_EX_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
 function saveCustomEx(a){ try{ localStorage.setItem(CUSTOM_EX_KEY,JSON.stringify(a)); }catch(e){} }
 function applyCustomExercises(){ const a=loadCustomEx(); if(a.length){ EX_LIBRARY._coach={cat:'🏅 برنامه‌ی مربی من',items:a}; } else { delete EX_LIBRARY._coach; }
@@ -13526,6 +13603,8 @@ function chatParseActions(text){
   if(work&&work.obj){ action={kind:'workout',data:work.obj}; t=(t.slice(0,work.start)+t.slice(work.endAbs)).trim(); }
   const plan=chatExtractMarker(t,'@@PLAN@@');
   if(plan&&plan.obj){ action={kind:'plan',data:plan.obj}; t=(t.slice(0,plan.start)+t.slice(plan.endAbs)).trim(); }
+  const ins=chatExtractMarker(t,'@@INSULIN@@');
+  if(ins&&ins.obj){ action={kind:'insulin',data:ins.obj}; t=(t.slice(0,ins.start)+t.slice(ins.endAbs)).trim(); }
   return {text:t, action};
 }
 // کارتِ اقدام زیر پیامِ دستیار
@@ -13544,6 +13623,12 @@ function chatActionCard(m,idx){
     const lst=exs.map(e=>`<span class="cact-chip">${escVision((e.n||e.name||'')+(e.set?(' · '+e.set):''))}</span>`).join('');
     return `<div class="cact"><div class="cact-h">🏅 ${escVision(d.title||'برنامه‌ی ورزشی')} <span style="color:var(--muted);font-weight:600">(${faDigits(String(exs.length))} حرکت)</span></div>${lst?`<div class="cact-items">${lst}</div>`:''}
       <div class="cact-btns"><button type="button" class="cact-b" onclick="chatWorkoutToPlan(${idx})">🗓 افزودن به برنامهٔ هفتگی</button><button type="button" class="cact-b alt" onclick="chatWorkoutAdd(${idx})">➕ کتابخانهٔ ورزشِ من</button></div></div>`;
+  }
+  if(a.kind==='insulin'){
+    const ins=Array.isArray(d.items)?d.items:[];
+    const lst=ins.map(x=>`<span class="cact-chip">${escVision((x.kind==='basal'?'پایه: ':'سریع: ')+(x.name||'')+(x.dose!=null?(' · '+x.dose+' واحد'):'')+(x.time?(' · '+x.time):''))}</span>`).join('');
+    return `<div class="cact"><div class="cact-h">💉 ${escVision(d.title||'برنامهٔ انسولین')} <span style="color:var(--muted);font-weight:600">(یادآوری)</span></div>${lst?`<div class="cact-items">${lst}</div>`:''}
+      <div class="cact-btns"><button type="button" class="cact-b" onclick="chatInsulinToPlan(${idx})">🗓 افزودن به برنامهٔ هفتگی</button></div></div>`;
   }
   if(a.kind==='plan'){ return chatPlanCard(m,idx); }
   return '';
@@ -13784,6 +13869,24 @@ function chatMealToPlan(idx){
     if(typeof savePlan==='function') savePlan();
     try{ if(document.getElementById('page-plan')) renderWeek(); }catch(e){}
     uiToast('✓ وعده به '+faDigits(String(keys.length))+' روزِ برنامهٔ هفتگی اضافه شد');
+  });
+}
+function chatInsulinToPlan(idx){
+  const c=chatActive(); const m=c&&c.messages&&c.messages[idx]; const d=m&&m.action&&m.action.data; if(!d){ return; }
+  const items=Array.isArray(d.items)?d.items:[]; if(!items.length){ uiToast('انسولینی در برنامه نبود'); return; }
+  planPickDaysDialog('🗓 برنامهٔ انسولین به کدام روزها اضافه شود؟', 'فقط یادآوریِ برنامه است و در محاسبهٔ I:C دخالتی ندارد. پایه یک‌بار در روز و سریع‌ها فهرست می‌شوند؛ می‌توانی بعداً در تبِ برنامه ویرایش کنی.', keys=>{
+    let nb=0,nr=0,cnt=0;
+    keys.forEach(key=>{
+      items.forEach(x=>{ const name=(x.name||'').trim(); const dose=(x.dose!=null?String(x.dose):''); const time=x.time||'';
+        if(!name && !dose) return;
+        if(x.kind==='basal'){ if(!planData['_basal']) planData['_basal']={}; planData['_basal'][key]={type:name,dose,time}; nb++; }
+        else { if(!planData['_planIns']) planData['_planIns']={}; if(!Array.isArray(planData['_planIns'][key])) planData['_planIns'][key]=[];
+          planData['_planIns'][key].push({type:name,dose,time,id:Date.now()+(cnt++)}); nr++; }
+      });
+    });
+    if(typeof savePlan==='function') savePlan();
+    try{ if(document.getElementById('page-plan')) renderWeek(); }catch(e){}
+    uiToast('✓ انسولینِ برنامه به '+faDigits(String(keys.length))+' روز اضافه شد');
   });
 }
 let _chatTopSug='';
@@ -14314,7 +14417,7 @@ async function chatSend(){
   let _shown=0, _streamDone=false, _revealResolve=null;
   const _revealDone=new Promise(res=>{ _revealResolve=res; });
   // خطِ «@@SUGGEST@@» را از نمایش حذف کن (حتی وقتی نیمه‌کاره استریم می‌شود)
-  const stripSug=s=>String(s).replace(/@@(SUGGEST|MEAL|WORKOUT|PLAN)@@[\s\S]*$/,'').replace(/\n*@[@A-Z]*$/,'');
+  const stripSug=s=>String(s).replace(/@@(SUGGEST|MEAL|WORKOUT|PLAN|INSULIN)@@[\s\S]*$/,'').replace(/\n*@[@A-Z]*$/,'');
   const paintReveal=()=>{ const b=bubble(); if(!b) return;
     const cur=(_shown<acc.length || !_streamDone)?'<span class="chat-cur"></span>':'';
     b.innerHTML=labAiFmt(stripSug(acc.slice(0,_shown)))+cur; if(mb) mb.scrollTop=mb.scrollHeight; };
