@@ -166,7 +166,8 @@ body.nav-bottom{padding-bottom:100px}
 .qbg-val-wrap .qbg-unit{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;direction:ltr;pointer-events:none}
 .qbg-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:18px}
 .qbg-lbl{display:block;font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:600}
-.qbg-in{width:100%;background:var(--field);border:1px solid var(--teal-dim);border-radius:11px;padding:12px;font-family:inherit;font-size:15px;color:var(--ink)}
+.qbg-in{width:100%;box-sizing:border-box;max-width:100%;background:var(--field);border:1px solid var(--teal-dim);border-radius:11px;padding:12px;font-family:inherit;font-size:15px;color:var(--ink)}
+input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearance:none;min-width:0}
 .qbg-grid .jdate-field{width:100%}
 .qbg-grid .jdate-input{flex:1;min-width:0}
 .qbg-actions{display:flex;gap:10px}
@@ -756,6 +757,14 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .picked-foods{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .picked-chip{background:var(--teal-dim);color:#d6f5ee;border-radius:20px;padding:6px 12px;font-size:13px;display:flex;align-items:center;gap:8px}
 .picked-chip .x{cursor:pointer;font-weight:800;color:#ffd0cc}
+.qmeal-frow{background:var(--field);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}
+.qmeal-fname{font-size:13.5px;font-weight:700;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.qmeal-del{background:transparent;border:none;color:var(--red,#f0a29b);font-size:20px;font-weight:800;cursor:pointer;line-height:1;padding:0 4px}
+.qmeal-fctrl{display:grid;grid-template-columns:1fr 1.1fr auto;gap:8px;align-items:center}
+.qmeal-fctrl .qmeal-unit{padding:8px;font-size:12.5px}
+.qmeal-amt{margin:0}
+.qmeal-cval{font-size:13px;font-weight:800;color:var(--teal);white-space:nowrap;text-align:center}
+.qmeal-freq{display:block;width:100%;text-align:right;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin-bottom:6px;font-family:inherit;font-size:12.5px;color:var(--ink);cursor:pointer}
 .saved-meal{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px}
 .saved-meal .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .saved-meal .mtype{font-weight:800;color:var(--amber);font-size:14px}
@@ -1061,7 +1070,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <button class="qa-item" onclick="quickAdd('startworkout')"><span class="qa-ico" style="background:rgba(63,185,163,.18);color:#5fd3bd">🏃</span>شروع ورزش</button>
       <button class="qa-item" onclick="quickAdd('calc')"><span class="qa-ico" style="background:rgba(63,185,163,.14);color:#5fd3bd">🧮</span>حساب دوز</button>
       <button class="qa-item" onclick="quickAdd('iccalib')"><span class="qa-ico" style="background:rgba(63,185,163,.18);color:#5fd3bd">🎯</span>تخمین I:C</button>
-      <button class="qa-item" onclick="quickAdd('plan')"><span class="qa-ico" style="background:rgba(224,163,85,.14);color:#e9b877">📔</span>دفترچه روزانه</button>
+      <button class="qa-item" onclick="quickAdd('plan')"><span class="qa-ico" style="background:rgba(224,163,85,.14);color:#e9b877">📅</span>برنامهٔ هفتگی</button>
       <button class="qa-item" onclick="quickAdd('lab')"><span class="qa-ico" style="background:rgba(154,134,224,.18);color:#c3b4f0">🧪</span>آزمایش</button>
       <button class="qa-item" onclick="quickAdd('cgmfile')"><span class="qa-ico" style="background:rgba(63,185,163,.14);color:#5fd3bd">📈</span>فایل CGM</button>
     </div>
@@ -1110,7 +1119,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <button type="button" data-v="post2" onclick="qbgPickTag(this)">۲ساعت بعد</button>
       <button type="button" data-v="post3" onclick="qbgPickTag(this)">۳ساعت بعد</button>
     </div>
-    <div id="qbgMealWrap" style="display:none;margin-top:10px"><label class="qbg-lbl">کدام وعده؟</label><select id="qbgMeal" class="qbg-in"><option value="صبحانه">صبحانه</option><option value="ناهار">ناهار</option><option value="شام">شام</option><option value="میان‌وعده">میان‌وعده</option></select></div>
+    <div id="qbgMealWrap" style="display:none;margin-top:10px;margin-bottom:16px"><label class="qbg-lbl">کدام وعده؟</label><select id="qbgMeal" class="qbg-in"><option value="صبحانه">صبحانه</option><option value="ناهار">ناهار</option><option value="شام">شام</option><option value="میان‌وعده">میان‌وعده</option></select></div>
     <div class="qbg-actions">
       <button class="qbg-cancel" onclick="closeQuickBG()">لغو</button>
       <button class="qbg-save" onclick="saveQuickBG()">💾 ذخیره</button>
@@ -1138,13 +1147,16 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <div><label class="qbg-lbl">ساعت</label><input type="time" id="qmealTime" class="qbg-in"></div>
     </div>
     <label class="qbg-lbl" style="margin-top:12px">غذاها</label>
+    <div class="pod-seg" style="margin-bottom:8px"><button type="button" onclick="qmealToggleFreq()">⭐ پرمصرف</button><button type="button" onclick="qmealTogglePaste()">📋 پیست خوراکی‌ها</button></div>
+    <div id="qmealFreqPanel" style="display:none;margin-bottom:8px"></div>
+    <div id="qmealPastePanel" style="display:none;margin-bottom:8px"><textarea id="qmealPasteBox" class="qbg-in" rows="2" placeholder="مثلاً: سیب قرمز، نان سنگک، ماست"></textarea><button type="button" class="mini-btn" style="margin-top:6px" onclick="qmealPasteFoods()">✓ تشخیص و افزودن</button></div>
     <div class="food-search-wrap">
       <input type="text" class="food-search" id="qmealFoodSearch" placeholder="🔍 جست‌وجوی غذا…" oninput="qmealSearch(this)" onfocus="qmealSearch(this)" autocomplete="off">
       <div class="search-results" id="qmealResults"></div>
     </div>
-    <div id="qmealPicked" class="picked-foods" style="margin-top:8px"></div>
-    <label class="qbg-lbl" style="margin-top:12px">کربوهیدرات (گرم) — اختیاری <span style="color:var(--muted);font-weight:400">(برای دقتِ I:C)</span></label>
-    <input type="number" id="qmealCarb" class="qbg-in" inputmode="numeric" placeholder="مثلاً ۵۵" style="margin-bottom:12px">
+    <div id="qmealPicked" style="margin-top:8px"></div>
+    <label class="qbg-lbl" style="margin-top:12px">کربوهیدراتِ کل (گرم) <span style="color:var(--muted);font-weight:400">(خودکار از غذاها — قابلِ ویرایش)</span></label>
+    <input type="number" id="qmealCarb" class="qbg-in" inputmode="numeric" placeholder="مثلاً ۵۵" style="margin-bottom:12px" oninput="_qmealCarbManual=true">
     <label class="qbg-lbl">یادداشت — اختیاری</label>
     <input type="text" id="qmealNote" class="qbg-in" placeholder="مثلاً کمی سنگین بود" style="margin-bottom:6px">
     <div class="qbg-actions"><button class="qbg-cancel" onclick="closeQEntry('qmealModal')">لغو</button><button class="qbg-save" onclick="saveQuickMeal()">💾 ذخیره</button></div>
@@ -2147,7 +2159,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۴۲</b> · انتشار: ۱۴۰۵/۰۶/۱۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۴۳</b> · انتشار: ۱۴۰۵/۰۶/۱۵ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -6863,9 +6875,11 @@ function icMoveCards(){ const body=document.getElementById('icModalBody'); if(!b
 function openICModal(){ icMoveCards(); const m=document.getElementById('icModal'); if(m) m.classList.add('show'); try{ updateCalibration(); }catch(e){} }
 if(document.readyState!=='loading'){ try{ icMoveCards(); }catch(e){} } else document.addEventListener('DOMContentLoaded',()=>{ try{ icMoveCards(); }catch(e){} });
 /* ── فرم سریعِ وعده (فقط غذا) ── */
+let _qmealItems=[];   // [{cat,item,unit,amt}]
+let _qmealCarbManual=false;
 function openQuickMeal(){
   const m=document.getElementById('qmealModal'); if(!m) return;
-  window._qmealPicked=[];
+  _qmealItems=[]; _qmealCarbManual=false;
   const d=new Date(); const p=n=>String(n).padStart(2,'0'); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate());
   document.getElementById('qmealDateWrap').innerHTML=jDateFieldHTML('qmealDate', jDateStr(j[0],j[1],j[2]));
   document.getElementById('qmealTime').value=`${p(d.getHours())}:${p(d.getMinutes())}`;
@@ -6873,6 +6887,7 @@ function openQuickMeal(){
   document.getElementById('qmealType').value=dft;
   document.getElementById('qmealCarb').value=''; document.getElementById('qmealNote').value='';
   const s=document.getElementById('qmealFoodSearch'); s.value=''; const rb=document.getElementById('qmealResults'); rb.classList.remove('show'); rb.innerHTML='';
+  document.getElementById('qmealFreqPanel').style.display='none'; document.getElementById('qmealPastePanel').style.display='none';
   qmealRenderPicked();
   m.classList.add('show');
   setTimeout(()=>s.focus(),60);
@@ -6883,11 +6898,38 @@ function qmealSearch(input){ const box=document.getElementById('qmealResults'); 
   if(!matches.length){ box.innerHTML='<div class="search-empty">موردی پیدا نشد</div>'; box.classList.add('show'); return; }
   box.innerHTML=matches.map(m=>`<div class="search-item" onclick="qmealPick('${m.cat.replace(/'/g,"\\'")}','${m.item.replace(/'/g,"\\'")}')"><span>${itemEmoji(m.cat,m.item)} ${m.item}</span><span class="cat">${(CAT_EMOJI[m.cat]||'')} ${m.cat}</span></div>`).join('');
   box.classList.add('show'); }
-function qmealPick(cat,item){ window._qmealPicked=window._qmealPicked||[]; window._qmealPicked.push(itemEmoji(cat,item)+' '+item); document.getElementById('qmealResults').classList.remove('show'); document.getElementById('qmealFoodSearch').value=''; qmealRenderPicked(); }
-function qmealRenderPicked(){ const c=document.getElementById('qmealPicked'); if(!c) return; c.innerHTML=(window._qmealPicked||[]).map((f,i)=>`<span class="picked-chip">${f}<span class="x" onclick="qmealRemove(${i})">×</span></span>`).join(''); }
-function qmealRemove(i){ (window._qmealPicked||[]).splice(i,1); qmealRenderPicked(); }
+function qmealPick(cat,item){ if(!(DB[cat]&&DB[cat][item])) return; const unit=Object.keys(DB[cat][item])[0]||''; _qmealItems.push({cat,item,unit,amt:1}); document.getElementById('qmealResults').classList.remove('show'); document.getElementById('qmealFoodSearch').value=''; _qmealCarbManual=false; qmealRenderPicked(); }
+function qmealItemCarb(x){ const per=(DB[x.cat]&&DB[x.cat][x.item]&&DB[x.cat][x.item][x.unit]!=null)?DB[x.cat][x.item][x.unit]:0; return per*(parseFloat(x.amt)||0); }
+function qmealRenderPicked(){ const c=document.getElementById('qmealPicked'); if(!c) return;
+  c.innerHTML=_qmealItems.map((x,i)=>{
+    const units=Object.keys((DB[x.cat]&&DB[x.cat][x.item])||{});
+    const opts=units.map(u=>`<option value="${u}" ${u===x.unit?'selected':''}>${u}</option>`).join('');
+    return `<div class="qmeal-frow"><div class="qmeal-fname">${itemEmoji(x.cat,x.item)} ${x.item}<button class="qmeal-del" onclick="qmealRemove(${i})">×</button></div>
+      <div class="qmeal-fctrl">
+        <select class="qbg-in qmeal-unit" onchange="qmealSetUnit(${i},this.value)">${opts}</select>
+        <div class="stepper qmeal-amt"><button type="button" onclick="qmealAmt(${i},-1)">−</button><input type="number" inputmode="decimal" min="0" step="0.5" value="${x.amt}" oninput="qmealSetAmt(${i},this.value)"><button type="button" onclick="qmealAmt(${i},1)">+</button></div>
+        <span class="qmeal-cval">${faDigits(Math.round(qmealItemCarb(x)))} گ</span>
+      </div></div>`;
+  }).join('');
+  qmealSyncCarb();
+}
+function qmealSetUnit(i,u){ if(_qmealItems[i]){ _qmealItems[i].unit=u; _qmealCarbManual=false; qmealRenderPicked(); } }
+function qmealSetAmt(i,v){ if(_qmealItems[i]){ _qmealItems[i].amt=parseFloat(faToEnDigits(v))||0; _qmealCarbManual=false; const row=document.getElementById('qmealPicked').children[i]; if(row){ const cv=row.querySelector('.qmeal-cval'); if(cv) cv.textContent=faDigits(Math.round(qmealItemCarb(_qmealItems[i])))+' گ'; } qmealSyncCarb(); } }
+function qmealAmt(i,dir){ if(!_qmealItems[i]) return; const u=_qmealItems[i].unit||''; const step=/گرم|میلی|سی‌سی|cc|ml/i.test(u)?10:0.5; _qmealItems[i].amt=Math.max(0,Math.round(((parseFloat(_qmealItems[i].amt)||0)+dir*step)*10)/10); _qmealCarbManual=false; qmealRenderPicked(); }
+function qmealRemove(i){ _qmealItems.splice(i,1); _qmealCarbManual=false; qmealRenderPicked(); }
+function qmealSyncCarb(){ if(_qmealCarbManual) return; let t=0; _qmealItems.forEach(x=>t+=qmealItemCarb(x)); const el=document.getElementById('qmealCarb'); if(el) el.value=_qmealItems.length?String(Math.round(t)):''; }
+// پرمصرف
+function qmealToggleFreq(){ const p=document.getElementById('qmealFreqPanel'); const on=p.style.display==='none'; document.getElementById('qmealPastePanel').style.display='none'; p.style.display=on?'block':'none'; if(on) qmealRenderFreq(); }
+function qmealRenderFreq(){ const p=document.getElementById('qmealFreqPanel'); let groups=[]; try{ groups=collectFrequentMeals()||[]; }catch(e){}
+  if(!groups.length){ p.innerHTML='<div class="qbg-sub" style="color:var(--muted);font-size:12px">هنوز وعدهٔ پرتکراری نداری.</div>'; return; }
+  p.innerHTML=groups.slice(0,8).map((g,i)=>`<button type="button" class="qmeal-freq" onclick="qmealAddFreq(${i})">${escVision((g.foods||[]).join(' + '))}</button>`).join('');
+  window._qmealFreq=groups; }
+function qmealAddFreq(i){ const g=(window._qmealFreq||[])[i]; if(!g) return; (g.foods||[]).forEach(f=>{ const nm=String(f).replace(/^\s*[\p{Emoji}\u200d\ufe0f]+\s*/u,'').trim(); let found=null; for(const c in DB){ if(DB[c][nm]){ found={cat:c,item:nm}; break; } } if(found) _qmealItems.push({cat:found.cat,item:found.item,unit:Object.keys(DB[found.cat][found.item])[0]||'',amt:1}); }); if(g.carb){ _qmealCarbManual=true; document.getElementById('qmealCarb').value=String(g.carb); } qmealRenderPicked(); if(g.carb) document.getElementById('qmealCarb').value=String(g.carb); document.getElementById('qmealFreqPanel').style.display='none'; }
+// پیست
+function qmealTogglePaste(){ const p=document.getElementById('qmealPastePanel'); const on=p.style.display==='none'; document.getElementById('qmealFreqPanel').style.display='none'; p.style.display=on?'block':'none'; }
+function qmealPasteFoods(){ const raw=(document.getElementById('qmealPasteBox').value||'').trim(); if(!raw) return; raw.split(/[،,\n]+/).map(s=>s.trim()).filter(Boolean).forEach(nm0=>{ const nm=nm0.replace(/^\s*[\p{Emoji}\u200d\ufe0f]+\s*/u,'').trim(); const nn=normalizeFa(nm); let found=null; for(const c in DB){ for(const it in DB[c]){ if(normalizeFa(it)===nn||normalizeFa(it).includes(nn)){ found={cat:c,item:it}; break; } } if(found)break; } if(found) _qmealItems.push({cat:found.cat,item:found.item,unit:Object.keys(DB[found.cat][found.item])[0]||'',amt:1}); }); _qmealCarbManual=false; document.getElementById('qmealPasteBox').value=''; document.getElementById('qmealPastePanel').style.display='none'; qmealRenderPicked(); }
 function saveQuickMeal(){
-  const foods=(window._qmealPicked||[]).slice();
+  const foods=_qmealItems.map(x=>`${itemEmoji(x.cat,x.item)} ${x.item}`+((x.amt&&x.unit)?` (${faDigits(x.amt)} ${x.unit})`:''));
   const note=(document.getElementById('qmealNote').value||'').trim();
   if(!foods.length && !note){ alert('حداقل یک غذا انتخاب کن یا یادداشت بنویس.'); return; }
   const pj=parseJDate((document.getElementById('qmealDate')||{}).value||''); if(!pj){ alert('تاریخ را انتخاب کن.'); return; }
