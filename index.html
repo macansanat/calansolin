@@ -498,6 +498,8 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 label{display:block;font-size:13.5px;color:var(--muted);margin:14px 0 6px}
 input,select{width:100%;box-sizing:border-box;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px 13px;font-family:inherit;font-size:15px;max-width:100%}
 input[type=time],input[type=date]{-webkit-appearance:none;appearance:none;min-width:0;height:41px;padding-top:0;padding-bottom:0;line-height:1.2;box-sizing:border-box}
+.ins-tab{background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:9px 8px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;transition:all .15s}
+.ins-tab.active{background:var(--teal-dim);border-color:var(--teal);color:var(--teal)}
 input:focus,select:focus{outline:none;border-color:var(--teal)}
 select{cursor:pointer;text-overflow:ellipsis;padding-right:10px;padding-left:28px;background-position:left 10px center}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -1576,9 +1578,10 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div class="card coll closed" id="c-addmeal">
-  <h2 onclick="toggleCard('c-addmeal')"><span>➕ افزودن وعده به این روز</span></h2>
+  <h2 onclick="toggleCard('c-addmeal')"><span>🍽 برنامهٔ وعدهٔ غذاییِ این روز</span></h2>
   <div class="card-body">
   <div class="add-meal-form" style="background:transparent;border:none;padding:0;margin:0">
+    <div class="formula-note" style="margin:0 0 12px;border:none;padding:0">وعده‌هایی که پزشک/متخصصِ تغذیه برای این روز تجویز کرده را <b style="color:var(--teal)">برنامه‌ریزی</b> کن. غذا را از دیتابیس انتخاب کن و مقدارش را بگذار تا کربوهیدرات خودکار حساب شود.</div>
     <div class="quick-actions">
       <button type="button" class="quick-btn" onclick="toggleFrequentPanel()">⭐ وعده‌های پرمصرف</button>
       <button type="button" class="quick-btn" onclick="togglePastePanel()">📋 پیست خوراکی‌ها</button>
@@ -1644,15 +1647,15 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       </div>
     </div>
     <div style="margin-top:10px">
-      <label>کربوهیدرات وعده (گرم)</label>
+      <label>کربوهیدرات وعده (گرم) — خودکار از مقدارِ غذاها، قابلِ ویرایش</label>
       <div class="stepper">
         <button type="button" onclick="stepById('mealCarb',-1,5)">−</button>
-        <input type="number" id="mealCarb" min="0" step="5" placeholder="مثلاً 55" inputmode="numeric">
+        <input type="number" id="mealCarb" min="0" step="5" placeholder="خودکار حساب می‌شود" inputmode="numeric" oninput="window._planCarbManual=true">
         <button type="button" onclick="stepById('mealCarb',1,5)">+</button>
       </div>
     </div>
     <input type="hidden" id="mealBGbefore"><input type="hidden" id="mealBGafter"><input type="hidden" id="mealPeak"><input type="hidden" id="mealTrough">
-    <button class="add-btn" style="margin-top:14px;width:100%" onclick="saveMealEntry()">💾 ذخیره‌ی وعده</button>
+    <button class="add-btn" style="margin-top:14px;width:100%" onclick="saveMealEntry()">💾 افزودن به برنامهٔ غذایی</button>
   </div>
   </div>
 </div>
@@ -1664,10 +1667,15 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
 </div>
 
-<div class="card coll closed" id="c-basal">
-  <h2 onclick="toggleCard('c-basal')"><span>💉 انسولین پایه‌ی این روز (یادآوری)</span></h2>
+<div class="card coll closed" id="c-insulin">
+  <h2 onclick="toggleCard('c-insulin')"><span>💉 برنامهٔ انسولینِ این روز (یادآوری)</span></h2>
   <div class="card-body">
-  <div class="basal-card" style="background:transparent;border:none;padding:0;margin:0">
+  <div class="formula-note" style="margin:0 0 12px;border:none;padding:0">انسولینی که پزشک برای این روز تجویز کرده را به‌عنوانِ <b style="color:var(--teal)">برنامه/یادآوری</b> ثبت کن. این فقط یادآوری است و در I:C یا محاسبات دخالتی ندارد. ثبتِ واقعی از منوی سریع ← 💉 انسولین.</div>
+  <div class="ins-tabs" style="display:flex;gap:6px;margin-bottom:14px">
+    <button type="button" class="ins-tab active" id="insTabBasal" onclick="insTab('basal')" style="flex:1">انسولین پایه</button>
+    <button type="button" class="ins-tab" id="insTabRapid" onclick="insTab('rapid')" style="flex:1">انسولین سریع‌الاثر</button>
+  </div>
+  <div id="insPanelBasal">
     <div class="row">
       <div>
         <label>نوع انسولین پایه</label>
@@ -1705,65 +1713,60 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     </div>
     <label style="margin-top:12px">ساعت تزریق</label>
     <input type="time" id="basalDayTime" onchange="saveBasalDay()">
-    <div class="formula-note" style="margin-top:8px">این فقط <b style="color:var(--teal)">یادآوریِ برنامه</b> است (دوزِ تجویزِ پزشک که باید بزنی)؛ در محاسبه‌ی I:C یا چیزِ دیگری دخالتی ندارد. ثبتِ واقعیِ انسولین را از منوی سریع ← 💉 انسولین انجام بده.</div>
+    <div class="formula-note" style="margin-top:8px">انسولین پایه معمولاً روزی یک‌بار (شب یا صبح) و مستقل از وعده‌هاست.</div>
   </div>
-  </div>
-</div>
-
-<div class="card coll closed" id="c-planins">
-  <h2 onclick="toggleCard('c-planins')"><span>💉 برنامه‌ریزیِ انسولینِ این روز (یادآوری)</span></h2>
-  <div class="card-body">
-  <div class="formula-note" style="margin:0 0 12px;border:none;padding:0">انسولین‌های سریعی که پزشک برای این روز تجویز کرده را به‌عنوانِ <b style="color:var(--teal)">برنامه</b> یادداشت کن. این فقط یادآوری است و در I:C یا محاسبات دخالتی ندارد.</div>
-  <div class="row">
-    <div>
-      <label>نوع انسولین</label>
-      <select id="planInsType">
-        <option value="">—</option>
-        <optgroup label="سریع‌الاثر">
-          <option value="اپیدرا">اپیدرا (گلولیزین)</option>
-          <option value="نووراپید">نووراپید / نووولاگ (آسپارت)</option>
-          <option value="هومالوگ">هومالوگ (لیسپرو)</option>
-          <option value="فیاسپ">فیاسپ (آسپارت سریع‌تر)</option>
-          <option value="لیومجو">لیومجو (لیسپرو سریع‌تر)</option>
-        </optgroup>
-        <optgroup label="کوتاه‌اثر">
-          <option value="رگولار">رگولار / اکترپید (R)</option>
-          <option value="هومولین R">هومولین R</option>
-        </optgroup>
-      </select>
-    </div>
-    <div>
-      <label>دوز (واحد)</label>
-      <div class="stepper">
-        <button type="button" onclick="stepById('planInsDose',-1,0.5)">−</button>
-        <input type="number" id="planInsDose" min="0" step="0.5" placeholder="مثلاً 6" inputmode="decimal">
-        <button type="button" onclick="stepById('planInsDose',1,0.5)">+</button>
+  <div id="insPanelRapid" hidden>
+    <div class="row">
+      <div>
+        <label>نوع انسولین</label>
+        <select id="planInsType">
+          <option value="">—</option>
+          <optgroup label="سریع‌الاثر">
+            <option value="اپیدرا">اپیدرا (گلولیزین)</option>
+            <option value="نووراپید">نووراپید / نووولاگ (آسپارت)</option>
+            <option value="هومالوگ">هومالوگ (لیسپرو)</option>
+            <option value="فیاسپ">فیاسپ (آسپارت سریع‌تر)</option>
+            <option value="لیومجو">لیومجو (لیسپرو سریع‌تر)</option>
+          </optgroup>
+          <optgroup label="کوتاه‌اثر">
+            <option value="رگولار">رگولار / اکترپید (R)</option>
+            <option value="هومولین R">هومولین R</option>
+          </optgroup>
+        </select>
+      </div>
+      <div>
+        <label>دوز (واحد)</label>
+        <div class="stepper">
+          <button type="button" onclick="stepById('planInsDose',-1,0.5)">−</button>
+          <input type="number" id="planInsDose" min="0" step="0.5" placeholder="مثلاً 6" inputmode="decimal">
+          <button type="button" onclick="stepById('planInsDose',1,0.5)">+</button>
+        </div>
       </div>
     </div>
+    <div style="margin-top:10px"><label>ساعت</label><input type="time" id="planInsTime"></div>
+    <button class="add-btn" style="margin-top:12px;width:100%" onclick="addPlanIns()">➕ افزودن به برنامه</button>
+    <div id="planInsList" style="margin-top:12px"></div>
   </div>
-  <div style="margin-top:10px"><label>ساعت</label><input type="time" id="planInsTime"></div>
-  <button class="add-btn" style="margin-top:12px;width:100%" onclick="addPlanIns()">➕ افزودن به برنامه</button>
-  <div id="planInsList" style="margin-top:12px"></div>
   </div>
 </div>
 
 <div class="card coll closed" id="c-planex">
-  <h2 onclick="toggleCard('c-planex')"><span>🏃 برنامه‌ریزیِ ورزشِ این روز</span></h2>
+  <h2 onclick="toggleCard('c-planex')"><span>🏃 برنامهٔ ورزشِ این روز</span></h2>
   <div class="card-body">
-  <div class="formula-note" style="margin:0 0 12px;border:none;padding:0">ورزش‌هایی که برای این روز برنامه‌ریزی کرده‌ای را اضافه کن. این هم فقط یادآوری/برنامه است.</div>
-  <div class="row">
-    <div>
-      <label>نوع ورزش</label>
-      <select id="planExType">
-        <option value="پیاده‌روی">پیاده‌روی</option>
-        <option value="دویدن">دویدن</option>
-        <option value="دوچرخه">دوچرخه</option>
-        <option value="شنا">شنا</option>
-        <option value="بدنسازی">بدنسازی</option>
-        <option value="یوگا/کششی">یوگا / کششی</option>
-        <option value="ورزشِ دیگر">ورزشِ دیگر</option>
-      </select>
-    </div>
+  <div class="formula-note" style="margin:0 0 12px;border:none;padding:0">ورزش را از کتابخانه انتخاب کن (ست/تکرارش خودکار می‌آید و قابلِ ویرایش است) یا دستی بنویس، بعد ساعت و مدت را بگذار. فقط یادآوری/برنامه است.</div>
+  <div>
+    <label>ورزش (از کتابخانه)</label>
+    <select id="planExPick" onchange="planExPicked()"><option value="">— انتخاب کن —</option></select>
+  </div>
+  <div style="margin-top:10px" id="planExCustomWrap" hidden>
+    <label>نامِ ورزش (دستی)</label>
+    <input type="text" id="planExCustom" placeholder="مثلاً فوتبال">
+  </div>
+  <div style="margin-top:10px">
+    <label>ست / تکرار (قابلِ ویرایش)</label>
+    <input type="text" id="planExSet" placeholder="مثلاً ۳ ست × ۱۲ بار">
+  </div>
+  <div class="row" style="margin-top:10px">
     <div>
       <label>مدت (دقیقه)</label>
       <div class="stepper">
@@ -1772,8 +1775,8 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
         <button type="button" onclick="stepById('planExDur',1,5)">+</button>
       </div>
     </div>
+    <div><label>ساعت</label><input type="time" id="planExTime"></div>
   </div>
-  <div style="margin-top:10px"><label>ساعت</label><input type="time" id="planExTime"></div>
   <button class="add-btn" style="margin-top:12px;width:100%" onclick="addPlanEx()">➕ افزودن به برنامه</button>
   <div id="planExList" style="margin-top:12px"></div>
   </div>
@@ -2214,7 +2217,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۴۷</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۴۸</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -8693,19 +8696,48 @@ function renderPlanIns(){
     <button class="del-meal" onclick="delPlanIns(${x.id})">حذف</button>
   </div></div>`).join('');
 }
+// تب‌های کارتِ انسولین
+function insTab(which){
+  const b=document.getElementById('insTabBasal'), r=document.getElementById('insTabRapid');
+  const pb=document.getElementById('insPanelBasal'), pr=document.getElementById('insPanelRapid');
+  if(!b||!r||!pb||!pr) return;
+  const basal=(which==='basal');
+  b.classList.toggle('active',basal); r.classList.toggle('active',!basal);
+  pb.hidden=!basal; pr.hidden=basal;
+}
+// پرکردنِ کتابخانهٔ ورزش در منوی برنامه‌ریزی
+function fillPlanExLib(){
+  const sel=document.getElementById('planExPick'); if(!sel||sel.dataset.filled) return;
+  let h='<option value="">— انتخاب کن —</option>';
+  try{ for(const g in EX_LIBRARY){ h+=`<optgroup label="${EX_LIBRARY[g].cat}">`;
+    EX_LIBRARY[g].items.forEach(ex=>{ h+=`<option value="${ex.id}">${ex.name}</option>`; }); h+='</optgroup>'; } }catch(e){}
+  h+='<optgroup label="—"><option value="__custom">✏️ ورزشِ دیگر (دستی)</option></optgroup>';
+  sel.innerHTML=h; sel.dataset.filled='1';
+}
+function planExPicked(){
+  const sel=document.getElementById('planExPick'); const v=sel.value;
+  const cw=document.getElementById('planExCustomWrap'); const setEl=document.getElementById('planExSet');
+  if(v==='__custom'){ cw.hidden=false; setEl.value=''; }
+  else if(v){ cw.hidden=true; const ex=(typeof findEx==='function')?findEx(v):null; setEl.value=ex&&ex.set?ex.set:''; }
+  else { cw.hidden=true; }
+}
 function addPlanEx(){
   const key=dayKeySel();
-  const type=document.getElementById('planExType').value;
+  const sel=document.getElementById('planExPick'); const v=sel.value;
+  let name='', exId='';
+  if(v==='__custom'){ name=document.getElementById('planExCustom').value.trim(); }
+  else if(v){ const ex=(typeof findEx==='function')?findEx(v):null; name=ex?ex.name:''; exId=v; }
+  const set=document.getElementById('planExSet').value.trim();
   const dur=document.getElementById('planExDur').value;
   const time=document.getElementById('planExTime').value;
-  if(!type && !dur && !time){ alert('نوع، مدت یا ساعتِ ورزش را وارد کن.'); return; }
+  if(!name && !set && !dur && !time){ alert('یک ورزش انتخاب کن یا دستی بنویس.'); return; }
+  if(!name) name='ورزش';
   if(!planData['_planEx']) planData['_planEx']={};
   if(!Array.isArray(planData['_planEx'][key])) planData['_planEx'][key]=[];
-  planData['_planEx'][key].push({type,dur,time,id:Date.now()});
+  planData['_planEx'][key].push({exId,name,set,dur,time,id:Date.now()});
   savePlan();
-  document.getElementById('planExType').value='';
-  document.getElementById('planExDur').value='';
-  document.getElementById('planExTime').value='';
+  sel.value=''; document.getElementById('planExCustom').value=''; document.getElementById('planExCustomWrap').hidden=true;
+  document.getElementById('planExSet').value=''; document.getElementById('planExDur').value=''; document.getElementById('planExTime').value='';
   renderPlanEx();
 }
 function delPlanEx(id){
@@ -8714,15 +8746,16 @@ function delPlanEx(id){
   planData['_planEx'][key]=arr.filter(x=>x.id!==id); savePlan(); renderPlanEx();
 }
 function renderPlanEx(){
+  fillPlanExLib();
   const c=document.getElementById('planExList'); if(!c) return;
   const key=dayKeySel();
   const arr=(planData['_planEx']||{})[key]||[];
   if(!arr.length){ c.innerHTML='<div class="empty-day">هنوز ورزشی برای این روز برنامه‌ریزی نشده.</div>'; return; }
   const sorted=arr.slice().sort((a,b)=>(a.time||'99').localeCompare(b.time||'99'));
   c.innerHTML=sorted.map(x=>`<div class="saved-meal"><div class="top">
-    <span class="mtype">🏃 ${x.type||'ورزش'}${x.dur?` <span class="mtime">${x.dur} دقیقه</span>`:''}${x.time?` <span class="mtime">${x.time}</span>`:''}</span>
+    <span class="mtype">🏃 ${x.name||x.type||'ورزش'}${x.time?` <span class="mtime">${x.time}</span>`:''}${x.dur?` <span class="mtime">${x.dur} دقیقه</span>`:''}</span>
     <button class="del-meal" onclick="delPlanEx(${x.id})">حذف</button>
-  </div></div>`).join('');
+  </div>${x.set?`<div class="foods" style="margin-top:4px">${x.set}</div>`:''}</div>`).join('');
 }
 
 /* لیست غذاهای انتخاب‌شده برای وعده‌ی در حال ساخت */
@@ -8738,18 +8771,40 @@ function doSearchPlan(input){
        <span>${itemEmoji(m.cat,m.item)} ${m.item}</span><span class="cat">${(CAT_EMOJI[m.cat]||'')} ${m.cat}</span></div>`).join('');
   box.classList.add('show');
 }
+// آیتم‌های انتخاب‌شده اکنون شیء‌اند: غذای دیتابیس={cat,item,unit,amt} ، آزاد/پیست={name}
+window._planCarbManual=false;
+function planItemDisp(x){ return x.item ? (itemEmoji(x.cat,x.item)+' '+x.item) : (x.name||''); }
+function planItemCarb(x){ if(!x.item) return 0; const per=(DB[x.cat]&&DB[x.cat][x.item]&&DB[x.cat][x.item][x.unit]!=null)?DB[x.cat][x.item][x.unit]:0; return per*(parseFloat(x.amt)||0); }
+function planSyncCarb(){ if(window._planCarbManual) return; let t=0,any=false; window._planPicked.forEach(x=>{ if(x.item){any=true; t+=planItemCarb(x);} }); const el=document.getElementById('mealCarb'); if(el&&any) el.value=String(Math.round(t)); }
 function pickPlanFood(cat,item){
-  window._planPicked.push(itemEmoji(cat,item)+' '+item);
+  if(DB[cat]&&DB[cat][item]){ const unit=Object.keys(DB[cat][item])[0]||''; window._planPicked.push({cat,item,unit,amt:1}); }
+  else { window._planPicked.push({name:itemEmoji(cat,item)+' '+item}); }
+  window._planCarbManual=false;
   document.getElementById('planSearchResults').classList.remove('show');
   document.getElementById('planFoodSearch').value='';
   renderPickedFoods();
 }
 function renderPickedFoods(){
   const c=document.getElementById('planPickedFoods');
-  c.innerHTML=window._planPicked.map((f,i)=>
-    `<span class="picked-chip">${f}<span class="x" onclick="removePicked(${i})">×</span></span>`).join('');
+  c.innerHTML=window._planPicked.map((x,i)=>{
+    if(!x.item){ // آیتمِ آزاد (پیست/تکراری/دستی) — بدونِ مقدار
+      return `<span class="picked-chip">${x.name||''}<span class="x" onclick="removePicked(${i})">×</span></span>`;
+    }
+    const units=Object.keys((DB[x.cat]&&DB[x.cat][x.item])||{});
+    const opts=units.map(u=>`<option value="${u}" ${u===x.unit?'selected':''}>${u}</option>`).join('');
+    return `<div class="qmeal-frow"><div class="qmeal-fname">${itemEmoji(x.cat,x.item)} ${x.item}<button class="qmeal-del" onclick="removePicked(${i})">×</button></div>
+      <div class="qmeal-fctrl">
+        <select class="qbg-in qmeal-unit" onchange="planSetUnit(${i},this.value)">${opts}</select>
+        <div class="stepper qmeal-amt"><button type="button" onclick="planAmt(${i},-1)">−</button><input type="number" inputmode="decimal" min="0" step="0.5" value="${x.amt}" oninput="planSetAmt(${i},this.value)"><button type="button" onclick="planAmt(${i},1)">+</button></div>
+        <span class="qmeal-cval">${faDigits(Math.round(planItemCarb(x)))} گ</span>
+      </div></div>`;
+  }).join('');
+  planSyncCarb();
 }
-function removePicked(i){ window._planPicked.splice(i,1); renderPickedFoods(); }
+function planSetUnit(i,u){ if(window._planPicked[i]){ window._planPicked[i].unit=u; window._planCarbManual=false; renderPickedFoods(); } }
+function planSetAmt(i,v){ if(window._planPicked[i]){ window._planPicked[i].amt=parseFloat(faToEnDigits(v))||0; window._planCarbManual=false; const row=document.getElementById('planPickedFoods').children[i]; if(row){ const cv=row.querySelector('.qmeal-cval'); if(cv) cv.textContent=faDigits(Math.round(planItemCarb(window._planPicked[i])))+' گ'; } planSyncCarb(); } }
+function planAmt(i,dir){ const x=window._planPicked[i]; if(!x) return; const u=x.unit||''; const step=/گرم|میلی|سی‌سی|cc|ml/i.test(u)?10:0.5; x.amt=Math.max(0,Math.round(((parseFloat(x.amt)||0)+dir*step)*10)/10); window._planCarbManual=false; renderPickedFoods(); }
+function removePicked(i){ window._planPicked.splice(i,1); window._planCarbManual=false; renderPickedFoods(); }
 
 // ===== وعده‌های پرمصرف: گروه‌بندی بر اساس غذاهای مشترک (تطبیق جزئی) =====
 function collectFrequentMeals(){
@@ -8819,7 +8874,8 @@ function renderFrequentMeals(){
 function loadFrequentMeal(i){
   const f=window._freqMeals[i]; if(!f) return;
   // لود کردن در فرم افزودن وعده
-  window._planPicked=f.foods.slice();
+  window._planPicked=f.foods.map(s=>({name:s}));
+  window._planCarbManual=!!f.carb;
   renderPickedFoods();
   if(f.carb) document.getElementById('mealCarb').value=f.carb;
   if(f.insType) document.getElementById('mealInsulinType').value=f.insType;
@@ -8932,11 +8988,11 @@ function pastePlanFoods(){
   let added=0, notFound=[];
   res.items.forEach(it=>{
     if(it.unmatched){ notFound.push(it.raw); }
-    else { window._planPicked.push(it.emoji+' '+it.item); added++; }
+    else { window._planPicked.push({name:it.emoji+' '+it.item}); added++; }
   });
   renderPickedFoods();
-  // پر کردن کرب خودکار
-  if(res.carb>0) document.getElementById('mealCarb').value=res.carb;
+  // پر کردن کرب خودکار (پیست مقدارِ جداگانه ندارد؛ کربِ کلّ را دستی ست می‌کنیم)
+  if(res.carb>0){ window._planCarbManual=true; document.getElementById('mealCarb').value=res.carb; }
   ta.value='';
   let msg=`${faDigits(added)} غذا اضافه شد`;
   if(res.carb>0) msg+=` (مجموع کرب: ${faDigits(res.carb)} گرم)`;
@@ -8955,14 +9011,14 @@ function saveMealEntry(){
   const bgAfter=document.getElementById('mealBGafter').value;
   const peak=document.getElementById('mealPeak').value;
   const trough=document.getElementById('mealTrough').value;
-  const foods=window._planPicked.slice();
+  const foods=window._planPicked.map(planItemDisp).filter(Boolean);
   if(foods.length===0 && !time){ alert('حداقل یک غذا یا ساعت وارد کنید.'); return; }
   if(!planData[key]) planData[key]=[];
   if(!Array.isArray(planData[key])) planData[key]=[]; // مهاجرت از فرمت قدیمی
   planData[key].push({type,time,insType,insDose,carb,bgBefore,bgAfter,peak,trough,foods,planned:true,id:Date.now()});
   savePlan();
   // ریست فرم
-  window._planPicked=[]; renderPickedFoods();
+  window._planPicked=[]; window._planCarbManual=false; renderPickedFoods();
   ['mealTime','mealInsulinDose','mealInsulinType','mealCarb','mealBGbefore','mealBGafter','mealPeak','mealTrough'].forEach(id=>document.getElementById(id).value='');
   renderSavedMeals();
   updateCalibration();
@@ -14484,7 +14540,7 @@ function buildHealthSnapshot(scope){
       if(Array.isArray(arr)&&arr.length){ const items=arr.filter(m=>m.planned&&m.foods&&m.foods.length).map(m=>(m.type||'وعده')+(m.time?(' '+m.time):'')+': '+m.foods.join('، ')+(m.carb?(' ('+m.carb+'گ کرب)'):''));
         if(items.length) parts.push('وعده‌ها: '+items.join(' | ')); }
       const ins=pins[key]; if(Array.isArray(ins)&&ins.length){ parts.push('انسولین: '+ins.map(x=>(x.type||'')+(x.dose?(' '+x.dose+'و'):'')+(x.time?(' '+x.time):'')).join('، ')); }
-      const ex=pex[key]; if(Array.isArray(ex)&&ex.length){ parts.push('ورزش: '+ex.map(x=>(x.type||'')+(x.dur?(' '+x.dur+'دق'):'')+(x.time?(' '+x.time):'')).join('، ')); }
+      const ex=pex[key]; if(Array.isArray(ex)&&ex.length){ parts.push('ورزش: '+ex.map(x=>(x.name||x.type||'')+(x.set?(' ['+x.set+']'):'')+(x.dur?(' '+x.dur+'دق'):'')+(x.time?(' '+x.time):'')).join('، ')); }
       if(parts.length) up.push(dn(k)+' — '+parts.join(' ؛ ')); }
     if(up.length) L.push('برنامهٔ پیشِ‌روِ کاربر (برنامه‌ریزی‌شده): '+up.join(' || '));
   }catch(e){}
