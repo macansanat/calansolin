@@ -497,7 +497,7 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .step-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:var(--teal-dim);color:#cdefe6;font-size:12px;font-weight:800;margin-left:8px;direction:ltr}
 label{display:block;font-size:13.5px;color:var(--muted);margin:14px 0 6px}
 input,select{width:100%;box-sizing:border-box;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px 13px;font-family:inherit;font-size:15px;max-width:100%}
-input[type=time],input[type=date]{-webkit-appearance:none;appearance:none;min-width:0}
+input[type=time],input[type=date]{-webkit-appearance:none;appearance:none;min-width:0;height:41px;padding-top:0;padding-bottom:0;line-height:1.2;box-sizing:border-box}
 input:focus,select:focus{outline:none;border-color:var(--teal)}
 select{cursor:pointer;text-overflow:ellipsis;padding-right:10px;padding-left:28px;background-position:left 10px center}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -1573,7 +1573,6 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <button class="mini-btn" onclick="changeWeek(1)">هفته‌ی بعد ›</button>
   </div>
   <div class="day-tabs" id="dayTabs"></div>
-  <div class="formula-note" style="margin-top:12px">📥 وارد کردن از فایل لاگ و پاک کردن وعده‌ها به تب <b style="color:var(--teal)">«👤 پروفایل»</b> منتقل شده است.</div>
 </div>
 
 <div class="card coll closed" id="c-addmeal">
@@ -1652,47 +1651,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
         <button type="button" onclick="stepById('mealCarb',1,5)">+</button>
       </div>
     </div>
-    <details style="margin-top:12px">
-      <summary style="cursor:pointer;font-size:13px;color:var(--teal);font-weight:700">🩸 قند و کالیبراسیون (اختیاری)</summary>
-      <div class="formula-note" style="margin:8px 0">بهتره قندها را از منوی سریعِ «🩸 قند» با تگِ «قبلِ وعده» و «۲ساعت بعد» ثبت کنی تا خودکار به همین وعده وصل شوند و در تخمینِ I:C بیایند. اگر خواستی، همین‌جا هم می‌توانی مستقیم وارد کنی.</div>
-      <div class="row">
-        <div>
-          <label>قند قبل غذا (mg/dL)</label>
-          <div class="stepper">
-            <button type="button" onclick="stepById('mealBGbefore',-1,5)">−</button>
-            <input type="number" id="mealBGbefore" min="20" max="600" placeholder="مثلاً 90" inputmode="numeric">
-            <button type="button" onclick="stepById('mealBGbefore',1,5)">+</button>
-          </div>
-        </div>
-        <div>
-          <label>قند ۲ ساعت بعد (mg/dL)</label>
-          <div class="stepper">
-            <button type="button" onclick="stepById('mealBGafter',-1,5)">−</button>
-            <input type="number" id="mealBGafter" min="20" max="600" placeholder="مثلاً 120" inputmode="numeric">
-            <button type="button" onclick="stepById('mealBGafter',1,5)">+</button>
-          </div>
-        </div>
-      </div>
-      <div class="row" style="margin-top:10px">
-        <div>
-          <label>پیک (بالاترین قند) — اختیاری</label>
-          <div class="stepper">
-            <button type="button" onclick="stepById('mealPeak',-1,5)">−</button>
-            <input type="number" id="mealPeak" min="20" max="600" placeholder="مثلاً 149" inputmode="numeric">
-            <button type="button" onclick="stepById('mealPeak',1,5)">+</button>
-          </div>
-        </div>
-        <div>
-          <label>کمترین قند تا ۴ ساعت — اختیاری</label>
-          <div class="stepper">
-            <button type="button" onclick="stepById('mealTrough',-1,5)">−</button>
-            <input type="number" id="mealTrough" min="20" max="600" placeholder="مثلاً 95" inputmode="numeric">
-            <button type="button" onclick="stepById('mealTrough',1,5)">+</button>
-          </div>
-        </div>
-      </div>
-      <div class="formula-note" style="margin-top:6px">وعده‌های با پیکِ بالای ۲۵۰ یا افتِ زیر ۶۰ از کالیبراسیون کنار گذاشته می‌شوند.</div>
-    </details>
+    <input type="hidden" id="mealBGbefore"><input type="hidden" id="mealBGafter"><input type="hidden" id="mealPeak"><input type="hidden" id="mealTrough">
     <button class="add-btn" style="margin-top:14px;width:100%" onclick="saveMealEntry()">💾 ذخیره‌ی وعده</button>
   </div>
   </div>
@@ -2186,7 +2145,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۴۵</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۴۶</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
