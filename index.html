@@ -2115,7 +2115,8 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <div><label>وزنِ اولیه (کیلو)</label><input type="number" id="weightStart" placeholder="شروع" min="10" max="400"></div>
       <div><label>وزنِ فعلی (کیلو)</label><input type="number" id="weight" placeholder="اکنون" min="10" max="400"></div>
     </div>
-    <div class="formula-note" style="margin-top:6px">«وزنِ اولیه» = وقتی برنامه را نصب کردی. با رژیم/ورزش، «وزنِ فعلی» را هر چند وقت به‌روز کن تا روندِ کاهش/افزایش را ببینی و هوش مصنوعی از آن باخبر باشد.</div>
+    <div class="formula-note" style="margin-top:6px">«وزنِ اولیه» = وقتی برنامه را نصب کردی. «وزنِ فعلی» را از منوی سریع ← ⚖️ وزن فعلی (با تاریخ) ثبت کن تا روند بماند و هوش مصنوعی از آن باخبر باشد.</div>
+    <div style="display:flex;gap:8px;margin-top:8px"><button type="button" class="mini-btn" onclick="quickAdd('weight')">⚖️ ثبتِ وزنِ امروز</button><button type="button" class="mini-btn" onclick="weightHistOpen()">🗂 تاریخچهٔ وزن</button></div>
 
     <div id="insSection" style="display:none">
     <label style="margin-top:14px">نوع دیابت</label>
@@ -2288,7 +2289,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۶۳</b> · انتشار: ۱۴۰۵/۰۶/۱۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۶۴</b> · انتشار: ۱۴۰۵/۰۶/۱۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5957,7 +5958,7 @@ function dashExtraSlides(){
     const cur=wl.length?wl[wl.length-1].kg:(pr.weight?+pr.weight:null);
     const start=(pr.weightStart&&+pr.weightStart)||(wl.length?wl[0].kg:cur);
     if(cur!=null){ const d=Math.round((cur-start)*10)/10; const col=d<0?'#6fd39a':d>0?'#e0a355':'#5fd3bd'; const lastD=wl.length?wl[wl.length-1].date:'';
-      out.push(_gc('⚖️','وزنِ فعلی',lastD?('آخرین ثبت: '+escVision(String(lastD))):'', `<div class="gbig" style="color:${col}">${faDigits(cur)}<small> کیلو</small></div><div class="gsub">${(start!=cur)?('از '+faDigits(start)+' شروع · '+(d<0?'کاهشِ '+faDigits(Math.abs(d)):'افزایشِ '+faDigits(d))+' کیلو'):'اولین ثبت'}${wl.length?(' · '+faDigits(wl.length)+' ثبت'):''}</div>`));
+      out.push(_gc('⚖️','وزنِ فعلی',lastD?('آخرین ثبت: '+escVision(String(lastD))):'', `<div class="gbig" style="color:${col}">${faDigits(cur)}<small> کیلو</small></div><div class="gsub">${(start!=cur)?('از '+faDigits(start)+' شروع · '+(d<0?'کاهشِ '+faDigits(Math.abs(d)):'افزایشِ '+faDigits(d))+' کیلو'):'اولین ثبت'}${wl.length?(' · '+faDigits(wl.length)+' ثبت'):''}</div><div style="text-align:center;margin-top:8px"><button class="dash-btn" style="padding:5px 14px;font-size:12px" onclick="weightHistOpen()">🗂 تاریخچهٔ وزن</button></div>`));
     } else out.push(_gc('⚖️','وزنِ فعلی','', _gce('هنوز وزنی ثبت نشده.<br>از ＋ ← ⚖️ وزن فعلی ثبت کن.')));
   }catch(e){}
   // انسولین امروز (تفکیک سریع/پایه با ساعت)
@@ -6922,6 +6923,46 @@ function saveQuickWeight(){
     const els=document.getElementById('weightStart'); if(els&&!els.value) els.value=String(kg);
   }catch(e){}
   closeQEntry('qwtModal'); uiToast('✓ وزن ثبت و در پروفایل به‌روز شد'); afterQuickLog();
+}
+// تاریخچهٔ وزن‌های ثبت‌شده (با تاریخ) + روند + حذف
+function weightHistOpen(){
+  try{ ensureChatCss&&ensureChatCss(); }catch(e){}
+  const old=document.getElementById('wtHistBg'); if(old) old.remove();
+  let wl=[]; try{ wl=JSON.parse(localStorage.getItem('weight_log_v1')||'[]')||[]; }catch(e){}
+  wl=wl.filter(x=>x&&x.kg).sort((a,b)=>new Date(a.iso)-new Date(b.iso));
+  let body='';
+  if(!wl.length){ body='<div style="color:var(--muted);font-size:12.5px;text-align:center;padding:24px 8px;line-height:1.9">هنوز وزنی ثبت نشده.<br>از منوی سریع ← ⚖️ وزن فعلی ثبت کن.</div>'; }
+  else{
+    const start=wl[0].kg, cur=wl[wl.length-1].kg; const d=Math.round((cur-start)*10)/10;
+    const head=`<div style="display:flex;gap:8px;margin-bottom:10px">
+      <div class="gmini" style="flex:1"><div class="mv">${faDigits(start)}</div><div class="ml">اولین</div></div>
+      <div class="gmini" style="flex:1"><div class="mv">${faDigits(cur)}</div><div class="ml">فعلی</div></div>
+      <div class="gmini" style="flex:1"><div class="mv" style="color:${d<0?'#6fd39a':d>0?'#e0a355':'#5fd3bd'}">${d>0?'+':''}${faDigits(d)}</div><div class="ml">تغییر (کیلو)</div></div></div>`;
+    const rows=wl.map((x,idx)=>({x,idx})).reverse().map(({x,idx})=>{ const prev= idx>0? wl[idx-1].kg : null; const dd= prev!=null? Math.round((x.kg-prev)*10)/10 : null;
+      const dtxt = dd==null?'' : `<span style="font-size:11px;color:${dd<0?'#6fd39a':dd>0?'#e0a355':'var(--muted)'};margin-inline-start:6px">${dd<0?'▼ ':dd>0?'▲ +':'= '}${dd!==0?faDigits(Math.abs(dd)):''}</span>`;
+      return `<div style="display:flex;align-items:center;gap:9px;padding:9px 8px;border-bottom:1px solid var(--line)">
+        <span style="font-size:15px">⚖️</span>
+        <div style="flex:1"><div style="font-weight:800;font-size:14px">${faDigits(x.kg)} <span style="font-size:11px;color:var(--muted)">کیلو</span>${dtxt}</div>
+          <div style="font-size:11px;color:var(--muted)">${escVision(String(x.date||_jshort(x.iso)))}</div></div>
+        <button onclick="weightHistDel('${x.iso}')" title="حذف" style="background:transparent;border:none;color:var(--muted);font-size:15px;cursor:pointer">🗑</button>
+      </div>`; }).join('');
+    body=head+`<div style="border:1px solid var(--line);border-radius:12px;overflow:hidden">${rows}</div>`;
+  }
+  const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='wtHistBg'; bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
+  bg.innerHTML=`<div class="chat-rename" role="dialog" aria-modal="true" style="max-width:420px">
+    <h4>⚖️ تاریخچهٔ وزن</h4>
+    <div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:8px">همهٔ وزن‌هایی که با تاریخ ثبت کرده‌ای. هوش مصنوعی و گزارش‌ها هم از این روند استفاده می‌کنند.</div>
+    <div style="max-height:56vh;overflow:auto">${body}</div>
+    <div class="chat-rename-btns" style="margin-top:12px"><button type="button" class="crn-btn crn-cancel" onclick="document.getElementById('wtHistBg').remove()">بستن</button>
+      <button type="button" class="crn-btn crn-ok" onclick="document.getElementById('wtHistBg').remove(); quickAdd('weight')">➕ ثبتِ وزنِ تازه</button></div></div>`;
+  document.body.appendChild(bg);
+}
+function weightHistDel(iso){ if(!confirm('این ثبتِ وزن حذف شود؟')) return;
+  try{ let wl=JSON.parse(localStorage.getItem('weight_log_v1')||'[]')||[]; wl=wl.filter(x=>x&&x.iso!==iso); localStorage.setItem('weight_log_v1',JSON.stringify(wl));
+    const rem=wl.filter(x=>x&&x.kg).sort((a,b)=>new Date(a.iso)-new Date(b.iso));
+    const raw=localStorage.getItem(PKEY); const p=raw?JSON.parse(raw):{}; if(rem.length){ p.weight=String(rem[rem.length-1].kg); localStorage.setItem(PKEY,JSON.stringify(p)); const el=document.getElementById('weight'); if(el) el.value=String(rem[rem.length-1].kg); }
+  }catch(e){}
+  weightHistOpen(); try{ if(typeof renderDashboard==='function') renderDashboard(); }catch(e){}
 }
 function saveQuickJournal(){
   const rating=qSegVal('qjrnRating');
