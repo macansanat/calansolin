@@ -235,19 +235,23 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 @keyframes podBreathe{0%,100%{filter:brightness(1)}50%{filter:brightness(1.03)}}
 @keyframes podSway{0%,100%{transform:scale(1.04) translate(0,0)}33%{transform:scale(1.05) translate(-1.1%,0.4%)}66%{transform:scale(1.05) translate(1%,-0.5%)}}
 @media (prefers-reduced-motion:reduce){.pod-av-img,.pod-av-ph,.pod-av-eq i{animation:none!important}}
-/* دکمه‌های آواتار: تمام‌صفحه و بازگشت */
-.pod-av-fs,.pod-av-dock{position:absolute;top:8px;inset-inline-end:8px;z-index:6;width:32px;height:32px;border-radius:9px;border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.4);color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
-.pod-av-dock{display:none}
+/* دکمه‌های آواتار: تمام‌صفحه (پایین-راست) و بازگشت */
+.pod-av-fs,.pod-av-dock{position:absolute;z-index:6;width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.44);color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.pod-av-fs{bottom:10px;right:10px}
+.pod-av-dock{top:8px;right:8px;display:none}
+/* کنترل‌ها بعد از چند ثانیه محو می‌شوند؛ با لمسِ صحنه دوباره ظاهر */
+.pod-av-fs,.pod-3d-zoom{opacity:0;transition:opacity .35s ease;pointer-events:none}
+.pod-av.pod-av--ui .pod-av-fs,.pod-av.pod-av--ui .pod-3d-zoom{opacity:1;pointer-events:auto}
 /* شبه‌تمام‌صفحه (روی iOS هم کار می‌کند چون به Fullscreen APIِ مرورگر وابسته نیست) */
 .pod-av--full{position:fixed;inset:0;z-index:9998;margin:0;background:#0b1210;display:flex;align-items:center;justify-content:center}
-.pod-av--full .pod-av-stage{width:100vw;width:100dvw;height:100dvh;max-width:none;border-radius:0}
+.pod-av--full .pod-av-stage{width:100vw;width:100dvw;height:100dvh;max-width:none;border-radius:0;transition:none!important}
 .pod-av--full.pod-av--3d .pod-av-stage{height:100dvh}
 /* مینی‌پلیرِ شناور (داخلِ همین صفحه، حینِ اسکرول) */
 .pod-av--float{position:fixed;bottom:78px;inset-inline-end:12px;z-index:9997;margin:0;width:120px}
-.pod-av--float .pod-av-stage{width:120px;height:152px;max-width:none;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.16)}
+.pod-av--float .pod-av-stage{width:120px;height:152px;max-width:none;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.16);transition:none!important}
 .pod-av--float.pod-av--3d .pod-av-stage{height:152px}
 .pod-av--float .pod-av-fs,.pod-av--float .pod-3d-zoom{display:none}
-.pod-av--float .pod-av-dock{display:flex;width:26px;height:26px;font-size:13px;top:4px;inset-inline-end:4px}
+.pod-av--float .pod-av-dock{display:flex;width:26px;height:26px;font-size:13px;top:4px;right:4px;opacity:1}
 .pod-tabs{display:flex;gap:6px;margin:2px 0 14px;position:sticky;top:0;z-index:3;background:var(--card,#0f1720);padding:6px 0}
 .pod-tabs button{flex:1;background:transparent;border:none;border-bottom:2.5px solid var(--line);color:var(--muted);padding:9px 4px;font-family:inherit;font-weight:800;font-size:13.5px;cursor:pointer;transition:all .15s}
 .pod-tabs button.on{color:var(--teal);border-bottom-color:var(--teal)}
@@ -2284,7 +2288,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۶۲</b> · انتشار: ۱۴۰۵/۰۶/۱۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۶۳</b> · انتشار: ۱۴۰۵/۰۶/۱۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5432,7 +5436,7 @@ function renderPodcastCard(){
       ? `<img class="pod-av-img" src="${_pod.avImg}" alt="مجریِ پادکست"><canvas id="podAvCanvas" class="pod-av-cv"></canvas>`
       : `<div class="pod-av-ph">${podAvatarSilhouetteSVG(c.avGender)}</div>`);
   const avBlock = avOn ? `<div id="podAvatar" class="pod-av ${active?'live':''} ${paused?'paused':''} ${av3d?'pod-av--3d':''} ${av3d&&playing?'pod-av--play':''}" style="--lv:0">
-      <div class="pod-av-stage">${avInner}<div class="pod-av-ring"></div><div class="pod-av-eq"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="pod-av-stage" onclick="podAvShowControls()">${avInner}<div class="pod-av-ring"></div><div class="pod-av-eq"><i></i><i></i><i></i><i></i><i></i></div>
         <button class="pod-av-fs" onclick="podAvToggleFull(event)" title="تمام‌صفحه">⛶</button>
         <button class="pod-av-dock" onclick="podAvDock(event)" title="بازگشت">✕</button></div>
     </div>` : '';
@@ -5463,18 +5467,22 @@ function renderPodcastCard(){
   if(av3d){ try{ pod3dEnsure(c.avGender); }catch(e){} }
   else { pod3dStopLoop(); if(avOn && _pod.avImg){ podAvBuildLayers().then(()=>{ try{ podAvDraw(); }catch(e){} }).catch(()=>{}); } }
   if(playing) podReactStart(); else podReactStop();
-  try{ podAvApplyModes(); podAvFloatObserve(box); }catch(e){}
+  try{ podAvApplyModes(); podAvFloatObserve(box); if(avOn) podAvShowControls(); }catch(e){}
 }
 // ── تمام‌صفحه و مینی‌پلیرِ شناورِ آواتار ──────────────────────
+// تغییرِ اندازهٔ رندرِ سه‌بعدی را چند بار طیِ ~۴۵۰ms صدا می‌زند تا نسبتِ تصویر پس از انیمیشن/لِی‌اوت درست بنشیند (رفعِ کشیدگی)
+function podAvResizeSoon(){ let n=0; const tick=()=>{ try{ pod3dResize(); }catch(e){} if(++n<9) setTimeout(tick,55); }; try{ requestAnimationFrame(tick); }catch(e){ tick(); } }
+function podAvShowControls(){ const el=document.getElementById('podAvatar'); if(!el) return; el.classList.add('pod-av--ui');
+  if(_pod._uiT) clearTimeout(_pod._uiT); _pod._uiT=setTimeout(()=>{ try{ const e2=document.getElementById('podAvatar'); if(e2) e2.classList.remove('pod-av--ui'); }catch(e){} }, 3200); }
 function podAvApplyModes(){ const el=document.getElementById('podAvatar'); if(!el) return;
   if(_pod.mode!=='playing'){ _pod._float=false; }   // شناور فقط حینِ پخش
   el.classList.toggle('pod-av--full', !!_pod._full);
   el.classList.toggle('pod-av--float', !!_pod._float && !_pod._full && _pod.mode==='playing');
-  try{ requestAnimationFrame(()=>{ pod3dResize(); }); }catch(e){}
+  podAvResizeSoon();
 }
 function podAvToggleFull(e){ if(e){ e.stopPropagation(); } const el=document.getElementById('podAvatar'); if(!el) return;
   _pod._full=!el.classList.contains('pod-av--full'); if(_pod._full) _pod._float=false;
-  podAvApplyModes(); try{ requestAnimationFrame(()=>{ pod3dResize(); requestAnimationFrame(pod3dResize); }); }catch(e2){} }
+  podAvApplyModes(); podAvShowControls(); }
 function podAvDock(e){ if(e){ e.stopPropagation(); } _pod._float=false; _pod._full=false; podAvApplyModes();
   const card=document.getElementById('homePodcast'); try{ if(card&&card.scrollIntoView) card.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e2){} }
 // وقتی کارت حینِ پخش از دید خارج شد، آواتار به گوشه شناور شود (داخلِ همین صفحه)
