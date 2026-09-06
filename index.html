@@ -311,6 +311,16 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .dash-sec-t{font-size:13.5px;font-weight:800;margin:18px 0 10px;display:flex;align-items:center;gap:6px}
 .dash-sec-s{font-size:10.5px;color:var(--muted);font-weight:600}
 .dash-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* اسلایدرِ بالای خانه: آخرین قند + خلاصهٔ قند (تاچ/موس چپ‌وراست) */
+.dash-slider{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:0;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+.dash-slider::-webkit-scrollbar{display:none}
+.dash-slide{flex:0 0 100%;min-width:0;scroll-snap-align:center;box-sizing:border-box}
+.dash-slide>.dash-hero{margin-bottom:0}
+.dash-slide-sum{display:flex;flex-direction:column;justify-content:center;min-height:100%}
+.dash-slide-sum .dash-sec-t{margin-top:0}
+.dash-dots{display:flex;justify-content:center;gap:7px;margin:9px 0 14px}
+.dash-dot{width:7px;height:7px;border-radius:50%;background:var(--line);transition:all .2s;cursor:pointer}
+.dash-dot.on{background:var(--teal);width:20px;border-radius:4px}
 .dash-tile{background:linear-gradient(160deg,var(--field),var(--panel));border:1px solid var(--line);border-radius:14px;padding:16px 12px;text-align:center}
 .dash-tile .dt-v{font-size:25px;font-weight:800;direction:ltr;line-height:1.15}
 .dash-tile .dt-l{font-size:11px;color:var(--muted);margin-top:4px}
@@ -2217,7 +2227,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۵۲</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۵۳</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5538,25 +5548,25 @@ function renderDashboard(){
   const src=resolveBgSrc((window._cgmReadings&&window._cgmReadings.length>=10), loadBG().length>0);
   let h='';
   if(hasAnyGlu) h+=`<div class="dash-srcrow">${bgSrcChip()}</div>`;
+  let heroHTML='';
   if(latest){
     const st=dashGluStatus(latest.glu);
     const arrow=trend==='up'?'↑':trend==='down'?'↓':trend==='flat'?'→':'';
-    h+=`<div class="dash-hero ${st.k}">
+    heroHTML=`<div class="dash-hero ${st.k}">
       <div class="dh-label">آخرین قند خون</div>
       <div class="dh-main"><span class="dh-num" style="color:${st.c}">${faDigits(Math.round(latest.glu))}</span><span class="dh-unit">mg/dL</span>${arrow?`<span class="dh-arrow" style="color:${st.c}">${arrow}</span>`:''}</div>
       <div class="dh-meta"><span class="dh-pill" style="background:${st.c}22;color:${st.c}">${st.t}</span><span class="dh-dot">•</span>${dashAgo(latest.date)}<span class="dh-dot">•</span>${source}</div>
     </div>`;
   }else{
-    h+=`<div class="dash-hero empty">
+    heroHTML=`<div class="dash-hero empty">
       <div class="dh-empty-ic">🩸</div>
       <div class="dh-empty-t">هنوز داده‌ی قندی نداری</div>
       <div class="dh-empty-s">با دکمه‌ی ＋ قند خون را ثبت کن، یا فایل CGM را از پروفایل وارد کن.</div>
       <button class="dash-btn" onclick="openQuickBG()">🩸 ثبت قند خون</button>
     </div>`;
   }
-  h+=dashAiDoctorCard();
-  h+=`<div id="homePodcast"></div>`;
   // کاشی‌های خلاصه‌ی قند بر اساس منبع
+  let summaryHTML='';
   if(src==='cgm'){
     const s=window._cgmStats;
     if(s){
@@ -5566,14 +5576,14 @@ function renderDashboard(){
         ['A1c تخمینی (GMI)', (s.gmi!=null?s.gmi.toFixed(1)+'٪':'—'), '#9fc0f0'],
         ['نوسان (CV)', (s.cv!=null?Math.round(s.cv)+'٪':'—'), (s.cv!=null&&s.cv<=36)?'#6fd39a':'#e0a355'],
       ];
-      h+=`<div class="dash-sec-t">📊 خلاصه‌ی قند <span class="dash-sec-s">(کل داده‌ی CGM)</span></div><div class="dash-tiles">`;
-      tiles.forEach(t=>{ h+=`<div class="dash-tile"><div class="dt-v" style="color:${t[2]}">${faDigits(String(t[1]))}</div><div class="dt-l">${t[0]}</div></div>`; });
-      h+=`</div>`;
+      summaryHTML=`<div class="dash-sec-t">📊 خلاصه‌ی قند <span class="dash-sec-s">(کل داده‌ی CGM)</span></div><div class="dash-tiles">`;
+      tiles.forEach(t=>{ summaryHTML+=`<div class="dash-tile"><div class="dt-v" style="color:${t[2]}">${faDigits(String(t[1]))}</div><div class="dt-l">${t[0]}</div></div>`; });
+      summaryHTML+=`</div>`;
     }
   } else if(src==='meter'){
     const bs=bgStats(loadBG().map(x=>({g:x.glu})));
     if(bs){
-      h+=`<div class="dash-sec-t">📊 خلاصه‌ی قند <span class="dash-sec-s">(گلوکومتر · همه‌ی اندازه‌گیری‌ها)</span></div><div class="dash-tiles">
+      summaryHTML=`<div class="dash-sec-t">📊 خلاصه‌ی قند <span class="dash-sec-s">(گلوکومتر · همه‌ی اندازه‌گیری‌ها)</span></div><div class="dash-tiles">
         <div class="dash-tile"><div class="dt-v" style="color:#5fd3bd">${faDigits(Math.round(bs.avg))}</div><div class="dt-l">میانگین قند</div></div>
         <div class="dash-tile"><div class="dt-v" style="color:#6fd39a">${faDigits(bs.inRange)}<span style="font-size:13px;color:var(--muted)"> از ${faDigits(bs.n)}</span></div><div class="dt-l">در محدوده</div></div>
         <div class="dash-tile"><div class="dt-v" style="color:#9fc0f0">${faDigits(Math.round(bs.min))}</div><div class="dt-l">کمترین</div></div>
@@ -5581,6 +5591,21 @@ function renderDashboard(){
       </div>`;
     }
   }
+  // مونتاژ: اگر خلاصهٔ قند داریم، «آخرین قند» و «خلاصهٔ قند» را در یک اسلایدرِ افقی (تاچ/موس) بگذار
+  if(summaryHTML){
+    h+=`<div class="dash-slider" id="dashSlider">
+      <div class="dash-slide">${heroHTML}</div>
+      <div class="dash-slide"><div class="dash-slide-sum">${summaryHTML}</div></div>
+    </div>
+    <div class="dash-dots" id="dashDots">
+      <span class="dash-dot on" onclick="dashSlideTo(0)" aria-label="آخرین قند"></span>
+      <span class="dash-dot" onclick="dashSlideTo(1)" aria-label="خلاصهٔ قند"></span>
+    </div>`;
+  } else {
+    h+=heroHTML;
+  }
+  h+=dashAiDoctorCard();
+  h+=`<div id="homePodcast"></div>`;
   // امروز
   let todayMeals=0, lastIns=null, lastMeal=null;
   try{ const pk=dayKey(new Date()); const arr=(planData&&planData[pk])||[];
@@ -5604,9 +5629,25 @@ function renderDashboard(){
   h+=`<div id="homeAiPanel"></div>`;
   h+=`<div class="dash-note">⚕️ این داشبورد فقط آینه‌ی گذشته است تا آگاه‌تر باشی و بهتر با پزشکت صحبت کنی — تشخیص و هر تصمیم درمانی فقط با پزشک است.</div>`;
   box.innerHTML=h;
+  try{ dashSliderInit(); }catch(e){}
   renderHealthAiPanel('home');
   try{ renderPodcastCard(); }catch(e){}
   try{ podAvatarLoad(); }catch(e){}   // اگر چهره در کش هست، بدونِ هزینه نشان بده
+}
+// اسلایدرِ بالای خانه — نقطه‌ها + درگِ ماوس (تاچ به‌صورتِ بومی کار می‌کند)
+function dashSlideTo(i){ const sl=document.getElementById('dashSlider'); if(!sl) return; sl.scrollTo({left:i*(sl.clientWidth||0), behavior:'smooth'}); }
+function dashSliderInit(){
+  const sl=document.getElementById('dashSlider'); if(!sl || sl._init) return; sl._init=true;
+  const dots=Array.from(document.querySelectorAll('#dashDots .dash-dot'));
+  const upd=()=>{ const w=sl.clientWidth||1; const i=Math.max(0,Math.min(dots.length-1,Math.round(sl.scrollLeft/w))); dots.forEach((d,k)=>d.classList.toggle('on',k===i)); };
+  sl.addEventListener('scroll',()=>{ if(sl._raf) return; sl._raf=requestAnimationFrame(()=>{ sl._raf=0; upd(); }); },{passive:true});
+  // درگِ ماوس روی دسکتاپ
+  let down=false,sx=0,sc=0,moved=false;
+  sl.addEventListener('pointerdown',e=>{ if(e.pointerType!=='mouse') return; down=true; sx=e.clientX; sc=sl.scrollLeft; moved=false; sl.style.scrollSnapType='none'; });
+  sl.addEventListener('pointermove',e=>{ if(!down) return; const dx=e.clientX-sx; if(Math.abs(dx)>3) moved=true; sl.scrollLeft=sc-dx; });
+  const end=()=>{ if(!down) return; down=false; sl.style.scrollSnapType='x mandatory'; dashSlideTo(Math.round(sl.scrollLeft/(sl.clientWidth||1))); };
+  sl.addEventListener('pointerup',end); sl.addEventListener('pointerleave',end);
+  sl.addEventListener('click',e=>{ if(moved){ e.stopPropagation(); e.preventDefault(); moved=false; } },true);
 }
 /* ====== گزارش روزانه ====== */
 let _dailyDate=new Date(); _dailyDate.setHours(0,0,0,0);
