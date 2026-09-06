@@ -2271,7 +2271,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۵۷</b> · انتشار: ۱۴۰۵/۰۶/۱۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۵۸</b> · انتشار: ۱۴۰۵/۰۶/۱۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5593,7 +5593,7 @@ function renderDashboard(){
   }
   const src=resolveBgSrc((window._cgmReadings&&window._cgmReadings.length>=10), loadBG().length>0);
   let h='';
-  if(hasAnyGlu) h+=`<div class="dash-srcrow">${bgSrcChip()}</div>`;
+  h+=`<div class="dash-srcrow" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${hasAnyGlu?bgSrcChip():''}<button class="bgsrc-chip" onclick="dashOpenReorder()" title="جابه‌جاییِ ترتیبِ باکس‌ها">✏️ ویرایشِ چیدمان</button></div>`;
   // اسلاید ۱: آخرین قند (کارتِ شیشه‌ای)
   // اسلاید ۱: آخرین قند — چینشِ اصلی (لیبل بالا، عددِ بزرگ وسط، متا با فلش/چنددقیقه/منبع پایین)
   let heroHTML='';
@@ -5641,6 +5641,10 @@ function renderDashboard(){
   // مونتاژِ اسلایدر: قند + خلاصه + کارت‌های امروز/AI
   let slides=[heroHTML]; if(summaryHTML) slides.push(summaryHTML);
   try{ slides=slides.concat(dashExtraSlides()); }catch(e){}
+  // اعمالِ چیدمانِ ذخیره‌شدهٔ کاربر
+  let slObjs=slides.map(html=>({key:_slideMeta(html).key, html}));
+  try{ slObjs=applyDashOrder(slObjs); }catch(e){}
+  slides=slObjs.map(o=>o.html);
   if(slides.length>1){
     h+=`<div class="dash-slider" id="dashSlider">`+slides.map(s=>`<div class="dash-slide">${s}</div>`).join('')+`</div>`;
     h+=`<div class="dash-dots" id="dashDots">`+slides.map((_,i)=>`<span class="dash-dot ${i===0?'on':''}" onclick="dashSlideTo(${i})"></span>`).join('')+`</div>`;
@@ -5696,6 +5700,48 @@ function dashSliderInit(){
   sl.addEventListener('pointerup',end); sl.addEventListener('pointerleave',end);
   sl.addEventListener('click',e=>{ if(moved){ e.stopPropagation(); e.preventDefault(); moved=false; } },true);
 }
+// ── چیدمانِ دلخواهِ اسلایدرِ خانه (ویرایش/قفل) ──────────────────
+function _slideMeta(html){ html=String(html||'');
+  if(/dash-hero/.test(html)) return {key:'glucose', title:'آخرین قند خون', icon:'🩸'};
+  if(/dash-slide-sum/.test(html)) return {key:'summary', title:'خلاصهٔ قند', icon:'📊'};
+  const ic=((html.match(/gcard-ic">([^<]*)</)||[])[1]||'▫️').trim();
+  let t=((html.match(/gcard-t">([^<]*?)(?:<small|<\/div)/)||[])[1]||'—').trim();
+  return {key:t, title:t, icon:ic};
+}
+function dashGetOrder(){ try{ const a=JSON.parse(localStorage.getItem('dash_order_v1')||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function dashSaveOrder(keys){ try{ localStorage.setItem('dash_order_v1', JSON.stringify(keys)); }catch(e){} }
+function applyDashOrder(objs){ const ord=dashGetOrder(); if(!ord.length) return objs;
+  const idx=k=>{ const i=ord.indexOf(k); return i<0?9999:i; };
+  return objs.map((o,i)=>({o,i})).sort((a,b)=>{ const d=idx(a.o.key)-idx(b.o.key); return d!==0?d:a.i-b.i; }).map(x=>x.o); }
+let _dashReorder=[];
+function dashOpenReorder(){
+  const sl=document.getElementById('dashSlider'); if(!sl){ uiToast&&uiToast('اسلایدی برای چیدمان نیست'); return; }
+  _dashReorder=[...sl.querySelectorAll('.dash-slide')].map(s=>_slideMeta(s.innerHTML));
+  try{ ensureChatCss&&ensureChatCss(); }catch(e){}
+  const old=document.getElementById('dashReBg'); if(old) old.remove();
+  const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='dashReBg'; bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
+  bg.innerHTML=`<div class="chat-rename" role="dialog" aria-modal="true" style="max-width:400px">
+    <h4>✏️ ویرایشِ چیدمانِ خانه</h4>
+    <div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:8px">با فلش‌ها ترتیبِ باکس‌ها را بالا/پایین کن، بعد «پایان» را بزن تا قفل شود.</div>
+    <div id="dashReList" style="max-height:52vh;overflow:auto"></div>
+    <div class="chat-rename-btns" style="margin-top:12px">
+      <button type="button" class="crn-btn crn-cancel" onclick="dashResetOrder()">بازگردانی به پیش‌فرض</button>
+      <button type="button" class="crn-btn crn-ok" onclick="dashSaveReorder()">✓ پایان و قفل</button></div></div>`;
+  document.body.appendChild(bg);
+  dashRenderReorder();
+}
+function dashRenderReorder(){
+  const c=document.getElementById('dashReList'); if(!c) return;
+  c.innerHTML=_dashReorder.map((m,i)=>`<div style="display:flex;align-items:center;gap:9px;padding:9px 8px;border-bottom:1px solid var(--line)">
+    <span style="font-size:17px">${m.icon}</span>
+    <span style="flex:1;font-size:13.5px;font-weight:700">${escVision(m.title)}</span>
+    <button type="button" onclick="dashMove(${i},-1)" ${i===0?'disabled':''} style="width:34px;height:32px;border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:9px;cursor:pointer;font-size:15px;opacity:${i===0?.35:1}">↑</button>
+    <button type="button" onclick="dashMove(${i},1)" ${i===_dashReorder.length-1?'disabled':''} style="width:34px;height:32px;border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:9px;cursor:pointer;font-size:15px;opacity:${i===_dashReorder.length-1?.35:1}">↓</button>
+  </div>`).join('');
+}
+function dashMove(i,dir){ const j=i+dir; if(j<0||j>=_dashReorder.length) return; const t=_dashReorder[i]; _dashReorder[i]=_dashReorder[j]; _dashReorder[j]=t; dashRenderReorder(); }
+function dashSaveReorder(){ dashSaveOrder(_dashReorder.map(m=>m.key)); const b=document.getElementById('dashReBg'); if(b) b.remove(); if(typeof renderDashboard==='function') renderDashboard(); uiToast&&uiToast('✓ چیدمان ذخیره و قفل شد'); }
+function dashResetOrder(){ try{ localStorage.removeItem('dash_order_v1'); }catch(e){} const b=document.getElementById('dashReBg'); if(b) b.remove(); if(typeof renderDashboard==='function') renderDashboard(); uiToast&&uiToast('✓ چیدمان به حالتِ پیش‌فرض برگشت'); }
 // ── کارت‌های شیشه‌ایِ اسلایدرِ خانه ──────────────────────────────
 function _gc(icon,title,sub,body){ return `<div class="gcard"><div class="gcard-h"><div class="gcard-ic">${icon}</div><div class="gcard-t">${title}${sub?`<small>${sub}</small>`:''}</div></div><div class="gcard-body">${body}</div></div>`; }
 function _gce(msg){ return `<div class="gcard-empty">${msg}</div>`; }
