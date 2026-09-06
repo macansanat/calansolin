@@ -186,6 +186,15 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .qbg-doc::placeholder{color:var(--muted);opacity:.8}
 .qbg-ta{width:100%;min-height:64px;resize:vertical;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:11px 13px;font-family:inherit;font-size:14px;color:var(--ink);outline:none;line-height:1.7;box-sizing:border-box}
 .qbg-ta:focus{border-color:var(--teal)}
+.qjrn-more{margin-bottom:12px;border:1px solid var(--line);border-radius:12px;background:var(--field);overflow:hidden}
+.qjrn-more>summary{list-style:none;cursor:pointer;padding:12px 14px;font-size:13px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:8px;-webkit-tap-highlight-color:transparent;user-select:none}
+.qjrn-more>summary::-webkit-details-marker{display:none}
+.qjrn-more>summary::after{content:'⌄';margin-inline-start:auto;font-size:15px;transition:transform .2s;opacity:.7}
+.qjrn-more[open]>summary::after{transform:rotate(180deg)}
+.qjrn-more[open]>summary{color:var(--ink);border-bottom:1px solid var(--line)}
+.qjrn-more>div{padding:0 14px 12px}
+.qjrn-cnt{background:var(--teal-dim);color:#eafff8;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:800}
+.qjrn-cnt:empty{display:none}
 /* کارت دفترچه در نمای روزانه */
 .jrn-card{background:linear-gradient(135deg,rgba(224,163,85,.10),var(--panel));border:1px solid rgba(224,163,85,.4);border-radius:14px;padding:13px 14px;margin:10px 0}
 .jrn-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
@@ -1358,6 +1367,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <div class="qbg-box">
     <button class="qbg-x" onclick="closeQEntry('qwtModal')" title="بستن">✕</button>
     <div class="qbg-head"><span class="qbg-badge" style="background:rgba(63,185,163,.18)">⚖️</span><div><div class="qbg-title">وزنِ فعلی</div><div class="qbg-sub">وزنِ امروزت را ثبت کن. در پروفایل به‌روز می‌شود و روندش در گزارش‌ها و برای هوش مصنوعی می‌ماند.</div></div></div>
+    <div style="display:flex;justify-content:flex-end;margin:-2px 0 12px"><button type="button" class="mini-btn" onclick="weightHistOpen()">🗂 تاریخچهٔ وزن</button></div>
     <label class="qbg-lbl">وزن (کیلوگرم)</label>
     <input type="number" id="qwtKg" class="qbg-in" inputmode="decimal" step="0.1" placeholder="مثلاً ۷۸.۵" style="margin-bottom:14px">
     <div class="qbg-grid">
@@ -1373,35 +1383,46 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <div class="qbg-box">
     <button class="qbg-x" onclick="closeQEntry('qjrnModal')" title="بستن">✕</button>
     <div class="qbg-head"><span class="qbg-badge" style="background:rgba(224,163,85,.18)">📓</span><div><div class="qbg-title">دفترچه‌ی روز</div><div class="qbg-sub">عملکرد، اتفاقات و مشاهدات امروز — خلاصه‌اش در گزارش‌ها و هنگام مراجعه به پزشک در دسترس است.</div></div></div>
+    <div style="display:flex;justify-content:flex-end;margin:-2px 0 14px"><button type="button" class="mini-btn" onclick="jrnHistOpen()">🗂 تاریخچهٔ یادداشت‌ها</button></div>
+
     <label class="qbg-lbl">امروز چطور بود؟</label>
-    <div class="qseg" id="qjrnRating">
+    <div class="qseg" id="qjrnRating" style="margin-bottom:16px">
       <button type="button" data-v="great" onclick="qsegPick('qjrnRating',this)">😄 عالی</button>
       <button type="button" data-v="good" onclick="qsegPick('qjrnRating',this)">🙂 خوب</button>
       <button type="button" data-v="ok" onclick="qsegPick('qjrnRating',this)">😐 معمولی</button>
       <button type="button" data-v="bad" onclick="qsegPick('qjrnRating',this)">😟 سخت</button>
     </div>
-    <label class="qbg-lbl">اتفاقات مهم امروز (چندتا می‌تونی انتخاب کنی)</label>
-    <div class="qtags" id="qjrnTags">
-      <button type="button" data-v="قند خوب" onclick="qtagToggle(this)">✅ قند خوب</button>
-      <button type="button" data-v="قند بالا" onclick="qtagToggle(this)">🔺 قند بالا</button>
-      <button type="button" data-v="افت قند (هیپو)" onclick="qtagToggle(this)">🔻 افت قند</button>
-      <button type="button" data-v="خطای سنسور" onclick="qtagToggle(this)">📡 خطای سنسور</button>
-      <button type="button" data-v="وعده‌ی خوب" onclick="qtagToggle(this)">🥗 وعده‌ی خوب</button>
-      <button type="button" data-v="پرخوری" onclick="qtagToggle(this)">🍰 پرخوری</button>
-      <button type="button" data-v="فراموشی دارو" onclick="qtagToggle(this)">💊 فراموشی دارو</button>
-      <button type="button" data-v="فراموشی انسولین" onclick="qtagToggle(this)">💉 فراموشی انسولین</button>
-      <button type="button" data-v="ورزش کردم" onclick="qtagToggle(this)">🏃 ورزش کردم</button>
-      <button type="button" data-v="استرس" onclick="qtagToggle(this)">😣 استرس</button>
-      <button type="button" data-v="بیماری/سرماخوردگی" onclick="qtagToggle(this)">🤒 بیماری</button>
-      <button type="button" data-v="خواب بد" onclick="qtagToggle(this)">😴 خواب بد</button>
-    </div>
-    <label class="qbg-lbl">یادداشت و مشاهدات (اختیاری)</label>
-    <textarea id="qjrnNote" class="qbg-ta" placeholder="مثلاً: بعد از ناهار قندم بالا رفت و دیر پایین اومد…" style="margin-bottom:14px"></textarea>
-    <label class="qbg-lbl">📌 نکته برای پزشک (اختیاری)</label>
-    <input type="text" id="qjrnDoc" class="qbg-doc" placeholder="چیزی که باید سرِ ویزیت به پزشک بگی" style="margin-bottom:14px">
-    <label class="qbg-lbl">تاریخ (شمسی)</label><div id="qjrnDateWrap" style="margin-bottom:2px"></div>
-    <div style="text-align:center;margin-top:4px"><button type="button" class="mini-btn" onclick="jrnHistOpen()">🗂 تاریخچهٔ یادداشت‌ها</button></div>
-    <div class="qbg-actions" style="margin-top:10px"><button class="qbg-cancel" onclick="closeQEntry('qjrnModal')">لغو</button><button class="qbg-save" onclick="saveQuickJournal()">💾 ذخیره</button></div>
+
+    <label class="qbg-lbl">✍️ یادداشت روز</label>
+    <textarea id="qjrnNote" class="qbg-ta" placeholder="مثلاً: بعد از ناهار قندم بالا رفت و دیر پایین اومد…" style="min-height:140px;margin-bottom:16px"></textarea>
+
+    <details class="qjrn-more">
+      <summary>🏷 برچسب اتفاقات مهم امروز <span class="qjrn-cnt" id="qjrnTagCnt"></span></summary>
+      <div class="qtags" id="qjrnTags" style="margin-top:10px">
+        <button type="button" data-v="قند خوب" onclick="qtagToggle(this)">✅ قند خوب</button>
+        <button type="button" data-v="قند بالا" onclick="qtagToggle(this)">🔺 قند بالا</button>
+        <button type="button" data-v="افت قند (هیپو)" onclick="qtagToggle(this)">🔻 افت قند</button>
+        <button type="button" data-v="خطای سنسور" onclick="qtagToggle(this)">📡 خطای سنسور</button>
+        <button type="button" data-v="وعده‌ی خوب" onclick="qtagToggle(this)">🥗 وعده‌ی خوب</button>
+        <button type="button" data-v="پرخوری" onclick="qtagToggle(this)">🍰 پرخوری</button>
+        <button type="button" data-v="فراموشی دارو" onclick="qtagToggle(this)">💊 فراموشی دارو</button>
+        <button type="button" data-v="فراموشی انسولین" onclick="qtagToggle(this)">💉 فراموشی انسولین</button>
+        <button type="button" data-v="ورزش کردم" onclick="qtagToggle(this)">🏃 ورزش کردم</button>
+        <button type="button" data-v="استرس" onclick="qtagToggle(this)">😣 استرس</button>
+        <button type="button" data-v="بیماری/سرماخوردگی" onclick="qtagToggle(this)">🤒 بیماری</button>
+        <button type="button" data-v="خواب بد" onclick="qtagToggle(this)">😴 خواب بد</button>
+      </div>
+    </details>
+
+    <details class="qjrn-more">
+      <summary>📌 نکته برای پزشک و تاریخ</summary>
+      <div style="margin-top:10px">
+        <input type="text" id="qjrnDoc" class="qbg-doc" placeholder="چیزی که باید سرِ ویزیت به پزشک بگی" style="margin-bottom:14px">
+        <label class="qbg-lbl">تاریخ (شمسی)</label><div id="qjrnDateWrap" style="margin-bottom:2px"></div>
+      </div>
+    </details>
+
+    <div class="qbg-actions" style="margin-top:14px"><button class="qbg-cancel" onclick="closeQEntry('qjrnModal')">لغو</button><button class="qbg-save" onclick="saveQuickJournal()">💾 ذخیره</button></div>
   </div>
 </div>
 
@@ -2290,7 +2311,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۶۵</b> · انتشار: ۱۴۰۵/۰۶/۱۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۶۶</b> · انتشار: ۱۴۰۵/۰۶/۱۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -6899,9 +6920,12 @@ function openJournalQuick(){
   openQEntry('qjrnModal','qjrnDateWrap',null,['qjrnDoc'],null,'qjrnRating');
   const ta=document.getElementById('qjrnNote'); if(ta) ta.value='';
   document.querySelectorAll('#qjrnTags button.on').forEach(b=>b.classList.remove('on'));
+  try{ document.querySelectorAll('#qjrnModal .qjrn-more').forEach(d=>d.open=false); }catch(e){}
+  qjrnTagCntRefresh();
   try{ const t=document.querySelector('#qjrnModal .qbg-title'); if(t) t.textContent='دفترچه‌ی روز'; }catch(e){}
 }
-function qtagToggle(btn){ btn.classList.toggle('on'); uiDing&&uiDing(); }
+function qtagToggle(btn){ btn.classList.toggle('on'); uiDing&&uiDing(); if(btn.closest('#qjrnTags')) qjrnTagCntRefresh(); }
+function qjrnTagCntRefresh(){ try{ const c=document.getElementById('qjrnTagCnt'); if(!c) return; const n=document.querySelectorAll('#qjrnTags button.on').length; c.textContent=n?faDigits(n):''; }catch(e){} }
 function qTagVals(id){ return [...document.querySelectorAll('#'+id+' button.on')].map(b=>b.getAttribute('data-v')); }
 const JRN_RATING={great:'😄 عالی',good:'🙂 خوب',ok:'😐 معمولی',bad:'😟 سخت'};
 function vitalsFa(x){ const p=[]; if(x.sys!=null&&x.dia!=null) p.push('فشار '+faDigits(x.sys)+'/'+faDigits(x.dia)); else if(x.sys!=null) p.push('سیستول '+faDigits(x.sys)); else if(x.dia!=null) p.push('دیاستول '+faDigits(x.dia)); if(x.hr!=null) p.push('ضربان '+faDigits(x.hr)); return p.join(' · '); }
@@ -7039,9 +7063,10 @@ function jrnHistOpen(){
 function jrnHistEdit(iso){ let arr=[]; try{ arr=JSON.parse(localStorage.getItem('journal_v1')||'[]')||[]; }catch(e){} const x=arr.find(r=>r.iso===iso); if(!x) return;
   const bg=document.getElementById('jrnHistBg'); if(bg) bg.remove();
   openJournalQuick(); _editJrnIso=iso;
-  try{ qSegSet('qjrnRating', x.rating||''); qTagsSet('qjrnTags', x.tags||[]);
+  try{ qSegSet('qjrnRating', x.rating||''); qTagsSet('qjrnTags', x.tags||[]); qjrnTagCntRefresh();
     const n=document.getElementById('qjrnNote'); if(n) n.value=x.note||''; const dc=document.getElementById('qjrnDoc'); if(dc) dc.value=x.doctor||'';
     const d=new Date(x.iso); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); const inp=document.getElementById('qjrnDate'); if(inp) inp.value=jDateStr(j[0],j[1],j[2]);
+    const dets=document.querySelectorAll('#qjrnModal .qjrn-more'); if(dets[0]) dets[0].open=(x.tags&&x.tags.length>0); if(dets[1]) dets[1].open=!!(x.doctor&&x.doctor.trim());
     const t=document.querySelector('#qjrnModal .qbg-title'); if(t) t.textContent='ویرایشِ یادداشت';
   }catch(e){}
 }
