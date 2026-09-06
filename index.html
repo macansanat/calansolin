@@ -2271,7 +2271,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۵۹</b> · انتشار: ۱۴۰۵/۰۶/۱۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۶۰</b> · انتشار: ۱۴۰۵/۰۶/۱۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3586,6 +3586,16 @@ const POD_VOICES={
   openai:[ {id:'shimmer',fa:'Shimmer — زن، گرم'},{id:'nova',fa:'Nova — زن، روشن'},{id:'coral',fa:'Coral — زن، مهربان'},{id:'alloy',fa:'Alloy — خنثی'},{id:'onyx',fa:'Onyx — مرد، بم'},{id:'echo',fa:'Echo — مرد، آرام'} ]
 };
 const POD_LENS=[2,3,5,7];
+// لحن‌های پادکست — هرکدام سبکِ گفتار و زبان را عوض می‌کند (خطِ قرمزِ ایمنی در بخشِ ثابتِ پرامپت می‌ماند)
+const POD_TONES={
+  casual:{fa:'😊 خودمونی', prompt:'لحن: گرم، صمیمی و خودمونی. زبان: کاملاً «محاوره‌ای»، دقیقاً مثلِ حرف‌زدنِ روزمره — «می‌ره» نه «می‌رود»، «می‌گه»، «یه»، «واسه»، «الان»؛ از «ببین»، «راستش»، «خب» استفاده کن. جمله‌ها کوتاه و شکسته، انگار با یک دوست گپ می‌زنی.'},
+  formal:{fa:'🎩 رسمی', prompt:'لحن: محترمانه، متین و حرفه‌ای. زبان: فارسیِ معیارِ روان و نوشتاری اما ساده و قابل‌فهم.'},
+  humor:{fa:'😂 طنز', prompt:'لحن: شاد و بامزه با طنزِ ملایم و تشبیه‌های خنده‌دار و بی‌آزار؛ لبخند به لبِ شنونده بیاور ولی هیچ‌وقت داده‌ها و دقتِ آموزشی را فدای شوخی نکن. زبانِ محاوره‌ای و پرانرژی.'},
+  luti:{fa:'🎩 لوتی/داش‌مشتی', prompt:'لحن: «لوتی و داش‌مشتیِ» مهربانِ تهرانِ قدیم — گرم، پهلوانی، باصفا و رفیق‌وار؛ از تعبیرهایی مثل «جونِ دلم»، «مرامت»، «قربونِ معرفتت»، «پهلوون» استفاده کن، ولی همیشه محترمانه و بدونِ توهین یا لاتی‌گریِ زننده. محتوای دقیق و آموزشی حفظ شود.'},
+  doctor:{fa:'🩺 پزشک‌وار', prompt:'لحن: مثلِ یک پزشکِ آرام، مطمئن، دقیق و دلسوز؛ علمی و منطقی ولی ساده و قابل‌فهم برای مردمِ عادی. با اطمینان و مهربانی توضیح بده و اعتماد بده.'},
+  calm:{fa:'🧘 آرامش‌بخش', prompt:'لحن: آرام‌بخش و شمرده، مثلِ یک راهنمای ذهن‌آگاهی (مدیتیشن)؛ نرم، آهسته و دلگرم‌کننده که به شنونده آرامش و امید بدهد. جمله‌های ملایم و مثبت.'},
+  kids:{fa:'🧒 کودکانه', prompt:'لحن: کودکانه و خیلی ساده، انگار با یک بچهٔ ۷ تا ۹ ساله حرف می‌زنی که خودش یا عزیزش دیابت دارد. کلمه‌های خیلی آسان، جمله‌های کوتاه، مثال‌های بامزه و ملموس (مثلِ بازی و خوراکی)، تشویقِ زیاد و مهربانی. مفاهیمِ سخت را به ساده‌ترین شکل و با قصه‌ی کوتاه توضیح بده. هیچ کلمهٔ ترسناک یا پیچیده به کار نبر.'}
+};
 function podCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(POD_CFG_KEY)||'{}')||{}; }catch(e){}
   return { prov:o.prov||'auto', minutes:o.minutes||5, gVoice:o.gVoice||'Kore', oVoice:o.oVoice||'shimmer', dVoice:o.dVoice||'',
     avatar:(o.avatar!==false), avGender:(o.avGender==='male'?'male':'female'),
@@ -3601,7 +3611,7 @@ function podContentCfg(cc){ cc=cc||{};
   const dflt={glucose:true,meals:true,insulin:true,meds:true,exercise:true,sleep:true,vitals:true,mood:true,labs:true,weight:true,plan:true,tip:true,step:true};
   const r={}; for(const k in dflt) r[k]=(cc[k]!==false);
   r.glucoseRange=cc.glucoseRange||'today';
-  r.tone=(cc.tone==='formal'?'formal':'casual');   // لحنِ گفتار: محاوره‌ای (پیش‌فرض) یا رسمی
+  r.tone=(POD_TONES[cc.tone]?cc.tone:'casual');   // لحنِ گفتار (خودمونی/رسمی/طنز/لوتی/پزشک/آرام/کودکانه)
   return r; }
 function podContentSet(key,val){ const c=podCfg().content; c[key]=val; podCfgSet({content:c}); try{ renderPodCfg(); }catch(e){}
   uiToast&&uiToast('✓ ثبت شد — «پخش» یا «🔄 ساختِ دوباره» را بزن تا با تنظیماتِ تازه ساخته شود'); }
@@ -3656,16 +3666,36 @@ const POD_TOPICS=[
 function podPickTopic(){ const doy=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,0))/86400000); return POD_TOPICS[((doy%POD_TOPICS.length)+POD_TOPICS.length)%POD_TOPICS.length]; }
 function podLoad(){ try{ return JSON.parse(localStorage.getItem(POD_KEY)||'null'); }catch(e){ return null; } }
 function podSave(o){ try{ localStorage.setItem(POD_KEY, JSON.stringify(o)); }catch(e){} }
-// رکوردی که کارت نشان/پخش می‌کند: اگر کاربر از تاریخچه یک روز را باز کرده، همان؛ وگرنه امروز
-function podCurRec(){ return _pod._viewRec || podLoad(); }
-// تاریخچهٔ پادکست‌ها (فقط متن — سبک؛ برای پخشِ دوباره بدونِ درخواستِ تازه از هوش مصنوعی)
+// رکوردی که کارت نشان/پخش می‌کند: تاریخچه‌ی‌بازشده | تازه‌ساخته‌شده‌ی‌امروز | ستاره‌دارِ امروز | آخرینِ امروز
+function podCurRec(){ return _pod._viewRec || podTodayDisplayRec() || null; }
+// آرشیوِ پادکست‌ها بر اساسِ تاریخ: {dateKey:[rec,...]} — چند پادکست در روز، با متادیتا (لحن/بازه/موضوع‌ها) و ستاره
 const POD_HIST_KEY='podcast_hist_v1';
-function podHistAll(){ try{ const o=JSON.parse(localStorage.getItem(POD_HIST_KEY)||'{}'); return (o&&typeof o==='object')?o:{}; }catch(e){ return {}; } }
-function podHistSave(rec){ if(!rec||!rec.script||!rec.dateKey) return; try{ const o=podHistAll(); o[rec.dateKey]={dateKey:rec.dateKey, jday:rec.jday, script:rec.script, len:rec.len, provider:rec.provider, ts:rec.ts||Date.now()};
-  // فقط ۶۰ روزِ آخر را نگه دار تا حجم کنترل شود
-  const keys=Object.keys(o).sort(); while(keys.length>60){ delete o[keys.shift()]; }
-  localStorage.setItem(POD_HIST_KEY, JSON.stringify(o)); }catch(e){} }
-function podHistList(){ const o=podHistAll(); return Object.keys(o).sort().reverse().map(k=>o[k]); }
+const POD_TOPIC_FA={glucose:'قند',meals:'وعده',insulin:'انسولین',meds:'دارو',exercise:'ورزش',sleep:'خواب',vitals:'فشار',mood:'حال روحی',labs:'آزمایش',weight:'وزن',plan:'برنامه'};
+const POD_RANGE_FA={today:'امروز',yesterday:'دیروز','7':'۷ روزه','14':'۱۴ روزه','30':'۳۰ روزه','90':'۹۰ روزه'};
+function podHistAll(){ try{ let o=JSON.parse(localStorage.getItem(POD_HIST_KEY)||'{}'); if(!o||typeof o!=='object') return {};
+  // مهاجرت از فرمتِ قدیمی (هر روز یک رکورد) به آرایه
+  let changed=false; for(const k in o){ if(o[k]&&!Array.isArray(o[k])){ o[k]=[Object.assign({id:'m'+k},o[k])]; changed=true; } }
+  if(changed){ try{ localStorage.setItem(POD_HIST_KEY,JSON.stringify(o)); }catch(e){} }
+  return o; }catch(e){ return {}; } }
+function podHistDay(dateKey){ const a=podHistAll()[dateKey]; return Array.isArray(a)?a:[]; }
+function podHistDays(){ return Object.keys(podHistAll()).sort().reverse(); }
+function podHistSave(rec){ if(!rec||!rec.script||!rec.dateKey) return rec; try{ const o=podHistAll(); const k=rec.dateKey;
+  if(!Array.isArray(o[k])) o[k]=[];
+  const item={id:'p'+(rec.ts||Date.now())+Math.random().toString(36).slice(2,5), dateKey:k, jday:rec.jday, script:rec.script, len:rec.len, provider:rec.provider, tone:rec.tone||'casual', range:rec.range||'today', topics:Array.isArray(rec.topics)?rec.topics:[], ts:rec.ts||Date.now(), starred:false};
+  o[k].push(item); rec.id=item.id;
+  while(o[k].length>10) o[k].shift();   // حداکثر ۱۰ پادکست در هر روز
+  let days=Object.keys(o).sort(); while(days.length>60){ delete o[days.shift()]; }   // ۶۰ روزِ آخر
+  localStorage.setItem(POD_HIST_KEY, JSON.stringify(o)); }catch(e){} return rec; }
+function podTodayDisplayRec(){ const arr=podHistDay(podTodayKey()); if(!arr.length) return null;
+  if(_pod._todayShow){ const j=arr.find(r=>r.id===_pod._todayShow); if(j) return j; }
+  const st=arr.find(r=>r.starred); if(st) return st;
+  return arr.slice().sort((a,b)=>(b.ts||0)-(a.ts||0))[0]; }
+function podHistStar(dateKey,id){ try{ const o=podHistAll(); const arr=o[dateKey]; if(!Array.isArray(arr)) return;
+  const it=arr.find(r=>r.id===id); if(!it) return; const wasStar=!!it.starred; arr.forEach(r=>r.starred=false); it.starred=!wasStar;
+  localStorage.setItem(POD_HIST_KEY, JSON.stringify(o)); }catch(e){}
+  if(dateKey===podTodayKey()) _pod._todayShow=null;   // تا ستاره روی خانه اعمال شود
+}
+function podHistDel(dateKey,id){ try{ const o=podHistAll(); const arr=o[dateKey]; if(!Array.isArray(arr)) return; o[dateKey]=arr.filter(r=>r.id!==id); if(!o[dateKey].length) delete o[dateKey]; localStorage.setItem(POD_HIST_KEY, JSON.stringify(o)); }catch(e){} }
 function podTodayKey(){ return dayKey(new Date()); }
 function podWordCount(s){ return String(s||'').trim().split(/\s+/).filter(Boolean).length; }
 function podCleanScript(s){ return String(s||'').replace(/```[\s\S]*?```/g,'').replace(/[*_#>`~]/g,'').replace(/\[[^\]]*\]/g,'').replace(/^\s*[-•]\s*/gm,'').replace(/\n{2,}/g,'\n').trim(); }
@@ -3760,10 +3790,8 @@ function podPrompt(mins){
   struct+="در پایان یک جملهٔ کوتاهِ دلگرم‌کننده و خداحافظی.\n";
   return "تو گویندهٔ پادکستِ روزانهٔ نرم‌افزارِ «"+APP_NAME+"» (یک اپِ آموزشیِ دیابت) به فارسی هستی. نامِ نرم‌افزار دقیقاً «"+APP_NAME+"» است؛ اگر خواستی خوشامد بگویی همین نام را به کار ببر و هرگز نامِ دیگری برای اپ نساز. یک متنِ گفتاری بنویس که وقتی با صدا خوانده شود حدود "+mins+" دقیقه شود.\n"+
   "طولِ متن مهم است: باید «حداقل» "+words+" کلمهٔ فارسی باشد (برای "+mins+" دقیقه گفتار). خیلی مهم: زودتر تمام نکن. هر موضوع را کامل باز کن — «چرا»یش را توضیح بده، یک مثالِ روزمره بزن، و یک نکتهٔ کاربردی اضافه کن — تا وقتی به این طول برسی. اگر حس کردی کوتاه شد، عمق و مثال بیشتری بده، نه اینکه ببندی.\n"+
-  "لحن: گرم، آرام، انسانی، دلگرم‌کننده و جذاب — انگار داری با یک دوستِ صمیمی حرف می‌زنی. جوری بنویس که شنونده جذب شود و تا آخر گوش بدهد.\n"+
-  (C.tone==='formal'
-    ? "زبان: فارسیِ معیارِ روان و محترمانه (نوشتاری اما ساده).\n"
-    : "زبان: کاملاً «محاوره‌ای» و خودمونی بنویس، دقیقاً مثلِ حرف‌زدنِ عادیِ روزمره — «می‌ره» نه «می‌رود»، «می‌گه» نه «می‌گوید»، «بریم»، «چطوری»، «یه»، «واسه»، «الان». اصلاً رسمی و کتابی ننویس. می‌تونی از کلمه‌های صمیمی مثلِ «ببین»، «راستش»، «خب» استفاده کنی تا مثلِ یه آدمِ واقعی که داره باهات گپ می‌زنه به‌نظر بیاد. جمله‌ها کوتاه و شکسته.\n")+
+  "جوری بنویس که شنونده جذب شود و تا آخر گوش بدهد.\n"+
+  ((POD_TONES[C.tone]||POD_TONES.casual).prompt+"\n")+
   struct+
   "قواعدِ مهم: فقط فارسی بنویس. فقط متنِ گفتاری بده — بدونِ تیتر، بدونِ ستاره یا علامتِ مارک‌داون، بدونِ توضیحِ صحنه یا براکت، بدونِ شکلک. جمله‌ها کوتاه و روان تا خوب خوانده شوند. هرگز دوزِ قطعیِ انسولین/دارو یا تشخیصِ قطعی نده. مهم: در متنِ گفتار هیچ جمله‌ی سلبِ مسئولیت نگو (مثلِ «این آموزشی است» یا «جایگزینِ پزشک نیست») — این پیام جای دیگری نشان داده می‌شود؛ فقط گرم و طبیعی صحبت کن.\n\n"+
   "دادهٔ عملکردِ کاربر (برای شخصی‌سازی — عین‌به‌عین نخوان، طبیعی و انتخابی استفاده کن):\n"+(snapF||'دادهٔ کافی نیست؛ عمومی و دلگرم‌کننده صحبت کن.');
@@ -3786,8 +3814,10 @@ async function podcastGenerate(force){
     }catch(e){ script=''; }
   }
   if(!script){ script=podOfflineScript(mins); usedProv='offline'; }
-  const rec={ dateKey:today, jday:_jLabel(new Date()), script, provider:usedProv, len:mins, sig, ts:Date.now() };
-  podSave(rec); try{ podHistSave(rec); }catch(e){} return rec;
+  const C=podCfg().content||podContentCfg();
+  const topics=Object.keys(POD_TOPIC_FA).filter(k=>C[k]!==false);
+  const rec={ dateKey:today, jday:_jLabel(new Date()), script, provider:usedProv, len:mins, sig, ts:Date.now(), tone:C.tone||'casual', range:C.glucoseRange||'today', topics };
+  podSave(rec); try{ podHistSave(rec); _pod._todayShow=rec.id; }catch(e){} return rec;
 }
 // امضایِ تنظیماتِ محتوا (لحن + موضوع‌ها + بازهٔ قند) — با تغییرش، پادکستِ امروز از نو ساخته می‌شود
 function podContentSig(){ try{ return JSON.stringify(podCfg().content||{}); }catch(e){ return ''; } }
@@ -3923,33 +3953,53 @@ function podcastResume(){
 function podcastEnded(){ podProgressStop(); podStopSrc(); podMusicStop(); _pod.mode='idle'; _pod.prep=false; try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} const sl=document.getElementById('podSlider'); if(sl) sl.value=sl.max; renderPodcastCard(); }
 function podcastStopAll(){ podProgressStop(); podStopSrc(); podMusicStop(); try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} try{ if(_wkAudioCtx&&_wkAudioCtx.state==='suspended'&&_wkAudioCtx.resume) _wkAudioCtx.resume(); }catch(e){} _pod.mode='idle'; _pod.prep=false; }
 async function podcastRegen(){ _pod._viewRec=null; podcastStopAll(); _pod.mode='loading'; renderPodcastCard(); try{ await podcastGenerate(true); uiToast&&uiToast('✓ پادکستِ تازه ساخته شد'); }catch(e){} _pod.mode='idle'; renderPodcastCard(); }
-// ── تاریخچهٔ پادکست‌ها ──────────────────────────────────────
+// ── آرشیوِ پادکست‌ها (پوشه بر اساسِ تاریخ؛ چند پادکست در روز؛ ستاره + متادیتا) ──
+function _podChip(txt,col){ return `<span style="display:inline-block;font-size:10px;background:${col||'var(--field)'};border:1px solid var(--line);border-radius:20px;padding:1px 8px;margin:2px 2px 0 0">${txt}</span>`; }
+function podRenderHistList(){
+  const c=document.getElementById('podHistList'); if(!c) return;
+  const days=podHistDays(); const todayK=podTodayKey();
+  if(!days.length){ c.innerHTML=`<div style="color:var(--muted);font-size:12.5px;text-align:center;padding:24px 8px;line-height:1.9">هنوز پادکستی در آرشیو نیست.<br>هر پادکستی که بسازی از این پس اینجا با تاریخش می‌ماند و بدونِ هزینهٔ دوباره (متن و صدا) پخش می‌شود.</div>`; return; }
+  c.innerHTML=days.map(dk=>{ const arr=podHistDay(dk).slice().sort((a,b)=>(b.ts||0)-(a.ts||0)); const isToday=dk===todayK;
+    const items=arr.map(r=>{
+      const chips=[_podChip('لحن: '+((POD_TONES[r.tone]||POD_TONES.casual).fa||''))+_podChip('مرور: '+(POD_RANGE_FA[r.range]||r.range||'—'))]
+        .concat((r.topics||[]).map(t=>_podChip(POD_TOPIC_FA[t]||t,'rgba(63,185,163,.12)'))).join('');
+      const star=r.starred?'⭐':'☆';
+      return `<div style="padding:9px 8px;border-top:1px dashed var(--line)">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:12px;color:var(--muted);min-width:44px">🕐 ${_hm(r.ts)}</span>
+          <span style="flex:1;font-size:12px">${r.len?faDigits(r.len)+' دقیقه':''}${r.provider==='offline'?' · متنِ آماده':''}</span>
+          <button type="button" title="ستاره برای این روز" onclick="podStarHist('${dk}','${r.id}')" style="background:transparent;border:none;font-size:18px;cursor:pointer;color:${r.starred?'#e9b877':'var(--muted)'}">${star}</button>
+          <button type="button" class="crn-btn crn-ok" style="padding:5px 12px" onclick="podViewHist('${dk}','${r.id}')">▶ پخش</button>
+          <button type="button" title="حذف" onclick="podDelHist('${dk}','${r.id}')" style="background:transparent;border:none;font-size:15px;cursor:pointer;color:var(--muted)">🗑</button>
+        </div>
+        <div style="margin-top:5px">${chips}</div>
+      </div>`; }).join('');
+    return `<div style="border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden">
+      <div style="padding:9px 10px;background:var(--field);font-weight:800;font-size:13px">📅 ${escVision(arr[0].jday||dk)}${isToday?' <span style="color:var(--teal);font-size:11px">· امروز</span>':''} <span style="color:var(--muted);font-weight:600;font-size:11px">· ${faDigits(arr.length)} پادکست</span></div>
+      ${items}</div>`;
+  }).join('');
+}
 function podOpenHist(){
   try{ ensureChatCss&&ensureChatCss(); }catch(e){}
   const old=document.getElementById('podHistBg'); if(old) old.remove();
-  const list=podHistList();
-  const todayK=podTodayKey();
-  const rows=list.length? list.map(r=>{ const isToday=r.dateKey===todayK; const mins=r.len?faDigits(r.len)+' دقیقه':'';
-    return `<div style="display:flex;align-items:center;gap:9px;padding:10px 8px;border-bottom:1px solid var(--line)">
-      <span style="font-size:16px">🎧</span>
-      <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">${escVision(r.jday||r.dateKey)}${isToday?' <span style="color:var(--teal);font-size:11px">· امروز</span>':''}</div>
-        <div style="font-size:11px;color:var(--muted)">${mins}${r.provider==='offline'?' · متنِ آماده':''}</div></div>
-      <button type="button" class="crn-btn crn-ok" style="padding:6px 14px" onclick="podViewHist('${r.dateKey}')">▶ پخش</button>
-    </div>`; }).join('')
-    : `<div style="color:var(--muted);font-size:12.5px;text-align:center;padding:24px 8px;line-height:1.9">هنوز پادکستی در تاریخچه نیست.<br>هر پادکستی که ساخته شود از این پس اینجا می‌ماند و بدونِ مصرفِ دوبارهٔ هوش مصنوعی دوباره پخش می‌شود.</div>`;
   const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='podHistBg'; bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
-  bg.innerHTML=`<div class="chat-rename" role="dialog" aria-modal="true" style="max-width:420px">
-    <h4>🗂 تاریخچهٔ پادکست‌ها</h4>
-    <div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:8px">یک روز را انتخاب کن تا همان پادکست دوباره پخش شود — بدونِ درخواستِ تازه از هوش مصنوعی (صرفه‌جویی در توکن).</div>
-    <div style="max-height:56vh;overflow:auto;border:1px solid var(--line);border-radius:12px">${rows}</div>
+  bg.innerHTML=`<div class="chat-rename" role="dialog" aria-modal="true" style="max-width:440px">
+    <h4>🗂 آرشیوِ پادکست‌ها</h4>
+    <div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:8px">هر پادکست با تاریخ، لحن، بازهٔ مرور و موضوع‌هایش ثبت شده. «▶ پخش» همان را دوباره اجرا می‌کند بدونِ هزینه (متن و صدا از قبل ذخیره شده‌اند). با ⭐ یک پادکست را برای آن روز نشان کن تا روی صفحهٔ خانه بماند.</div>
+    <div id="podHistList" style="max-height:58vh;overflow:auto"></div>
     <div class="chat-rename-btns" style="margin-top:12px"><button type="button" class="crn-btn crn-cancel" onclick="document.getElementById('podHistBg').remove()">بستن</button></div></div>`;
   document.body.appendChild(bg);
+  podRenderHistList();
 }
-function podViewHist(dateKey){ const o=podHistAll(); const r=o[dateKey]; if(!r||!r.script){ uiToast&&uiToast('متنِ این روز موجود نیست'); return; }
+function podFindHist(dateKey,id){ return podHistDay(dateKey).find(r=>r.id===id)||null; }
+function podViewHist(dateKey,id){ const r=podFindHist(dateKey,id); if(!r||!r.script){ uiToast&&uiToast('متنِ این پادکست موجود نیست'); return; }
   try{ podcastStopAll(); }catch(e){} _pod._viewRec=r; _pod.mode='idle';
   const b=document.getElementById('podHistBg'); if(b) b.remove();
   renderPodcastCard(); uiToast&&uiToast('✓ پادکستِ '+(r.jday||dateKey)+' — «پخش» را بزن');
 }
+function podStarHist(dateKey,id){ podHistStar(dateKey,id); podRenderHistList(); try{ renderPodcastCard(); }catch(e){}
+  const r=podFindHist(dateKey,id); uiToast&&uiToast(r&&r.starred?'⭐ برای این روز نشان شد':'ستاره برداشته شد'); }
+function podDelHist(dateKey,id){ if(!confirm('این پادکست از آرشیو حذف شود؟')) return; podHistDel(dateKey,id); if(_pod._viewRec&&_pod._viewRec.id===id) _pod._viewRec=null; if(_pod._todayShow===id) _pod._todayShow=null; podRenderHistList(); try{ renderPodcastCard(); }catch(e){} }
 function podViewToday(){ _pod._viewRec=null; try{ podcastStopAll(); }catch(e){} _pod.mode='idle'; renderPodcastCard(); }
 /* ---- صدای گوشی (speechSynthesis) ---- */
 function podBrowserSpeak(text){
@@ -4054,17 +4104,25 @@ async function podAvGet(key){ try{ const db=await podIdbOpen(); if(!db.objectSto
 async function podAvPut(key,val){ try{ const db=await podIdbOpen(); if(!db.objectStoreNames.contains(POD_AV_STORE)) return; await new Promise(res=>{ const rq=db.transaction(POD_AV_STORE,'readwrite').objectStore(POD_AV_STORE).put(val,key); rq.onsuccess=()=>res(); rq.onerror=()=>res(); }); }catch(e){} }
 async function podCacheGet(key){ try{ const db=await podIdbOpen(); return await new Promise(res=>{ const rq=db.transaction(POD_STORE,'readonly').objectStore(POD_STORE).get(key); rq.onsuccess=()=>res(rq.result||null); rq.onerror=()=>res(null); }); }catch(e){ return null; } }
 async function podCachePut(key,val){ try{ const db=await podIdbOpen(); await new Promise(res=>{ const rq=db.transaction(POD_STORE,'readwrite').objectStore(POD_STORE).put(val,key); rq.onsuccess=()=>res(); rq.onerror=()=>res(); }); }catch(e){} }
-async function podCacheClearOldDay(){ try{ const today=podTodayKey(); if(localStorage.getItem('pod_audio_day')===today) return; const db=await podIdbOpen(); await new Promise(res=>{ const rq=db.transaction(POD_STORE,'readwrite').objectStore(POD_STORE).clear(); rq.onsuccess=()=>res(); rq.onerror=()=>res(); }); try{ localStorage.setItem('pod_audio_day', today); }catch(e){} }catch(e){} }
+// LRU: بجای پاک‌سازیِ روزانه، فقط تعدادِ محدودی صوت نگه می‌داریم تا صوتِ آرشیو دوباره رایگان پخش شود
+const POD_AUDIO_CAP=20;
+function podAudioKeys(){ try{ const a=JSON.parse(localStorage.getItem('pod_audio_keys')||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+async function podAudioTouch(key){ let a=podAudioKeys().filter(k=>k!==key); a.unshift(key);
+  const evict=a.slice(POD_AUDIO_CAP); a=a.slice(0,POD_AUDIO_CAP);
+  try{ localStorage.setItem('pod_audio_keys', JSON.stringify(a)); }catch(e){}
+  if(evict.length){ try{ const db=await podIdbOpen(); const st=db.transaction(POD_STORE,'readwrite').objectStore(POD_STORE); evict.forEach(k=>{ try{ st.delete(k); }catch(e){} }); }catch(e){} }
+}
 function podHash(s){ s=String(s||''); let h=5381; for(let i=0;i<s.length;i++){ h=((h<<5)+h+s.charCodeAt(i))|0; } return (h>>>0).toString(36); }
-function podAudioKey(full){ const c=podCfg(); const voice=_pod.ttsProv==='gemini'?c.gVoice:c.oVoice; return podTodayKey()+'|'+_pod.ttsProv+'|'+voice+'|'+c.minutes+'|'+podHash(full); }
+// کلیدِ مستقل از تاریخ: همان متن + همان صدا = همان صوت (پخشِ آرشیو رایگان می‌ماند)
+function podAudioKey(full){ const c=podCfg(); const voice=_pod.ttsProv==='gemini'?c.gVoice:c.oVoice; return _pod.ttsProv+'|'+voice+'|'+podHash(full); }
 async function podCloudSpeak(full){
   const ctx=wkEnsureAudio(); if(!ctx) throw new Error('no audio ctx');
   podVoiceOut(ctx);
   podEngineReset();
-  const key=podAudioKey(full); await podCacheClearOldDay();
-  // ۱) کش: اگر امروز با همین صدا/مدت قبلاً ساخته شده، بدونِ هیچ درخواستی پخش کن (رایگان و فوری)
+  const key=podAudioKey(full);
+  // ۱) کش: اگر همین متن با همین صدا قبلاً ساخته شده (هر روزی)، بدونِ هیچ درخواستی پخش کن (رایگان و فوری)
   try{ const hit=await podCacheGet(key);
-    if(hit && hit.chunks && hit.chunks.length){
+    if(hit && hit.chunks && hit.chunks.length){ try{ podAudioTouch(key); }catch(e){}
       _pod.prep=false; podMusicStart(); podMusicGain(0.05); _pod.fromCache=true;
       _pod.rawChunks=hit.chunks; _pod.rawType=hit.type||'audio/mpeg';
       for(let i=0;i<hit.chunks.length;i++){ if(_pod.mode==='idle') return;
@@ -4096,7 +4154,7 @@ async function podCloudSpeak(full){
   }
   _pod.allFetched=true; _pod.rawChunks=raw; _pod.rawType=rawType;
   // ۳) ذخیرهٔ کش فقط اگر همهٔ قطعه‌ها کامل ساخته شدند
-  if(raw.length===chunks.length){ try{ await podCachePut(key, {chunks:raw, type:rawType, ts:Date.now()}); }catch(e){} }
+  if(raw.length===chunks.length){ try{ await podCachePut(key, {chunks:raw, type:rawType, ts:Date.now()}); await podAudioTouch(key); }catch(e){} }
   if(!_pod.playing && _pod.mode==='playing') podcastEnded();
 }
 /* ---- کارتِ خانه (پلیر مدرن) ---- */
@@ -5431,8 +5489,8 @@ function renderPodCfg(){
   const C=c.content||podContentCfg();
   h+=`<label class="qbg-lbl">مدتِ پادکست</label><div class="pod-seg">`+POD_LENS.map(m=>`<button class="${c.minutes===m?'on':''}" onclick="podCfgPick('minutes',${m})">${faDigits(m)} دقیقه</button>`).join('')+`</div>`;
   h+=`<label class="qbg-lbl" style="margin-top:10px">🗣️ لحنِ گفتار</label>`;
-  h+=`<div class="pod-seg">`+[['casual','😊 محاوره‌ای (خودمونی)'],['formal','🎩 رسمی']].map(o=>`<button class="${C.tone===o[0]?'on':''}" onclick="podContentSet('tone','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
-  h+=`<div class="qbg-sub" style="margin-top:4px">«محاوره‌ای» متن و صدا را مثلِ حرف‌زدنِ عادیِ روزمره می‌کند (می‌ره، می‌گه…) تا طبیعی‌تر و صمیمی‌تر باشد.</div>`;
+  h+=`<div class="pod-togs">`+Object.keys(POD_TONES).map(k=>`<button class="pod-tog ${C.tone===k?'on':''}" onclick="podContentSet('tone','${k}')"><span>${POD_TONES[k].fa}</span></button>`).join('')+`</div>`;
+  h+=`<div class="qbg-sub" style="margin-top:4px">لحنِ متن و صدای پادکست را عوض می‌کند: خودمونی، رسمی، طنز، لوتی، پزشک‌وار، آرامش‌بخش، یا کودکانه (زبانِ ساده برای بچه‌ها).</div>`;
   h+=`<div class="qbg-sub" style="margin-top:10px;line-height:1.9">انتخاب کن پادکستِ امروز راجع‌به چه چیزهایی حرف بزند. هر مورد که خاموش باشد در پادکست نمی‌آید.</div>`;
   h+=`<label class="qbg-lbl" style="margin-top:10px">🗓️ بازهٔ مرور</label>`;
   const grOpts=[['today','امروز'],['yesterday','دیروز'],['7','۷ روز'],['14','۱۴ روز'],['30','۳۰ روز'],['90','۹۰ روز']];
