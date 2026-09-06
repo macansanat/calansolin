@@ -311,16 +311,43 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .dash-sec-t{font-size:13.5px;font-weight:800;margin:18px 0 10px;display:flex;align-items:center;gap:6px}
 .dash-sec-s{font-size:10.5px;color:var(--muted);font-weight:600}
 .dash-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-/* اسلایدرِ بالای خانه: آخرین قند + خلاصهٔ قند (تاچ/موس چپ‌وراست) */
-.dash-slider{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:0;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+/* اسلایدرِ بالای خانه: کارت‌های شیشه‌ایِ هم‌اندازه (تاچ/موس چپ‌وراست) */
+.dash-slider{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:0;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;height:232px}
 .dash-slider::-webkit-scrollbar{display:none}
-.dash-slide{flex:0 0 100%;min-width:0;scroll-snap-align:center;box-sizing:border-box}
-.dash-slide>.dash-hero{margin-bottom:0}
-.dash-slide-sum{display:flex;flex-direction:column;justify-content:center;min-height:100%}
-.dash-slide-sum .dash-sec-t{margin-top:0}
-.dash-dots{display:flex;justify-content:center;gap:7px;margin:9px 0 14px}
+.dash-slide{flex:0 0 100%;min-width:0;scroll-snap-align:center;box-sizing:border-box;height:100%}
+.dash-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:10px 8px 14px}
 .dash-dot{width:7px;height:7px;border-radius:50%;background:var(--line);transition:all .2s;cursor:pointer}
 .dash-dot.on{background:var(--teal);width:20px;border-radius:4px}
+/* کارتِ شیشه‌ای (glassmorphism) */
+.gcard{position:relative;height:100%;box-sizing:border-box;border-radius:20px;padding:17px 18px;
+  background:linear-gradient(160deg,rgba(255,255,255,.065),rgba(255,255,255,.015));
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:0 10px 28px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.07);
+  backdrop-filter:blur(11px);-webkit-backdrop-filter:blur(11px);
+  display:flex;flex-direction:column;overflow:hidden}
+.gcard-h{display:flex;align-items:center;gap:9px;margin-bottom:11px;flex:0 0 auto}
+.gcard-ic{width:34px;height:34px;flex:0 0 34px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;
+  background:linear-gradient(160deg,rgba(63,185,163,.30),rgba(63,185,163,.07));border:1px solid rgba(63,185,163,.34);box-shadow:0 3px 9px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.12)}
+.gcard-t{font-size:13.5px;font-weight:800;line-height:1.3}
+.gcard-t small{display:block;font-size:10.5px;color:var(--muted);font-weight:600}
+.gcard-body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:7px;min-height:0}
+.gcard-empty{color:var(--muted);font-size:12.5px;text-align:center;margin:auto;line-height:1.9}
+.gbig{font-size:40px;font-weight:900;text-align:center;line-height:1}
+.gbig small{font-size:14px;font-weight:700;color:var(--muted)}
+.gsub{font-size:11.5px;color:var(--muted);text-align:center;line-height:1.7}
+.gpill{display:inline-block;font-size:11.5px;font-weight:700;border-radius:20px;padding:3px 12px}
+.grow{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.grow:last-child{border-bottom:none}
+.grow .gl{color:var(--muted);display:flex;align-items:center;gap:6px}
+.grow .gv{font-weight:800;text-align:end}
+.gclamp{font-size:12px;line-height:1.85;color:var(--ink);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.gcard .dash-tiles{gap:8px}
+.gcard .dash-tile{padding:11px 8px;border-radius:13px}
+.gcard .dash-tile .dt-v{font-size:24px}
+.gcard-2{display:grid;grid-template-columns:1fr 1fr;gap:9px;flex:1;align-content:center}
+.gmini{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:10px 8px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:3px}
+.gmini .mv{font-size:20px;font-weight:900}
+.gmini .ml{font-size:10.5px;color:var(--muted)}
 .dash-tile{background:linear-gradient(160deg,var(--field),var(--panel));border:1px solid var(--line);border-radius:14px;padding:16px 12px;text-align:center}
 .dash-tile .dt-v{font-size:25px;font-weight:800;direction:ltr;line-height:1.15}
 .dash-tile .dt-l{font-size:11px;color:var(--muted);margin-top:4px}
@@ -2227,7 +2254,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۵۳</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۵۴</b> · انتشار: ۱۴۰۵/۰۶/۱۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5548,24 +5575,22 @@ function renderDashboard(){
   const src=resolveBgSrc((window._cgmReadings&&window._cgmReadings.length>=10), loadBG().length>0);
   let h='';
   if(hasAnyGlu) h+=`<div class="dash-srcrow">${bgSrcChip()}</div>`;
+  // اسلاید ۱: آخرین قند (کارتِ شیشه‌ای)
   let heroHTML='';
   if(latest){
     const st=dashGluStatus(latest.glu);
     const arrow=trend==='up'?'↑':trend==='down'?'↓':trend==='flat'?'→':'';
-    heroHTML=`<div class="dash-hero ${st.k}">
-      <div class="dh-label">آخرین قند خون</div>
-      <div class="dh-main"><span class="dh-num" style="color:${st.c}">${faDigits(Math.round(latest.glu))}</span><span class="dh-unit">mg/dL</span>${arrow?`<span class="dh-arrow" style="color:${st.c}">${arrow}</span>`:''}</div>
-      <div class="dh-meta"><span class="dh-pill" style="background:${st.c}22;color:${st.c}">${st.t}</span><span class="dh-dot">•</span>${dashAgo(latest.date)}<span class="dh-dot">•</span>${source}</div>
-    </div>`;
+    heroHTML=`<div class="gcard">
+      <div class="gcard-h"><div class="gcard-ic">🩸</div><div class="gcard-t">آخرین قند خون<small>${source} · ${dashAgo(latest.date)}</small></div></div>
+      <div class="gcard-body">
+        <div class="gbig" style="color:${st.c}">${faDigits(Math.round(latest.glu))}${arrow?` <span style="font-size:24px">${arrow}</span>`:''} <small>mg/dL</small></div>
+        <div style="text-align:center"><span class="gpill" style="background:${st.c}22;color:${st.c}">${st.t}</span></div>
+      </div></div>`;
   }else{
-    heroHTML=`<div class="dash-hero empty">
-      <div class="dh-empty-ic">🩸</div>
-      <div class="dh-empty-t">هنوز داده‌ی قندی نداری</div>
-      <div class="dh-empty-s">با دکمه‌ی ＋ قند خون را ثبت کن، یا فایل CGM را از پروفایل وارد کن.</div>
-      <button class="dash-btn" onclick="openQuickBG()">🩸 ثبت قند خون</button>
-    </div>`;
+    heroHTML=`<div class="gcard"><div class="gcard-h"><div class="gcard-ic">🩸</div><div class="gcard-t">آخرین قند خون</div></div>
+      <div class="gcard-body"><div class="gcard-empty">هنوز داده‌ی قندی نداری.<br><button class="dash-btn" onclick="openQuickBG()" style="margin-top:8px">🩸 ثبت قند خون</button></div></div></div>`;
   }
-  // کاشی‌های خلاصه‌ی قند بر اساس منبع
+  // اسلاید ۲: خلاصهٔ قند
   let summaryHTML='';
   if(src==='cgm'){
     const s=window._cgmStats;
@@ -5576,33 +5601,25 @@ function renderDashboard(){
         ['A1c تخمینی (GMI)', (s.gmi!=null?s.gmi.toFixed(1)+'٪':'—'), '#9fc0f0'],
         ['نوسان (CV)', (s.cv!=null?Math.round(s.cv)+'٪':'—'), (s.cv!=null&&s.cv<=36)?'#6fd39a':'#e0a355'],
       ];
-      summaryHTML=`<div class="dash-sec-t">📊 خلاصه‌ی قند <span class="dash-sec-s">(کل داده‌ی CGM)</span></div><div class="dash-tiles">`;
-      tiles.forEach(t=>{ summaryHTML+=`<div class="dash-tile"><div class="dt-v" style="color:${t[2]}">${faDigits(String(t[1]))}</div><div class="dt-l">${t[0]}</div></div>`; });
-      summaryHTML+=`</div>`;
+      summaryHTML=`<div class="gcard"><div class="gcard-h"><div class="gcard-ic">📊</div><div class="gcard-t">خلاصهٔ قند<small>کل داده‌ی CGM</small></div></div>
+        <div class="gcard-2">`+tiles.map(t=>`<div class="gmini"><div class="mv" style="color:${t[2]}">${faDigits(String(t[1]))}</div><div class="ml">${t[0]}</div></div>`).join('')+`</div></div>`;
     }
   } else if(src==='meter'){
     const bs=bgStats(loadBG().map(x=>({g:x.glu})));
     if(bs){
-      summaryHTML=`<div class="dash-sec-t">📊 خلاصه‌ی قند <span class="dash-sec-s">(گلوکومتر · همه‌ی اندازه‌گیری‌ها)</span></div><div class="dash-tiles">
-        <div class="dash-tile"><div class="dt-v" style="color:#5fd3bd">${faDigits(Math.round(bs.avg))}</div><div class="dt-l">میانگین قند</div></div>
-        <div class="dash-tile"><div class="dt-v" style="color:#6fd39a">${faDigits(bs.inRange)}<span style="font-size:13px;color:var(--muted)"> از ${faDigits(bs.n)}</span></div><div class="dt-l">در محدوده</div></div>
-        <div class="dash-tile"><div class="dt-v" style="color:#9fc0f0">${faDigits(Math.round(bs.min))}</div><div class="dt-l">کمترین</div></div>
-        <div class="dash-tile"><div class="dt-v" style="color:#f0a29b">${faDigits(Math.round(bs.max))}</div><div class="dt-l">بیشترین</div></div>
-      </div>`;
+      const tiles=[['میانگین قند',Math.round(bs.avg),'#5fd3bd'],['در محدوده',faDigits(bs.inRange)+' از '+faDigits(bs.n),'#6fd39a'],['کمترین',Math.round(bs.min),'#9fc0f0'],['بیشترین',Math.round(bs.max),'#f0a29b']];
+      summaryHTML=`<div class="gcard"><div class="gcard-h"><div class="gcard-ic">📊</div><div class="gcard-t">خلاصهٔ قند<small>گلوکومتر</small></div></div>
+        <div class="gcard-2">`+tiles.map(t=>`<div class="gmini"><div class="mv" style="color:${t[2]}">${faDigits(String(t[1]))}</div><div class="ml">${t[0]}</div></div>`).join('')+`</div></div>`;
     }
   }
-  // مونتاژ: اگر خلاصهٔ قند داریم، «آخرین قند» و «خلاصهٔ قند» را در یک اسلایدرِ افقی (تاچ/موس) بگذار
-  if(summaryHTML){
-    h+=`<div class="dash-slider" id="dashSlider">
-      <div class="dash-slide">${heroHTML}</div>
-      <div class="dash-slide"><div class="dash-slide-sum">${summaryHTML}</div></div>
-    </div>
-    <div class="dash-dots" id="dashDots">
-      <span class="dash-dot on" onclick="dashSlideTo(0)" aria-label="آخرین قند"></span>
-      <span class="dash-dot" onclick="dashSlideTo(1)" aria-label="خلاصهٔ قند"></span>
-    </div>`;
+  // مونتاژِ اسلایدر: قند + خلاصه + کارت‌های شیشه‌ایِ امروز/AI
+  let slides=[heroHTML]; if(summaryHTML) slides.push(summaryHTML);
+  try{ slides=slides.concat(dashExtraSlides()); }catch(e){}
+  if(slides.length>1){
+    h+=`<div class="dash-slider" id="dashSlider">`+slides.map(s=>`<div class="dash-slide">${s}</div>`).join('')+`</div>`;
+    h+=`<div class="dash-dots" id="dashDots">`+slides.map((_,i)=>`<span class="dash-dot ${i===0?'on':''}" onclick="dashSlideTo(${i})"></span>`).join('')+`</div>`;
   } else {
-    h+=heroHTML;
+    h+=`<div style="margin-bottom:14px">${heroHTML}</div>`;
   }
   h+=dashAiDoctorCard();
   h+=`<div id="homePodcast"></div>`;
@@ -5648,6 +5665,115 @@ function dashSliderInit(){
   const end=()=>{ if(!down) return; down=false; sl.style.scrollSnapType='x mandatory'; dashSlideTo(Math.round(sl.scrollLeft/(sl.clientWidth||1))); };
   sl.addEventListener('pointerup',end); sl.addEventListener('pointerleave',end);
   sl.addEventListener('click',e=>{ if(moved){ e.stopPropagation(); e.preventDefault(); moved=false; } },true);
+}
+// ── کارت‌های شیشه‌ایِ اسلایدرِ خانه ──────────────────────────────
+function _gc(icon,title,sub,body){ return `<div class="gcard"><div class="gcard-h"><div class="gcard-ic">${icon}</div><div class="gcard-t">${title}${sub?`<small>${sub}</small>`:''}</div></div><div class="gcard-body">${body}</div></div>`; }
+function _gce(msg){ return `<div class="gcard-empty">${msg}</div>`; }
+function _hm(ts){ try{ const d=new Date(ts); const p=n=>String(n).padStart(2,'0'); return faDigits(p(d.getHours())+':'+p(d.getMinutes())); }catch(e){ return ''; } }
+function _jshort(ts){ try{ return jalaliShort(new Date(ts)); }catch(e){ return ''; } }
+function _cleanAI(t){ return String(t||'').replace(/@@(SUGGEST|MEAL|WORKOUT|PLAN|INSULIN)@@[\s\S]*$/,'').replace(/[#*`>_]/g,'').replace(/\n{2,}/g,'\n').trim(); }
+// آخرین گفتگو با نقشی که pred برقرار است → {role, text, ts, title}
+function lastChatByRole(pred){
+  try{ const chats=(chatLoad().chats||[]).filter(c=>Array.isArray(c.roles)&&c.roles.some(id=>{const r=chatRoleById(id);return r&&pred(r);})&&Array.isArray(c.messages)&&c.messages.some(m=>m.role==='assistant'));
+    if(!chats.length) return null;
+    const lastTs=c=>{ const a=[...c.messages].reverse().find(m=>m.role==='assistant'); return a?(a.ts||0):0; };
+    chats.sort((a,b)=>lastTs(b)-lastTs(a));
+    const c=chats[0]; const lastA=[...c.messages].reverse().find(m=>m.role==='assistant');
+    const rid=c.roles.find(id=>{const r=chatRoleById(id);return r&&pred(r);});
+    return {role:chatRoleById(rid), text:_cleanAI(lastA&&lastA.content), ts:lastA?lastA.ts:0, title:c.title};
+  }catch(e){ return null; }
+}
+function _aiVisitCard(icon,title,pred){
+  const v=lastChatByRole(pred);
+  if(!v||!v.text) return _gc(icon,title,'آخرین مراجعه', _gce('هنوز مراجعه‌ای ثبت نشده.<br>در تبِ گفتگو با این نقش صحبت کن.'));
+  const nm=(v.role&&v.role.name)?v.role.name:'';
+  return _gc(icon,title,(nm?nm+' · ':'')+_jshort(v.ts), `<div class="gclamp">${escVision(v.text).slice(0,420)}</div>`);
+}
+// همهٔ اسلایدهای بعد از «قند» و «خلاصه»
+function dashExtraSlides(){
+  const out=[]; const jl=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'[]')||[]; }catch(e){ return []; } };
+  const key=dayKey(new Date());
+  const today=arr=>Array.isArray(arr)?arr.filter(x=>x&&x.iso&&dayKey(new Date(x.iso))===key):[];
+  // فشار و ضربان (آخرین ثبت)
+  try{ const V=jl('vitals_v1').filter(x=>x&&x.iso).sort((a,b)=>new Date(a.iso)-new Date(b.iso)); const vt=V[V.length-1];
+    if(vt){ const rows=[];
+      if(vt.sys!=null&&vt.dia!=null) rows.push(['❤️ فشار خون', faDigits(vt.sys)+'/'+faDigits(vt.dia)]);
+      if(vt.hr!=null) rows.push(['💓 ضربان قلب', faDigits(vt.hr)+' bpm']);
+      rows.push(['🕐 زمان', vt.time?escVision(String(vt.time)):(_jshort(vt.iso)+' '+_hm(vt.iso))]);
+      out.push(_gc('❤️','فشار و ضربان','آخرین ثبت', rows.map(r=>`<div class="grow"><span class="gl">${r[0]}</span><span class="gv">${r[1]}</span></div>`).join('')));
+    } else out.push(_gc('❤️','فشار و ضربان','', _gce('فشار/ضربانی ثبت نشده.<br>از ＋ ثبت کن.')));
+  }catch(e){}
+  // انسولین امروز (تفکیک سریع/پایه با ساعت)
+  try{ const arr=(planData&&Array.isArray(planData[key]))?planData[key]:[]; const rapid=[]; let rSum=0;
+    arr.forEach(m=>{ if(+m.insDose>0){ rapid.push({t:m.insType||'سریع',d:+m.insDose,tm:m.time||''}); rSum+=+m.insDose; } });
+    const bz=(planData&&planData._basal&&planData._basal[key])?planData._basal[key]:null;
+    if(rapid.length||bz){
+      let body=`<div class="gcard-2" style="flex:0 0 auto;margin-bottom:8px">
+        <div class="gmini"><div class="mv" style="color:#5fd3bd">${faDigits(Math.round(rSum*10)/10)}</div><div class="ml">سریع (واحد)</div></div>
+        <div class="gmini"><div class="mv" style="color:#9fc0f0">${bz&&bz.dose?faDigits(bz.dose):'—'}</div><div class="ml">پایه (واحد)</div></div></div>`;
+      const lines=rapid.map(r=>`<div class="grow"><span class="gl">💉 ${escVision(r.t)}</span><span class="gv">${faDigits(r.d)} واحد${r.tm?' · '+faDigits(r.tm):''}</span></div>`);
+      if(bz&&bz.dose) lines.push(`<div class="grow"><span class="gl">🛡️ ${escVision(bz.type||'پایه')}</span><span class="gv">${faDigits(bz.dose)} واحد${bz.time?' · '+faDigits(bz.time):''}</span></div>`);
+      body+=`<div style="overflow:auto">${lines.slice(0,3).join('')}</div>`;
+      out.push(_gc('💉','انسولین امروز','سریع/پایه', body));
+    } else out.push(_gc('💉','انسولین امروز','', _gce('امروز انسولینی ثبت نشده.')));
+  }catch(e){}
+  // وعده‌های غذایی امروز
+  try{ const arr=(planData&&Array.isArray(planData[key]))?planData[key]:[]; let main=0,snack=0,carb=0;
+    arr.forEach(m=>{ if((m.foods&&m.foods.length)||m.carb){ if(String(m.type||'').includes('میان‌وعده')) snack++; else main++; carb+=(+m.carb||0); } });
+    if(main||snack) out.push(_gc('🍽️','وعده‌های امروز','اصلی و میان‌وعده',
+      `<div class="gcard-2" style="flex:0 0 auto"><div class="gmini"><div class="mv" style="color:#e9b877">${faDigits(main)}</div><div class="ml">وعدهٔ اصلی</div></div>
+       <div class="gmini"><div class="mv" style="color:#9fc0f0">${faDigits(snack)}</div><div class="ml">میان‌وعده</div></div></div>
+       <div class="grow" style="margin-top:8px"><span class="gl">🍞 کربوهیدرات کل</span><span class="gv">${faDigits(Math.round(carb))} گرم</span></div>`));
+    else out.push(_gc('🍽️','وعده‌های امروز','', _gce('امروز وعده‌ای ثبت نشده.')));
+  }catch(e){}
+  // داروها
+  try{ const meds=(typeof myMedsGet==='function')?myMedsGet():[]; const log=jl('med_log_v1').filter(x=>x&&x.iso).sort((a,b)=>new Date(a.iso)-new Date(b.iso)); const last=log[log.length-1];
+    if(meds.length||last){ const rows=[];
+      rows.push(['💊 داروهای ثابت', faDigits(meds.length)+' مورد']);
+      if(last) rows.push(['🕐 آخرین مصرف', escVision(last.name||'')+(last.iso?' · '+_hm(last.iso):'')]);
+      const names=meds.slice(0,2).map(m=>escVision(m.name||'')).filter(Boolean).join('، ');
+      if(names) rows.push(['📋 نمونه', names]);
+      out.push(_gc('💊','داروها','ثابت و آخرین مصرف', rows.map(r=>`<div class="grow"><span class="gl">${r[0]}</span><span class="gv">${r[1]}</span></div>`).join('')));
+    } else out.push(_gc('💊','داروها','', _gce('دارویی ثبت نشده.<br>در پروفایل اضافه کن.')));
+  }catch(e){}
+  // ورزش امروز
+  try{ let sessions=0, names=[], dur=0;
+    (loadExLog().entries||[]).forEach(x=>{ if(x.ts&&dayKey(new Date(x.ts))===key){ sessions++; (x.items||[]).forEach(it=>{ if(it.name) names.push(it.name); }); } });
+    (loadExercise()||[]).forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ sessions++; if(x.what) names.push(x.what); if(x.dur) dur+=(+x.dur||0); } });
+    if(sessions){ const rows=[['🏃 جلسات', faDigits(sessions)]];
+      if(dur) rows.push(['⏱ مدت کل', faDigits(dur)+' دقیقه']);
+      if(names.length) rows.push(['📋 حرکت‌ها', escVision(names.slice(0,3).join('، '))]);
+      out.push(_gc('🏃','ورزش امروز','', rows.map(r=>`<div class="grow"><span class="gl">${r[0]}</span><span class="gv">${r[1]}</span></div>`).join('')));
+    } else out.push(_gc('🏃','ورزش امروز','', _gce('امروز ورزشی ثبت نشده.')));
+  }catch(e){}
+  // حال روحی امروز
+  try{ const M=jl('mood_log_v1').filter(x=>x&&x.iso).sort((a,b)=>new Date(a.iso)-new Date(b.iso)); const todayM=M.filter(x=>dayKey(new Date(x.iso))===key); const m=(todayM.length?todayM:M)[ (todayM.length?todayM:M).length-1 ];
+    if(m) out.push(_gc('🙂','حال روحی','امروز', `<div class="gbig" style="font-size:26px">${escVision(m.mood||'')}</div><div class="gsub">🕐 ${_hm(m.iso)}${m.note?' · '+escVision(String(m.note).slice(0,40)):''}</div>`));
+    else out.push(_gc('🙂','حال روحی','', _gce('حالِ روحی‌ای ثبت نشده.')));
+  }catch(e){}
+  // تخمین I:C — ۷ روز اخیر
+  try{ let meals=[]; try{ meals=collectCalibMeals()||[]; }catch(e){}
+    const wk=new Date(); wk.setDate(wk.getDate()-7); const wkKey=dayKey(wk);
+    const good=meals.filter(m=>m.good && m.dayKey && m.dayKey>=wkKey && m.ins>0);
+    if(good.length>=2){ const ratios=good.map(m=>m.carb/m.ins).sort((a,b)=>a-b); const mid=Math.floor(ratios.length/2); const ic=ratios.length%2?ratios[mid]:(ratios[mid-1]+ratios[mid])/2;
+      out.push(_gc('🎯','تخمین I:C','۷ روزِ اخیر', `<div class="gbig" style="color:#5fd3bd">1:${faDigits(ic.toFixed(1))}</div><div class="gsub">هر ۱ واحد انسولین ≈ ${faDigits(ic.toFixed(1))} گرم کرب<br>بر اساسِ ${faDigits(good.length)} وعدهٔ موفق</div>`));
+    } else out.push(_gc('🎯','تخمین I:C','۷ روزِ اخیر', _gce('برای تخمین، وعده‌های دارای کرب + انسولین + قند قبل/بعد لازم است.')));
+  }catch(e){}
+  // برنامهٔ امروز (توصیه‌ها: غذا/ورزش/انسولین برنامه‌ریزی‌شده)
+  try{ const arr=(planData&&Array.isArray(planData[key]))?planData[key]:[]; const pm=arr.filter(m=>m.planned&&((m.foods&&m.foods.length)||m.carb)).length;
+    const pi=((planData&&planData._planIns&&planData._planIns[key])||[]).length; const pe=((planData&&planData._planEx&&planData._planEx[key])||[]).length;
+    if(pm||pi||pe) out.push(_gc('🗓','برنامهٔ امروز','برنامه‌ریزی‌شده',
+      `<div class="gcard-2"><div class="gmini"><div class="mv" style="color:#e9b877">${faDigits(pm)}</div><div class="ml">وعده</div></div>
+       <div class="gmini"><div class="mv" style="color:#5fd3bd">${faDigits(pi)}</div><div class="ml">انسولین</div></div>
+       <div class="gmini"><div class="mv" style="color:#9fc0f0">${faDigits(pe)}</div><div class="ml">ورزش</div></div>
+       <div class="gmini"><div class="mv" style="color:#6fd39a">${faDigits(pm+pi+pe)}</div><div class="ml">کل</div></div></div>`));
+    else out.push(_gc('🗓','برنامهٔ امروز','', _gce('برای امروز برنامه‌ای ثبت نشده.<br>در تبِ برنامهٔ هفتگی بساز.')));
+  }catch(e){}
+  // آخرین مراجعه‌ها به AIها
+  try{ out.push(_aiVisitCard('🩺','پزشکِ هوش مصنوعی', r=>r.cat==='doc')); }catch(e){}
+  try{ out.push(_aiVisitCard('🏅','مربیِ ورزشِ AI', r=>r.id==='coach')); }catch(e){}
+  try{ out.push(_aiVisitCard('👨‍🍳','سرآشپزِ AI', r=>r.id==='chef')); }catch(e){}
+  return out;
 }
 /* ====== گزارش روزانه ====== */
 let _dailyDate=new Date(); _dailyDate.setHours(0,0,0,0);
