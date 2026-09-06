@@ -2271,7 +2271,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۶۰</b> · انتشار: ۱۴۰۵/۰۶/۱۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۶۱</b> · انتشار: ۱۴۰۵/۰۶/۱۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5744,27 +5744,24 @@ function renderDashboard(){
   let slObjs=slides.map(html=>({key:_slideMeta(html).key, html}));
   try{ slObjs=applyDashOrder(slObjs); }catch(e){}
   slides=slObjs.map(o=>o.html);
+  let sliderHtml='';
   if(slides.length>1){
-    h+=`<div class="dash-slider" id="dashSlider">`+slides.map(s=>`<div class="dash-slide">${s}</div>`).join('')+`</div>`;
-    h+=`<div class="dash-dots" id="dashDots">`+slides.map((_,i)=>`<span class="dash-dot ${i===0?'on':''}" onclick="dashSlideTo(${i})"></span>`).join('')+`</div>`;
+    sliderHtml=`<div class="dash-slider" id="dashSlider">`+slides.map(s=>`<div class="dash-slide">${s}</div>`).join('')+`</div>`
+      +`<div class="dash-dots" id="dashDots">`+slides.map((_,i)=>`<span class="dash-dot ${i===0?'on':''}" onclick="dashSlideTo(${i})"></span>`).join('')+`</div>`;
   } else {
-    h+=`<div style="margin-bottom:14px">${heroHTML}</div>`;
+    sliderHtml=`<div style="margin-bottom:14px">${heroHTML}</div>`;
   }
-  h+=dashAiDoctorCard();
-  h+=`<div id="homePodcast"></div>`;
   // امروز
   let todayMeals=0, lastIns=null, lastMeal=null;
   try{ const pk=dayKey(new Date()); const arr=(planData&&planData[pk])||[];
     todayMeals=arr.length;
     arr.forEach(m=>{ if(m.time){ if(!lastMeal||m.time>lastMeal.time) lastMeal=m; } if(m.insDose){ if(!lastIns||(m.time>lastIns.time)) lastIns=m; } });
   }catch(e){}
-  h+=renderWatchdogCard();
-  h+=`<div class="dash-sec-t">📅 امروز</div><div class="dash-today">
+  const todayHtml=`<div class="dash-sec-t">📅 امروز</div><div class="dash-today">
     <div class="dtoday-item"><span class="dti-ico">🍽️</span><div><div class="dti-v">${faDigits(todayMeals)}</div><div class="dti-l">وعده‌ی ثبت‌شده</div></div></div>
     <div class="dtoday-item"><span class="dti-ico">💉</span><div><div class="dti-v">${lastIns?faDigits(String(lastIns.insDose))+' واحد':'—'}</div><div class="dti-l">آخرین انسولین${lastIns&&lastIns.time?' · '+faDigits(lastIns.time):''}</div></div></div>
   </div>`;
-  // میان‌برها
-  h+=`<div class="dash-sec-t">⚡ میان‌برها</div><div class="dash-short">
+  const shortcutsHtml=`<div class="dash-sec-t">⚡ میان‌برها</div><div class="dash-short">
     <button class="dash-scard" onclick="openQuickBG()"><span class="ds-ic" style="background:rgba(224,104,95,.16)">🩸</span>ثبت قند</button>
     <button class="dash-scard" onclick="quickAdd('meal')"><span class="ds-ic" style="background:rgba(224,163,85,.16)">🍽️</span>ثبت وعده</button>
     <button class="dash-scard" onclick="switchTab('cgm')"><span class="ds-ic" style="background:rgba(63,185,163,.16)">📈</span>تحلیل قند</button>
@@ -5772,7 +5769,9 @@ function renderDashboard(){
     <button class="dash-scard" onclick="switchTab('labs')"><span class="ds-ic" style="background:rgba(154,134,224,.16)">🧪</span>آزمایش</button>
     <button class="dash-scard" onclick="switchTab('calc')"><span class="ds-ic" style="background:rgba(63,185,163,.16)">🧮</span>حساب دوز</button>
   </div>`;
-  h+=`<div id="homeAiPanel"></div>`;
+  // بخش‌های اصلیِ خانه با ترتیبِ دلخواهِ کاربر
+  const secHtml={ slider:sliderHtml, doctor:dashAiDoctorCard(), podcast:`<div id="homePodcast"></div>`, watchdog:renderWatchdogCard(), today:todayHtml, shortcuts:shortcutsHtml, aipanel:`<div id="homeAiPanel"></div>` };
+  h+= homeSectionsOrdered().map(s=>secHtml[s.key]||'').join('');
   h+=`<div class="dash-note">⚕️ این داشبورد فقط آینه‌ی گذشته است تا آگاه‌تر باشی و بهتر با پزشکت صحبت کنی — تشخیص و هر تصمیم درمانی فقط با پزشک است.</div>`;
   box.innerHTML=h;
   try{ dashSliderInit(); }catch(e){}
@@ -5807,40 +5806,68 @@ function _slideMeta(html){ html=String(html||'');
   let t=((html.match(/gcard-t">([^<]*?)(?:<small|<\/div)/)||[])[1]||'—').trim();
   return {key:t, title:t, icon:ic};
 }
+// ترتیبِ بخش‌های اصلیِ صفحهٔ خانه (بالا/پایین)
+const HOME_SECTIONS=[
+  {key:'slider', title:'📊 اسلایدرِ بالا (کارت‌ها)'},
+  {key:'doctor', title:'🩺 پزشک هوش مصنوعی'},
+  {key:'podcast', title:'🎧 پادکستِ امروز'},
+  {key:'watchdog', title:'🐶 ناظرِ روزانه'},
+  {key:'today', title:'📅 خلاصهٔ امروز'},
+  {key:'shortcuts', title:'⚡ میان‌برها'},
+  {key:'aipanel', title:'🤖 تحلیلِ هوش مصنوعیِ خانه'},
+];
+function homeGetOrder(){ try{ const a=JSON.parse(localStorage.getItem('home_order_v1')||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function homeSaveOrder(keys){ try{ localStorage.setItem('home_order_v1', JSON.stringify(keys)); }catch(e){} }
+function applyHomeOrder(objs){ const ord=homeGetOrder(); if(!ord.length) return objs; const idx=k=>{ const i=ord.indexOf(k); return i<0?9999:i; };
+  return objs.map((o,i)=>({o,i})).sort((a,b)=>{ const d=idx(a.o.key)-idx(b.o.key); return d!==0?d:a.i-b.i; }).map(x=>x.o); }
+function homeSectionsOrdered(){ return applyHomeOrder(HOME_SECTIONS.map(s=>Object.assign({},s))); }
 function dashGetOrder(){ try{ const a=JSON.parse(localStorage.getItem('dash_order_v1')||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
 function dashSaveOrder(keys){ try{ localStorage.setItem('dash_order_v1', JSON.stringify(keys)); }catch(e){} }
 function applyDashOrder(objs){ const ord=dashGetOrder(); if(!ord.length) return objs;
   const idx=k=>{ const i=ord.indexOf(k); return i<0?9999:i; };
   return objs.map((o,i)=>({o,i})).sort((a,b)=>{ const d=idx(a.o.key)-idx(b.o.key); return d!==0?d:a.i-b.i; }).map(x=>x.o); }
-let _dashReorder=[];
+let _dashReorder=[], _homeReorder=[], _dashReTab='slider';
 function dashOpenReorder(){
-  const sl=document.getElementById('dashSlider'); if(!sl){ uiToast&&uiToast('اسلایدی برای چیدمان نیست'); return; }
-  _dashReorder=[...sl.querySelectorAll('.dash-slide')].map(s=>_slideMeta(s.innerHTML));
+  const sl=document.getElementById('dashSlider');
+  _dashReorder = sl ? [...sl.querySelectorAll('.dash-slide')].map(s=>_slideMeta(s.innerHTML)) : [];
+  _homeReorder = homeSectionsOrdered();
+  _dashReTab='slider';
   try{ ensureChatCss&&ensureChatCss(); }catch(e){}
   const old=document.getElementById('dashReBg'); if(old) old.remove();
   const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='dashReBg'; bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
-  bg.innerHTML=`<div class="chat-rename" role="dialog" aria-modal="true" style="max-width:400px">
+  bg.innerHTML=`<div class="chat-rename" role="dialog" aria-modal="true" style="max-width:410px">
     <h4>✏️ ویرایشِ چیدمانِ خانه</h4>
-    <div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:8px">با فلش‌ها ترتیبِ باکس‌ها را بالا/پایین کن، بعد «پایان» را بزن تا قفل شود.</div>
-    <div id="dashReList" style="max-height:52vh;overflow:auto"></div>
+    <div class="pod-tabs" style="margin-bottom:8px">
+      <button id="dashTabSlider" class="on" onclick="dashReTab('slider')">📊 اسلایدرِ بالا</button>
+      <button id="dashTabHome" onclick="dashReTab('home')">🏠 کلِ صفحهٔ خانه</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:8px" id="dashReHint">با فلش‌ها ترتیبِ کارت‌های اسلایدر را بالا/پایین کن، بعد «پایان» را بزن.</div>
+    <div id="dashReList" style="max-height:48vh;overflow:auto"></div>
     <div class="chat-rename-btns" style="margin-top:12px">
       <button type="button" class="crn-btn crn-cancel" onclick="dashResetOrder()">بازگردانی به پیش‌فرض</button>
       <button type="button" class="crn-btn crn-ok" onclick="dashSaveReorder()">✓ پایان و قفل</button></div></div>`;
   document.body.appendChild(bg);
   dashRenderReorder();
 }
+function dashReTab(t){ _dashReTab=t;
+  const a=document.getElementById('dashTabSlider'), b=document.getElementById('dashTabHome'); if(a)a.classList.toggle('on',t==='slider'); if(b)b.classList.toggle('on',t==='home');
+  const hint=document.getElementById('dashReHint'); if(hint) hint.textContent = t==='home' ? 'ترتیبِ بخش‌های کلِ صفحهٔ خانه (پزشک، پادکست، ناظر و…) را بالا/پایین کن، بعد «پایان».' : 'با فلش‌ها ترتیبِ کارت‌های اسلایدر را بالا/پایین کن، بعد «پایان».';
+  dashRenderReorder();
+}
 function dashRenderReorder(){
   const c=document.getElementById('dashReList'); if(!c) return;
-  c.innerHTML=_dashReorder.map((m,i)=>`<div style="display:flex;align-items:center;gap:9px;padding:9px 8px;border-bottom:1px solid var(--line)">
-    <span style="font-size:17px">${m.icon}</span>
+  const arr = _dashReTab==='home' ? _homeReorder : _dashReorder;
+  if(!arr.length){ c.innerHTML='<div style="color:var(--muted);font-size:12.5px;text-align:center;padding:20px">موردی برای چیدمان نیست.</div>'; return; }
+  c.innerHTML=arr.map((m,i)=>`<div style="display:flex;align-items:center;gap:9px;padding:9px 8px;border-bottom:1px solid var(--line)">
+    <span style="font-size:17px">${m.icon||'▫️'}</span>
     <span style="flex:1;font-size:13.5px;font-weight:700">${escVision(m.title)}</span>
     <button type="button" onclick="dashMove(${i},-1)" ${i===0?'disabled':''} style="width:34px;height:32px;border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:9px;cursor:pointer;font-size:15px;opacity:${i===0?.35:1}">↑</button>
-    <button type="button" onclick="dashMove(${i},1)" ${i===_dashReorder.length-1?'disabled':''} style="width:34px;height:32px;border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:9px;cursor:pointer;font-size:15px;opacity:${i===_dashReorder.length-1?.35:1}">↓</button>
+    <button type="button" onclick="dashMove(${i},1)" ${i===arr.length-1?'disabled':''} style="width:34px;height:32px;border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:9px;cursor:pointer;font-size:15px;opacity:${i===arr.length-1?.35:1}">↓</button>
   </div>`).join('');
 }
-function dashMove(i,dir){ const j=i+dir; if(j<0||j>=_dashReorder.length) return; const t=_dashReorder[i]; _dashReorder[i]=_dashReorder[j]; _dashReorder[j]=t; dashRenderReorder(); }
-function dashSaveReorder(){ dashSaveOrder(_dashReorder.map(m=>m.key)); const b=document.getElementById('dashReBg'); if(b) b.remove(); if(typeof renderDashboard==='function') renderDashboard(); uiToast&&uiToast('✓ چیدمان ذخیره و قفل شد'); }
-function dashResetOrder(){ try{ localStorage.removeItem('dash_order_v1'); }catch(e){} const b=document.getElementById('dashReBg'); if(b) b.remove(); if(typeof renderDashboard==='function') renderDashboard(); uiToast&&uiToast('✓ چیدمان به حالتِ پیش‌فرض برگشت'); }
+function dashMove(i,dir){ const arr=_dashReTab==='home'?_homeReorder:_dashReorder; const j=i+dir; if(j<0||j>=arr.length) return; const t=arr[i]; arr[i]=arr[j]; arr[j]=t; dashRenderReorder(); }
+function dashSaveReorder(){ dashSaveOrder(_dashReorder.map(m=>m.key)); homeSaveOrder(_homeReorder.map(m=>m.key)); const b=document.getElementById('dashReBg'); if(b) b.remove(); if(typeof renderDashboard==='function') renderDashboard(); uiToast&&uiToast('✓ چیدمان ذخیره و قفل شد'); }
+function dashResetOrder(){ try{ if(_dashReTab==='home') localStorage.removeItem('home_order_v1'); else localStorage.removeItem('dash_order_v1'); }catch(e){} const b=document.getElementById('dashReBg'); if(b) b.remove(); if(typeof renderDashboard==='function') renderDashboard(); uiToast&&uiToast('✓ چیدمانِ این تب به پیش‌فرض برگشت'); }
 // ── کارت‌های شیشه‌ایِ اسلایدرِ خانه ──────────────────────────────
 function _gc(icon,title,sub,body){ return `<div class="gcard"><div class="gcard-h"><div class="gcard-ic">${icon}</div><div class="gcard-t">${title}${sub?`<small>${sub}</small>`:''}</div></div><div class="gcard-body">${body}</div></div>`; }
 function _gce(msg){ return `<div class="gcard-empty">${msg}</div>`; }
