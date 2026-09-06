@@ -1098,6 +1098,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <button class="qa-item" onclick="quickAdd('sleep')"><span class="qa-ico" style="background:rgba(91,143,214,.18);color:#9fc0f0">😴</span>خواب</button>
       <button class="qa-item" onclick="quickAdd('mood')"><span class="qa-ico" style="background:rgba(224,163,85,.16);color:#e9b877">🙂</span>حالت روحی</button>
       <button class="qa-item" onclick="quickAdd('vitals')"><span class="qa-ico" style="background:rgba(224,104,95,.16);color:#f0a29b">❤️</span>فشار و ضربان</button>
+      <button class="qa-item" onclick="quickAdd('weight')"><span class="qa-ico" style="background:rgba(63,185,163,.16);color:#6fd39a">⚖️</span>وزن فعلی</button>
       <button class="qa-item" onclick="quickAdd('journal')"><span class="qa-ico" style="background:rgba(224,163,85,.14);color:#e9b877">📓</span>دفترچه</button>
     </div>
     <div class="qa-subt">هوش مصنوعی</div>
@@ -1332,6 +1333,21 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <div><label class="qbg-lbl">ساعت</label><input type="time" id="qvitTime" class="qbg-in"></div>
     </div>
     <div class="qbg-actions"><button class="qbg-cancel" onclick="closeQEntry('qvitModal')">لغو</button><button class="qbg-save" onclick="saveQuickVitals()">💾 ذخیره</button></div>
+  </div>
+</div>
+
+<!-- فرم سریع وزن فعلی -->
+<div class="qbg-modal" id="qwtModal" onclick="if(event.target===this)closeQEntry('qwtModal')">
+  <div class="qbg-box">
+    <button class="qbg-x" onclick="closeQEntry('qwtModal')" title="بستن">✕</button>
+    <div class="qbg-head"><span class="qbg-badge" style="background:rgba(63,185,163,.18)">⚖️</span><div><div class="qbg-title">وزنِ فعلی</div><div class="qbg-sub">وزنِ امروزت را ثبت کن. در پروفایل به‌روز می‌شود و روندش در گزارش‌ها و برای هوش مصنوعی می‌ماند.</div></div></div>
+    <label class="qbg-lbl">وزن (کیلوگرم)</label>
+    <input type="number" id="qwtKg" class="qbg-in" inputmode="decimal" step="0.1" placeholder="مثلاً ۷۸.۵" style="margin-bottom:14px">
+    <div class="qbg-grid">
+      <div><label class="qbg-lbl">تاریخ (شمسی)</label><div id="qwtDateWrap"></div></div>
+      <div><label class="qbg-lbl">ساعت</label><input type="time" id="qwtTime" class="qbg-in"></div>
+    </div>
+    <div class="qbg-actions"><button class="qbg-cancel" onclick="closeQEntry('qwtModal')">لغو</button><button class="qbg-save" onclick="saveQuickWeight()">💾 ذخیره</button></div>
   </div>
 </div>
 
@@ -2255,7 +2271,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۵۶</b> · انتشار: ۱۴۰۵/۰۶/۱۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۵۷</b> · انتشار: ۱۴۰۵/۰۶/۱۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3582,7 +3598,7 @@ function podCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(POD_CFG_KEY)
     content:podContentCfg(o.content) }; }
 // تنظیماتِ محتوایِ پادکست: کدام موضوع‌ها بحث شوند (هر کدام قابلِ فعال/غیرفعال) + بازهٔ مرورِ قند
 function podContentCfg(cc){ cc=cc||{};
-  const dflt={glucose:true,meals:true,insulin:true,meds:true,exercise:true,sleep:true,vitals:true,mood:true,labs:true,plan:true,tip:true,step:true};
+  const dflt={glucose:true,meals:true,insulin:true,meds:true,exercise:true,sleep:true,vitals:true,mood:true,labs:true,weight:true,plan:true,tip:true,step:true};
   const r={}; for(const k in dflt) r[k]=(cc[k]!==false);
   r.glucoseRange=cc.glucoseRange||'today';
   r.tone=(cc.tone==='formal'?'formal':'casual');   // لحنِ گفتار: محاوره‌ای (پیش‌فرض) یا رسمی
@@ -3688,6 +3704,7 @@ function podLineKind(l){
   if(/^(دفترچه‌ی روزانه|📌|مشاهدات اخیرِ)/.test(l)) return 'mood';
   if(/^آخرین آزمایش/.test(l)) return 'labs';
   if(/^برنامهٔ پیشِ‌رو/.test(l)) return 'plan';
+  if(/^روندِ وزنِ کاربر/.test(l)) return 'weight';
   return 'keep';   // پروفایل و خطِ بازه — همیشه بماند
 }
 // خلاصهٔ قند برای بازهٔ دلخواه (روز): بازهٔ گزارشِ کلی را موقتاً عوض و برمی‌گرداند
@@ -3722,6 +3739,7 @@ function podPrompt(mins){
   if(C.vitals) cover.push('فشار خون و ضربان');
   if(C.mood) cover.push('حالِ روحی و یادداشت‌های دفترچه');
   if(C.labs) cover.push('نتایجِ آخرین آزمایش‌ها و مواردِ نیازمندِ توجه');
+  if(C.weight) cover.push('روندِ وزن (کاهش/افزایش نسبت به شروع) و یک تشویق یا راهنماییِ کوتاه');
   if(C.plan) cover.push('برنامهٔ هفتگیِ پیشِ‌رو (وعده/انسولین/ورزشِ برنامه‌ریزی‌شده) و یادآوریِ آن');
   const jd=_jLabel(new Date());
   let struct="ساختار (پیوسته و روان، بدونِ نوشتنِ تیتر یا شماره): یک سلامِ گرم و اشاره به امروز («امروز "+jd+"»). ";
@@ -5379,7 +5397,7 @@ function renderPodCfg(){
   const grOpts=[['today','امروز'],['yesterday','دیروز'],['7','۷ روز'],['14','۱۴ روز'],['30','۳۰ روز'],['90','۹۰ روز']];
   h+=`<div class="pod-seg">`+grOpts.map(o=>`<button class="${C.glucoseRange===o[0]?'on':''}" ${C.glucose?'':'disabled'} onclick="podContentSet('glucoseRange','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
   h+=`<div class="qbg-sub" style="margin-top:4px">«دیروز» کلِ دادهٔ روزِ کاملِ گذشته را مرور می‌کند (چون امروز شاید هنوز ناقص باشد). «امروز» = همین روز. بازه‌های چندروزه فقط روندِ قند را نشان می‌دهند.</div>`;
-  const tog=[['glucose','🩸 بررسیِ قند خون'],['meals','🍽️ وعده‌های غذایی و پیشنهادها'],['insulin','💉 انسولین و پایبندی'],['meds','💊 داروها'],['exercise','🏃 ورزش و فعالیت'],['sleep','😴 خواب'],['vitals','❤️ فشار خون و ضربان'],['mood','🙂 حالِ روحی و دفترچه'],['labs','🧪 نتایجِ آزمایش‌ها'],['plan','🗓 برنامهٔ هفتگی'],['tip','💡 نکتهٔ آموزشیِ روز'],['step','✅ یک قدمِ عملی']];
+  const tog=[['glucose','🩸 بررسیِ قند خون'],['meals','🍽️ وعده‌های غذایی و پیشنهادها'],['insulin','💉 انسولین و پایبندی'],['meds','💊 داروها'],['exercise','🏃 ورزش و فعالیت'],['sleep','😴 خواب'],['vitals','❤️ فشار خون و ضربان'],['mood','🙂 حالِ روحی و دفترچه'],['labs','🧪 نتایجِ آزمایش‌ها'],['weight','⚖️ روندِ وزن'],['plan','🗓 برنامهٔ هفتگی'],['tip','💡 نکتهٔ آموزشیِ روز'],['step','✅ یک قدمِ عملی']];
   h+=`<div class="pod-togs">`+tog.map(t=>`<button class="pod-tog ${C[t[0]]?'on':''}" onclick="podContentSet('${t[0]}',${C[t[0]]?'false':'true'})"><span>${t[1]}</span><span class="pod-tog-sw">${C[t[0]]?'روشن':'خاموش'}</span></button>`).join('')+`</div>`;
   h+=`<div class="qbg-sub" style="margin-top:8px">اگر می‌خواهی پادکست کوتاه و متمرکز باشد، فقط چند موردِ مهم را روشن بگذار.</div>`;
   }
@@ -5715,6 +5733,15 @@ function dashExtraSlides(){
       out.push(_gc('❤️','فشار و ضربان','آخرین ثبت', rows.map(r=>`<div class="grow"><span class="gl">${r[0]}</span><span class="gv">${r[1]}</span></div>`).join('')));
     } else out.push(_gc('❤️','فشار و ضربان','', _gce('فشار/ضربانی ثبت نشده.<br>از ＋ ثبت کن.')));
   }catch(e){}
+  // وزنِ فعلی + روند
+  try{ let pr={}; try{ pr=JSON.parse(localStorage.getItem(PKEY)||'{}')||{}; }catch(e){}
+    let wl=jl('weight_log_v1').filter(x=>x&&x.kg).sort((a,b)=>new Date(a.iso)-new Date(b.iso));
+    const cur=wl.length?wl[wl.length-1].kg:(pr.weight?+pr.weight:null);
+    const start=(pr.weightStart&&+pr.weightStart)||(wl.length?wl[0].kg:cur);
+    if(cur!=null){ const d=Math.round((cur-start)*10)/10; const col=d<0?'#6fd39a':d>0?'#e0a355':'#5fd3bd'; const lastD=wl.length?wl[wl.length-1].date:'';
+      out.push(_gc('⚖️','وزنِ فعلی',lastD?('آخرین ثبت: '+escVision(String(lastD))):'', `<div class="gbig" style="color:${col}">${faDigits(cur)}<small> کیلو</small></div><div class="gsub">${(start!=cur)?('از '+faDigits(start)+' شروع · '+(d<0?'کاهشِ '+faDigits(Math.abs(d)):'افزایشِ '+faDigits(d))+' کیلو'):'اولین ثبت'}${wl.length?(' · '+faDigits(wl.length)+' ثبت'):''}</div>`));
+    } else out.push(_gc('⚖️','وزنِ فعلی','', _gce('هنوز وزنی ثبت نشده.<br>از ＋ ← ⚖️ وزن فعلی ثبت کن.')));
+  }catch(e){}
   // انسولین امروز (تفکیک سریع/پایه با ساعت)
   try{ const arr=(planData&&Array.isArray(planData[key]))?planData[key]:[]; const rapid=[]; let rSum=0;
     arr.forEach(m=>{ if(+m.insDose>0){ rapid.push({t:m.insType||'سریع',d:+m.insDose,tm:m.time||''}); rSum+=+m.insDose; } });
@@ -5897,6 +5924,7 @@ function renderDailyReport(){
   if(sleepRec) chips.push(['😴','خواب', faDigits(sleepRec.hours)+' ساعت']);
   if(vitLast){ if(vitLast.sys!=null&&vitLast.dia!=null) chips.push(['❤️','فشار', faDigits(vitLast.sys)+'/'+faDigits(vitLast.dia)]); if(vitLast.hr!=null) chips.push(['💓','ضربان', faDigits(vitLast.hr)]); }
   if(jrnRec&&jrnRec.rating) chips.push(['📓','حال روز', JRN_RATING[jrnRec.rating]||jrnRec.rating]);
+  try{ const wl=jlog('weight_log_v1').filter(x=>x&&x.iso&&x.kg&&dayKey(new Date(x.iso))===key); if(wl.length){ chips.push(['⚖️','وزن', faDigits(wl[wl.length-1].kg)+' کیلو']); } }catch(e){}
   if(chips.length){ h+=`<div class="daily-chips">`+chips.map(c=>`<div class="daily-chip"><span class="dc-ico">${c[0]}</span><span class="dc-l">${c[1]}</span><b class="dc-v">${c[2]}</b></div>`).join('')+`</div>`; }
   if(jrnRec&&(jrnRec.rating||(jrnRec.tags&&jrnRec.tags.length)||jrnRec.note||jrnRec.doctor)){
     h+=`<div class="jrn-card"><div class="jrn-head"><span style="font-size:17px">📓</span><span class="jrn-rating">دفترچه‌ی روز${jrnRec.rating?' · '+(JRN_RATING[jrnRec.rating]||jrnRec.rating):''}</span></div>`;
@@ -6640,6 +6668,7 @@ function quickAdd(type){
   else if(type==='sleep') openQEntry('qsleepModal','qsleepDateWrap',null,['qsleepHours'],'qsleepHours','qsleepQual');
   else if(type==='mood') openQEntry('qmoodModal','qmoodDateWrap','qmoodTime',['qmoodNote'],null,'qmoodPick');
   else if(type==='vitals') openQEntry('qvitModal','qvitDateWrap','qvitTime',['qvitSys','qvitDia','qvitHr'],'qvitSys');
+  else if(type==='weight'){ openQEntry('qwtModal','qwtDateWrap','qwtTime',['qwtKg'],'qwtKg'); try{ const raw=localStorage.getItem(PKEY); const p=raw?JSON.parse(raw):{}; const el=document.getElementById('qwtKg'); if(el&&p.weight) el.placeholder='فعلی: '+faDigits(p.weight)+' — وزنِ تازه را وارد کن'; }catch(e){} }
   else if(type==='journal') openJournalQuick();
   else if(type==='aidoctor'){ if(typeof chatStartJourneyNew==='function') chatStartJourneyNew(); else switchTab('chat'); }
 }
@@ -6662,6 +6691,19 @@ function saveQuickVitals(){
   const dt=qDateTimeISO('qvitDate','qvitTime'); if(!dt){ alert('تاریخ را انتخاب کن.'); return; }
   qLogPush('vitals_v1',{iso:dt.iso, time:dt.sh, sys, dia, hr});
   closeQEntry('qvitModal'); uiToast('✓ فشار/ضربان ثبت شد'); afterQuickLog();
+}
+function saveQuickWeight(){
+  const r=faToEnDigits((document.getElementById('qwtKg').value||'').trim());
+  const kg=Math.round(parseFloat(r)*10)/10;
+  if(!r||isNaN(kg)||kg<20||kg>400){ alert('وزن را درست وارد کن (کیلوگرم، بینِ ۲۰ تا ۴۰۰).'); return; }
+  const dt=qDateTimeISO('qwtDate','qwtTime'); if(!dt){ alert('تاریخ را انتخاب کن.'); return; }
+  qLogPush('weight_log_v1',{iso:dt.iso, date:dt.sh, kg});
+  // «وزنِ فعلی» در پروفایل به‌روز شود (مستقیم در ذخیره‌گاه تا فرمِ نبودهٔ پروفایل پاک نشود)؛ اگر وزنِ اولیه خالی بود همان اولین ثبت را بگذار
+  try{ const raw=localStorage.getItem(PKEY); const p=raw?JSON.parse(raw):{}; p.weight=String(kg); if(!p.weightStart) p.weightStart=String(kg); localStorage.setItem(PKEY,JSON.stringify(p));
+    const el=document.getElementById('weight'); if(el) el.value=String(kg);   // اگر تبِ پروفایل باز است
+    const els=document.getElementById('weightStart'); if(els&&!els.value) els.value=String(kg);
+  }catch(e){}
+  closeQEntry('qwtModal'); uiToast('✓ وزن ثبت و در پروفایل به‌روز شد'); afterQuickLog();
 }
 function saveQuickJournal(){
   const rating=qSegVal('qjrnRating');
@@ -7653,7 +7695,7 @@ async function loadProfile(){
 // کلیدهای localStorage که در بکاپ گنجانده می‌شوند (نقشه‌ی داده‌ی کاربر).
 // از مقادیر رشته‌ای مستقیم استفاده می‌شود چون بعضی از این const‌ها (CGMKEY, BGKEY, ...)
 // پایین‌تر در فایل تعریف شده‌اند و ارجاع به خودِ متغیر اینجا TDZ می‌دهد.
-const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','vitals_v1','journal_v1','custom_foods_v1','custom_meds_v1','custom_exercises_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','ai_model_frozen_v1','ai_section_model_v1','journeys_v1','pod_cfg_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1'];
+const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','vitals_v1','journal_v1','weight_log_v1','custom_foods_v1','custom_meds_v1','custom_exercises_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','ai_model_frozen_v1','ai_section_model_v1','journeys_v1','pod_cfg_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1'];
 
 async function renderProfileTab(){
   // فرم پروفایل (c-profile) حالا خودش داخل این تب است و وضعیت ذخیره‌شده را نشان می‌دهد.
@@ -14817,6 +14859,13 @@ function buildHealthSnapshot(scope){
       if(cs.length) L.push('بیماری‌ها/وضعیت‌های کاربر (در همهٔ توصیه‌ها و تحلیل‌ها این‌ها را در نظر بگیر و نسبت به آن‌ها محتاط و دقیق باش): '+cs.join('، ')); }catch(e){}
     // داروهای ثابتِ کاربر
     try{ const mm=JSON.parse(localStorage.getItem('my_meds_v1')||'[]')||[]; if(mm.length) L.push('داروهای ثابتِ کاربر: '+mm.map(m=>m.name+(m.timing?(' ('+m.timing+')'):'')).join('؛ ')); }catch(e){}
+    // روندِ وزن — وزنِ اولیه + هر روزی که وزنِ تازه ثبت شده، تا AI دربارهٔ تغییراتِ وزنی نظر بدهد
+    try{ let wl=JSON.parse(localStorage.getItem('weight_log_v1')||'[]')||[]; wl=wl.filter(x=>x&&x.kg).sort((a,b)=>new Date(a.iso)-new Date(b.iso));
+      if(wl.length){ const start=(p.weightStart&&+p.weightStart)|| wl[0].kg; const cur=wl[wl.length-1].kg; const d=Math.round((cur-start)*10)/10;
+        const recent=wl.slice(-6).map(x=>(x.date?x.date+': ':'')+faDigits(x.kg)+'kg').join('؛ ');
+        let s='روندِ وزنِ کاربر — وزنِ اولیه '+faDigits(start)+'kg، فعلی '+faDigits(cur)+'kg'+(d!==0?(' ('+(d<0?'کاهشِ '+faDigits(Math.abs(d)):'افزایشِ '+faDigits(d))+'kg)'):'')+'. ثبت‌های اخیر: '+recent+'. دربارهٔ این تغییراتِ وزنی هم راهنمایی و نظر بده.';
+        L.push(s); }
+    }catch(e){}
   }catch(e){}
   // قند خون
   try{
