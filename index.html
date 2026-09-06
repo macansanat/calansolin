@@ -1400,7 +1400,8 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <label class="qbg-lbl">📌 نکته برای پزشک (اختیاری)</label>
     <input type="text" id="qjrnDoc" class="qbg-doc" placeholder="چیزی که باید سرِ ویزیت به پزشک بگی" style="margin-bottom:14px">
     <label class="qbg-lbl">تاریخ (شمسی)</label><div id="qjrnDateWrap" style="margin-bottom:2px"></div>
-    <div class="qbg-actions" style="margin-top:14px"><button class="qbg-cancel" onclick="closeQEntry('qjrnModal')">لغو</button><button class="qbg-save" onclick="saveQuickJournal()">💾 ذخیره</button></div>
+    <div style="text-align:center;margin-top:4px"><button type="button" class="mini-btn" onclick="jrnHistOpen()">🗂 تاریخچهٔ یادداشت‌ها</button></div>
+    <div class="qbg-actions" style="margin-top:10px"><button class="qbg-cancel" onclick="closeQEntry('qjrnModal')">لغو</button><button class="qbg-save" onclick="saveQuickJournal()">💾 ذخیره</button></div>
   </div>
 </div>
 
@@ -2289,7 +2290,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۶۴</b> · انتشار: ۱۴۰۵/۰۶/۱۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۶۵</b> · انتشار: ۱۴۰۵/۰۶/۱۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -6150,6 +6151,7 @@ function renderDailyReport(){
     if(jrnRec.tags&&jrnRec.tags.length) h+=`<div class="jrn-tags">`+jrnRec.tags.map(t=>`<span class="jrn-tag">${escVision(t)}</span>`).join('')+`</div>`;
     if(jrnRec.note) h+=`<div class="jrn-note">${escVision(jrnRec.note)}</div>`;
     if(jrnRec.doctor) h+=`<div class="jrn-doc">📌 برای پزشک: ${escVision(jrnRec.doctor)}</div>`;
+    h+=`<div style="display:flex;gap:8px;margin-top:10px"><button class="mini-btn" onclick="jrnHistEdit('${jrnRec.iso}')">✏️ ویرایش</button><button class="mini-btn" onclick="jrnHistOpen()">🗂 تاریخچه</button></div>`;
     h+=`</div>`;
   }
   // تفکیک انسولین پایه/سریع (اسم و واحد)
@@ -6887,15 +6889,17 @@ function quickAdd(type){
   else if(type==='sleep') openQEntry('qsleepModal','qsleepDateWrap',null,['qsleepHours'],'qsleepHours','qsleepQual');
   else if(type==='mood') openQEntry('qmoodModal','qmoodDateWrap','qmoodTime',['qmoodNote'],null,'qmoodPick');
   else if(type==='vitals') openQEntry('qvitModal','qvitDateWrap','qvitTime',['qvitSys','qvitDia','qvitHr'],'qvitSys');
-  else if(type==='weight'){ openQEntry('qwtModal','qwtDateWrap','qwtTime',['qwtKg'],'qwtKg'); try{ const raw=localStorage.getItem(PKEY); const p=raw?JSON.parse(raw):{}; const el=document.getElementById('qwtKg'); if(el&&p.weight) el.placeholder='فعلی: '+faDigits(p.weight)+' — وزنِ تازه را وارد کن'; }catch(e){} }
+  else if(type==='weight'){ _editWtIso=null; openQEntry('qwtModal','qwtDateWrap','qwtTime',['qwtKg'],'qwtKg'); try{ const t=document.querySelector('#qwtModal .qbg-title'); if(t) t.textContent='وزنِ فعلی'; const raw=localStorage.getItem(PKEY); const p=raw?JSON.parse(raw):{}; const el=document.getElementById('qwtKg'); if(el&&p.weight) el.placeholder='فعلی: '+faDigits(p.weight)+' — وزنِ تازه را وارد کن'; }catch(e){} }
   else if(type==='journal') openJournalQuick();
   else if(type==='aidoctor'){ if(typeof chatStartJourneyNew==='function') chatStartJourneyNew(); else switchTab('chat'); }
 }
 /* دفترچه‌ی روز: علاوه بر ریست فیلدها، تگ‌ها و یادداشتِ آزاد را هم پاک می‌کند */
 function openJournalQuick(){
+  _editJrnIso=null;
   openQEntry('qjrnModal','qjrnDateWrap',null,['qjrnDoc'],null,'qjrnRating');
   const ta=document.getElementById('qjrnNote'); if(ta) ta.value='';
   document.querySelectorAll('#qjrnTags button.on').forEach(b=>b.classList.remove('on'));
+  try{ const t=document.querySelector('#qjrnModal .qbg-title'); if(t) t.textContent='دفترچه‌ی روز'; }catch(e){}
 }
 function qtagToggle(btn){ btn.classList.toggle('on'); uiDing&&uiDing(); }
 function qTagVals(id){ return [...document.querySelectorAll('#'+id+' button.on')].map(b=>b.getAttribute('data-v')); }
@@ -6911,18 +6915,34 @@ function saveQuickVitals(){
   qLogPush('vitals_v1',{iso:dt.iso, time:dt.sh, sys, dia, hr});
   closeQEntry('qvitModal'); uiToast('✓ فشار/ضربان ثبت شد'); afterQuickLog();
 }
+let _editWtIso=null;
 function saveQuickWeight(){
   const r=faToEnDigits((document.getElementById('qwtKg').value||'').trim());
   const kg=Math.round(parseFloat(r)*10)/10;
   if(!r||isNaN(kg)||kg<20||kg>400){ alert('وزن را درست وارد کن (کیلوگرم، بینِ ۲۰ تا ۴۰۰).'); return; }
   const dt=qDateTimeISO('qwtDate','qwtTime'); if(!dt){ alert('تاریخ را انتخاب کن.'); return; }
-  qLogPush('weight_log_v1',{iso:dt.iso, date:dt.sh, kg});
-  // «وزنِ فعلی» در پروفایل به‌روز شود (مستقیم در ذخیره‌گاه تا فرمِ نبودهٔ پروفایل پاک نشود)؛ اگر وزنِ اولیه خالی بود همان اولین ثبت را بگذار
-  try{ const raw=localStorage.getItem(PKEY); const p=raw?JSON.parse(raw):{}; p.weight=String(kg); if(!p.weightStart) p.weightStart=String(kg); localStorage.setItem(PKEY,JSON.stringify(p));
-    const el=document.getElementById('weight'); if(el) el.value=String(kg);   // اگر تبِ پروفایل باز است
-    const els=document.getElementById('weightStart'); if(els&&!els.value) els.value=String(kg);
+  const wasEdit=!!_editWtIso;
+  try{ let wl=JSON.parse(localStorage.getItem('weight_log_v1')||'[]')||[];
+    if(_editWtIso){ const x=wl.find(z=>z.iso===_editWtIso); if(x){ x.kg=kg; x.iso=dt.iso; x.date=dt.sh; } else { wl.push({iso:dt.iso,date:dt.sh,kg}); } _editWtIso=null; }
+    else { wl.push({iso:dt.iso,date:dt.sh,kg}); }
+    localStorage.setItem('weight_log_v1', JSON.stringify(wl));
+    // «وزنِ فعلی» پروفایل = آخرین ثبت (بر اساسِ تاریخ)
+    const sorted=wl.filter(z=>z&&z.kg).sort((a,b)=>new Date(a.iso)-new Date(b.iso)); const latest=sorted.length?sorted[sorted.length-1].kg:kg;
+    const raw=localStorage.getItem(PKEY); const p=raw?JSON.parse(raw):{}; p.weight=String(latest); if(!p.weightStart) p.weightStart=String(sorted.length?sorted[0].kg:kg); localStorage.setItem(PKEY,JSON.stringify(p));
+    const el=document.getElementById('weight'); if(el) el.value=String(latest);
+    const els=document.getElementById('weightStart'); if(els&&!els.value) els.value=String(sorted.length?sorted[0].kg:kg);
   }catch(e){}
-  closeQEntry('qwtModal'); uiToast('✓ وزن ثبت و در پروفایل به‌روز شد'); afterQuickLog();
+  closeQEntry('qwtModal'); uiToast(wasEdit?'✓ وزن ویرایش شد':'✓ وزن ثبت و در پروفایل به‌روز شد'); afterQuickLog();
+  if(wasEdit){ try{ weightHistOpen(); }catch(e){} }
+}
+function weightHistEdit(iso){ let wl=[]; try{ wl=JSON.parse(localStorage.getItem('weight_log_v1')||'[]')||[]; }catch(e){} const x=wl.find(r=>r.iso===iso); if(!x) return;
+  const bg=document.getElementById('wtHistBg'); if(bg) bg.remove();
+  openQEntry('qwtModal','qwtDateWrap','qwtTime',['qwtKg'],'qwtKg'); _editWtIso=iso;
+  try{ document.getElementById('qwtKg').value=x.kg;
+    const d=new Date(x.iso); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); const inp=document.getElementById('qwtDate'); if(inp) inp.value=jDateStr(j[0],j[1],j[2]);
+    const p=n=>String(n).padStart(2,'0'); const tinp=document.getElementById('qwtTime'); if(tinp) tinp.value=p(d.getHours())+':'+p(d.getMinutes());
+    const t=document.querySelector('#qwtModal .qbg-title'); if(t) t.textContent='ویرایشِ وزن';
+  }catch(e){}
 }
 // تاریخچهٔ وزن‌های ثبت‌شده (با تاریخ) + روند + حذف
 function weightHistOpen(){
@@ -6944,6 +6964,7 @@ function weightHistOpen(){
         <span style="font-size:15px">⚖️</span>
         <div style="flex:1"><div style="font-weight:800;font-size:14px">${faDigits(x.kg)} <span style="font-size:11px;color:var(--muted)">کیلو</span>${dtxt}</div>
           <div style="font-size:11px;color:var(--muted)">${escVision(String(x.date||_jshort(x.iso)))}</div></div>
+        <button onclick="weightHistEdit('${x.iso}')" title="ویرایش" style="background:transparent;border:none;color:var(--teal);font-size:15px;cursor:pointer">✏️</button>
         <button onclick="weightHistDel('${x.iso}')" title="حذف" style="background:transparent;border:none;color:var(--muted);font-size:15px;cursor:pointer">🗑</button>
       </div>`; }).join('');
     body=head+`<div style="border:1px solid var(--line);border-radius:12px;overflow:hidden">${rows}</div>`;
@@ -6964,6 +6985,7 @@ function weightHistDel(iso){ if(!confirm('این ثبتِ وزن حذف شود؟
   }catch(e){}
   weightHistOpen(); try{ if(typeof renderDashboard==='function') renderDashboard(); }catch(e){}
 }
+let _editJrnIso=null;
 function saveQuickJournal(){
   const rating=qSegVal('qjrnRating');
   const tags=qTagVals('qjrnTags');
@@ -6971,9 +6993,60 @@ function saveQuickJournal(){
   const doc=(document.getElementById('qjrnDoc').value||'').trim();
   if(!rating&&!tags.length&&!note&&!doc){ alert('حداقل یک مورد را پر کن (حال روز، اتفاق، یادداشت یا نکته‌ی پزشک).'); return; }
   const dt=qDateTimeISO('qjrnDate',null); if(!dt){ alert('تاریخ را انتخاب کن.'); return; }
-  qLogPush('journal_v1',{iso:dt.iso, date:dt.sh, rating, tags, note, doctor:doc});
-  closeQEntry('qjrnModal'); uiToast('✓ دفترچه ثبت شد'); afterQuickLog();
+  const wasEdit=!!_editJrnIso;
+  try{ let arr=JSON.parse(localStorage.getItem('journal_v1')||'[]')||[];
+    if(_editJrnIso){ const x=arr.find(z=>z.iso===_editJrnIso); if(x){ x.iso=dt.iso; x.date=dt.sh; x.rating=rating; x.tags=tags; x.note=note; x.doctor=doc; } else { arr.push({iso:dt.iso,date:dt.sh,rating,tags,note,doctor:doc}); } _editJrnIso=null; }
+    else { arr.push({iso:dt.iso,date:dt.sh,rating,tags,note,doctor:doc}); }
+    localStorage.setItem('journal_v1', JSON.stringify(arr));
+  }catch(e){}
+  closeQEntry('qjrnModal'); uiToast(wasEdit?'✓ یادداشت ویرایش شد':'✓ دفترچه ثبت شد'); afterQuickLog();
+  if(wasEdit){ try{ jrnHistOpen(); }catch(e){} }
 }
+// تنظیمِ سگمنت/تگ‌ها هنگامِ ویرایش
+function qSegSet(segId,val){ document.querySelectorAll('#'+segId+' button').forEach(b=>b.classList.toggle('on', b.getAttribute('data-v')===val)); }
+function qTagsSet(id,vals){ const set=new Set(vals||[]); document.querySelectorAll('#'+id+' button').forEach(b=>b.classList.toggle('on', set.has(b.getAttribute('data-v')))); }
+// تاریخچهٔ یادداشت‌های روز + ویرایش/حذف
+function jrnHistOpen(){
+  try{ ensureChatCss&&ensureChatCss(); }catch(e){}
+  const old=document.getElementById('jrnHistBg'); if(old) old.remove();
+  let arr=[]; try{ arr=JSON.parse(localStorage.getItem('journal_v1')||'[]')||[]; }catch(e){}
+  arr=arr.filter(x=>x&&x.iso).sort((a,b)=>new Date(a.iso)-new Date(b.iso));
+  let body='';
+  if(!arr.length){ body='<div style="color:var(--muted);font-size:12.5px;text-align:center;padding:24px 8px;line-height:1.9">هنوز یادداشتی ثبت نشده.<br>از منوی سریع ← 📓 دفترچه ثبت کن.</div>'; }
+  else{
+    body='<div style="border:1px solid var(--line);border-radius:12px;overflow:hidden">'+arr.slice().reverse().map(x=>{
+      const tags=(x.tags||[]).slice(0,4).map(t=>`<span style="display:inline-block;font-size:10px;background:var(--field);border:1px solid var(--line);border-radius:20px;padding:1px 8px;margin:2px 2px 0 0">${escVision(t)}</span>`).join('');
+      return `<div style="padding:10px 8px;border-bottom:1px solid var(--line)">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:15px">📓</span>
+          <div style="flex:1;min-width:0"><div style="font-weight:800;font-size:13px">${escVision(String(x.date||_jshort(x.iso)))}${x.rating?' · '+(JRN_RATING[x.rating]||x.rating):''}</div>
+            ${x.note?`<div style="font-size:11.5px;color:var(--ink);line-height:1.7;margin-top:2px">${escVision(String(x.note).slice(0,120))}</div>`:''}
+            ${x.doctor?`<div style="font-size:11px;color:var(--amber);margin-top:2px">📌 ${escVision(String(x.doctor).slice(0,80))}</div>`:''}</div>
+          <button onclick="jrnHistEdit('${x.iso}')" title="ویرایش" style="background:transparent;border:none;color:var(--teal);font-size:15px;cursor:pointer">✏️</button>
+          <button onclick="jrnHistDel('${x.iso}')" title="حذف" style="background:transparent;border:none;color:var(--muted);font-size:15px;cursor:pointer">🗑</button>
+        </div>${tags?`<div style="margin-top:5px;padding-inline-start:23px">${tags}</div>`:''}
+      </div>`; }).join('')+'</div>';
+  }
+  const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='jrnHistBg'; bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
+  bg.innerHTML=`<div class="chat-rename" role="dialog" aria-modal="true" style="max-width:430px">
+    <h4>📓 تاریخچهٔ یادداشت‌های روز</h4>
+    <div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:8px">همهٔ یادداشت‌های روزانه‌ات. با ✏️ ویرایش و با 🗑 حذف می‌شوند. در گزارش‌ها و برای پزشک استفاده می‌شوند.</div>
+    <div style="max-height:56vh;overflow:auto">${body}</div>
+    <div class="chat-rename-btns" style="margin-top:12px"><button type="button" class="crn-btn crn-cancel" onclick="document.getElementById('jrnHistBg').remove()">بستن</button>
+      <button type="button" class="crn-btn crn-ok" onclick="document.getElementById('jrnHistBg').remove(); quickAdd('journal')">➕ یادداشتِ تازه</button></div></div>`;
+  document.body.appendChild(bg);
+}
+function jrnHistEdit(iso){ let arr=[]; try{ arr=JSON.parse(localStorage.getItem('journal_v1')||'[]')||[]; }catch(e){} const x=arr.find(r=>r.iso===iso); if(!x) return;
+  const bg=document.getElementById('jrnHistBg'); if(bg) bg.remove();
+  openJournalQuick(); _editJrnIso=iso;
+  try{ qSegSet('qjrnRating', x.rating||''); qTagsSet('qjrnTags', x.tags||[]);
+    const n=document.getElementById('qjrnNote'); if(n) n.value=x.note||''; const dc=document.getElementById('qjrnDoc'); if(dc) dc.value=x.doctor||'';
+    const d=new Date(x.iso); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); const inp=document.getElementById('qjrnDate'); if(inp) inp.value=jDateStr(j[0],j[1],j[2]);
+    const t=document.querySelector('#qjrnModal .qbg-title'); if(t) t.textContent='ویرایشِ یادداشت';
+  }catch(e){}
+}
+function jrnHistDel(iso){ if(!confirm('این یادداشت حذف شود؟')) return; try{ let arr=JSON.parse(localStorage.getItem('journal_v1')||'[]')||[]; arr=arr.filter(x=>x&&x.iso!==iso); localStorage.setItem('journal_v1',JSON.stringify(arr)); }catch(e){}
+  jrnHistOpen(); try{ if(typeof renderDailyReport==='function') renderDailyReport(); }catch(e){} }
 /* ====== فرم‌های سریعِ عمومی (دارو/خواب/حالت روحی) ====== */
 function openQEntry(modalId,dateWrapId,timeId,clearIds,focusId,segId){
   const m=document.getElementById(modalId); if(!m) return;
