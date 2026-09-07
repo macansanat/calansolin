@@ -2314,7 +2314,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۷۹</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۸۰</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3671,7 +3671,8 @@ const OPENAI_PRICES={
   'gpt-4.5':{in:75,out:150}, 'o3':{in:2,out:8}, 'o3-mini':{in:1.1,out:4.4}, 'o4-mini':{in:1.1,out:4.4},
   // نرخِ خانوادهٔ GPT-5/6 «تقریبی» است (تا اعلامِ رسمیِ OpenAI)؛ اگر نرخِ واقعی فرق داشت اینجا اصلاح کن
   'gpt-5':{in:1.25,out:10}, 'gpt-5.1':{in:1.25,out:10}, 'gpt-5.2':{in:0.875,out:7}/*رسمی*/, 'gpt-5-mini':{in:0.25,out:2},
-  'gpt-6-astra':{in:10,out:50},   // منبع: اعلامِ رسمیِ OpenAI (سپتامبر ۲۰۲۶)؛ gpt-6-astra-pro با تطبیقِ پیشوندی همین را می‌گیرد تا نرخِ دقیقش اعلام شود
+  'gpt-5.4':{in:1.25,out:10}/*تخمینی*/, 'gpt-5.2-pro':{in:15,out:120}/*تخمینی (رده‌ی pro)*/,
+  'gpt-6-astra':{in:10,out:50},   // منبع: اعلامِ رسمیِ OpenAI (سپتامبر ۲۰۲۶)
   _default:{in:2.5,out:10}   // اگر مدل در جدول نبود، نرخِ gpt-4o را فرض می‌کند
 };
 function openaiPrice(model){ if(!model) return OPENAI_PRICES._default;
@@ -11522,26 +11523,31 @@ function aiVisionFallback(primary, makeCall, onRetry, onProv){ return aiFallback
 const AI_SECTION_KEY='ai_section_provider_v1';
 function sectionProvider(section){ try{ const o=JSON.parse(localStorage.getItem(AI_SECTION_KEY)||'{}'); const p=o[section]; return VISION_PROVIDERS.includes(p)?p:getVisionProvider(); }catch(e){ return getVisionProvider(); } }
 function setSectionProvider(section,prov){ try{ const o=JSON.parse(localStorage.getItem(AI_SECTION_KEY)||'{}'); if(prov) o[section]=prov; else delete o[section]; localStorage.setItem(AI_SECTION_KEY, JSON.stringify(o)); }catch(e){} }
+// سرویسِ «انتخاب‌شده»ی خام (بدونِ فالبک) — برای منوی کشویی
+function sectionProviderRaw(section){ try{ const o=JSON.parse(localStorage.getItem(AI_SECTION_KEY)||'{}'); const p=o[section]; return VISION_PROVIDERS.includes(p)?p:''; }catch(e){ return ''; } }
 // سرویس بخش را برمی‌گرداند؛ اگر بخش تصویری است و سرویس عکس ندارد، به یک سرویسِ عکس‌دار برمی‌گردد
 function sectionProviderVision(section){ let p=sectionProvider(section); if(!PROVIDER_VISION[p]||aiFrozen(p)){ p=['gemini','claude','openai'].find(x=>hasAnyKey(x)&&!aiFrozen(x)&&PROVIDER_VISION[x])||p; } return p; }
 /* ===== انتخابِ مدلِ دقیق برای هر بخش + فریزِ per-model + قفلِ بدونِ فالبک ===== */
 // ترتیب مهم است: مدلِ اول = پیش‌فرضِ آن سرویس (برای حفظِ رفتارِ فعلی، مدلِ باکیفیت اول).
 const AI_MODELS=[
-  {id:'gpt-4o',        prov:'openai', label:'GPT-4o (پیش‌فرض)', vision:true, tier:'باکیفیت'},
-  {id:'gpt-5.2',       prov:'openai', label:'GPT-5.2',       vision:true,  tier:'هوشمند (سنگین)'},
-  {id:'gpt-5.1',       prov:'openai', label:'GPT-5.1',       vision:true,  tier:'هوشمند'},
-  {id:'gpt-5',         prov:'openai', label:'GPT-5',         vision:true,  tier:'هوشمند'},
-  {id:'gpt-5-mini',    prov:'openai', label:'GPT-5 mini',    vision:true,  tier:'ارزان/هوشمند'},
-  {id:'gpt-6-astra',   prov:'openai', label:'GPT-6 Astra',   vision:true,  tier:'هوشمند (سنگین)'},
-  {id:'gpt-6-astra-pro', prov:'openai', label:'GPT-6 Astra Pro', vision:true, tier:'هوشمند (خیلی سنگین)'},
+  // ── OpenAI (ChatGPT) — کیوریت‌شده؛ اولین مدل = پیش‌فرضِ «خودکار»ِ سرویس ──
+  {id:'gpt-4o',        prov:'openai', label:'GPT-4o',        vision:true,  tier:'باکیفیت · پیش‌فرض'},
+  {id:'gpt-4o-mini',   prov:'openai', label:'GPT-4o mini',   vision:true,  tier:'ارزان'},
   {id:'gpt-4.1',       prov:'openai', label:'GPT-4.1',       vision:true,  tier:'باکیفیت'},
-  {id:'gpt-4.1-mini',  prov:'openai', label:'GPT-4.1 mini',  vision:true,  tier:'ارزان'},
+  {id:'gpt-5-mini',    prov:'openai', label:'GPT-5 mini',    vision:true,  tier:'ارزان و باهوش'},
+  {id:'gpt-5',         prov:'openai', label:'GPT-5',         vision:true,  tier:'هوشمند'},
+  {id:'gpt-5.2',       prov:'openai', label:'GPT-5.2',       vision:true,  tier:'هوشمند · بهترین ارزش'},
+  {id:'gpt-5.4',       prov:'openai', label:'GPT-5.4',       vision:true,  tier:'هوشمند · تازه'},
+  {id:'gpt-5.2-pro',   prov:'openai', label:'GPT-5.2 Pro',   vision:true,  tier:'خیلی سنگین'},
+  {id:'gpt-6-astra',   prov:'openai', label:'GPT-6 Astra',   vision:true,  tier:'قوی‌ترین · گران'},
   {id:'o3',            prov:'openai', label:'o3 (استدلالی)', vision:true,  tier:'استدلالی'},
-  {id:'o4-mini',       prov:'openai', label:'o4-mini (استدلالی)', vision:true, tier:'استدلالی/ارزان'},
-  {id:'gpt-4o-mini',   prov:'openai', label:'GPT-4o mini',  vision:true,  tier:'ارزان'},
+  {id:'o4-mini',       prov:'openai', label:'o4-mini (استدلالی)', vision:true, tier:'استدلالی · ارزان'},
+  // ── Gemini ──
   {id:'gemini-flash',  prov:'gemini', label:'Gemini Flash', vision:true,  tier:'ارزان/رایگان', real:VISION_MODELS.gemini},
+  // ── Claude ──
   {id:'claude-opus-5', prov:'claude', label:'Claude Opus',  vision:true,  tier:'باکیفیت'},
   {id:'claude-haiku-4-5', prov:'claude', label:'Claude Haiku', vision:true, tier:'ارزان'},
+  // ── DeepSeek ──
   {id:'deepseek-chat', prov:'deepseek', label:'DeepSeek',   vision:false, tier:'ارزان'}
 ];
 const AI_MODEL_FROZEN_KEY='ai_model_frozen_v1';
@@ -12132,21 +12138,32 @@ function renderVisionSetting(){
     h+=`</div>`;
   }
   // ۳) انتخاب مدلِ دقیق + قفلِ هر بخش
-  h+=`<div style="font-weight:800;font-size:12.5px;color:var(--teal);margin:16px 0 6px">۳) مدلِ هر بخش + قفل</div>
-    <div style="font-size:10.5px;color:var(--muted);line-height:1.7;margin-bottom:8px">برای هر بخش دقیقاً یک مدل انتخاب کن. با 🔒 <b>قفل</b> کنی، آن بخش فقط با همان مدل کار می‌کند و در صورتِ خطا سراغِ مدل/سرویسِ گران‌ترِ دیگر نمی‌رود.</div>`;
+  h+=`<div style="font-weight:800;font-size:12.5px;color:var(--teal);margin:16px 0 6px">۳) سرویس و مدلِ هر بخش + قفل</div>
+    <div style="font-size:10.5px;color:var(--muted);line-height:1.7;margin-bottom:8px">برای هر بخش «اول سرویس» (مثلاً ChatGPT/Claude/…) و «بعد مدلِ همان سرویس» را انتخاب کن. «خودکار» یعنی خودِ اپ بهترین را می‌چیند. با 🔒 <b>قفل</b> کنی، آن بخش فقط با همان مدل کار می‌کند و در خطا سراغِ سرویسِ دیگر نمی‌رود.</div>`;
   if(!availP.length){ h+=`<div style="font-size:11.5px;color:var(--amber)">اول یک کلید بالا ذخیره کن.</div>`; }
   else{
     h+=`<div style="border:1px solid var(--line);border-radius:12px;overflow:hidden">`;
     AI_SECTIONS.forEach((sec,i)=>{
-      const cfg=secCfg(sec.id); const curModel=cfg.model||SEC_DEFAULT_MODEL[sec.id]||''; const lock=!!cfg.lock;
-      const opts=AI_MODELS.filter(m=>hasAnyKey(m.prov)&&!aiModelFrozen(m.id)&&(!sec.vision||m.vision));
-      h+=`<div style="display:grid;grid-template-columns:1fr 128px 34px;align-items:center;gap:8px;padding:9px 11px;${i?'border-top:1px solid var(--line)':''}">
-        <div style="min-width:0;display:flex;align-items:center;gap:7px;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="flex:0 0 auto">${sec.icon}</span><span style="overflow:hidden;text-overflow:ellipsis">${sec.label}</span></div>
-        <select onchange="setSecModel('${sec.id}',this.value)" style="width:100%;min-width:0;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:7px 5px;font-family:inherit;font-size:11.5px">
-          <option value="" ${!curModel?'selected':''}>خودکار</option>
-          ${opts.map(m=>`<option value="${m.id}" ${m.id===curModel?'selected':''}>${escVision(m.label)}</option>`).join('')}
-        </select>
-        <button type="button" onclick="toggleSecLock('${sec.id}')" title="${lock?'قفل روشن: فقط همین مدل':'قفل خاموش: در صورت خطا مدلِ دیگر'}" style="width:34px;height:32px;border:1px solid ${lock?'var(--teal)':'var(--line)'};background:${lock?'var(--teal-dim)':'var(--field)'};color:${lock?'#eafff8':'var(--muted)'};border-radius:9px;cursor:pointer;font-size:13px">${lock?'🔒':'🔓'}</button>
+      const cfg=secCfg(sec.id); const lock=!!cfg.lock;
+      const pinM=cfg.model?modelById(cfg.model):null;
+      const curProv=pinM?pinM.prov:sectionProviderRaw(sec.id);   // سرویسِ انتخابیِ خام
+      const curModel=cfg.model||'';
+      const mOpts=curProv?AI_MODELS.filter(m=>m.prov===curProv&&hasAnyKey(m.prov)&&!aiModelFrozen(m.id)&&(!sec.vision||m.vision)):[];
+      const provSel=`<select onchange="setSecProviderPick('${sec.id}',this.value)" style="width:100%;min-width:0;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:7px 5px;font-family:inherit;font-size:11.5px">
+          <option value="" ${!curProv?'selected':''}>خودکار</option>
+          ${availP.filter(p=>!sec.vision||PROVIDER_VISION[p]).map(p=>`<option value="${p}" ${p===curProv?'selected':''}>${escVision(PROVIDER_NAMES[p])}</option>`).join('')}
+        </select>`;
+      const modSel=`<select ${curProv?'':'disabled'} onchange="setSecModel('${sec.id}',this.value)" style="width:100%;min-width:0;background:var(--field);border:1px solid var(--line);color:${curProv?'var(--ink)':'var(--muted)'};border-radius:9px;padding:7px 5px;font-family:inherit;font-size:11.5px">
+          <option value="" ${!curModel?'selected':''}>${curProv?'خودکار (بهترین)':'— اول سرویس —'}</option>
+          ${mOpts.map(m=>`<option value="${m.id}" ${m.id===curModel?'selected':''}>${escVision(m.label)} · ${escVision(m.tier)}</option>`).join('')}
+        </select>`;
+      h+=`<div style="padding:9px 11px;${i?'border-top:1px solid var(--line)':''}">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
+          <span style="flex:0 0 auto">${sec.icon}</span>
+          <span style="flex:1;min-width:0;font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sec.label}</span>
+          <button type="button" onclick="toggleSecLock('${sec.id}')" title="${lock?'قفل روشن: فقط همین مدل':'قفل خاموش: در صورت خطا سرویسِ دیگر'}" style="width:32px;height:30px;border:1px solid ${lock?'var(--teal)':'var(--line)'};background:${lock?'var(--teal-dim)':'var(--field)'};color:${lock?'#eafff8':'var(--muted)'};border-radius:9px;cursor:pointer;font-size:13px">${lock?'🔒':'🔓'}</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">${provSel}${modSel}</div>
       </div>`;
     });
     // ردیفِ جداگانه: صدای پادکست (TTS) — یک سرویس، جدا از مدلِ متن
@@ -12167,6 +12184,8 @@ function renderVisionSetting(){
 // انتخابِ سرویسِ صدای پادکست از پروفایل (همان کلیدِ تنظیماتِ پادکست)
 function setPodTTSProv(v){ try{ podCfgPick('prov', v); }catch(e){} if(typeof renderVisionSetting==='function') renderVisionSetting(); }
 function setSecModel(section, modelId){ const m=modelId?modelById(modelId):null; setSecCfg(section,{model:modelId||''}); if(m) setSectionProvider(section, m.prov); if(typeof renderVisionSetting==='function') renderVisionSetting(); }
+// انتخابِ سرویسِ یک بخش (منوی اول)؛ مدل به «خودکارِ همان سرویس» ریست می‌شود
+function setSecProviderPick(section, prov){ setSectionProvider(section, prov||''); setSecCfg(section,{model:''}); if(typeof renderVisionSetting==='function') renderVisionSetting(); }
 function toggleSecLock(section){ const cur=!!secCfg(section).lock; setSecCfg(section,{lock:!cur}); if(typeof renderVisionSetting==='function') renderVisionSetting(); }
 
 /* ===== تب ورزش: کتابخانه‌ی حرکت‌ها + برنامه + ثبت ===== */
