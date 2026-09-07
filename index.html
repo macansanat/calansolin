@@ -2316,7 +2316,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۸۳</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۸۴</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5613,6 +5613,8 @@ document.addEventListener('visibilitychange',()=>{ try{ if(document.visibilitySt
 function renderPodcastCard(){
   podWakeSync();
   const box=document.getElementById('homePodcast'); if(!box) return;
+  // اگر آواتارِ شناور به body منتقل شده بود، قبل از بازساختِ کارت آن را بردار تا id تکراری نشود
+  try{ const stray=document.querySelector('body > #podAvatar'); if(stray) stray.remove(); _pod._avHome=null; }catch(e){}
   const rec=podCurRec(); const c=podCfg(); const viewing=!!_pod._viewRec; const fresh=rec&&rec.script&&(viewing||rec.dateKey===podTodayKey());
   const mode=_pod.mode; const playing=mode==='playing', paused=mode==='paused', loading=mode==='loading';
   const prov=podTTSProvider(); const cloud=!!prov;
@@ -5673,8 +5675,15 @@ function podAvShowControls(){ const el=document.getElementById('podAvatar'); if(
 function podAvApplyModes(){ const el=document.getElementById('podAvatar'); if(!el) return;
   if(_pod.mode!=='playing'){ _pod._float=false; }   // شناور فقط حینِ پخش
   el.classList.toggle('pod-av--full', !!_pod._full);
-  el.classList.toggle('pod-av--float', !!_pod._float && !_pod._full && _pod.mode==='playing');
+  const floatOn = !!_pod._float && !_pod._full && _pod.mode==='playing';
+  el.classList.toggle('pod-av--float', floatOn);
+  podAvReparent(floatOn);   // در حالتِ شناور، المان را به body ببر تا با عوضِ تب پنهان نشود
   podAvResizeSoon();
+}
+// جابه‌جاییِ المانِ آواتار بین کارتِ خانه و body (برای شناوریِ بین‌تبی)
+function podAvReparent(toBody){ const el=document.getElementById('podAvatar'); if(!el) return;
+  if(toBody){ if(el.parentNode && el.parentNode!==document.body){ _pod._avHome={parent:el.parentNode, next:el.nextSibling}; try{ document.body.appendChild(el); }catch(e){} } }
+  else if(_pod._avHome){ const h=_pod._avHome; _pod._avHome=null; try{ if(el.parentNode===document.body){ if(h.next && h.next.parentNode===h.parent) h.parent.insertBefore(el,h.next); else h.parent.appendChild(el); } }catch(e){} }
 }
 function podAvToggleFull(e){ if(e){ e.stopPropagation(); } const el=document.getElementById('podAvatar'); if(!el) return;
   _pod._full=!el.classList.contains('pod-av--full'); if(_pod._full) _pod._float=false;
@@ -7053,6 +7062,8 @@ function switchTab(name,btn){
   const pg=document.getElementById('page-'+name); if(pg) pg.classList.add('active');
   document.body.classList.toggle('chat-active', name==='chat');
   window.scrollTo({top:0,behavior:'auto'});
+  // آواتارِ شناور: با رفتن به تبِ دیگر حینِ پخش، به گوشه شناور بماند (به body منتقل می‌شود)
+  try{ if(name!=='home' && _pod.mode==='playing' && podCfg().avatar && !_pod._full){ _pod._float=true; podAvApplyModes(); } }catch(e){}
   if(name==='home'){ renderDashboard(); }
   if(name==='daily'){ renderDailyReport(); }
   if(name==='overview'){ renderOverview(); }
