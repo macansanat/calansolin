@@ -256,13 +256,15 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .pod-av--full .pod-av-stage{width:100vw;width:100dvw;height:100dvh;max-width:none;border-radius:0;transition:none!important}
 .pod-av--full.pod-av--3d .pod-av-stage{height:100dvh}
 /* مینی‌پلیرِ شناور (داخلِ همین صفحه، حینِ اسکرول) */
-.pod-av--float{position:fixed;bottom:78px;inset-inline-end:12px;z-index:9997;margin:0;width:120px;touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.pod-av--float{position:fixed;bottom:78px;inset-inline-end:12px;z-index:9997;margin:0;width:calc(120px * var(--fscale,1));touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .pod-av--float:active{cursor:grabbing}
 .pod-av--float .pod-av-stage,.pod-av--float .pod-av-stage canvas,.pod-av--float .pod-3d-host{touch-action:none}
-.pod-av--float .pod-av-stage{width:120px;height:152px;max-width:none;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.16);transition:none!important}
-.pod-av--float.pod-av--3d .pod-av-stage{height:152px}
+.pod-av--float .pod-av-stage{width:calc(120px * var(--fscale,1));height:calc(152px * var(--fscale,1));max-width:none;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.16);transition:none!important}
+.pod-av--float.pod-av--3d .pod-av-stage{height:calc(152px * var(--fscale,1))}
 .pod-av--float .pod-av-fs,.pod-av--float .pod-3d-zoom{display:none}
-.pod-av--float .pod-av-dock{display:flex;width:26px;height:26px;font-size:13px;top:4px;right:4px;opacity:1}
+/* × مینی‌پلیر: پیش‌فرض محو، با لمس (کلاسِ pod-av--ui) چند ثانیه ظاهر می‌شود */
+.pod-av--float .pod-av-dock{display:flex;width:26px;height:26px;font-size:13px;top:4px;right:4px;opacity:0;pointer-events:none;transition:opacity .35s ease}
+.pod-av--float.pod-av--ui .pod-av-dock{opacity:1;pointer-events:auto}
 .pod-tabs{display:flex;gap:6px;margin:2px 0 14px;position:sticky;top:0;z-index:3;background:var(--card,#0f1720);padding:6px 0}
 .pod-tabs button{flex:1;background:transparent;border:none;border-bottom:2.5px solid var(--line);color:var(--muted);padding:9px 4px;font-family:inherit;font-weight:800;font-size:13.5px;cursor:pointer;transition:all .15s}
 .pod-tabs button.on{color:var(--teal);border-bottom-color:var(--teal)}
@@ -2318,7 +2320,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۹۴</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۹۵</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3626,7 +3628,7 @@ let _pod={ mode:'idle', cloud:false, ttsProv:'', music:null,
   analyser:null, raf:0, avImg:null, avImgGender:'', avBusy:false, musicKill:0, rawChunks:null, rawType:'',
   avFrames:null, avLayers:null, avLayersFor:'', avGeom:null, avW:null, avSway:null, blinkNext:0, blinkAt:0, avTmp:null,
   buffers:[], durs:[], cum:[0], totalDur:0, allFetched:false, playIdx:0, startCtx:0, startOff:0, playing:false, waiting:false,
-  audioEl:null, elUrls:[], elIdx:0, elMode:false, elBuffers:[], elRaw:[], elType:'', elSingle:false };
+  audioEl:null, elUrls:[], elIdx:0, elMode:false, elBuffers:[], elRaw:[], elType:'', elSingle:false, visSegTexts:null, _visSig:'' };
 const POD_RATING_FA={great:'عالی',good:'خوب',ok:'معمولی',bad:'سخت'};
 // صداهای انتخابیِ هر سرویس (id واقعیِ سرویس + برچسبِ فارسی)
 const POD_VOICES={
@@ -3984,7 +3986,7 @@ function podcastStart(rec){
   _pod.ttsProv=podTTSProvider();
   _pod.cloud = !!_pod.ttsProv;
   _pod.estDur = Math.max(60, Math.round(podWordCount(rec.script)/2.4));
-  _pod.script = rec.script||''; _pod.visTL=null; _pod.visIdx=0;   // متن برای زمان‌بندیِ شکلِ دهان
+  _pod.script = rec.script||''; _pod.visTL=null; _pod.visIdx=0; _pod.visSegTexts=null; _pod._visSig='';   // متن برای زمان‌بندیِ شکلِ دهان
   _pod.mode='playing'; _pod.t0=Date.now(); _pod.prep=_pod.cloud;
   podEngineReset(); podProgressStart(); renderPodcastCard();
   if(_pod.cloud){
@@ -4253,7 +4255,7 @@ function podElEl(){ if(!_pod.audioEl){ const a=new Audio(); a.preload='auto'; tr
     _pod.audioEl=a; } return _pod.audioEl; }
 // آزادسازیِ المان در لمسِ کاربر (iOS اجازهٔ play بعد از await نمی‌دهد مگر یک‌بار در جسچر آزاد شود)
 function podElUnlock(){ try{ const a=podElEl(); if(!a.dataset||!a.dataset.unlocked){ a.src=POD_SILENT_WAV; const pr=a.play(); if(pr&&pr.then) pr.then(()=>{ try{a.pause();a.currentTime=0;}catch(e){} }).catch(()=>{}); if(a.dataset) a.dataset.unlocked='1'; } }catch(e){} }
-function podElReset(){ try{ const a=_pod.audioEl; if(a){ a.pause(); } }catch(e){} (_pod.elUrls||[]).forEach(u=>{ try{ URL.revokeObjectURL(u); }catch(e){} }); _pod.elUrls=[]; _pod.elIdx=0; _pod.elMode=false; _pod.playing=false; _pod.elBuffers=[]; _pod.elRaw=[]; _pod.elType=''; _pod.elSingle=false; }
+function podElReset(){ try{ const a=_pod.audioEl; if(a){ a.pause(); } }catch(e){} (_pod.elUrls||[]).forEach(u=>{ try{ URL.revokeObjectURL(u); }catch(e){} }); _pod.elUrls=[]; _pod.elIdx=0; _pod.elMode=false; _pod.playing=false; _pod.elBuffers=[]; _pod.elRaw=[]; _pod.elType=''; _pod.elSingle=false; _pod.visSegTexts=null; _pod._visSig=''; }
 function podElPush(rawBytes, type, dur, abuf){ let url=''; try{ url=URL.createObjectURL(new Blob([rawBytes],{type:type||'audio/mpeg'})); }catch(e){ return; } _pod.elUrls.push(url); dur=dur||0; _pod.durs.push(dur); _pod.cum.push((_pod.cum[_pod.cum.length-1]||0)+dur); _pod.totalDur+=dur; _pod.elRaw.push(rawBytes); if(abuf) _pod.elBuffers.push(abuf); if(type) _pod.elType=type; }
 // چند AudioBuffer را به یک WAVِ ۱۶بیتیِ mono درمی‌آورد (برای صدای غیرِ mp3 مثل Gemini)
 function podAudioBuffersToWav(buffers){ if(!buffers||!buffers.length) return null;
@@ -4293,6 +4295,7 @@ function podElLoadPlay(idx, off){ const a=podElEl();
 async function podCloudSpeakEl(full){
   const ctx=wkEnsureAudio();   // فقط برای اندازه‌گیریِ مدتِ هر قطعه (دیکود؛ پخش از المان است)
   podEngineReset(); podElReset(); _pod.elMode=true; _pod.analyser=null;   // بدونِ analyser ⇒ لب‌سینکِ زمان‌محور
+  try{ _pod.visSegTexts=podChunksForTTS(full); _pod._visSig=''; }catch(e){ _pod.visSegTexts=null; }   // متنِ هر قطعه برای سینکِ دقیقِ لب
   const key=podAudioKey(full);
   // ۱) کش
   try{ const hit=await podCacheGet(key);
@@ -5023,11 +5026,44 @@ function podBuildVisemeTL(script, dur){
   for(let i=0;i<vis.length;i++){ at[i]=acc*scale; acc+=wt[i]; }
   return { at, vis, op, n:vis.length, dur };
 }
+// ۲۳.۹۵ — زمان‌بندیِ قطعه‌به‌قطعه: هر قطعهٔ TTS به مدتِ واقعیِ صوتِ خودش کشیده می‌شود
+// ⇒ سرعتِ گفتار در طولِ پادکست ثابت فرض نمی‌شود و لب دیگر جلو/عقب نمی‌افتد (drift).
+function podBuildVisemeTLSegs(texts, durs, fallbackTotal){
+  if(!texts||!texts.length) return null;
+  let knownDur=0, knownChars=0;
+  for(let i=0;i<texts.length;i++){ const d=durs&&durs[i]||0; if(d>0){ knownDur+=d; knownChars+=Math.max(1,String(texts[i]||'').length); } }
+  const perChar = knownChars>0 ? knownDur/knownChars
+    : (fallbackTotal>0 ? fallbackTotal/Math.max(1, texts.join('').length) : 0.06);
+  const vis=[], op=[], atArr=[]; let tAcc=0, any=false;
+  for(let i=0;i<texts.length;i++){
+    const s=String(texts[i]||''); if(!s) continue;
+    let segDur=durs&&durs[i]||0; if(!(segDur>0)) segDur=Math.max(0.3, s.length*perChar);
+    const V=[], O=[], w=[]; let total=0, lastVowel='A';
+    for(let j=0;j<s.length;j++){ const e=podVisemeFor(s[j]); let v=e.v,o=e.o;
+      if(v==='_'){ v=lastVowel; o=0.5; } else if(v==='A'||v==='AH'||v==='E'||v==='O') lastVowel=v;
+      V.push(v); O.push(o); w.push(e.w); total+=e.w; }
+    if(!total){ tAcc+=segDur; continue; }
+    const scale=segDur/total; let acc=0;
+    for(let j=0;j<V.length;j++){ atArr.push(tAcc+acc*scale); vis.push(V[j]); op.push(O[j]); acc+=w[j]; any=true; }
+    tAcc+=segDur;
+  }
+  if(!any) return null;
+  return { at:Float64Array.from(atArr), vis, op, n:vis.length, dur:tAcc };
+}
 function podEnsureVisemeTL(){
   const dur = _pod.cloud ? podTotalKnown() : _pod.estDur;
-  if(!_pod.script || !(dur>1)){ _pod.visTL=null; return; }
-  if(_pod.visTL && Math.abs((_pod.visTL.dur||0)-dur) < 1.5) return;   // فقط وقتی مدت واقعاً عوض شد بازبساز
-  _pod.visTL = podBuildVisemeTL(_pod.script, dur); _pod.visIdx=0;
+  if(!(dur>1)){ _pod.visTL=null; return; }
+  // ترجیح: زمان‌بندیِ قطعه‌به‌قطعه بر پایهٔ مدتِ واقعیِ هر قطعه (سینکِ دقیق‌ترِ لب با پلیرِ <audio>)
+  if(_pod.elMode && _pod.visSegTexts && _pod.visSegTexts.length){
+    const durs=_pod.durs||[]; const known=durs.filter(d=>d>0).length;
+    const sig=_pod.visSegTexts.length+'|'+known+'|'+Math.round(dur*4);
+    if(_pod.visTL && _pod._visSig===sig) return;
+    const tl=podBuildVisemeTLSegs(_pod.visSegTexts, durs, dur);
+    if(tl){ _pod.visTL=tl; _pod.visIdx=0; _pod._visSig=sig; return; }
+  }
+  if(!_pod.script) { _pod.visTL=null; return; }
+  if(_pod.visTL && !_pod._visSig && Math.abs((_pod.visTL.dur||0)-dur) < 1.5) return;   // فقط وقتی مدت واقعاً عوض شد بازبساز
+  _pod.visTL = podBuildVisemeTL(_pod.script, dur); _pod.visIdx=0; _pod._visSig='';
 }
 function podVisemeAt(el){
   const T=_pod.visTL; if(!T||!T.n) return null;
@@ -5074,7 +5110,7 @@ function podReactStart(){
     // ۲۳.۱۱ — اگر خطِ زمانیِ متن هست، «شکل» را از متن بگیر و «بازشدن» را از صدا (بلندی).
     podEnsureVisemeTL();
     let want='X', sec='', secW=0, tl=null, tlGate=1;
-    if(_pod.visTL){ const el=_pod.cloud?podElapsed():((Date.now()-_pod.t0)/1000); tl=podVisemeAt(el); }
+    if(_pod.visTL){ const el=(_pod.cloud?podElapsed():((Date.now()-_pod.t0)/1000))+0.05; tl=podVisemeAt(el); }   // پیش‌بینیِ ۵۰ms (لب کمی جلوتر ⇒ طبیعی‌تر)
     if(tl){
       // ۲۳.۱۲ — نویزگیت: دامنهٔ دهان از انرژیِ واقعیِ صدا گرفته می‌شود، نه فقط از متن.
       // مشکل: خطِ زمانیِ متن یکنواخت پخش می‌شود ولی صدای واقعی بین کلمات/جملات مکث دارد؛
@@ -5793,14 +5829,36 @@ function podAvApplyModes(){ const el=document.getElementById('podAvatar'); if(!e
 function podFloatPos(){ try{ const p=JSON.parse(localStorage.getItem('pod_float_pos')||'null'); if(!p) return null;
     const w=120, h=180; let l=Math.max(4,Math.min((window.innerWidth||360)-w-4, p.left)); let tp=Math.max(4,Math.min((window.innerHeight||640)-h-4, p.top)); return {left:l, top:tp};
   }catch(e){ return null; } }
-let _podFd=null;
-function podAvSetupDrag(el){ if(!el||el._fdBound) return; el._fdBound=true; el.addEventListener('pointerdown', podFdDown); }
+let _podFd=null;              // حالتِ درگِ تک‌انگشتی
+let _podPinch=null;           // حالتِ زومِ دوانگشتی (پینچ)
+const _podPts=new Map();      // اشاره‌گرهای فعال روی مینی‌پلیر
+function podFloatScale(){ let s=parseFloat(localStorage.getItem('pod_float_scale')||'1'); if(!isFinite(s)) s=1; return Math.max(0.6, Math.min(2.4, s)); }
+function podFloatApplyScale(s){ const el=document.getElementById('podAvatar'); if(!el) return; s=Math.max(0.6, Math.min(2.4, s||1));
+  el.style.setProperty('--fscale', s); try{ localStorage.setItem('pod_float_scale', String(s)); }catch(_){}
+  try{ if(typeof pod3dResize==='function') pod3dResize(); }catch(_){}
+}
+function podAvSetupDrag(el){ if(!el) return; try{ el.style.setProperty('--fscale', podFloatScale()); }catch(_){}
+  if(el._fdBound) return; el._fdBound=true; el.addEventListener('pointerdown', podFdDown); }
 function podFdDown(e){ const el=e.currentTarget; if(!el.classList.contains('pod-av--float')) return;
   if(e.target&&e.target.closest&&e.target.closest('.pod-av-dock,.pod-av-fs,.pod-3d-zoom,button')) return;   // دکمه‌ها را درگ نکن
-  const r=el.getBoundingClientRect(); _podFd={el, sx:e.clientX, sy:e.clientY, ox:r.left, oy:r.top, moved:false};
+  _podPts.set(e.pointerId, {x:e.clientX, y:e.clientY});
   el.style.transition='none'; try{ el.setPointerCapture&&el.setPointerCapture(e.pointerId); }catch(_){}
+  if(_podPts.size>=2){                                  // دو انگشت ⇒ شروعِ زومِ پینچ
+    const p=[..._podPts.values()]; const d=Math.hypot(p[0].x-p[1].x, p[0].y-p[1].y);
+    _podPinch={el, d0:Math.max(1,d), s0:podFloatScale()}; _podFd=null;
+  } else {                                              // یک انگشت ⇒ درگ
+    const r=el.getBoundingClientRect(); _podFd={el, sx:e.clientX, sy:e.clientY, ox:r.left, oy:r.top, moved:false};
+  }
 }
-function podFdMove(e){ if(!_podFd) return; const dx=e.clientX-_podFd.sx, dy=e.clientY-_podFd.sy; if(Math.abs(dx)+Math.abs(dy)>4) _podFd.moved=true;
+function podFdMove(e){ if(!_podPts.has(e.pointerId)&&!_podFd&&!_podPinch) return;
+  if(_podPts.has(e.pointerId)) _podPts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  if(_podPinch && _podPts.size>=2){                     // زومِ دوانگشتی
+    const p=[..._podPts.values()]; const d=Math.hypot(p[0].x-p[1].x, p[0].y-p[1].y);
+    podFloatApplyScale(_podPinch.s0 * (d/_podPinch.d0));
+    podAvShowControls(); if(e.cancelable) e.preventDefault(); return;
+  }
+  if(!_podFd) return;
+  const dx=e.clientX-_podFd.sx, dy=e.clientY-_podFd.sy; if(Math.abs(dx)+Math.abs(dy)>4) _podFd.moved=true;
   const el=_podFd.el, w=el.offsetWidth||120, h=el.offsetHeight||152;
   const nl=Math.max(4,Math.min((window.innerWidth||360)-w-4,_podFd.ox+dx)), nt=Math.max(4,Math.min((window.innerHeight||640)-h-4,_podFd.oy+dy));
   // مهم (RTL): اول propهای منطقی را پاک کن چون inset-inline-end به left نگاشت می‌شود و اگر بعد از left ست شود آن را خنثی می‌کند
@@ -5808,7 +5866,11 @@ function podFdMove(e){ if(!_podFd) return; const dx=e.clientX-_podFd.sx, dy=e.cl
   el.style.left=nl+'px'; el.style.top=nt+'px';
   if(e.cancelable) e.preventDefault();
 }
-function podFdUp(){ if(!_podFd) return; const el=_podFd.el; if(_podFd.moved){ try{ localStorage.setItem('pod_float_pos', JSON.stringify({left:parseInt(el.style.left)||0, top:parseInt(el.style.top)||0})); }catch(_){}} _podFd=null; }
+function podFdUp(e){ if(e&&e.pointerId!=null) _podPts.delete(e.pointerId);
+  if(_podFd){ const el=_podFd.el; if(_podFd.moved){ try{ localStorage.setItem('pod_float_pos', JSON.stringify({left:parseInt(el.style.left)||0, top:parseInt(el.style.top)||0})); }catch(_){}} }
+  if(_podPts.size<2) _podPinch=null;                    // پایانِ پینچ وقتی کمتر از دو انگشت ماند
+  if(_podPts.size===0) _podFd=null;
+}
 (function(){ try{ document.addEventListener('pointermove', podFdMove, {passive:false}); document.addEventListener('pointerup', podFdUp); document.addEventListener('pointercancel', podFdUp); }catch(e){} })();
 // جابه‌جاییِ المانِ آواتار بین کارتِ خانه و body (برای شناوریِ بین‌تبی)
 function podAvReparent(toBody){ const el=document.getElementById('podAvatar'); if(!el) return;
