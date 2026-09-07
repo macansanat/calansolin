@@ -5785,7 +5785,7 @@ function podAvApplyModes(){ const el=document.getElementById('podAvatar'); if(!e
   const floatOn = !!_pod._float && !_pod._full && _pod.mode==='playing';
   el.classList.toggle('pod-av--float', floatOn);
   podAvReparent(floatOn);   // در حالتِ شناور، المان را به body ببر تا با عوضِ تب پنهان نشود
-  if(floatOn){ try{ podAvSetupDrag(el); const pos=podFloatPos(); if(pos){ el.style.left=pos.left+'px'; el.style.top=pos.top+'px'; el.style.right='auto'; el.style.bottom='auto'; el.style.insetInlineEnd='auto'; } }catch(e){} }
+  if(floatOn){ try{ podAvSetupDrag(el); const pos=podFloatPos(); if(pos){ el.style.insetInlineEnd='auto'; el.style.insetInlineStart='auto'; el.style.right='auto'; el.style.bottom='auto'; el.style.left=pos.left+'px'; el.style.top=pos.top+'px'; } }catch(e){} }
   else { try{ el.style.left=el.style.top=el.style.right=el.style.bottom=el.style.insetInlineEnd=el.style.transition=''; }catch(e){} }
   podAvResizeSoon();
 }
@@ -5803,7 +5803,9 @@ function podFdDown(e){ const el=e.currentTarget; if(!el.classList.contains('pod-
 function podFdMove(e){ if(!_podFd) return; const dx=e.clientX-_podFd.sx, dy=e.clientY-_podFd.sy; if(Math.abs(dx)+Math.abs(dy)>4) _podFd.moved=true;
   const el=_podFd.el, w=el.offsetWidth||120, h=el.offsetHeight||152;
   const nl=Math.max(4,Math.min((window.innerWidth||360)-w-4,_podFd.ox+dx)), nt=Math.max(4,Math.min((window.innerHeight||640)-h-4,_podFd.oy+dy));
-  el.style.left=nl+'px'; el.style.top=nt+'px'; el.style.right='auto'; el.style.bottom='auto'; el.style.insetInlineEnd='auto';
+  // مهم (RTL): اول propهای منطقی را پاک کن چون inset-inline-end به left نگاشت می‌شود و اگر بعد از left ست شود آن را خنثی می‌کند
+  el.style.insetInlineEnd='auto'; el.style.insetInlineStart='auto'; el.style.right='auto'; el.style.bottom='auto';
+  el.style.left=nl+'px'; el.style.top=nt+'px';
   if(e.cancelable) e.preventDefault();
 }
 function podFdUp(){ if(!_podFd) return; const el=_podFd.el; if(_podFd.moved){ try{ localStorage.setItem('pod_float_pos', JSON.stringify({left:parseInt(el.style.left)||0, top:parseInt(el.style.top)||0})); }catch(_){}} _podFd=null; }
