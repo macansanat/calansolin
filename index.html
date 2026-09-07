@@ -2314,7 +2314,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۷۲</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۷۳</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3844,7 +3844,7 @@ function podPrompt(mins){
 async function podcastGenerate(force){
   const today=podTodayKey(); const cur=podLoad(); const mins=podCfg().minutes; const sig=podContentSig();
   if(!force && cur && cur.dateKey===today && cur.script && cur.len===mins && cur.sig===sig){ return cur; }
-  let script='', usedProv='offline';
+  let script='', usedProv='offline', errMsg='';
   const online=(navigator.onLine!==false);
   const anyKey=VISION_PROVIDERS.some(p=>hasAnyKey(p)&&!aiFrozen(p));
   if(online && anyKey){
@@ -3852,12 +3852,16 @@ async function podcastGenerate(force){
       const prompt=podPrompt(mins); const prov=sectionProvider('podcast');
       // فارسی در توکنایزر ~۳ توکن به‌ازای هر کلمه؛ برای «mins» دقیقه (~۱۵۰ کلمه/دقیقه) سقفِ توکن باید سخاوتمند باشد وگرنه متن وسطِ کار قطع می‌شود
       const maxTok=Math.min(8192, mins*600+800);
-      // متنِ پادکست را با مدلِ ارزان بگیر (OpenAI → gpt-4o-mini) تا هزینه پایین بماند؛ پزشک/تحلیل جدا و باکیفیت‌تر می‌ماند. دمای کمی بالاتر ⇒ روایتِ طبیعی‌تر و طولانی‌تر
+      // متنِ پادکست با مدلِ منتخبِ «متنِ پادکست» ساخته می‌شود. دمای کمی بالاتر ⇒ روایتِ طبیعی‌تر و طولانی‌تر
       let out=await aiSectionCall('podcast',(pv,key,model)=>callAIText(pv,key,prompt,maxTok,0.6, model),{onProv:(pv)=>{usedProv=pv;}});
       out=podCleanScript(out);
       if(out && podWordCount(out)>=60) script=out;
-    }catch(e){ script=''; }
+    }catch(e){ script=''; errMsg=(e&&e.message)?e.message:String(e||''); }
   }
+  // اگر متنِ آنلاین ساخته نشد ولی کلید/اینترنت بود ⇒ یعنی خطای مدل/سرویس؛ به‌جای رد شدنِ بی‌صدا، به کاربر هشدار بده (مثلاً مدلِ منتشرنشده)
+  const fellBack=(online && anyKey && !script);
+  _pod.genErr = fellBack ? (errMsg||'unknown') : '';
+  if(fellBack){ try{ const mdl=(secCfg('podcast').model)||''; uiToast&&uiToast('⚠️ متنِ آنلاینِ پادکست ساخته نشد'+(mdl?(' (مدل: '+mdl+')'):'')+' — '+podErrHint(errMsg)+' · نسخهٔ کوتاهِ آفلاین پخش شد. مدلِ «متنِ پادکست» را در پروفایل عوض کن.'); }catch(e){} }
   if(!script){ script=podOfflineScript(mins); usedProv='offline'; }
   const C=podCfg().content||podContentCfg();
   const topics=Object.keys(POD_TOPIC_FA).filter(k=>C[k]!==false);
@@ -4522,6 +4526,7 @@ async function podAvatarRegen(fresh){
 }
 // پیامِ راهنمای کوتاه از متنِ خطا (برای کاربر)
 function podErrHint(msg){ const m=String(msg||'');
+  if(/model_not_found|does not exist|no such model|unknown model|not found|unsupported model|404|model.*(invalid|deprecat)/i.test(m)) return 'این مدل در دسترسِ کلیدت نیست یا هنوز منتشر نشده؛ مدلِ دیگری (مثلِ GPT-4o) انتخاب کن';
   if(/429|rate|quota|limit|exhausted|resource/i.test(m)) return 'سقفِ نرخِ سرویس؛ چند دقیقه بعد دوباره «🎨 ساختِ چهره» را بزن (Gemini رایگان محدودیتِ دقیقه‌ای دارد)';
   if(/401|403|invalid|api key|permission|unauthor/i.test(m)) return 'کلید/دسترسی مشکل دارد (تنظیماتِ 🤖 را چک کن)';
   if(/verif|organization/i.test(m)) return 'برای gpt-image-1 باید سازمانِ OpenAI تأیید شود؛ کلیدِ Gemini امتحان کن';
