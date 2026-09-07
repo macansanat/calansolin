@@ -2314,7 +2314,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۷۶</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۷۷</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -11637,7 +11637,7 @@ async function callVision(prov, key, img, promptText, maxTok, thinkBudget, model
     const res=await fetch('https://api.openai.com/v1/chat/completions',{
       method:'POST',
       headers:{'content-type':'application/json','authorization':'Bearer '+key},
-      body:JSON.stringify({ model:modelOverride||VISION_MODELS.openai, max_tokens:mt,
+      body:JSON.stringify({ model:modelOverride||VISION_MODELS.openai, ...oaTok(modelOverride||VISION_MODELS.openai, mt),
         messages:[{role:'user',content:[{type:'text',text:prompt},{type:'image_url',image_url:{url:img.dataURL}}]}] })
     });
     if(!res.ok){ throw new Error('OpenAI ('+res.status+'): '+(await res.text()).slice(0,800)); }
@@ -11657,6 +11657,8 @@ async function callVision(prov, key, img, promptText, maxTok, thinkBudget, model
   return (data.content||[]).filter(b=>b&&b.type==='text').map(b=>b.text).join('\n');
 }
 // تماس فقط‌متنی (بدون عکس) — سبک و کم‌توکن؛ برای تحلیل مقادیر آزمایش.
+// مدل‌های تازهٔ OpenAI (GPT-5/GPT-6/o-series) پارامترِ max_tokens را رد می‌کنند و max_completion_tokens می‌خواهند
+function oaTok(model, mt){ return /^(o\d|gpt-5|gpt-6)/i.test(String(model||'')) ? {max_completion_tokens:mt} : {max_tokens:mt}; }
 async function callAIText(prov, key, promptText, maxTok, thinkBudget, modelOverride){
   const mt=maxTok||700;
   if(prov==='gemini'){
@@ -11667,7 +11669,7 @@ async function callAIText(prov, key, promptText, maxTok, thinkBudget, modelOverr
     const model = modelOverride || (prov==='deepseek' ? VISION_MODELS.deepseek : VISION_MODELS.openai);
     const res=await fetch(url,{ method:'POST',
       headers:{'content-type':'application/json','authorization':'Bearer '+key},
-      body:JSON.stringify({ model, max_tokens:mt, messages:[{role:'user',content:promptText}] }) });
+      body:JSON.stringify({ model, ...oaTok(model, mt), messages:[{role:'user',content:promptText}] }) });
     if(!res.ok){ throw new Error(PROVIDER_NAMES[prov]+' ('+res.status+'): '+(await res.text()).slice(0,800)); }
     const data=await res.json();
     chargeOpenAIUsage(prov, model, data.usage);
@@ -11700,7 +11702,7 @@ async function callAIChat(prov, key, systemText, messages, opts){
     if(prov==='deepseek' && !opts.model && opts.speed==='smart') model='deepseek-reasoner';
     const msgs=[]; if(systemText) msgs.push({role:'system',content:systemText}); messages.forEach(m=>msgs.push({role:m.role==='assistant'?'assistant':'user',content:String(m.content||'')}));
     const res=await fetch(url,{ method:'POST', headers:{'content-type':'application/json','authorization':'Bearer '+key},
-      body:JSON.stringify({ model, max_tokens:mt, messages:msgs }) });
+      body:JSON.stringify({ model, ...oaTok(model, mt), messages:msgs }) });
     if(!res.ok){ throw new Error(PROVIDER_NAMES[prov]+' ('+res.status+'): '+(await res.text()).slice(0,800)); }
     const data=await res.json();
     chargeOpenAIUsage(prov, model, data.usage);
@@ -11755,7 +11757,7 @@ async function callAIChatStream(prov, key, systemText, messages, opts, onDelta){
       if(hasImg(m) && prov==='openai'){ const arr=[{type:'text',text:String(m.content||'')}]; m.images.forEach(im=>arr.push({type:'image_url',image_url:{url:im.dataURL}})); msgs.push({role,content:arr}); }
       else msgs.push({role,content:String(m.content||'')}); });
     const res=await fetch(url,{ method:'POST', headers:{'content-type':'application/json','authorization':'Bearer '+key},
-      body:JSON.stringify({ model, max_tokens:mt, stream:true, stream_options:{include_usage:true}, messages:msgs }) });
+      body:JSON.stringify({ model, ...oaTok(model, mt), stream:true, stream_options:{include_usage:true}, messages:msgs }) });
     let _usage=null;
     const full=await readSSE(res, d=>(d.choices&&d.choices[0]&&d.choices[0].delta&&d.choices[0].delta.content)||'', o=>{ if(o&&o.usage) _usage=o.usage; });
     chargeOpenAIUsage(prov, model, _usage);
