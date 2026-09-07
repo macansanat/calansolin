@@ -1265,6 +1265,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <div><label class="qbg-lbl">تاریخ (شمسی)</label><div id="qinsDateWrap"></div></div>
       <div><label class="qbg-lbl">ساعت</label><input type="time" id="qinsTime" class="qbg-in"></div>
     </div>
+    <button type="button" onclick="saveInsNotTaken()" style="width:100%;margin-bottom:10px;background:rgba(224,163,85,.12);border:1px solid var(--amber);color:var(--amber);border-radius:11px;padding:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">🚫 امروز این انسولین را نزدم</button>
     <div class="qbg-actions"><button class="qbg-cancel" onclick="closeQEntry('qinsModal')">لغو</button><button class="qbg-save" onclick="saveQuickInsulin()">💾 ذخیره</button></div>
   </div>
 </div>
@@ -1291,6 +1292,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <div><label class="qbg-lbl">تاریخ (شمسی)</label><div id="qmedDateWrap"></div></div>
       <div><label class="qbg-lbl">ساعت</label><input type="time" id="qmedTime" class="qbg-in"></div>
     </div>
+    <button type="button" onclick="saveMedNotTaken()" style="width:100%;margin-bottom:10px;background:rgba(224,163,85,.12);border:1px solid var(--amber);color:var(--amber);border-radius:11px;padding:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">🚫 امروز این دارو را مصرف نکردم</button>
     <div class="qbg-actions"><button class="qbg-cancel" onclick="closeQEntry('qmedModal')">لغو</button><button class="qbg-save" onclick="saveQuickMed()">💾 ذخیره</button></div>
   </div>
 </div>
@@ -2314,7 +2316,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۸۲</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۸۳</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -6294,6 +6296,7 @@ function renderDailyReport(){
   try{ loadBG().forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); bgCount++; ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🩸', color:'#f0a29b', title:'قند خون', detail:faDigits(x.glu)+' mg/dL', kind:'bg', iso:x.iso}); } }); }catch(e){}
   const jlog=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'[]'); }catch(e){ return []; } };
   jlog('med_log_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'💊', color:'#c3b4f0', title:'دارو', detail:x.name+(x.count?' · '+x.count:'')+(x.dose?' · '+x.dose:'')+(x.timing?' · '+x.timing:''), kind:'med', iso:x.iso}); } });
+  jlog('skip_log_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🚫', color:'#e0a355', title:(x.kind==='insulin'?'انسولین نزده':'دارو نزده'), detail:x.name, kind:'skip', iso:x.iso}); } });
   jlog('mood_log_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🙂', color:'#e9b877', title:'حالت روحی', detail:x.mood+(x.note?' · '+x.note:''), kind:'mood', iso:x.iso}); } });
   jlog('vitals_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'❤️', color:'#f0a29b', title:'فشار و ضربان', detail:vitalsFa(x), kind:'vitals', iso:x.iso}); } });
   try{ (loadExLog().entries||[]).forEach(x=>{ if(x.ts&&dayKey(new Date(x.ts))===key){ const d=new Date(x.ts); ev.push({sm:x.time?smFromT(x.time):hourMin(d), time:x.time?faDigits(x.time):fmtHM(d), ico:'🏃', color:'#9fc0f0', title:'ورزش', detail:(x.items||[]).map(it=>it.name).join('، '), kind:'exlog', ts:x.ts}); } }); }catch(e){}
@@ -6802,6 +6805,7 @@ function collectAllEvents(){
     out.push({dateKey:key, sm:bz.time?smFromT(bz.time):1440, time:bz.time?faDigits(bz.time):'', ico:'🛡️', color:'#5fd3bd', title:'انسولین پایه', detail:(bz.type?bz.type+' · ':'')+faDigits(bz.dose)+' واحد', kind:'basal', key}); }
   try{ loadBG().forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'🩸', color:'#f0a29b', title:'قند خون', detail:faDigits(x.glu)+' mg/dL', kind:'bg', iso:x.iso}); }); }catch(e){}
   jlogGet('med_log_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'💊', color:'#c3b4f0', title:'دارو', detail:x.name+(x.count?' · '+x.count:'')+(x.dose?' · '+x.dose:'')+(x.timing?' · '+x.timing:''), kind:'med', iso:x.iso}); });
+  jlogGet('skip_log_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'🚫', color:'#e0a355', title:(x.kind==='insulin'?'انسولین نزده':'دارو نزده'), detail:x.name, kind:'skip', iso:x.iso}); });
   jlogGet('mood_log_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'🙂', color:'#e9b877', title:'حالت روحی', detail:x.mood+(x.note?' · '+x.note:''), kind:'mood', iso:x.iso}); });
   jlogGet('sleep_log_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:-1, time:'', ico:'😴', color:'#9fc0f0', title:'خواب', detail:faDigits(x.hours)+' ساعت'+(x.quality?' · '+x.quality:''), kind:'sleep', iso:x.iso}); });
   jlogGet('vitals_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'❤️', color:'#f0a29b', title:'فشار و ضربان', detail:vitalsFa(x), kind:'vitals', iso:x.iso}); });
@@ -7274,6 +7278,21 @@ function qDateTimeISO(dateInpId,timeId){
   return {iso:d.toISOString(), sh:`${jDateStr(pj[0],pj[1],pj[2])}${timeId?' '+p(hh)+':'+p(mm):''}`};
 }
 function qLogPush(key,rec){ let arr=[]; try{ arr=JSON.parse(localStorage.getItem(key)||'[]'); }catch(e){} arr.push(rec); try{ localStorage.setItem(key,JSON.stringify(arr)); }catch(e){} }
+// «نزدم/مصرف نکردم» — لاگِ جدا (skip_log_v1) تا هوش مصنوعی بداند عمدی نزده، نه اینکه ثبت یادش رفته. در I:C دخالتی ندارد.
+function saveMedNotTaken(){
+  const name=(document.getElementById('qmedName').value||'').trim()||'دارو';
+  const dt=qDateTimeISO('qmedDate','qmedTime'); if(!dt){ alert('تاریخ را انتخاب کن.'); return; }
+  qLogPush('skip_log_v1',{iso:dt.iso, time:dt.sh, kind:'med', name});
+  closeQEntry('qmedModal'); uiToast('✓ ثبت شد که این دارو را مصرف نکردی'); afterQuickLog();
+}
+function saveInsNotTaken(){
+  const name=(document.getElementById('qinsName')&&document.getElementById('qinsName').value||'').trim()||'انسولین';
+  const kind=(_qinsType==='basal'?'انسولین پایه':'انسولین سریع');
+  const meal=(document.getElementById('qinsMeal')||{}).value||'';
+  const dt=qDateTimeISO('qinsDate','qinsTime'); if(!dt){ alert('تاریخ را انتخاب کن.'); return; }
+  qLogPush('skip_log_v1',{iso:dt.iso, time:dt.sh, kind:'insulin', name:(name+(meal?(' — '+meal):'')), sub:kind});
+  closeQEntry('qinsModal'); uiToast('✓ ثبت شد که این انسولین را نزدی'); afterQuickLog();
+}
 let _editMedIso=null;
 function saveQuickMed(){
   const name=(document.getElementById('qmedName').value||'').trim();
@@ -8339,7 +8358,7 @@ async function loadProfile(){
 // کلیدهای localStorage که در بکاپ گنجانده می‌شوند (نقشه‌ی داده‌ی کاربر).
 // از مقادیر رشته‌ای مستقیم استفاده می‌شود چون بعضی از این const‌ها (CGMKEY, BGKEY, ...)
 // پایین‌تر در فایل تعریف شده‌اند و ارجاع به خودِ متغیر اینجا TDZ می‌دهد.
-const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','sleep_log_v1','mood_log_v1','vitals_v1','journal_v1','weight_log_v1','custom_foods_v1','custom_meds_v1','custom_exercises_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','ai_model_frozen_v1','ai_section_model_v1','journeys_v1','pod_cfg_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1'];
+const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','skip_log_v1','sleep_log_v1','mood_log_v1','vitals_v1','journal_v1','weight_log_v1','custom_foods_v1','custom_meds_v1','custom_exercises_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','ai_model_frozen_v1','ai_section_model_v1','journeys_v1','pod_cfg_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1'];
 
 async function renderProfileTab(){
   // فرم پروفایل (c-profile) حالا خودش داخل این تب است و وضعیت ذخیره‌شده را نشان می‌دهد.
@@ -15643,6 +15662,12 @@ function buildHealthSnapshot(scope){
       const ex=pex[key]; if(Array.isArray(ex)&&ex.length){ parts.push('ورزش: '+ex.map(x=>(x.name||x.type||'')+(x.set?(' ['+x.set+']'):'')+(x.dur?(' '+x.dur+'دق'):'')+(x.time?(' '+x.time):'')).join('، ')); }
       if(parts.length) up.push(dn(k)+' — '+parts.join(' ؛ ')); }
     if(up.length) L.push('برنامهٔ پیشِ‌روِ کاربر (برنامه‌ریزی‌شده): '+up.join(' || '));
+  }catch(e){}
+  // «نزدم/مصرف نکردم» — ثبتِ عمدیِ نزدنِ انسولین/دارو؛ به AI بفهمان که این یعنی «عمداً نزده»، نه «داده ثبت نشده»
+  try{ const sk=jl('skip_log_v1').filter(x=>{ const d=new Date(x.iso); if(inWin(d)){ seen(d); return true; } return false; });
+    if(sk.length){ const ins=sk.filter(x=>x.kind==='insulin').map(x=>x.name); const med=sk.filter(x=>x.kind==='med').map(x=>x.name);
+      const parts=[]; if(ins.length) parts.push('انسولین: '+ins.join('، ')); if(med.length) parts.push('دارو: '+med.join('، '));
+      L.push('⚠️ مواردی که کاربر «عمداً نزده/مصرف نکرده» (خودش ثبت کرده — یعنی فراموشیِ ثبت نیست، واقعاً مصرف نشده؛ در توصیه‌ها این را در نظر بگیر): '+parts.join(' ؛ ')); }
   }catch(e){}
   return { label:w.label, text:L.join('\n') };
 }
