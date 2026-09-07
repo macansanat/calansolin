@@ -2316,7 +2316,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۹۱</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۹۲</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5337,7 +5337,7 @@ function pod3dSetupModel(modelScene, gender, url){
          pod3dPoseArmsDown(modelScene, 'RightArm','RightForeArm', new T.Vector3(-0.25,-1,0.08));
          modelScene.updateMatrixWorld&&modelScene.updateMatrixWorld(true); _pod3d.posed=true;
          // استخوان‌ها را برای «حرکتِ زندهٔ بدن/دست/سر هنگام صحبت» ذخیره کن (کواترنیونِ پایهٔ همین ژست)
-         _pod3d.gbones={}; _pod3d._ge=0; _pod3d.gc=null; _pod3d.gmodel=modelScene; _pod3d.fb=undefined; ['Hips','Spine','Spine1','Spine2','Neck','Head','LeftArm','RightArm','LeftForeArm','RightForeArm','LeftHand','RightHand'].forEach(n=>{ const b=pod3dBone(modelScene,n); if(b) _pod3d.gbones[n]={b:b, q:b.quaternion.clone()}; });
+         _pod3d.gbones={}; _pod3d._ge=0; _pod3d.gc=null; _pod3d.gp=null; _pod3d.gmodel=modelScene; _pod3d.fb=undefined; _pod3d.fgs=undefined; ['Hips','Spine','Spine1','Spine2','Neck','Head','LeftArm','RightArm','LeftForeArm','RightForeArm','LeftHand','RightHand'].forEach(n=>{ const b=pod3dBone(modelScene,n); if(b) _pod3d.gbones[n]={b:b, q:b.quaternion.clone()}; });
     }catch(e){}
   } else {
     try{ if(_pod3d.idleClip && T.AnimationMixer){
@@ -5456,7 +5456,7 @@ function pod3dGesture(open){
     aim(La,Lf,pose.LA); aim(Lf,Lh,pose.LF); aim(Ra,Rf,pose.RA); aim(Rf,Rh,pose.RF);
     if(Lh){ const q=new T.Quaternion().setFromEuler(new T.Euler(pose.LH[0],pose.LH[1],pose.LH[2],'XYZ')); Lh.b.quaternion.copy(Lh.q).multiply(q); }
     if(Rh){ const q=new T.Quaternion().setFromEuler(new T.Euler(pose.RH[0],pose.RH[1],pose.RH[2],'XYZ')); Rh.b.quaternion.copy(Rh.q).multiply(q); }
-    // انگشت‌ها را دست‌نخورده (حالتِ طبیعیِ خودِ مدل) می‌گذاریم — خمِ دستیِ قبلی «انحراف» می‌داد
+    try{ const sh=pod3dPoseFingers(pose); pod3dApplyFingers(sh[0], sh[1], k); }catch(e){}   // انیمیتِ انگشت‌ها (اشاره/کف‌باز/گره)
     return;
   }
   // حالتِ نرمالِ امن (پیش‌فرض) — ملایم، دست‌ها پایینِ جلو، هرگز پشتِ سر/بدن نمی‌روند
@@ -5469,13 +5469,37 @@ function pod3dGesture(open){
   if(LHn){ const q=new T.Quaternion().setFromEuler(new T.Euler(0, Math.sin(t*1.1)*0.03, 0,'XYZ')); LHn.b.quaternion.copy(LHn.q).multiply(q); }
   if(RHn){ const q=new T.Quaternion().setFromEuler(new T.Euler(0,-Math.sin(t*1.15)*0.03, 0,'XYZ')); RHn.b.quaternion.copy(RHn.q).multiply(q); }
 }
-// انگشت‌ها را کمی جمع/طبیعی می‌کند (به‌جای صافِ خشکِ پیش‌فرض) — جهتِ خم تجربی است
-function pod3dFingerBones(){ if(_pod3d.fb!==undefined) return _pod3d.fb; _pod3d.fb=[];
-  try{ const sc=_pod3d.gmodel; if(sc&&sc.traverse){ sc.traverse(o=>{ if((o.isBone||o.type==='Bone')&&/Hand(Thumb|Index|Middle|Ring|Pinky|Little)\d/i.test(o.name||'')){ _pod3d.fb.push({b:o, q:o.quaternion.clone(), th:/Thumb/i.test(o.name)}); } }); } }catch(e){}
-  return _pod3d.fb; }
-function pod3dFingerCurl(amt){ const fb=pod3dFingerBones(); if(!fb||!fb.length||!THREE) return; const T=THREE;
-  for(let i=0;i<fb.length;i++){ const f=fb[i]; const a=f.th?amt*0.35:amt;
-    const q=new T.Quaternion().setFromEuler(new T.Euler(0,0,a,'XYZ')); f.b.quaternion.copy(f.q).multiply(q); } }
+// ── انیمیتِ انگشت‌ها: استخوان‌های انگشت را گروه‌بندی و پوز می‌دهد (اشاره/کفِ‌باز/مشت/…) ──
+// محورِ خم = X (چون Z در تستِ قبلی «بازشدنِ پهلویی» بود). POD_FING_AXIS برای اصلاحِ آسانِ جهت اگر لازم شد.
+let POD_FING_AXIS='x', POD_FING_SIGN=1;
+function pod3dFingerGroups(){ if(_pod3d.fgs!==undefined) return _pod3d.fgs; _pod3d.fgs=null;
+  try{ const sc=_pod3d.gmodel; if(!sc||!sc.traverse) return null; const G={L:{},R:{}};
+    sc.traverse(o=>{ if(!(o.isBone||o.type==='Bone')) return; const m=/(Left|Right)Hand(Thumb|Index|Middle|Ring|Pinky|Little)(\d)/i.exec(o.name||''); if(!m) return;
+      const side=/Left/i.test(m[1])?'L':'R'; let fin=m[2].toLowerCase(); if(fin==='little') fin='pinky';
+      (G[side][fin]=G[side][fin]||[]).push({b:o, q:o.quaternion.clone(), j:+m[3], c:0}); });
+    ['L','R'].forEach(s=>{ for(const f in G[s]) G[s][f].sort((a,b)=>a.j-b.j); });
+    _pod3d.fgs=(Object.keys(G.L).length||Object.keys(G.R).length)?G:null;
+  }catch(e){ _pod3d.fgs=null; }
+  return _pod3d.fgs; }
+// میزانِ جمع‌شدنِ هر انگشت برای هر «شکلِ دست» [شست، اشاره، وسط، حلقه، کوچک] (۰=باز، ۱=جمع)
+const POD_FING={ relax:[0.25,0.28,0.32,0.36,0.4], open:[0.05,0.03,0.03,0.03,0.06],
+  point:[0.45,0.0,0.95,1.0,1.0], fist:[0.7,0.95,0.95,0.95,0.95], steeple:[0.12,0.06,0.06,0.06,0.1] };
+function pod3dApplyFingers(shL, shR, k){ const G=pod3dFingerGroups(); if(!G||!THREE) return; const T=THREE;
+  const fns=['thumb','index','middle','ring','pinky'];
+  const ax=(a)=>POD_FING_AXIS==='y'?new T.Euler(0,POD_FING_SIGN*a,0,'XYZ'):POD_FING_AXIS==='z'?new T.Euler(0,0,POD_FING_SIGN*a,'XYZ'):new T.Euler(POD_FING_SIGN*a,0,0,'XYZ');
+  const one=(side,shape)=>{ const cur=POD_FING[shape]||POD_FING.relax; const H=G[side]; if(!H) return;
+    fns.forEach((fn,fi)=>{ const arr=H[fn]; if(!arr) return; const tgt=cur[fi]*0.55;   // زاویهٔ هر بند
+      arr.forEach(joint=>{ joint.c=(joint.c||0)+(tgt-(joint.c||0))*k; const q=new T.Quaternion().setFromEuler(ax(joint.c)); joint.b.quaternion.copy(joint.q).multiply(q); }); }); };
+  one('L',shL); one('R',shR); }
+// شکلِ دستِ هر پوز را از نامش استنتاج می‌کند
+function pod3dPoseFingers(pose){ const n=pose.n||''; let l='relax', r='relax';
+  if(/openBoth|wideOpen|reachOut|midBoth|bothUp|twoUp|calmDown/.test(n)){ l='open'; r='open'; }
+  if(/steeple|clasp/.test(n)){ l='steeple'; r='steeple'; }
+  if(/indexR|pointFwdR|raiseHiR|chopR/.test(n)) r='point';
+  if(/indexL|pointFwdL/.test(n)) l='point';
+  if(/palmUpR|oneOutR/.test(n)) r='open';
+  if(/palmUpL/.test(n)) l='open';
+  return [l,r]; }
 // کواترنیونِ محلیِ هدف تا استخوانِ B (که فرزندش C است) در فضای‌جهانی به سمتِ dir اشاره کند (مستقل از محورِ استخوان)
 function pod3dAimTargetLocal(B,C,dir){ const T=THREE; if(!B||!C||!B.parent) return null;
   try{ const bp=new T.Vector3(), cp=new T.Vector3(); B.getWorldPosition(bp); C.getWorldPosition(cp);
