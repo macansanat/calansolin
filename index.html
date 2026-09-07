@@ -2316,7 +2316,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۹۲</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۹۳</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5483,7 +5483,8 @@ function pod3dFingerGroups(){ if(_pod3d.fgs!==undefined) return _pod3d.fgs; _pod
   return _pod3d.fgs; }
 // میزانِ جمع‌شدنِ هر انگشت برای هر «شکلِ دست» [شست، اشاره، وسط، حلقه، کوچک] (۰=باز، ۱=جمع)
 const POD_FING={ relax:[0.25,0.28,0.32,0.36,0.4], open:[0.05,0.03,0.03,0.03,0.06],
-  point:[0.45,0.0,0.95,1.0,1.0], fist:[0.7,0.95,0.95,0.95,0.95], steeple:[0.12,0.06,0.06,0.06,0.1] };
+  point:[0.45,0.0,0.95,1.0,1.0], fist:[0.7,0.95,0.95,0.95,0.95], steeple:[0.12,0.06,0.06,0.06,0.1],
+  ok:[0.6,0.6,0.1,0.08,0.12] };   // شست و اشاره جمع (حلقه)، بقیه باز
 function pod3dApplyFingers(shL, shR, k){ const G=pod3dFingerGroups(); if(!G||!THREE) return; const T=THREE;
   const fns=['thumb','index','middle','ring','pinky'];
   const ax=(a)=>POD_FING_AXIS==='y'?new T.Euler(0,POD_FING_SIGN*a,0,'XYZ'):POD_FING_AXIS==='z'?new T.Euler(0,0,POD_FING_SIGN*a,'XYZ'):new T.Euler(POD_FING_SIGN*a,0,0,'XYZ');
@@ -5493,12 +5494,16 @@ function pod3dApplyFingers(shL, shR, k){ const G=pod3dFingerGroups(); if(!G||!TH
   one('L',shL); one('R',shR); }
 // شکلِ دستِ هر پوز را از نامش استنتاج می‌کند
 function pod3dPoseFingers(pose){ const n=pose.n||''; let l='relax', r='relax';
-  if(/openBoth|wideOpen|reachOut|midBoth|bothUp|twoUp|calmDown/.test(n)){ l='open'; r='open'; }
+  if(/openBoth|wideOpen|reachOut|midBoth|bothUp|twoUp|calmDown|questionBoth/.test(n)){ l='open'; r='open'; }
   if(/steeple|clasp/.test(n)){ l='steeple'; r='steeple'; }
-  if(/indexR|pointFwdR|raiseHiR|chopR/.test(n)) r='point';
+  if(/indexR|pointFwdR|raiseHiR|chopR|indexHiR/.test(n)) r='point';
   if(/indexL|pointFwdL/.test(n)) l='point';
-  if(/palmUpR|oneOutR/.test(n)) r='open';
-  if(/palmUpL/.test(n)) l='open';
+  if(/palmUpR|oneOutR|stopR|palmSideR/.test(n)) r='open';
+  if(/palmUpL|palmSideL/.test(n)) l='open';
+  if(/okR/.test(n)) r='ok';
+  if(/okL/.test(n)) l='ok';
+  if(/chinR/.test(n)) r='relax';
+  if(/chinL/.test(n)) l='relax';
   return [l,r]; }
 // کواترنیونِ محلیِ هدف تا استخوانِ B (که فرزندش C است) در فضای‌جهانی به سمتِ dir اشاره کند (مستقل از محورِ استخوان)
 function pod3dAimTargetLocal(B,C,dir){ const T=THREE; if(!B||!C||!B.parent) return null;
@@ -5539,7 +5544,16 @@ const POD_GEST_POSES=[
   {n:'twoUpEmp',LA:[0.2,-0.8,0.25],RA:[-0.2,-0.8,0.25], LF:[0.15,0.32,0.85],   RF:[-0.15,0.32,0.85], LH:[0.18,0,0], RH:[0.18,0,0]},  // هر دو دست بالای تأکیدی
   {n:'chopR',   LA:[0.06,-1,0.10], RA:[-0.12,-0.85,0.3], LF:[0.05,-0.45,0.90], RF:[-0.15,0.05,0.92], LH:[0.1,0,0], RH:[0.05,0,0.5]},   // دستِ راستِ عمودی (تأکیدِ برشی)
   {n:'claspLow',LA:[0.08,-1,0.12], RA:[-0.08,-1,0.12], LF:[-0.16,-0.42,0.86], RF:[0.16,-0.42,0.86], LH:[0.2,0,0], RH:[0.2,0,0]},    // دست‌ها به‌هم‌گره‌خورده‌ی پایینِ جلو (عکسِ ۳)
-  {n:'claspMid',LA:[0.08,-1,0.12], RA:[-0.08,-1,0.12], LF:[-0.14,-0.15,0.92], RF:[0.14,-0.15,0.92], LH:[0.18,0,0], RH:[0.18,0,0]}   // دست‌ها به‌هم وسطِ جلو (بینِ هرمی و گره)
+  {n:'claspMid',LA:[0.08,-1,0.12], RA:[-0.08,-1,0.12], LF:[-0.14,-0.15,0.92], RF:[0.14,-0.15,0.92], LH:[0.18,0,0], RH:[0.18,0,0]},   // دست‌ها به‌هم وسطِ جلو (بینِ هرمی و گره)
+  // ── حالت‌های گریدِ ۲۰تایی ──
+  {n:'stopR',    LA:[0.06,-1,0.10], RA:[-0.1,-0.55,0.55], LF:[0.05,-0.45,0.9], RF:[-0.05,0.28,0.78], LH:[0.1,0,0], RH:[0.5,0,0]},   // کفِ دستِ راست رو‌به‌جلو (بایست/توقف)
+  {n:'okR',      LA:[0.06,-1,0.10], RA:[-0.12,-0.85,0.35],LF:[0.05,-0.45,0.9], RF:[-0.12,-0.05,0.92],LH:[0.1,0,0], RH:[0.2,0,0]},   // علامتِ OK با راست
+  {n:'okL',      LA:[0.12,-0.85,0.35],RA:[-0.06,-1,0.10], LF:[0.12,-0.05,0.92],RF:[-0.05,-0.45,0.9], LH:[0.2,0,0], RH:[0.1,0,0]},   // علامتِ OK با چپ
+  {n:'chinR',    LA:[0.06,-1,0.10], RA:[-0.18,-0.5,0.5],  LF:[0.05,-0.45,0.9], RF:[-0.05,0.72,0.5],  LH:[0.1,0,0], RH:[0.25,0,0]},  // دستِ راست نزدیکِ چانه (فکرکردن)
+  {n:'palmSideR',LA:[0.06,-1,0.10], RA:[-0.35,-0.82,0.22],LF:[0.05,-0.45,0.9], RF:[-0.45,-0.05,0.8], LH:[0.1,0,0], RH:[0.3,0,0]},   // کفِ راست رو‌به‌بالا کنارِ بدن
+  {n:'palmSideL',LA:[0.35,-0.82,0.22],RA:[-0.06,-1,0.10], LF:[0.45,-0.05,0.8], RF:[-0.05,-0.45,0.9], LH:[0.3,0,0], RH:[0.1,0,0]},   // کفِ چپ رو‌به‌بالا کنارِ بدن
+  {n:'indexHiR', LA:[0.06,-1,0.10], RA:[-0.1,-0.2,0.42],  LF:[0.05,-0.45,0.9], RF:[-0.03,0.95,0.28], LH:[0.1,0,0], RH:[0.05,0,0]},  // اشارهٔ انگشتِ بالاترِ راست
+  {n:'questionBoth',LA:[0.3,-0.85,0.28],RA:[-0.3,-0.85,0.28],LF:[0.4,-0.05,0.82],RF:[-0.4,-0.05,0.82],LH:[0.25,0,0],RH:[0.25,0,0]}  // هر دو کفِ باز رو‌به‌بالا (پرسشی)
 ];
 // بندانگشتیِ آواتار را از رندرِ زنده می‌گیرد و کش می‌کند (برای گالریِ تنظیمات)
 function pod3dThumbKey(url){ return 'pod3dthumb:'+(url||''); }
