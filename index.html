@@ -2314,7 +2314,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۸۰</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۸۱</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3622,7 +3622,7 @@ let _pod={ mode:'idle', cloud:false, ttsProv:'', music:null,
   analyser:null, raf:0, avImg:null, avImgGender:'', avBusy:false, musicKill:0, rawChunks:null, rawType:'',
   avFrames:null, avLayers:null, avLayersFor:'', avGeom:null, avW:null, avSway:null, blinkNext:0, blinkAt:0, avTmp:null,
   buffers:[], durs:[], cum:[0], totalDur:0, allFetched:false, playIdx:0, startCtx:0, startOff:0, playing:false, waiting:false,
-  audioEl:null, elUrls:[], elIdx:0, elMode:false };
+  audioEl:null, elUrls:[], elIdx:0, elMode:false, elBuffers:[], elRaw:[], elType:'', elSingle:false };
 const POD_RATING_FA={great:'عالی',good:'خوب',ok:'معمولی',bad:'سخت'};
 // صداهای انتخابیِ هر سرویس (id واقعیِ سرویس + برچسبِ فارسی)
 const POD_VOICES={
@@ -3986,7 +3986,20 @@ function podcastStart(rec){
     const cloudFail=(e)=>{ _pod.cloud=false; _pod.elMode=false; _pod.prep=false; try{ console.warn('podcast cloud TTS failed:', e&&e.message||e); }catch(_){}; uiToast&&uiToast('صدای ابری نشد؛ با صدای گوشی پخش می‌شود'); podMusicStart(); podProgressStart(); podBrowserSpeak(rec.script); renderPodcastCard(); };
     if(podBgEnabled()) podCloudSpeakEl(rec.script).catch(cloudFail);   // پخشِ پس‌زمینه‌ایِ المان‌محور (پیش‌فرض)
     else podCloudSpeak(rec.script).catch(cloudFail);                    // مسیرِ Web Audio (اگر پس‌زمینه خاموش شد)
+  } else if(podCfg().prov!=='device'){                                   // آفلاین/بی‌کلید: اول کشِ صوتِ قبلی را امتحان کن (نه مستقیم صدای گوشی)
+    podTryCachedElseDevice(rec.script);
   } else { podMusicStart(); podBrowserSpeak(rec.script); }
+}
+// اگر صوتِ AIِ همین متن قبلاً کش شده (هر سرویسی)، همان را پخش کن — حتی آفلاین؛ وگرنه صدای گوشی
+async function podTryCachedElseDevice(script){
+  for(const pv of ['openai','gemini']){ let hit=null; try{ hit=await podCacheGet(podAudioKeyFor(pv,script)); }catch(e){}
+    if(hit && hit.chunks && hit.chunks.length){ _pod.ttsProv=pv; _pod.cloud=true; _pod.prep=false;
+      const p=podBgEnabled()?podCloudSpeakEl(script):podCloudSpeak(script);
+      p.catch(()=>{ _pod.cloud=false; _pod.elMode=false; podMusicStart(); podBrowserSpeak(script); });
+      renderPodcastCard(); return;
+    }
+  }
+  podMusicStart(); podBrowserSpeak(script);
 }
 function podcastPause(){
   // مهم: کانتکستِ مشترکِ اپ را suspend نکن (وگرنه صدای دکمه‌ها و کلِ اپ هم قطع می‌شود).
@@ -4178,7 +4191,8 @@ async function podAudioTouch(key){ let a=podAudioKeys().filter(k=>k!==key); a.un
 }
 function podHash(s){ s=String(s||''); let h=5381; for(let i=0;i<s.length;i++){ h=((h<<5)+h+s.charCodeAt(i))|0; } return (h>>>0).toString(36); }
 // کلیدِ مستقل از تاریخ: همان متن + همان صدا = همان صوت (پخشِ آرشیو رایگان می‌ماند)
-function podAudioKey(full){ const c=podCfg(); const voice=_pod.ttsProv==='gemini'?c.gVoice:c.oVoice; return _pod.ttsProv+'|'+voice+'|'+podHash(full); }
+function podAudioKeyFor(prov, full){ const c=podCfg(); const voice=prov==='gemini'?c.gVoice:c.oVoice; return prov+'|'+voice+'|'+podHash(full); }
+function podAudioKey(full){ return podAudioKeyFor(_pod.ttsProv, full); }
 async function podCloudSpeak(full){
   const ctx=wkEnsureAudio(); if(!ctx) throw new Error('no audio ctx');
   podVoiceOut(ctx);
@@ -4234,8 +4248,33 @@ function podElEl(){ if(!_pod.audioEl){ const a=new Audio(); a.preload='auto'; tr
     _pod.audioEl=a; } return _pod.audioEl; }
 // آزادسازیِ المان در لمسِ کاربر (iOS اجازهٔ play بعد از await نمی‌دهد مگر یک‌بار در جسچر آزاد شود)
 function podElUnlock(){ try{ const a=podElEl(); if(!a.dataset||!a.dataset.unlocked){ a.src=POD_SILENT_WAV; const pr=a.play(); if(pr&&pr.then) pr.then(()=>{ try{a.pause();a.currentTime=0;}catch(e){} }).catch(()=>{}); if(a.dataset) a.dataset.unlocked='1'; } }catch(e){} }
-function podElReset(){ try{ const a=_pod.audioEl; if(a){ a.pause(); } }catch(e){} (_pod.elUrls||[]).forEach(u=>{ try{ URL.revokeObjectURL(u); }catch(e){} }); _pod.elUrls=[]; _pod.elIdx=0; _pod.elMode=false; _pod.playing=false; }
-function podElPush(rawBytes, type, dur){ let url=''; try{ url=URL.createObjectURL(new Blob([rawBytes],{type:type||'audio/mpeg'})); }catch(e){ return; } _pod.elUrls.push(url); dur=dur||0; _pod.durs.push(dur); _pod.cum.push((_pod.cum[_pod.cum.length-1]||0)+dur); _pod.totalDur+=dur; }
+function podElReset(){ try{ const a=_pod.audioEl; if(a){ a.pause(); } }catch(e){} (_pod.elUrls||[]).forEach(u=>{ try{ URL.revokeObjectURL(u); }catch(e){} }); _pod.elUrls=[]; _pod.elIdx=0; _pod.elMode=false; _pod.playing=false; _pod.elBuffers=[]; _pod.elRaw=[]; _pod.elType=''; _pod.elSingle=false; }
+function podElPush(rawBytes, type, dur, abuf){ let url=''; try{ url=URL.createObjectURL(new Blob([rawBytes],{type:type||'audio/mpeg'})); }catch(e){ return; } _pod.elUrls.push(url); dur=dur||0; _pod.durs.push(dur); _pod.cum.push((_pod.cum[_pod.cum.length-1]||0)+dur); _pod.totalDur+=dur; _pod.elRaw.push(rawBytes); if(abuf) _pod.elBuffers.push(abuf); if(type) _pod.elType=type; }
+// چند AudioBuffer را به یک WAVِ ۱۶بیتیِ mono درمی‌آورد (برای صدای غیرِ mp3 مثل Gemini)
+function podAudioBuffersToWav(buffers){ if(!buffers||!buffers.length) return null;
+  const sr=buffers[0].sampleRate||24000; let n=0; buffers.forEach(b=>{ n+=b.length; });
+  const pcm=new Float32Array(n); let off=0; buffers.forEach(b=>{ pcm.set(b.getChannelData(0), off); off+=b.length; });
+  const buf=new ArrayBuffer(44+n*2); const dv=new DataView(buf); const ws=(o,s)=>{ for(let i=0;i<s.length;i++) dv.setUint8(o+i,s.charCodeAt(i)); };
+  ws(0,'RIFF'); dv.setUint32(4,36+n*2,true); ws(8,'WAVE'); ws(12,'fmt '); dv.setUint32(16,16,true); dv.setUint16(20,1,true); dv.setUint16(22,1,true); dv.setUint32(24,sr,true); dv.setUint32(28,sr*2,true); dv.setUint16(32,2,true); dv.setUint16(34,16,true); ws(36,'data'); dv.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++){ let s=Math.max(-1,Math.min(1,pcm[i])); dv.setInt16(44+i*2, s<0?s*0x8000:s*0x7FFF, true); }
+  return new Blob([buf],{type:'audio/wav'});
+}
+// وقتی همهٔ قطعه‌ها آماده شد: یک فایلِ واحد بساز و المان را به آن سوییچ کن (بدونِ سوییچِ میانی ⇒ در قفلِ گوشی قطع نمی‌شود)
+function podElConsolidate(playFromZero){
+  if(!_pod.elMode || _pod.elSingle) return false;
+  let blob=null;
+  try{
+    if(/mpeg|mp3/i.test(_pod.elType||'') && _pod.elRaw.length){ blob=new Blob(_pod.elRaw,{type:'audio/mpeg'}); }   // mp3: به‌هم‌چسباندنِ خامِ فریم‌ها کافی است (سبک)
+    else if(_pod.elBuffers.length){ blob=podAudioBuffersToWav(_pod.elBuffers); }                                    // wav/pcm: از بافرهای دیکودشده یک WAV بساز
+  }catch(e){ blob=null; }
+  if(!blob) return false;
+  const pos=playFromZero?0:podElapsed();
+  let url=''; try{ url=URL.createObjectURL(blob); }catch(e){ return false; }
+  (_pod.elUrls||[]).forEach(u=>{ try{ URL.revokeObjectURL(u); }catch(e){} });
+  _pod.elUrls=[url]; _pod.durs=[_pod.totalDur]; _pod.cum=[0,_pod.totalDur]; _pod.elIdx=0; _pod.elSingle=true;
+  if(_pod.mode==='playing') podElLoadPlay(0, Math.max(0,Math.min(pos,_pod.totalDur-0.05)));
+  return true;
+}
 function podElStop(){ try{ const a=_pod.audioEl; if(a) a.pause(); }catch(e){} _pod.playing=false; }
 function podElLoadPlay(idx, off){ const a=podElEl();
   if(idx>=_pod.elUrls.length){ if(_pod.allFetched){ podcastEnded(); } else { _pod.waiting=true; _pod.elIdx=idx; _pod.startOff=0; } return; }
@@ -4256,12 +4295,13 @@ async function podCloudSpeakEl(full){
       _pod.prep=false; _pod.fromCache=true; _pod.rawChunks=hit.chunks; _pod.rawType=hit.type||'audio/mpeg';
       podMusicStart(); podMusicGain(0.05);
       for(let i=0;i<hit.chunks.length;i++){ if(_pod.mode==='idle') return;
-        let dur=0; try{ const ab=await podDecode(ctx, hit.chunks[i].slice(0)); dur=ab.duration||0; }catch(e){ dur=0; }
-        podElPush(hit.chunks[i], _pod.rawType, dur);
+        let dur=0, ab=null; try{ ab=await podDecode(ctx, hit.chunks[i].slice(0)); dur=ab.duration||0; }catch(e){ dur=0; }
+        podElPush(hit.chunks[i], _pod.rawType, dur, ab);
         if(_pod.elUrls.length===1){ podElLoadPlay(0,0); podMediaSessionSet(); renderPodcastCard(); }
         else if(_pod.waiting && _pod.elIdx===_pod.elUrls.length-1){ _pod.waiting=false; podElLoadPlay(_pod.elIdx, _pod.startOff||0); }
       }
-      _pod.allFetched=true; podMediaPos(); if(!_pod.playing && _pod.mode==='playing') podcastEnded();
+      _pod.allFetched=true; try{ podElConsolidate(false); }catch(e){}   // یک فایلِ واحد ⇒ در قفلِ گوشی قطع نمی‌شود
+      podMediaPos(); if(!_pod.playing && _pod.mode==='playing') podcastEnded();
       return;
     }
   }catch(e){}
@@ -4270,7 +4310,7 @@ async function podCloudSpeakEl(full){
   const first=await podFetchBuffer(chunks[0],3); if(!first) throw new Error('first chunk failed');
   if(_pod.mode==='idle') return;
   raw.push(first.raw); rawType=first.type||rawType;
-  podElPush(first.raw, rawType, (first.audio&&first.audio.duration)||0);
+  podElPush(first.raw, rawType, (first.audio&&first.audio.duration)||0, first.audio);
   _pod.prep=false; podMusicStart(); podMusicGain(0.05); podElLoadPlay(0,0); podMediaSessionSet(); renderPodcastCard();
   let fails=0;
   for(let i=1;i<chunks.length;i++){
@@ -4278,11 +4318,13 @@ async function podCloudSpeakEl(full){
     if(_pod.mode==='idle') return;
     const r=await podFetchBuffer(chunks[i],3); if(_pod.mode==='idle') return;
     if(!r){ fails++; if(fails>=2){ _pod.cloud=false; _pod.elMode=false; uiToast&&uiToast('ادامه با صدای گوشی'); podElStop(); podBrowserSpeak(chunks.slice(i).join(' ')); return; } continue; }
-    fails=0; raw.push(r.raw); podElPush(r.raw, rawType, (r.audio&&r.audio.duration)||0);
+    fails=0; raw.push(r.raw); podElPush(r.raw, rawType, (r.audio&&r.audio.duration)||0, r.audio);
     if(_pod.waiting && _pod.elIdx===_pod.elUrls.length-1){ _pod.waiting=false; podElLoadPlay(_pod.elIdx, _pod.startOff||0); }
   }
-  _pod.allFetched=true; _pod.rawChunks=raw; _pod.rawType=rawType; podMediaPos();
+  _pod.allFetched=true; _pod.rawChunks=raw; _pod.rawType=rawType;
   if(raw.length===chunks.length){ try{ await podCachePut(key,{chunks:raw,type:rawType,ts:Date.now()}); await podAudioTouch(key); }catch(e){} }
+  try{ podElConsolidate(false); }catch(e){}   // فایلِ واحد ⇒ ادامهٔ پخش در قفلِ گوشی
+  podMediaPos();
   if(!_pod.playing && _pod.mode==='playing') podcastEnded();
 }
 // ── MediaSession: پلیرِ قفل‌صفحه/نوتیفیکیشن ──
