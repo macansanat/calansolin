@@ -2314,7 +2314,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۷۸</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۷۹</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3621,7 +3621,8 @@ let _pod={ mode:'idle', cloud:false, ttsProv:'', music:null,
   t0:0, estDur:0, timer:0, prep:false, seeking:false, voiceGain:null, srcNode:null,
   analyser:null, raf:0, avImg:null, avImgGender:'', avBusy:false, musicKill:0, rawChunks:null, rawType:'',
   avFrames:null, avLayers:null, avLayersFor:'', avGeom:null, avW:null, avSway:null, blinkNext:0, blinkAt:0, avTmp:null,
-  buffers:[], durs:[], cum:[0], totalDur:0, allFetched:false, playIdx:0, startCtx:0, startOff:0, playing:false, waiting:false };
+  buffers:[], durs:[], cum:[0], totalDur:0, allFetched:false, playIdx:0, startCtx:0, startOff:0, playing:false, waiting:false,
+  audioEl:null, elUrls:[], elIdx:0, elMode:false };
 const POD_RATING_FA={great:'عالی',good:'خوب',ok:'معمولی',bad:'سخت'};
 // صداهای انتخابیِ هر سرویس (id واقعیِ سرویس + برچسبِ فارسی)
 const POD_VOICES={
@@ -3899,7 +3900,7 @@ function podMusicStop(){ const m=_pod.music; if(!m) return; _pod.music=null; try
 function podMusicGain(v){ const m=_pod.music; if(m){ try{ m.master.gain.setTargetAtTime(v, m.ctx.currentTime, 0.3); }catch(e){} } }
 /* ---- موتورِ پخش و پیشرفت (چند-قطعه‌ای، با اسکراب) ---- */
 function podEngineReset(){ _pod.buffers=[]; _pod.durs=[]; _pod.cum=[0]; _pod.totalDur=0; _pod.allFetched=false; _pod.playIdx=0; _pod.startCtx=0; _pod.startOff=0; _pod.playing=false; _pod.waiting=false; _pod.fromCache=false; _pod.rawChunks=null; _pod.rawType=''; }
-function podElapsed(){ const ctx=_wkAudioCtx; const base=(_pod.cum[_pod.playIdx]||0)+(_pod.startOff||0); if(!ctx||!_pod.playing) return base; return base+(ctx.currentTime-_pod.startCtx); }
+function podElapsed(){ if(_pod.elMode){ const a=_pod.audioEl; return (_pod.cum[_pod.elIdx]||0)+((a&&isFinite(a.currentTime))?a.currentTime:0); } const ctx=_wkAudioCtx; const base=(_pod.cum[_pod.playIdx]||0)+(_pod.startOff||0); if(!ctx||!_pod.playing) return base; return base+(ctx.currentTime-_pod.startCtx); }
 function podTotalKnown(){ return _pod.allFetched? _pod.totalDur : Math.max(_pod.totalDur, _pod.estDur); }
 function podProgressStart(){ podProgressStop(); _pod.timer=setInterval(podTick, 250); podTick(); }
 function podProgressStop(){ if(_pod.timer){ clearInterval(_pod.timer); _pod.timer=0; } }
@@ -3910,6 +3911,7 @@ function podTick(){
   const cur=document.getElementById('podCur'); if(cur) cur.textContent=podFmtTime(el);
   const tot=document.getElementById('podTot'); if(tot) tot.textContent=(cloud&&!_pod.allFetched?'~':'')+podFmtTime(total);
   const st=document.getElementById('podState'); if(st) st.textContent=_pod.prep?'در حالِ آماده‌سازیِ صدا…':(_pod.mode==='playing'?'در حالِ پخش':(_pod.mode==='paused'?'مکث':''));
+  if(_pod.elMode) podMediaPos();
 }
 // گِینِ خروجیِ پادکست را برای کانتکستِ فعلی می‌سازد/بازمی‌سازد (بعد از بازسازیِ کانتکست حیاتی است)
 function podVoiceOut(ctx){
@@ -3934,6 +3936,9 @@ function podPlayFrom(idx, off){
   _pod.srcNode=src;
 }
 function podSeek(sec){
+  if(_pod.elMode){ const maxKnown=_pod.elUrls.length?_pod.cum[_pod.elUrls.length]:0; let t=Math.max(0,Math.min(sec,Math.max(0,maxKnown-0.1)));
+    let idx=0; while(idx<_pod.elUrls.length-1 && _pod.cum[idx+1]<=t) idx++;
+    if(_pod.mode==='paused') _pod.mode='playing'; podMusicGain(0.05); podElLoadPlay(idx, t-(_pod.cum[idx]||0)); podProgressStart(); renderPodcastCard(); return; }
   const ctx=_wkAudioCtx; if(!ctx||!_pod.cloud) return;
   const maxKnown=_pod.buffers.length?_pod.cum[_pod.buffers.length]:0;
   let t=Math.max(0, Math.min(sec, Math.max(0,maxKnown-0.1)));
@@ -3951,6 +3956,7 @@ async function podcastToggle(){
   if(_pod.mode==='paused'){ podcastResume(); return; }
   _pod.mode='loading'; renderPodcastCard();
   wkEnsureAudio(); // لمسِ کاربر — برای آزادسازیِ صدا
+  if(podBgEnabled()){ try{ podElUnlock(); }catch(e){} }   // آزادسازیِ المانِ <audio> در همین جسچر (iOS)
   try{ podAvatarPrepare(); }catch(e){}   // موازی: چهرهٔ مجری (یک‌بار ساخته/کش می‌شود)
   // اگر از تاریخچه یک روز باز شده، همان متن را پخش کن — بدونِ درخواستِ تازه از هوش مصنوعی
   if(_pod._viewRec && _pod._viewRec.script){ podcastStart(_pod._viewRec); return; }
@@ -3976,32 +3982,39 @@ function podcastStart(rec){
   _pod.mode='playing'; _pod.t0=Date.now(); _pod.prep=_pod.cloud;
   podEngineReset(); podProgressStart(); renderPodcastCard();
   if(_pod.cloud){
-    podCloudSpeak(rec.script).catch((e)=>{ _pod.cloud=false; _pod.prep=false; try{ console.warn('podcast cloud TTS failed:', e&&e.message||e); }catch(_){}; uiToast&&uiToast('صدای ابری نشد؛ با صدای گوشی پخش می‌شود'); podMusicStart(); podProgressStart(); podBrowserSpeak(rec.script); renderPodcastCard(); });
+    const cloudFail=(e)=>{ _pod.cloud=false; _pod.elMode=false; _pod.prep=false; try{ console.warn('podcast cloud TTS failed:', e&&e.message||e); }catch(_){}; uiToast&&uiToast('صدای ابری نشد؛ با صدای گوشی پخش می‌شود'); podMusicStart(); podProgressStart(); podBrowserSpeak(rec.script); renderPodcastCard(); };
+    if(podBgEnabled()) podCloudSpeakEl(rec.script).catch(cloudFail);   // پخشِ پس‌زمینه‌ایِ المان‌محور (پیش‌فرض)
+    else podCloudSpeak(rec.script).catch(cloudFail);                    // مسیرِ Web Audio (اگر پس‌زمینه خاموش شد)
   } else { podMusicStart(); podBrowserSpeak(rec.script); }
 }
 function podcastPause(){
   // مهم: کانتکستِ مشترکِ اپ را suspend نکن (وگرنه صدای دکمه‌ها و کلِ اپ هم قطع می‌شود).
   // به‌جایش موقعیت را نگه دار و فقط منبعِ پادکست را متوقف کن.
   try{
-    if(_pod.cloud){ _pod.pausePos=podElapsed(); podStopSrc(); podMusicGain(0.0001); }
+    if(_pod.elMode){ _pod.pausePos=podElapsed(); podElStop(); podMusicGain(0.0001); }
+    else if(_pod.cloud){ _pod.pausePos=podElapsed(); podStopSrc(); podMusicGain(0.0001); }
     else { if(window.speechSynthesis) speechSynthesis.pause(); podMusicGain(0.0001); }
   }catch(e){}
-  _pod.mode='paused'; podProgressStop(); renderPodcastCard();
+  _pod.mode='paused'; podProgressStop(); podMediaPos(); renderPodcastCard();
 }
 function podcastResume(){
   _pod.mode='playing';
   try{
-    if(_pod.cloud){
+    if(_pod.elMode){
+      podMusicGain(0.05);
+      const t=Math.max(0,_pod.pausePos||0); let idx=0; while(idx<_pod.elUrls.length-1 && _pod.cum[idx+1]<=t) idx++;
+      podElLoadPlay(idx, t-(_pod.cum[idx]||0));
+    } else if(_pod.cloud){
       const ctx=_wkAudioCtx; if(ctx&&(ctx.state==='suspended'||ctx.state==='interrupted')&&ctx.resume) ctx.resume().catch(()=>{});
       podMusicGain(0.05);
       const t=Math.max(0,_pod.pausePos||0); let idx=0; while(idx<_pod.buffers.length-1 && _pod.cum[idx+1]<=t) idx++;
       podPlayFrom(idx, t-(_pod.cum[idx]||0));
     } else { if(window.speechSynthesis) speechSynthesis.resume(); podMusicGain(0.09); }
   }catch(e){}
-  podProgressStart(); renderPodcastCard();
+  podProgressStart(); podMediaPos(); renderPodcastCard();
 }
-function podcastEnded(){ podProgressStop(); podStopSrc(); podMusicStop(); _pod.mode='idle'; _pod.prep=false; try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} const sl=document.getElementById('podSlider'); if(sl) sl.value=sl.max; renderPodcastCard(); }
-function podcastStopAll(){ podProgressStop(); podStopSrc(); podMusicStop(); try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} try{ if(_wkAudioCtx&&_wkAudioCtx.state==='suspended'&&_wkAudioCtx.resume) _wkAudioCtx.resume(); }catch(e){} _pod.mode='idle'; _pod.prep=false; }
+function podcastEnded(){ podProgressStop(); podStopSrc(); podElStop(); podMusicStop(); _pod.mode='idle'; _pod.prep=false; try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} try{ if('mediaSession' in navigator) navigator.mediaSession.playbackState='none'; }catch(e){} const sl=document.getElementById('podSlider'); if(sl) sl.value=sl.max; renderPodcastCard(); }
+function podcastStopAll(){ podProgressStop(); podStopSrc(); podElReset(); podMusicStop(); try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} try{ if(_wkAudioCtx&&_wkAudioCtx.state==='suspended'&&_wkAudioCtx.resume) _wkAudioCtx.resume(); }catch(e){} try{ if('mediaSession' in navigator) navigator.mediaSession.playbackState='none'; }catch(e){} _pod.mode='idle'; _pod.prep=false; }
 async function podcastRegen(){ _pod._viewRec=null; podcastStopAll(); _pod.mode='loading'; renderPodcastCard(); try{ await podcastGenerate(true); uiToast&&uiToast('✓ پادکستِ تازه ساخته شد'); }catch(e){} _pod.mode='idle'; renderPodcastCard(); }
 // ── آرشیوِ پادکست‌ها (پوشه بر اساسِ تاریخ؛ چند پادکست در روز؛ ستاره + متادیتا) ──
 function _podChip(txt,col){ return `<span style="display:inline-block;font-size:10px;background:${col||'var(--field)'};border:1px solid var(--line);border-radius:20px;padding:1px 8px;margin:2px 2px 0 0">${txt}</span>`; }
@@ -4206,6 +4219,90 @@ async function podCloudSpeak(full){
   // ۳) ذخیرهٔ کش فقط اگر همهٔ قطعه‌ها کامل ساخته شدند
   if(raw.length===chunks.length){ try{ await podCachePut(key, {chunks:raw, type:rawType, ts:Date.now()}); await podAudioTouch(key); }catch(e){} }
   if(!_pod.playing && _pod.mode==='playing') podcastEnded();
+}
+/* ---- پخشِ پس‌زمینه‌ای با المانِ <audio> + MediaSession (نسخه ۲۳.۷۹) ----
+   چرا: Web Audio روی iOS در پس‌زمینه/تعویضِ تب معلق می‌شود و صدا می‌میرد. المانِ <audio>
+   (که به AudioContext وصل نیست) مثلِ سایت‌های موزیک در پس‌زمینه ادامه می‌دهد و کنترلِ
+   قفل‌صفحه/نوتیف می‌دهد. لب‌سینک در این حالت زمان‌محور است (بدونِ analyser). */
+const POD_SILENT_WAV='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+function podBgEnabled(){ return podCfg().bgPlay!==false; }   // پیش‌فرض روشن
+function podElEl(){ if(!_pod.audioEl){ const a=new Audio(); a.preload='auto'; try{ a.setAttribute('playsinline',''); a.setAttribute('webkit-playsinline',''); }catch(e){}
+    a.addEventListener('ended',()=>{ if(_pod.elMode && _pod.mode==='playing') podElLoadPlay(_pod.elIdx+1,0); });
+    a.addEventListener('error',()=>{ if(_pod.elMode && _pod.mode==='playing') podElLoadPlay(_pod.elIdx+1,0); });
+    a.addEventListener('timeupdate',()=>{ podMediaPos(); });
+    _pod.audioEl=a; } return _pod.audioEl; }
+// آزادسازیِ المان در لمسِ کاربر (iOS اجازهٔ play بعد از await نمی‌دهد مگر یک‌بار در جسچر آزاد شود)
+function podElUnlock(){ try{ const a=podElEl(); if(!a.dataset||!a.dataset.unlocked){ a.src=POD_SILENT_WAV; const pr=a.play(); if(pr&&pr.then) pr.then(()=>{ try{a.pause();a.currentTime=0;}catch(e){} }).catch(()=>{}); if(a.dataset) a.dataset.unlocked='1'; } }catch(e){} }
+function podElReset(){ try{ const a=_pod.audioEl; if(a){ a.pause(); } }catch(e){} (_pod.elUrls||[]).forEach(u=>{ try{ URL.revokeObjectURL(u); }catch(e){} }); _pod.elUrls=[]; _pod.elIdx=0; _pod.elMode=false; _pod.playing=false; }
+function podElPush(rawBytes, type, dur){ let url=''; try{ url=URL.createObjectURL(new Blob([rawBytes],{type:type||'audio/mpeg'})); }catch(e){ return; } _pod.elUrls.push(url); dur=dur||0; _pod.durs.push(dur); _pod.cum.push((_pod.cum[_pod.cum.length-1]||0)+dur); _pod.totalDur+=dur; }
+function podElStop(){ try{ const a=_pod.audioEl; if(a) a.pause(); }catch(e){} _pod.playing=false; }
+function podElLoadPlay(idx, off){ const a=podElEl();
+  if(idx>=_pod.elUrls.length){ if(_pod.allFetched){ podcastEnded(); } else { _pod.waiting=true; _pod.elIdx=idx; _pod.startOff=0; } return; }
+  _pod.elIdx=idx; _pod.startOff=off||0; _pod.playing=true;
+  try{ a.src=_pod.elUrls[idx]; a.load(); }catch(e){}
+  const go=()=>{ a.removeEventListener('loadedmetadata',go); try{ if(off) a.currentTime=off; }catch(e){} const pr=a.play(); if(pr&&pr.catch) pr.catch(()=>{}); };
+  a.addEventListener('loadedmetadata',go);
+  try{ const pr=a.play(); if(pr&&pr.catch) pr.catch(()=>{}); }catch(e){}
+  podMediaPos();
+}
+async function podCloudSpeakEl(full){
+  const ctx=wkEnsureAudio();   // فقط برای اندازه‌گیریِ مدتِ هر قطعه (دیکود؛ پخش از المان است)
+  podEngineReset(); podElReset(); _pod.elMode=true; _pod.analyser=null;   // بدونِ analyser ⇒ لب‌سینکِ زمان‌محور
+  const key=podAudioKey(full);
+  // ۱) کش
+  try{ const hit=await podCacheGet(key);
+    if(hit && hit.chunks && hit.chunks.length){ try{ podAudioTouch(key); }catch(e){}
+      _pod.prep=false; _pod.fromCache=true; _pod.rawChunks=hit.chunks; _pod.rawType=hit.type||'audio/mpeg';
+      podMusicStart(); podMusicGain(0.05);
+      for(let i=0;i<hit.chunks.length;i++){ if(_pod.mode==='idle') return;
+        let dur=0; try{ const ab=await podDecode(ctx, hit.chunks[i].slice(0)); dur=ab.duration||0; }catch(e){ dur=0; }
+        podElPush(hit.chunks[i], _pod.rawType, dur);
+        if(_pod.elUrls.length===1){ podElLoadPlay(0,0); podMediaSessionSet(); renderPodcastCard(); }
+        else if(_pod.waiting && _pod.elIdx===_pod.elUrls.length-1){ _pod.waiting=false; podElLoadPlay(_pod.elIdx, _pod.startOff||0); }
+      }
+      _pod.allFetched=true; podMediaPos(); if(!_pod.playing && _pod.mode==='playing') podcastEnded();
+      return;
+    }
+  }catch(e){}
+  // ۲) ساختِ تازه
+  const chunks=podChunksForTTS(full); const raw=[]; let rawType='audio/mpeg';
+  const first=await podFetchBuffer(chunks[0],3); if(!first) throw new Error('first chunk failed');
+  if(_pod.mode==='idle') return;
+  raw.push(first.raw); rawType=first.type||rawType;
+  podElPush(first.raw, rawType, (first.audio&&first.audio.duration)||0);
+  _pod.prep=false; podMusicStart(); podMusicGain(0.05); podElLoadPlay(0,0); podMediaSessionSet(); renderPodcastCard();
+  let fails=0;
+  for(let i=1;i<chunks.length;i++){
+    while(_pod.mode!=='idle' && i>_pod.elIdx+2){ await podSleep(400); }
+    if(_pod.mode==='idle') return;
+    const r=await podFetchBuffer(chunks[i],3); if(_pod.mode==='idle') return;
+    if(!r){ fails++; if(fails>=2){ _pod.cloud=false; _pod.elMode=false; uiToast&&uiToast('ادامه با صدای گوشی'); podElStop(); podBrowserSpeak(chunks.slice(i).join(' ')); return; } continue; }
+    fails=0; raw.push(r.raw); podElPush(r.raw, rawType, (r.audio&&r.audio.duration)||0);
+    if(_pod.waiting && _pod.elIdx===_pod.elUrls.length-1){ _pod.waiting=false; podElLoadPlay(_pod.elIdx, _pod.startOff||0); }
+  }
+  _pod.allFetched=true; _pod.rawChunks=raw; _pod.rawType=rawType; podMediaPos();
+  if(raw.length===chunks.length){ try{ await podCachePut(key,{chunks:raw,type:rawType,ts:Date.now()}); await podAudioTouch(key); }catch(e){} }
+  if(!_pod.playing && _pod.mode==='playing') podcastEnded();
+}
+// ── MediaSession: پلیرِ قفل‌صفحه/نوتیفیکیشن ──
+function podMediaSessionSet(){ if(!('mediaSession' in navigator)) return;
+  try{ const rec=(typeof podCurRec==='function')?podCurRec():null;
+    navigator.mediaSession.metadata=new MediaMetadata({ title:'پادکستِ روزانه'+(rec&&rec.jday?(' — '+rec.jday):''), artist:(typeof APP_NAME!=='undefined'?APP_NAME:'دستیار دیابت'), album:'پادکست' });
+    const H=(name,fn)=>{ try{ navigator.mediaSession.setActionHandler(name, fn); }catch(e){} };
+    H('play', ()=>{ if(_pod.mode==='paused') podcastResume(); else if(_pod.mode==='idle') podcastToggle(); });
+    H('pause', ()=>{ if(_pod.mode==='playing') podcastPause(); });
+    H('stop', ()=>{ podcastStopAll(); renderPodcastCard&&renderPodcastCard(); });
+    H('seekbackward', (d)=>{ podSeek(Math.max(0, podElapsed()-((d&&d.seekOffset)||10))); });
+    H('seekforward', (d)=>{ podSeek(podElapsed()+((d&&d.seekOffset)||10)); });
+    H('seekto', (d)=>{ if(d&&d.seekTime!=null) podSeek(d.seekTime); });
+  }catch(e){}
+}
+function podMediaPos(){ if(!('mediaSession' in navigator)) return;
+  try{ navigator.mediaSession.playbackState=(_pod.mode==='playing')?'playing':(_pod.mode==='paused'?'paused':'none');
+    const dur=podTotalKnown(), pos=podElapsed();
+    if(navigator.mediaSession.setPositionState && dur>0 && isFinite(dur) && isFinite(pos)){
+      navigator.mediaSession.setPositionState({ duration:dur, position:Math.max(0,Math.min(pos,dur)), playbackRate:1 }); }
+  }catch(e){}
 }
 /* ---- کارتِ خانه (پلیر مدرن) ---- */
 /* ---- مجریِ تصویریِ پادکست (پرترهٔ AI، یک‌بار ساخته و کش می‌شود) ---- */
@@ -5596,6 +5693,10 @@ function renderPodCfg(){
     if(!show.length) h+=`<div class="qbg-sub">صدایی روی این مرورگر پیدا نشد (روی iOS صدای فارسی محدود است).</div>`;
     show.forEach((v,i)=>{ h+=`<div class="pod-vrow ${c.dVoice===v.name?'on':''}"><span class="pod-vname">${escVision(v.name)} <span style="color:var(--muted);font-weight:600;font-size:10px">${escVision(v.lang||'')}</span></span><button class="pod-vtest" onclick="podTestDevice(${i})">▶ تست</button><button class="pod-vpick" onclick="podPickDevice(${i})">${c.dVoice===v.name?'✓ انتخاب':'انتخاب'}</button></div>`; });
   }
+  // پخشِ پس‌زمینه‌ای + کنترلِ قفل‌صفحه (فقط صدای ابری)
+  h+=`<label class="qbg-lbl" style="margin-top:14px">🔒 پخش در پس‌زمینه و کنترلِ قفل‌صفحه</label>`;
+  h+=`<div class="pod-seg">`+[['on','روشن',true],['off','خاموش',false]].map(o=>`<button class="${podBgEnabled()===o[2]?'on':''}" onclick="podCfgPick('bgPlay',${o[2]})">${o[1]}</button>`).join('')+`</div>`;
+  h+=`<div class="qbg-sub" style="margin-top:4px;line-height:1.9">با «روشن»، صدای ابری (OpenAI/Gemini) مثلِ اپ‌های موزیک تا کروم/سافاری کاملاً بسته نشده در پس‌زمینه ادامه می‌دهد و پلیرِ قفل‌صفحه/نوتیفیکیشن می‌آید. توجه: مجریِ متحرک و موزیکِ محیطی در پس‌زمینه اجرا نمی‌شوند و صدای گوشی (آفلاین) هم پس‌زمینه‌ای نیست.</div>`;
   h+=`<div class="qbg-sub" style="margin-top:14px">💰 برآوردِ هزینه و موجودیِ هوش مصنوعی به تبِ <b>«👤 پروفایل ← 🤖 هوش مصنوعی»</b> منتقل شد.</div>`;
   } // پایانِ تبِ صدا
   if(tab==='avatar'){
