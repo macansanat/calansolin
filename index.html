@@ -2314,7 +2314,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۷۷</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۷۸</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3800,7 +3800,7 @@ function podGlucoseWindowSnap(days){ const save=_ovRange; _ovRange=days; let t='
 function podDaySnap(offset){ const save=_dailyDate; try{ const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()+(offset||0)); _dailyDate=d; }catch(e){}
   let t=''; try{ t=(buildHealthSnapshot('daily')||{}).text||''; }catch(e){} _dailyDate=save; return t; }
 function podPrompt(mins){
-  mins=mins||podCfg().minutes||5; const words=mins*150;
+  mins=mins||podCfg().minutes||5; const words=mins*145; const wLow=mins*125, wHigh=mins*160;
   const C=podCfg().content||podContentCfg();
   const gr=C.glucoseRange||'today';
   const yest=(gr==='yesterday');
@@ -3835,7 +3835,7 @@ function podPrompt(mins){
   if(C.step) struct+="یک قدمِ کوچکِ عملی برای امروز یا فردا. ";
   struct+="در پایان یک جملهٔ کوتاهِ دلگرم‌کننده و خداحافظی.\n";
   return "تو گویندهٔ پادکستِ روزانهٔ نرم‌افزارِ «"+APP_NAME+"» (یک اپِ آموزشیِ دیابت) به فارسی هستی. نامِ نرم‌افزار دقیقاً «"+APP_NAME+"» است؛ اگر خواستی خوشامد بگویی همین نام را به کار ببر و هرگز نامِ دیگری برای اپ نساز. یک متنِ گفتاری بنویس که وقتی با صدا خوانده شود حدود "+mins+" دقیقه شود.\n"+
-  "طولِ متن مهم است: باید «حداقل» "+words+" کلمهٔ فارسی باشد (برای "+mins+" دقیقه گفتار). خیلی مهم: زودتر تمام نکن. هر موضوع را کامل باز کن — «چرا»یش را توضیح بده، یک مثالِ روزمره بزن، و یک نکتهٔ کاربردی اضافه کن — تا وقتی به این طول برسی. اگر حس کردی کوتاه شد، عمق و مثال بیشتری بده، نه اینکه ببندی.\n"+
+  "طولِ متن مهم است: حدودِ "+words+" کلمهٔ فارسی — یعنی بینِ "+wLow+" تا "+wHigh+" کلمه برای "+mins+" دقیقه گفتار. نه کوتاه‌تر از "+wLow+" و «نه بلندتر از "+wHigh+" کلمه». وقتی به این اندازه رسیدی، جمع‌بندی کن و ادامه نده. هر موضوع را با یک «چرا» و یک مثالِ کوتاه باز کن، ولی از این بازهٔ طول عبور نکن و متن را بیش از حد کش نده.\n"+
   "جوری بنویس که شنونده جذب شود و تا آخر گوش بدهد.\n"+
   ((POD_TONES[C.tone]||POD_TONES.casual).prompt+"\n")+
   struct+
@@ -3852,7 +3852,7 @@ async function podcastGenerate(force){
     try{
       const prompt=podPrompt(mins); const prov=sectionProvider('podcast');
       // فارسی در توکنایزر ~۳ توکن به‌ازای هر کلمه؛ برای «mins» دقیقه (~۱۵۰ کلمه/دقیقه) سقفِ توکن باید سخاوتمند باشد وگرنه متن وسطِ کار قطع می‌شود
-      const maxTok=Math.min(8192, mins*600+800);
+      const maxTok=Math.min(8192, Math.round(mins*160*3.3)+500);   // سقفِ متناسب با کرانِ بالای کلمات (~۳٫۳ توکن/کلمه) تا نه قطع شود نه بیش‌ازحد بلند
       // متنِ پادکست با مدلِ منتخبِ «متنِ پادکست» ساخته می‌شود. دمای کمی بالاتر ⇒ روایتِ طبیعی‌تر و طولانی‌تر
       let out=await aiSectionCall('podcast',(pv,key,model)=>callAIText(pv,key,prompt,maxTok,0.6, model),{onProv:(pv)=>{usedProv=pv;}});
       out=podCleanScript(out);
