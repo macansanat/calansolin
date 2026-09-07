@@ -2314,7 +2314,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۷۱</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۷۲</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -11981,7 +11981,7 @@ const AI_SECTIONS=[
   {id:'overview', label:'گزارش کلی', icon:'📊', vision:false},
   {id:'home', label:'صفحه‌ی اول', icon:'🏠', vision:false},
   {id:'chat', label:'چت هوشمند', icon:'💬', vision:false},
-  {id:'podcast', label:'پادکست روزانه', icon:'🎧', vision:false}
+  {id:'podcast', label:'متنِ پادکست', icon:'🎧', vision:false}
 ];
 // سطحِ رایگان/پولیِ هر سرویس — تا بدانیم داریم از API رایگان استفاده می‌کنیم یا پولی
 function visionTier(prov){ try{ const o=JSON.parse(localStorage.getItem('vision_tier_v1')||'{}'); if(o[prov]) return o[prov]; }catch(e){} return prov==='gemini'?'free':'paid'; }
@@ -12039,11 +12039,23 @@ function renderVisionSetting(){
         <button type="button" onclick="toggleSecLock('${sec.id}')" title="${lock?'قفل روشن: فقط همین مدل':'قفل خاموش: در صورت خطا مدلِ دیگر'}" style="width:34px;height:32px;border:1px solid ${lock?'var(--teal)':'var(--line)'};background:${lock?'var(--teal-dim)':'var(--field)'};color:${lock?'#eafff8':'var(--muted)'};border-radius:9px;cursor:pointer;font-size:13px">${lock?'🔒':'🔓'}</button>
       </div>`;
     });
+    // ردیفِ جداگانه: صدای پادکست (TTS) — یک سرویس، جدا از مدلِ متن
+    const ttsCur=(podCfg().prov||'');
+    const ttsOpt=(v,lbl)=>`<option value="${v}" ${ttsCur===v?'selected':''}>${lbl}</option>`;
+    h+=`<div style="display:grid;grid-template-columns:1fr 128px 34px;align-items:center;gap:8px;padding:9px 11px;border-top:1px solid var(--line)">
+        <div style="min-width:0;display:flex;align-items:center;gap:7px;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="flex:0 0 auto">🎙</span><span style="overflow:hidden;text-overflow:ellipsis">صدای پادکست (TTS)</span></div>
+        <select onchange="setPodTTSProv(this.value)" style="width:100%;min-width:0;background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:7px 5px;font-family:inherit;font-size:11.5px">
+          ${ttsOpt('','خودکار')}${ttsOpt('gemini','Gemini (رایگان)')}${ttsOpt('openai','OpenAI')}${ttsOpt('device','گوشی (آفلاین)')}
+        </select>
+        <span></span>
+      </div>`;
     h+=`</div>`;
-    h+=`<div style="font-size:10.5px;color:var(--muted);line-height:1.8;margin-top:8px">مثال: پادکست → <b>GPT-4o mini</b> با قفلِ 🔒 (هرگز از مدلِ گران استفاده نکند)؛ پزشک/تحلیل → <b>GPT-4o</b> یا <b>Claude</b>؛ عکس‌ها → <b>Gemini</b> (رایگان). «خودکار» یعنی مدلِ پیش‌فرضِ سرویس.</div>`;
+    h+=`<div style="font-size:10.5px;color:var(--muted);line-height:1.8;margin-top:8px">مثال: <b>متنِ پادکست</b> → مدلِ باهوش‌تر (GPT-5/GPT-4o) چون کیفیتِ متن مهم است؛ <b>صدای پادکست</b> → <b>Gemini</b> (رایگان) یا OpenAI برای کم‌کردنِ هزینه. صدا از مدلِ چت جدا است و توکنِ متن مصرف نمی‌کند. «خودکار» یعنی پیش‌فرضِ سرویس.</div>`;
   }
   box.innerHTML=h;
 }
+// انتخابِ سرویسِ صدای پادکست از پروفایل (همان کلیدِ تنظیماتِ پادکست)
+function setPodTTSProv(v){ try{ podCfgPick('prov', v); }catch(e){} if(typeof renderVisionSetting==='function') renderVisionSetting(); }
 function setSecModel(section, modelId){ const m=modelId?modelById(modelId):null; setSecCfg(section,{model:modelId||''}); if(m) setSectionProvider(section, m.prov); if(typeof renderVisionSetting==='function') renderVisionSetting(); }
 function toggleSecLock(section){ const cur=!!secCfg(section).lock; setSecCfg(section,{lock:!cur}); if(typeof renderVisionSetting==='function') renderVisionSetting(); }
 
