@@ -2316,7 +2316,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۸۵</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۸۶</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5686,8 +5686,29 @@ function podAvApplyModes(){ const el=document.getElementById('podAvatar'); if(!e
   const floatOn = !!_pod._float && !_pod._full && _pod.mode==='playing';
   el.classList.toggle('pod-av--float', floatOn);
   podAvReparent(floatOn);   // در حالتِ شناور، المان را به body ببر تا با عوضِ تب پنهان نشود
+  if(floatOn){ try{ podAvSetupDrag(el); const pos=podFloatPos(); if(pos){ el.style.left=pos.left+'px'; el.style.top=pos.top+'px'; el.style.right='auto'; el.style.bottom='auto'; el.style.insetInlineEnd='auto'; } }catch(e){} }
+  else { try{ el.style.left=el.style.top=el.style.right=el.style.bottom=el.style.insetInlineEnd=el.style.transition=''; }catch(e){} }
   podAvResizeSoon();
 }
+// ── کشیدنِ مینی‌پلیرِ شناور با انگشت/ماوس به هر گوشه ──
+function podFloatPos(){ try{ const p=JSON.parse(localStorage.getItem('pod_float_pos')||'null'); if(!p) return null;
+    const w=120, h=180; let l=Math.max(4,Math.min((window.innerWidth||360)-w-4, p.left)); let tp=Math.max(4,Math.min((window.innerHeight||640)-h-4, p.top)); return {left:l, top:tp};
+  }catch(e){ return null; } }
+let _podFd=null;
+function podAvSetupDrag(el){ if(!el||el._fdBound) return; el._fdBound=true; el.addEventListener('pointerdown', podFdDown); }
+function podFdDown(e){ const el=e.currentTarget; if(!el.classList.contains('pod-av--float')) return;
+  if(e.target&&e.target.closest&&e.target.closest('.pod-av-dock,.pod-av-fs,.pod-3d-zoom,button')) return;   // دکمه‌ها را درگ نکن
+  const r=el.getBoundingClientRect(); _podFd={el, sx:e.clientX, sy:e.clientY, ox:r.left, oy:r.top, moved:false};
+  el.style.transition='none'; try{ el.setPointerCapture&&el.setPointerCapture(e.pointerId); }catch(_){}
+}
+function podFdMove(e){ if(!_podFd) return; const dx=e.clientX-_podFd.sx, dy=e.clientY-_podFd.sy; if(Math.abs(dx)+Math.abs(dy)>4) _podFd.moved=true;
+  const el=_podFd.el, w=el.offsetWidth||120, h=el.offsetHeight||152;
+  const nl=Math.max(4,Math.min((window.innerWidth||360)-w-4,_podFd.ox+dx)), nt=Math.max(4,Math.min((window.innerHeight||640)-h-4,_podFd.oy+dy));
+  el.style.left=nl+'px'; el.style.top=nt+'px'; el.style.right='auto'; el.style.bottom='auto'; el.style.insetInlineEnd='auto';
+  if(e.cancelable) e.preventDefault();
+}
+function podFdUp(){ if(!_podFd) return; const el=_podFd.el; if(_podFd.moved){ try{ localStorage.setItem('pod_float_pos', JSON.stringify({left:parseInt(el.style.left)||0, top:parseInt(el.style.top)||0})); }catch(_){}} _podFd=null; }
+(function(){ try{ document.addEventListener('pointermove', podFdMove, {passive:false}); document.addEventListener('pointerup', podFdUp); document.addEventListener('pointercancel', podFdUp); }catch(e){} })();
 // جابه‌جاییِ المانِ آواتار بین کارتِ خانه و body (برای شناوریِ بین‌تبی)
 function podAvReparent(toBody){ const el=document.getElementById('podAvatar'); if(!el) return;
   if(toBody){ if(el.parentNode && el.parentNode!==document.body){ _pod._avHome={parent:el.parentNode, next:el.nextSibling}; try{ document.body.appendChild(el); }catch(e){} } }
