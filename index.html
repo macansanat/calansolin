@@ -256,7 +256,9 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .pod-av--full .pod-av-stage{width:100vw;width:100dvw;height:100dvh;max-width:none;border-radius:0;transition:none!important}
 .pod-av--full.pod-av--3d .pod-av-stage{height:100dvh}
 /* مینی‌پلیرِ شناور (داخلِ همین صفحه، حینِ اسکرول) */
-.pod-av--float{position:fixed;bottom:78px;inset-inline-end:12px;z-index:9997;margin:0;width:120px}
+.pod-av--float{position:fixed;bottom:78px;inset-inline-end:12px;z-index:9997;margin:0;width:120px;touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.pod-av--float:active{cursor:grabbing}
+.pod-av--float .pod-av-stage,.pod-av--float .pod-av-stage canvas,.pod-av--float .pod-3d-host{touch-action:none}
 .pod-av--float .pod-av-stage{width:120px;height:152px;max-width:none;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.16);transition:none!important}
 .pod-av--float.pod-av--3d .pod-av-stage{height:152px}
 .pod-av--float .pod-av-fs,.pod-av--float .pod-3d-zoom{display:none}
@@ -2316,7 +2318,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۹۳</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۹۴</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
