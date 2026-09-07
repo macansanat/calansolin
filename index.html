@@ -1274,14 +1274,17 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <div class="qbg-box">
     <button class="qbg-x" onclick="closeQEntry('qmedModal')" title="بستن">✕</button>
     <div class="qbg-head"><span class="qbg-badge" style="background:rgba(154,134,224,.18)">💊</span><div><div class="qbg-title">ثبت دارو</div><div class="qbg-sub">داروی مصرف‌شده را ثبت کن تا سابقه‌اش را داشته باشی.</div></div></div>
+    <div style="text-align:left;margin-bottom:10px"><button type="button" onclick="medHistOpen()" style="background:var(--field);border:1px solid var(--line);color:var(--teal);border-radius:20px;padding:6px 12px;font-size:12.5px;font-weight:700;cursor:pointer">🗂 تاریخچهٔ مصرف دارو</button></div>
     <div id="qmedSaved" style="display:none"></div>
     <label class="qbg-lbl">نام دارو <span style="color:var(--muted);font-weight:400">(جست‌وجو در کتابخانه یا تایپ دستی)</span></label>
     <div class="food-search-wrap" style="margin-bottom:14px">
       <input type="text" id="qmedName" class="qbg-in" placeholder="مثلاً متفورمین…" autocomplete="off" oninput="medDoSearch('qmed')" onfocus="medDoSearch('qmed')">
       <div class="search-results" id="qmedResults"></div>
     </div>
-    <label class="qbg-lbl">دوز / تعداد (اختیاری)</label>
-    <input type="text" id="qmedDose" class="qbg-in" placeholder="مثلاً ۵۰۰ میلی‌گرم — ۱ قرص" style="margin-bottom:14px">
+    <div class="qbg-grid">
+      <div><label class="qbg-lbl">تعداد قرص مصرفی (اختیاری)</label><input type="text" id="qmedCount" class="qbg-in" placeholder="مثلاً ۱ قرص" style="margin-bottom:14px"></div>
+      <div><label class="qbg-lbl">دوز (اختیاری)</label><input type="text" id="qmedDose" class="qbg-in" placeholder="مثلاً ۵۰۰ میلی‌گرم" style="margin-bottom:14px"></div>
+    </div>
     <label class="qbg-lbl">طریقه و زمان مصرف (اختیاری)</label>
     <input type="text" id="qmedTiming" class="qbg-in" placeholder="مثلاً بعد از غذا — صبح و شب" style="margin-bottom:14px">
     <div class="qbg-grid">
@@ -2311,7 +2314,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۶۶</b> · انتشار: ۱۴۰۵/۰۶/۱۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۶۷</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -6118,7 +6121,7 @@ function renderDailyReport(){
   try{ const bz=(planData._basal||{})[key]; if(bz){ basalDose=(+bz.dose||0); basalIns={name:bz.type||'', dose:bz.dose}; ev.push({sm:bz.time?smFromT(bz.time):1440, time:bz.time?faDigits(bz.time):'', ico:'🛡️', color:'#5fd3bd', title:'انسولین پایه', detail:(bz.type?bz.type+' · ':'')+faDigits(bz.dose)+' واحد', kind:'basal', key:key}); } }catch(e){}
   try{ loadBG().forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); bgCount++; ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🩸', color:'#f0a29b', title:'قند خون', detail:faDigits(x.glu)+' mg/dL', kind:'bg', iso:x.iso}); } }); }catch(e){}
   const jlog=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'[]'); }catch(e){ return []; } };
-  jlog('med_log_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'💊', color:'#c3b4f0', title:'دارو', detail:x.name+(x.dose?' · '+x.dose:'')+(x.timing?' · '+x.timing:''), kind:'med', iso:x.iso}); } });
+  jlog('med_log_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'💊', color:'#c3b4f0', title:'دارو', detail:x.name+(x.count?' · '+x.count:'')+(x.dose?' · '+x.dose:'')+(x.timing?' · '+x.timing:''), kind:'med', iso:x.iso}); } });
   jlog('mood_log_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🙂', color:'#e9b877', title:'حالت روحی', detail:x.mood+(x.note?' · '+x.note:''), kind:'mood', iso:x.iso}); } });
   jlog('vitals_v1').forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); ev.push({sm:hourMin(d), time:fmtHM(d), ico:'❤️', color:'#f0a29b', title:'فشار و ضربان', detail:vitalsFa(x), kind:'vitals', iso:x.iso}); } });
   try{ (loadExLog().entries||[]).forEach(x=>{ if(x.ts&&dayKey(new Date(x.ts))===key){ const d=new Date(x.ts); ev.push({sm:x.time?smFromT(x.time):hourMin(d), time:x.time?faDigits(x.time):fmtHM(d), ico:'🏃', color:'#9fc0f0', title:'ورزش', detail:(x.items||[]).map(it=>it.name).join('، '), kind:'exlog', ts:x.ts}); } }); }catch(e){}
@@ -6449,8 +6452,10 @@ function evMedForm(iso){
       <input type="text" id="evMedName" class="qbg-in" autocomplete="off" oninput="medDoSearch('evMed')" onfocus="medDoSearch('evMed')" value="${(x.name||'').replace(/"/g,'&quot;')}">
       <div class="search-results" id="evMedResults"></div>
     </div>
-    <label class="qbg-lbl">دوز / تعداد (اختیاری)</label>
-    <input type="text" id="evMedDose" class="qbg-in" value="${(x.dose||'').replace(/"/g,'&quot;')}">
+    <div class="qbg-grid">
+      <div><label class="qbg-lbl">تعداد قرص مصرفی (اختیاری)</label><input type="text" id="evMedCount" class="qbg-in" value="${(x.count||'').replace(/"/g,'&quot;')}"></div>
+      <div><label class="qbg-lbl">دوز (اختیاری)</label><input type="text" id="evMedDose" class="qbg-in" value="${(x.dose||'').replace(/"/g,'&quot;')}"></div>
+    </div>
     <label class="qbg-lbl">طریقه و زمان مصرف (اختیاری)</label>
     <input type="text" id="evMedTiming" class="qbg-in" value="${(x.timing||'').replace(/"/g,'&quot;')}">
     <div class="qbg-grid">
@@ -6466,7 +6471,7 @@ function saveEvMed(){
   const pj=parseJDate((document.getElementById('evMedDate')||{}).value||''); if(!pj){ alert('تاریخ را انتخاب کن.'); return; }
   const g=j2g(pj[0],pj[1],pj[2]); const tv=(document.getElementById('evMedTime').value||'00:00').split(':'); const hh=parseInt(tv[0],10)||0, mm=parseInt(tv[1],10)||0;
   const d=new Date(g[0],g[1]-1,g[2],hh,mm); const p=n=>String(n).padStart(2,'0');
-  x.name=name; x.dose=(document.getElementById('evMedDose').value||'').trim(); x.timing=(document.getElementById('evMedTiming').value||'').trim(); x.iso=d.toISOString(); x.time=`${jDateStr(pj[0],pj[1],pj[2])} ${p(hh)}:${p(mm)}`;
+  x.name=name; x.count=(document.getElementById('evMedCount').value||'').trim(); x.dose=(document.getElementById('evMedDose').value||'').trim(); x.timing=(document.getElementById('evMedTiming').value||'').trim(); x.iso=d.toISOString(); x.time=`${jDateStr(pj[0],pj[1],pj[2])} ${p(hh)}:${p(mm)}`;
   jlogSet('med_log_v1',arr); closeEvEdit(); uiToast('✓ ذخیره شد'); refreshAfterEdit();
 }
 function delEvMed(){ if(!_evEdit) return; if(!confirm('این دارو حذف شود؟')) return; jlogSet('med_log_v1', jlogGet('med_log_v1').filter(r=>r.iso!==_evEdit.iso)); closeEvEdit(); uiToast('✓ حذف شد'); refreshAfterEdit(); }
@@ -6624,7 +6629,7 @@ function collectAllEvents(){
   for(const key in basals){ const bz=basals[key]; if(!bz||String(key).split('-').length!==3) continue;
     out.push({dateKey:key, sm:bz.time?smFromT(bz.time):1440, time:bz.time?faDigits(bz.time):'', ico:'🛡️', color:'#5fd3bd', title:'انسولین پایه', detail:(bz.type?bz.type+' · ':'')+faDigits(bz.dose)+' واحد', kind:'basal', key}); }
   try{ loadBG().forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'🩸', color:'#f0a29b', title:'قند خون', detail:faDigits(x.glu)+' mg/dL', kind:'bg', iso:x.iso}); }); }catch(e){}
-  jlogGet('med_log_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'💊', color:'#c3b4f0', title:'دارو', detail:x.name+(x.dose?' · '+x.dose:'')+(x.timing?' · '+x.timing:''), kind:'med', iso:x.iso}); });
+  jlogGet('med_log_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'💊', color:'#c3b4f0', title:'دارو', detail:x.name+(x.count?' · '+x.count:'')+(x.dose?' · '+x.dose:'')+(x.timing?' · '+x.timing:''), kind:'med', iso:x.iso}); });
   jlogGet('mood_log_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'🙂', color:'#e9b877', title:'حالت روحی', detail:x.mood+(x.note?' · '+x.note:''), kind:'mood', iso:x.iso}); });
   jlogGet('sleep_log_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:-1, time:'', ico:'😴', color:'#9fc0f0', title:'خواب', detail:faDigits(x.hours)+' ساعت'+(x.quality?' · '+x.quality:''), kind:'sleep', iso:x.iso}); });
   jlogGet('vitals_v1').forEach(x=>{ if(!x.iso) return; const d=new Date(x.iso); out.push({dateKey:dayKey(d), sm:d.getHours()*60+d.getMinutes(), time:hm(d), ico:'❤️', color:'#f0a29b', title:'فشار و ضربان', detail:vitalsFa(x), kind:'vitals', iso:x.iso}); });
@@ -6906,7 +6911,7 @@ function quickAdd(type){
   else if(type==='chat'){ switchTab('chat'); }
   else if(type==='aihistory'){ switchTab('aihistory'); }
   else if(type==='bg') openQuickBG();
-  else if(type==='med'){ openQEntry('qmedModal','qmedDateWrap','qmedTime',['qmedName','qmedDose','qmedTiming'],'qmedName'); const rb=document.getElementById('qmedResults'); if(rb){ rb.classList.remove('show'); rb.innerHTML=''; } try{ renderQmedSaved(); }catch(e){} }
+  else if(type==='med'){ _editMedIso=null; openQEntry('qmedModal','qmedDateWrap','qmedTime',['qmedName','qmedCount','qmedDose','qmedTiming'],'qmedName'); try{ const t=document.querySelector('#qmedModal .qbg-title'); if(t) t.textContent='ثبت دارو'; }catch(e){} const rb=document.getElementById('qmedResults'); if(rb){ rb.classList.remove('show'); rb.innerHTML=''; } try{ renderQmedSaved(); }catch(e){} }
   else if(type==='sleep') openQEntry('qsleepModal','qsleepDateWrap',null,['qsleepHours'],'qsleepHours','qsleepQual');
   else if(type==='mood') openQEntry('qmoodModal','qmoodDateWrap','qmoodTime',['qmoodNote'],null,'qmoodPick');
   else if(type==='vitals') openQEntry('qvitModal','qvitDateWrap','qvitTime',['qvitSys','qvitDia','qvitHr'],'qvitSys');
@@ -7097,13 +7102,63 @@ function qDateTimeISO(dateInpId,timeId){
   return {iso:d.toISOString(), sh:`${jDateStr(pj[0],pj[1],pj[2])}${timeId?' '+p(hh)+':'+p(mm):''}`};
 }
 function qLogPush(key,rec){ let arr=[]; try{ arr=JSON.parse(localStorage.getItem(key)||'[]'); }catch(e){} arr.push(rec); try{ localStorage.setItem(key,JSON.stringify(arr)); }catch(e){} }
+let _editMedIso=null;
 function saveQuickMed(){
   const name=(document.getElementById('qmedName').value||'').trim();
   if(!name){ alert('نام دارو را وارد کن.'); return; }
   const dt=qDateTimeISO('qmedDate','qmedTime'); if(!dt){ alert('تاریخ را انتخاب کن.'); return; }
-  qLogPush('med_log_v1',{iso:dt.iso, time:dt.sh, name, dose:(document.getElementById('qmedDose').value||'').trim(), timing:(document.getElementById('qmedTiming').value||'').trim()});
-  closeQEntry('qmedModal'); uiToast('✓ دارو ثبت شد'); afterQuickLog();
+  const count=(document.getElementById('qmedCount').value||'').trim();
+  const dose=(document.getElementById('qmedDose').value||'').trim();
+  const timing=(document.getElementById('qmedTiming').value||'').trim();
+  const wasEdit=!!_editMedIso;
+  if(_editMedIso){ let arr=jlogGet('med_log_v1'); const x=arr.find(r=>r.iso===_editMedIso); if(x){ x.iso=dt.iso; x.time=dt.sh; x.name=name; x.count=count; x.dose=dose; x.timing=timing; } else { arr.push({iso:dt.iso,time:dt.sh,name,count,dose,timing}); } jlogSet('med_log_v1',arr); _editMedIso=null; }
+  else { qLogPush('med_log_v1',{iso:dt.iso, time:dt.sh, name, count, dose, timing}); }
+  closeQEntry('qmedModal'); uiToast(wasEdit?'✓ دارو ویرایش شد':'✓ دارو ثبت شد'); afterQuickLog();
+  if(wasEdit){ try{ medHistOpen(); }catch(e){} }
 }
+// نمایشِ خلاصهٔ رکوردِ دارو (تعداد · دوز · زمان)
+function medRecDisp(x){ return [x.count,x.dose,x.timing].filter(v=>v&&String(v).trim()).map(v=>escVision(String(v))).join(' · '); }
+// تاریخچهٔ مصرفِ دارو + ویرایش/حذف
+function medHistOpen(){
+  try{ ensureChatCss&&ensureChatCss(); }catch(e){}
+  const old=document.getElementById('medHistBg'); if(old) old.remove();
+  let arr=[]; try{ arr=JSON.parse(localStorage.getItem('med_log_v1')||'[]')||[]; }catch(e){}
+  arr=arr.filter(x=>x&&x.iso).sort((a,b)=>new Date(a.iso)-new Date(b.iso));
+  let body='';
+  if(!arr.length){ body='<div style="color:var(--muted);font-size:12.5px;text-align:center;padding:24px 8px;line-height:1.9">هنوز دارویی ثبت نشده.<br>از همین پنجره نام دارو را وارد و ذخیره کن.</div>'; }
+  else{
+    body='<div style="border:1px solid var(--line);border-radius:12px;overflow:hidden">'+arr.slice().reverse().map(x=>{
+      const sub=medRecDisp(x);
+      return `<div style="display:flex;align-items:center;gap:9px;padding:9px 8px;border-bottom:1px solid var(--line)">
+        <span style="font-size:15px">💊</span>
+        <div style="flex:1;min-width:0"><div style="font-weight:800;font-size:13.5px">${escVision(String(x.name||''))}</div>
+          ${sub?`<div style="font-size:11.5px;color:var(--ink);line-height:1.6;margin-top:1px">${sub}</div>`:''}
+          <div style="font-size:11px;color:var(--muted)">${escVision(String(x.time||_jshort(x.iso)))}</div></div>
+        <button onclick="medHistEdit('${x.iso}')" title="ویرایش" style="background:transparent;border:none;color:var(--teal);font-size:15px;cursor:pointer">✏️</button>
+        <button onclick="medHistDel('${x.iso}')" title="حذف" style="background:transparent;border:none;color:var(--muted);font-size:15px;cursor:pointer">🗑</button>
+      </div>`; }).join('')+'</div>';
+  }
+  const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='medHistBg'; bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
+  bg.innerHTML=`<div class="chat-rename" role="dialog" aria-modal="true" style="max-width:430px">
+    <h4>🗂 تاریخچهٔ مصرفِ دارو</h4>
+    <div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:8px">همهٔ داروهایی که ثبت کرده‌ای. با ✏️ ویرایش و با 🗑 حذف می‌شوند.</div>
+    <div style="max-height:56vh;overflow:auto">${body}</div>
+    <div class="chat-rename-btns" style="margin-top:12px"><button type="button" class="crn-btn crn-cancel" onclick="document.getElementById('medHistBg').remove()">بستن</button>
+      <button type="button" class="crn-btn crn-ok" onclick="document.getElementById('medHistBg').remove(); quickAdd('med')">➕ ثبتِ داروی تازه</button></div></div>`;
+  document.body.appendChild(bg);
+}
+function medHistEdit(iso){ let arr=[]; try{ arr=JSON.parse(localStorage.getItem('med_log_v1')||'[]')||[]; }catch(e){} const x=arr.find(r=>r.iso===iso); if(!x) return;
+  const bg=document.getElementById('medHistBg'); if(bg) bg.remove();
+  openQEntry('qmedModal','qmedDateWrap','qmedTime',['qmedName','qmedCount','qmedDose','qmedTiming'],'qmedName'); _editMedIso=iso;
+  try{ const rb=document.getElementById('qmedResults'); if(rb){ rb.classList.remove('show'); rb.innerHTML=''; } renderQmedSaved(); }catch(e){}
+  try{ document.getElementById('qmedName').value=x.name||''; document.getElementById('qmedCount').value=x.count||''; document.getElementById('qmedDose').value=x.dose||''; document.getElementById('qmedTiming').value=x.timing||'';
+    const d=new Date(x.iso); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); const inp=document.getElementById('qmedDate'); if(inp) inp.value=jDateStr(j[0],j[1],j[2]);
+    const p=n=>String(n).padStart(2,'0'); const tinp=document.getElementById('qmedTime'); if(tinp) tinp.value=p(d.getHours())+':'+p(d.getMinutes());
+    const t=document.querySelector('#qmedModal .qbg-title'); if(t) t.textContent='ویرایشِ دارو';
+  }catch(e){}
+}
+function medHistDel(iso){ if(!confirm('این ثبتِ دارو حذف شود؟')) return; try{ let arr=JSON.parse(localStorage.getItem('med_log_v1')||'[]')||[]; arr=arr.filter(x=>x&&x.iso!==iso); localStorage.setItem('med_log_v1',JSON.stringify(arr)); }catch(e){}
+  medHistOpen(); afterQuickLog(); }
 function saveQuickSleep(){
   const hRaw=faToEnDigits((document.getElementById('qsleepHours').value||'').trim());
   const hours=parseFloat(hRaw);
@@ -7123,7 +7178,7 @@ function afterQuickLog(){ const st=document.getElementById('dataStats'); if(st) 
 
 /* ====== کتابخانه‌ی داروها (آموزشی) ====== */
 /* هر دارو: n=نام، u=کاربرد، d=دوز رایج آموزشی، t=طریقه/زمان مصرف، no=نکته. اعداد صرفاً آموزشی‌اند؛ دوز قطعی با پزشک. */
-const MED_CAT_EMOJI={'دیابت خوراکی':'💊','انسولین':'💉','GLP-1 و لاغری':'📉','فشار خون':'🫀','چربی خون':'🩸','قلب و ضدانعقاد':'❤️','عصب و درد (نوروپاتی)':'⚡','کلیه و نقرس':'🫘','کبد':'🫄','رگ و گردش خون':'🦵','تیروئید':'🦋','گوارش':'🌀','مکمل و ویتامین':'🌱','روان و خواب':'🧠','چشم و رتینوپاتی':'👁️','چشم و پوست':'👁️','آنتی‌بیوتیک و عفونت':'🦠'};
+const MED_CAT_EMOJI={'دیابت خوراکی':'💊','انسولین':'💉','GLP-1 و لاغری':'📉','فشار خون':'🫀','چربی خون':'🩸','قلب و ضدانعقاد':'❤️','عصب و درد (نوروپاتی)':'⚡','کلیه و نقرس':'🫘','کبد':'🫄','رگ و گردش خون':'🦵','تیروئید':'🦋','گوارش':'🌀','مکمل و ویتامین':'🌱','روان و خواب':'🧠','چشم و رتینوپاتی':'👁️','چشم و پوست':'👁️','آنتی‌بیوتیک و عفونت':'🦠','مسکن و تب‌بر و ضدالتهاب':'💢','شل‌کنندهٔ عضلانی':'💆','سرماخوردگی، آلرژی و سرفه':'🤧'};
 const MED_DB={
  'دیابت خوراکی':[
   {n:'متفورمین (گلوکوفاژ)',u:'خط اول دیابت نوع ۲؛ مقاومت به انسولین را کم و قند کبدی را مهار می‌کند.',d:'۵۰۰ تا ۱۰۰۰ میلی‌گرم، ۱ تا ۳ بار در روز (حداکثر رایج ۲۰۰۰–۲۵۵۰).',t:'همراه یا بلافاصله بعد از غذا (برای کاهش تهوع و دل‌پیچه).',b:'افت قند نمی‌دهد، وزن را کمی کم می‌کند، ارزان و بی‌خطرِ آزموده، خطر قلبی را کاهش می‌دهد.',s:'تهوع، اسهال و دل‌پیچه (به‌ویژه اول دوره)، مزهٔ فلزی، کاهش B12؛ به‌ندرت اسیدوز لاکتیک در نارسایی کلیه.',no:'ممکن است B12 را کم کند؛ در نارسایی کلیه محدود می‌شود.'},
@@ -7402,6 +7457,60 @@ const MED_DB_MORE={
  ]
 };
 Object.keys(MED_DB_MORE).forEach(function(cat){ MED_DB[cat]=(MED_DB[cat]||[]).concat(MED_DB_MORE[cat]); });
+/* گسترش کتابخانه (نسخه ۲۳.۶۷): مسکن‌ها و تب‌برها، شل‌کننده‌های عضلانی، سرماخوردگی/آلرژی/سرفه و مکمل‌های بیشتر داروخانه‌ای */
+const MED_DB_MORE2={
+ 'مسکن و تب‌بر و ضدالتهاب':[
+  {n:'استامینوفن (استامینوفن ساده / پاراستامول)',u:'مسکن و تب‌بر پرمصرف؛ درد خفیف تا متوسط و تب.',d:'۳۲۵ تا ۵۰۰ میلی‌گرم هر ۶ ساعت (حداکثر رایج ۳ تا ۴ گرم در روز).',t:'با یا بدون غذا؛ از سقف روزانه عبور نکن.',b:'بی‌خطرترین مسکن برای معده و کلیه، مناسب دیابتی‌ها، بی‌اثر بر قند، بدون نسخه.',s:'در دوز بالا یا مصرف طولانی: آسیب کبد (به‌ویژه با الکل)؛ در دوز معمول کم‌عارضه.',no:'از سقف روزانه رد نشو؛ در بیماری کبدی احتیاط؛ مسکن انتخابی دیابتی‌ها.'},
+  {n:'استامینوفن کدئین',u:'مسکن ترکیبی برای درد متوسط که به استامینوفن تنها پاسخ نمی‌دهد.',d:'۱ قرص (۳۰۰/۱۰ یا ۳۰۰/۲۰) هر ۶ تا ۸ ساعت طبق نیاز.',t:'با غذا؛ کوتاه‌مدت.',b:'تسکین قوی‌تر درد نسبت به استامینوفن ساده.',s:'خواب‌آلودگی، یبوست، تهوع، سرگیجه؛ کدئین وابستگی‌آور است.',no:'کوتاه‌مدت؛ رانندگی با احتیاط؛ وابستگی‌آور.'},
+  {n:'ژلوفن (ایبوپروفن)',u:'ضدالتهاب غیراستروئیدی (NSAID)؛ درد، تب و التهاب.',d:'۲۰۰ تا ۴۰۰ میلی‌گرم هر ۶ تا ۸ ساعت (حداکثر رایج ۱۲۰۰–۲۴۰۰).',t:'حتماً با غذا (کاهش آزار معده).',b:'مؤثر بر درد عضلانی/مفصلی و سردرد و تب، ضدالتهاب.',s:'زخم و خونریزی معده، افزایش فشار خون، احتباس آب، آسیب کلیه؛ در دیابتی با نارسایی کلیه احتیاط.',no:'با معدهٔ خالی نخور؛ در بیماری کلیه/قلب و همراه ACE/ARB احتیاط.'},
+  {n:'ناپروکسن',u:'NSAID بلنداثر؛ درد و التهاب (مفصلی، قاعدگی، نقرس).',d:'۲۵۰ تا ۵۰۰ میلی‌گرم، ۲ بار در روز.',t:'با غذا.',b:'اثر طولانی‌تر (دو بار در روز کافی است)، مناسب درد مفصلی مزمن.',s:'زخم و خونریزی معده، آسیب کلیه، احتباس آب و افزایش فشار.',no:'با غذا؛ در بیماری کلیه/قلب احتیاط.'},
+  {n:'مفنامیک اسید (پونستان)',u:'NSAID؛ به‌ویژه درد قاعدگی و سردرد.',d:'۲۵۰ تا ۵۰۰ میلی‌گرم، ۳ بار در روز.',t:'با غذا؛ کوتاه‌مدت.',b:'مؤثر بر درد قاعدگی.',s:'ناراحتی و زخم معده، اسهال، آسیب کلیه.',no:'دورهٔ کوتاه؛ با غذا.'},
+  {n:'دیکلوفناک (ولتارن)',u:'NSAID قوی؛ درد و التهاب مفصل و عضله.',d:'۵۰ میلی‌گرم، ۲ تا ۳ بار (یا آهسته‌رهش ۱۰۰ روزانه).',t:'با غذا؛ فرم آهسته‌رهش کامل بلعیده شود.',b:'اثر قوی ضددرد و ضدالتهاب.',s:'زخم معده، آسیب کلیه، افزایش خطر قلبی‌عروقی در مصرف طولانی/دوز بالا.',no:'کمترین دوز مؤثر و کوتاه‌ترین دوره؛ در بیماری قلبی احتیاط.'},
+  {n:'ژل دیکلوفناک (موضعی)',u:'ضدالتهاب موضعی برای درد مفصل/عضلهٔ سطحی.',d:'۲ تا ۴ بار روی ناحیه.',t:'روی پوست سالم مالیده و دست‌ها شسته شود.',b:'اثر موضعی با جذب سیستمیک کم؛ آزار معدهٔ کمتر از قرص.',s:'قرمزی و سوزش موضعی، حساسیت به نور؛ روی زخم باز نمالید.',no:'گزینهٔ ایمن‌تر برای دیابتی‌ها نسبت به NSAID خوراکی.'},
+  {n:'ایندومتاسین',u:'NSAID قوی؛ نقرس حاد و التهاب شدید مفصل.',d:'۲۵ تا ۵۰ میلی‌گرم، ۲ تا ۳ بار.',t:'با غذا.',b:'بسیار مؤثر در حملهٔ حاد نقرس.',s:'آزار شدید معده، سردرد و سرگیجه، آسیب کلیه.',no:'کوتاه‌مدت؛ عوارض گوارشی بالا.'},
+  {n:'پیروکسیکام',u:'NSAID بلنداثر؛ آرتریت و درد مفصلی.',d:'۱۰ تا ۲۰ میلی‌گرم روزانه.',t:'با غذا، روزی‌یک‌بار.',b:'روزی‌یک‌بار.',s:'خطر بالای زخم و خونریزی معده، آسیب کلیه؛ در سالمند احتیاط.',no:'به‌خاطر عوارض گوارشی کمتر توصیه می‌شود.'},
+  {n:'ملوکسیکام',u:'NSAID نسبتاً انتخابی (COX-2)؛ آرتریت.',d:'۷٫۵ تا ۱۵ میلی‌گرم روزانه.',t:'با غذا، روزی‌یک‌بار.',b:'آزار معدهٔ کمتر از NSAIDهای قدیمی، روزی‌یک‌بار.',s:'ناراحتی معده، آسیب کلیه، احتباس آب.',no:'—'},
+  {n:'سلکوکسیب (سلبرکس)',u:'مهارکنندهٔ انتخابی COX-2؛ درد و التهاب با آزار معدهٔ کمتر.',d:'۱۰۰ تا ۲۰۰ میلی‌گرم، ۱ تا ۲ بار.',t:'با یا بدون غذا.',b:'زخم و خونریزی معدهٔ کمتر از NSAIDهای معمولی.',s:'افزایش خطر قلبی‌عروقی، آسیب کلیه، احتباس آب؛ در بیماری قلبی احتیاط.',no:'برای معدهٔ حساس بهتر است؛ در بیماری قلبی احتیاط.'},
+  {n:'کتورولاک',u:'NSAID تزریقی/خوراکی قوی برای درد شدید کوتاه‌مدت.',d:'۱۰ میلی‌گرم هر ۶ ساعت خوراکی (حداکثر ۵ روز).',t:'با غذا؛ فقط کوتاه‌مدت.',b:'قدرت ضددرد نزدیک به مخدرها بدون وابستگی.',s:'خطر بالای زخم/خونریزی معده و آسیب کلیه؛ فقط تا ۵ روز.',no:'بیش از ۵ روز مصرف نشود.'},
+  {n:'کدئین',u:'مسکن مخدر خفیف و ضدسرفه.',d:'۱۵ تا ۶۰ میلی‌گرم هر ۴ تا ۶ ساعت طبق نیاز.',t:'با غذا؛ کوتاه‌مدت.',b:'تسکین درد متوسط و سرکوب سرفهٔ خشک.',s:'یبوست، خواب‌آلودگی، تهوع، وابستگی؛ در دوز بالا افت تنفس.',no:'وابستگی‌آور؛ فقط با تجویز و کوتاه‌مدت.'},
+  {n:'استامینوفن + کافئین (مسکن سردرد)',u:'ترکیب مسکن برای سردرد و میگرن خفیف.',d:'۱ تا ۲ قرص هر ۶ ساعت طبق نیاز.',t:'با آب؛ از سقف استامینوفن رد نشو.',b:'کافئین اثر مسکن را تقویت می‌کند.',s:'بی‌قراری و بی‌خوابی از کافئین؛ مراقب سقف استامینوفن.',no:'شب دیر مصرف نشود (بی‌خوابی).'},
+  {n:'آسپرین (مسکن دوز بالا)',u:'مسکن و تب‌بر و ضدالتهاب (دوز درمانی، جدا از آسپرین قلبی).',d:'۳۰۰ تا ۶۰۰ میلی‌گرم هر ۴ تا ۶ ساعت.',t:'با غذا.',b:'مسکن و ضدالتهاب ارزان.',s:'زخم و خونریزی معده، وزوز گوش در دوز بالا؛ در کودکان (سندرم ری) ممنوع.',no:'با دوز پایین قلبی اشتباه نشود؛ در کودکان مصرف نکن.'},
+  {n:'سوماتریپتان',u:'درمان اختصاصی حملهٔ میگرن.',d:'۵۰ تا ۱۰۰ میلی‌گرم در شروع حمله (قابل تکرار پس از ۲ ساعت).',t:'در شروع سردردِ میگرنی.',b:'قطع مؤثر حملهٔ میگرن (نه فقط تسکین).',s:'فشار/سنگینی قفسهٔ سینه و گلو، سرگیجه؛ در بیماری قلبی/فشار کنترل‌نشده ممنوع.',no:'در بیماری قلبی و فشار بالا مصرف نشود.'}
+ ],
+ 'شل‌کنندهٔ عضلانی':[
+  {n:'متوکاربامول',u:'شل‌کنندهٔ عضله برای اسپاسم و گرفتگی و کمردرد.',d:'۵۰۰ تا ۱۵۰۰ میلی‌گرم، ۳ تا ۴ بار.',t:'با غذا.',b:'کاهش اسپاسم و درد عضلانی.',s:'خواب‌آلودگی، سرگیجه، تهوع؛ ادرار تیره (بی‌خطر).',no:'با رانندگی احتیاط.'},
+  {n:'بکلوفن',u:'شل‌کنندهٔ عضله برای اسپاسم‌های شدید (MS/آسیب نخاعی).',d:'۵ تا ۲۰ میلی‌گرم، ۳ بار در روز.',t:'با غذا؛ افزایش و قطع تدریجی.',b:'مؤثر بر اسپاسم شدید عضلانی.',s:'خواب‌آلودگی، ضعف، سرگیجه؛ قطع ناگهانی خطرناک (تشنج).',no:'ناگهانی قطع نشود.'},
+  {n:'تیزانیدین',u:'شل‌کنندهٔ عضله برای اسپاسم و درد گردن/کمر.',d:'۲ تا ۴ میلی‌گرم، تا ۳ بار (حداکثر ۳۶).',t:'ساعت ثابت؛ اغلب شب.',b:'کاهش اسپاسم با خواب‌آلودگی قابل کنترل.',s:'خواب‌آلودگی، خشکی دهان، افت فشار، افزایش آنزیم کبد.',no:'با کبد ضعیف احتیاط.'},
+  {n:'کلرزوکسازون',u:'شل‌کنندهٔ عضله برای دردهای عضلانی حاد.',d:'۲۵۰ تا ۵۰۰ میلی‌گرم، ۳ تا ۴ بار.',t:'با غذا.',b:'کمک به کاهش اسپاسم حاد.',s:'خواب‌آلودگی، سرگیجه؛ به‌ندرت آسیب کبد.',no:'اغلب همراه استامینوفن است.'},
+  {n:'اورفنادرین',u:'شل‌کنندهٔ عضله با اثر ضددرد؛ کمردرد و اسپاسم.',d:'۱۰۰ میلی‌گرم، ۲ بار در روز.',t:'با غذا.',b:'کاهش اسپاسم و درد عضلانی.',s:'خشکی دهان، تاری دید، یبوست، احتباس ادرار؛ در گلوکوم/پروستات احتیاط.',no:'در سالمند با احتیاط.'}
+ ],
+ 'سرماخوردگی، آلرژی و سرفه':[
+  {n:'قرص سرماخوردگی (استامینوفن+فنیل‌افرین+کلرفنیرامین)',u:'تسکین علائم سرماخوردگی: تب، آبریزش و گرفتگی بینی.',d:'۱ قرص هر ۶ ساعت طبق نیاز.',t:'با آب؛ از سقف استامینوفن رد نشو.',b:'چند علامت را با یک قرص تسکین می‌دهد.',s:'خواب‌آلودگی (کلرفنیرامین)، افزایش فشار و ضربان (فنیل‌افرین)، خشکی دهان.',no:'در فشار خون بالا و دیابت با احتیاط (جزء ضداحتقان فشار را بالا می‌برد).'},
+  {n:'سودوافدرین',u:'ضداحتقان بینی؛ گرفتگی بینی و سینوس.',d:'۳۰ تا ۶۰ میلی‌گرم هر ۴ تا ۶ ساعت.',t:'روز؛ نزدیک خواب نه (بی‌خوابی).',b:'باز کردن مؤثر گرفتگی بینی.',s:'افزایش فشار خون و ضربان، بی‌قراری و بی‌خوابی، افزایش خفیف قند.',no:'در فشار بالا، بیماری قلبی و دیابت با احتیاط.'},
+  {n:'کلرفنیرامین',u:'آنتی‌هیستامین قدیمی؛ آلرژی و آبریزش بینی.',d:'۴ میلی‌گرم هر ۶ تا ۸ ساعت.',t:'اغلب شب (خواب‌آلودگی).',b:'ارزان و مؤثر بر آلرژی و خارش.',s:'خواب‌آلودگی، خشکی دهان، یبوست، تاری دید.',no:'با رانندگی احتیاط؛ در سالمند و پروستات احتیاط.'},
+  {n:'ستیریزین (زیرتک)',u:'آنتی‌هیستامین جدید؛ آلرژی، کهیر و آبریزش بینی.',d:'۱۰ میلی‌گرم روزانه.',t:'روزی‌یک‌بار، اغلب شب.',b:'روزی‌یک‌بار، خواب‌آلودگی کم.',s:'خواب‌آلودگی خفیف، خشکی دهان.',no:'—'},
+  {n:'لوراتادین (کلاریتین)',u:'آنتی‌هیستامین غیرخواب‌آور؛ آلرژی و کهیر.',d:'۱۰ میلی‌گرم روزانه.',t:'روزی‌یک‌بار.',b:'بدون خواب‌آلودگی تقریباً، مناسب روز.',s:'کم؛ سردرد، خشکی دهان.',no:'مناسب مصرف روزانه.'},
+  {n:'فکسوفنادین',u:'آنتی‌هیستامین غیرخواب‌آور قوی؛ آلرژی فصلی و کهیر.',d:'۱۲۰ تا ۱۸۰ میلی‌گرم روزانه.',t:'با آب؛ با آبمیوه فاصله بده.',b:'کنترل خوب آلرژی بدون خواب‌آلودگی.',s:'کم؛ سردرد.',no:'با آبمیوه جذب کم می‌شود.'},
+  {n:'دیفن‌هیدرامین',u:'آنتی‌هیستامین؛ آلرژی، خارش و کمک به خواب.',d:'۲۵ تا ۵۰ میلی‌گرم طبق نیاز.',t:'شب (خواب‌آلودگی زیاد).',b:'ضدخارش و ضدحساسیت، کمک‌خواب.',s:'خواب‌آلودگی زیاد، خشکی دهان، گیجی در سالمند، احتباس ادرار.',no:'در سالمند و پروستات/گلوکوم احتیاط.'},
+  {n:'دکسترومتورفان (شربت ضدسرفهٔ خشک)',u:'سرکوب سرفهٔ خشک و آزاردهنده.',d:'۱۰ تا ۲۰ میلی‌گرم هر ۴ تا ۶ ساعت.',t:'طبق نیاز؛ برای سرفهٔ خشک نه خلط‌دار.',b:'کاهش سرفهٔ خشک شبانه.',s:'سرگیجه، خواب‌آلودگی، تهوع؛ سوءمصرف در دوز بالا.',no:'برای سرفهٔ خلط‌دار مناسب نیست.'},
+  {n:'گایافنزین/برم‌هگزین (خلط‌آور)',u:'رقیق‌کردن و دفع خلط در سرفهٔ خلط‌دار.',d:'طبق برچسب، چند بار در روز.',t:'با آب فراوان.',b:'کمک به دفع خلط.',s:'تهوع خفیف، سرگیجه.',no:'آب فراوان بنوش.'},
+  {n:'استیل‌سیستئین (موکولیتیک)',u:'رقیق‌کردن خلط غلیظ (برونشیت/سرفهٔ خلط‌دار).',d:'۲۰۰ میلی‌گرم، ۲ تا ۳ بار (یا ۶۰۰ روزانه).',t:'با آب؛ جوشان در آب.',b:'رقیق‌کردن خلط چسبنده.',s:'ناراحتی گوارشی، تهوع؛ به‌ندرت اسپاسم برونش.',no:'—'},
+  {n:'قرص مکیدنی گلودرد',u:'تسکین موقت گلودرد و سرفهٔ خفیف.',d:'هر ۲ تا ۳ ساعت یک عدد.',t:'در دهان حل شود؛ نجویدن.',b:'تسکین موضعی گلودرد.',s:'کم؛ نوع قنددار برای دیابتی مناسب نیست.',no:'نوع بدون‌قند برای دیابتی‌ها بهتر است.'},
+  {n:'اسپری/قطرهٔ ضداحتقان بینی',u:'باز کردن سریع گرفتگی بینی.',d:'۱ تا ۲ پاف در هر سوراخ، حداکثر ۳ روز.',t:'کوتاه‌مدت.',b:'اثر سریع بر گرفتگی بینی.',s:'بیش از ۳ تا ۵ روز → احتقان برگشتی (وابستگی بینی).',no:'بیش از ۳ روز پشت‌سر‌هم مصرف نکن.'}
+ ]
+};
+Object.keys(MED_DB_MORE2).forEach(function(cat){ MED_DB[cat]=(MED_DB[cat]||[]).concat(MED_DB_MORE2[cat]); });
+/* مکمل‌های بیشترِ داروخانه‌ای (نسخه ۲۳.۶۷) */
+MED_DB['مکمل و ویتامین']=(MED_DB['مکمل و ویتامین']||[]).concat([
+  {n:'ویتامین A',u:'کمبود ویتامین A؛ سلامت پوست و بینایی.',d:'طبق برچسب/پزشک.',t:'همراه غذای چرب.',b:'کمک به بینایی و پوست و ایمنی.',s:'دوز بالای طولانی: سمیت کبد و استخوان؛ در بارداری دوز بالا خطرناک.',no:'دوز بالا فقط با تجویز.'},
+  {n:'ویتامین K2',u:'کمک به استخوان و هدایت کلسیم؛ اغلب همراه ویتامین D.',d:'۹۰ تا ۱۸۰ میکروگرم روزانه.',t:'همراه غذای چرب.',b:'کمک به سلامت استخوان و عروق.',s:'کم؛ با وارفارین تداخل مهم دارد.',no:'با وارفارین حتماً با پزشک هماهنگ کن.'},
+  {n:'ویتامین D3 + K2',u:'ترکیب برای جذب و هدایت بهتر کلسیم به استخوان.',d:'طبق برچسب روزانه.',t:'همراه غذای چرب.',b:'حمایت هم‌زمان استخوان.',s:'مانند اجزای آن؛ با وارفارین احتیاط.',no:'—'},
+  {n:'کلسیم + منیزیم + زینک',u:'مکمل ترکیبی استخوان، عضله و ایمنی.',d:'۱ تا ۲ عدد روزانه طبق برچسب.',t:'شب همراه غذا.',b:'تأمین هم‌زمان چند ریزمغذی، کمک به خواب و گرفتگی.',s:'یبوست یا اسهال، تهوع؛ با آهن/لووتیروکسین فاصله.',no:'با داروی تیروئید فاصله بده.'},
+  {n:'ژینکو بیلوبا',u:'مکمل گیاهی؛ گردش خون مغزی و حافظه.',d:'۱۲۰ تا ۲۴۰ میلی‌گرم روزانه.',t:'همراه غذا.',b:'کمک احتمالی به تمرکز و گردش خون.',s:'سردرد، ناراحتی گوارشی؛ خطر خونریزی با ضدانعقادها.',no:'با رقیق‌کنندهٔ خون احتیاط.'},
+  {n:'اکیناسه',u:'مکمل گیاهی؛ تقویت ایمنی و کاهش دورهٔ سرماخوردگی.',d:'طبق برچسب در شروع سرماخوردگی.',t:'کوتاه‌مدت.',b:'کمک احتمالی به کوتاه‌شدن سرماخوردگی.',s:'ناراحتی گوارشی، حساسیت؛ در بیماری خودایمنی احتیاط.',no:'مکمل؛ شواهد متغیر.'},
+  {n:'ویتامین C + زینک',u:'مکمل ترکیبی ایمنی؛ سرماخوردگی و ترمیم.',d:'طبق برچسب روزانه.',t:'همراه غذا.',b:'کمک به ایمنی و ترمیم زخم.',s:'تهوع با معدهٔ خالی؛ دوز بالای C خطر سنگ کلیه.',no:'—'},
+  {n:'ORS (پودر آب و الکترولیت)',u:'جبران آب و املاح در اسهال/استفراغ و کم‌آبی.',d:'۱ ساشه در آب مطابق دستور، بعد هر اجابت.',t:'جرعه‌جرعه.',b:'پیشگیری از کم‌آبی؛ مهم در بیماری همراه دیابت.',s:'کم؛ نوع قنددار قند را کمی بالا می‌برد.',no:'در بیماری و کم‌آبی به‌ویژه برای دیابتی‌ها مهم است.'}
+]);
 const custom_meds_key='custom_meds_v1';
 function medLoadCustom(){ try{ return JSON.parse(localStorage.getItem(custom_meds_key)||'[]'); }catch(e){ return []; } }
 function medSaveCustom(arr){ try{ localStorage.setItem(custom_meds_key,JSON.stringify(arr)); }catch(e){} }
