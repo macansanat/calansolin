@@ -2316,7 +2316,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۸۷</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۸۸</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3651,7 +3651,7 @@ function podCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(POD_CFG_KEY)
     mDxM:(typeof o.mDxM==='number'?o.mDxM:0), mDyM:(typeof o.mDyM==='number'?o.mDyM:0), mScaleM:(typeof o.mScaleM==='number'?o.mScaleM:1),
     eDx:(typeof o.eDx==='number'?o.eDx:0), eDy:(typeof o.eDy==='number'?o.eDy:0), eScale:(typeof o.eScale==='number'?o.eScale:1),
     imgQuality:(['low','medium','high'].indexOf(o.imgQuality)>=0?o.imgQuality:'medium'),
-    bgPlay:(o.bgPlay!==false), handMode:(o.handMode==='back'?'back':'normal'),
+    bgPlay:(o.bgPlay!==false), handMode:(['back','present'].indexOf(o.handMode)>=0?o.handMode:'normal'),
     content:podContentCfg(o.content) }; }
 // تنظیماتِ محتوایِ پادکست: کدام موضوع‌ها بحث شوند (هر کدام قابلِ فعال/غیرفعال) + بازهٔ مرورِ قند
 function podContentCfg(cc){ cc=cc||{};
@@ -5337,7 +5337,7 @@ function pod3dSetupModel(modelScene, gender, url){
          pod3dPoseArmsDown(modelScene, 'RightArm','RightForeArm', new T.Vector3(-0.25,-1,0.08));
          modelScene.updateMatrixWorld&&modelScene.updateMatrixWorld(true); _pod3d.posed=true;
          // استخوان‌ها را برای «حرکتِ زندهٔ بدن/دست/سر هنگام صحبت» ذخیره کن (کواترنیونِ پایهٔ همین ژست)
-         _pod3d.gbones={}; _pod3d._ge=0; _pod3d.gc=null; ['Hips','Spine','Spine1','Spine2','Neck','Head','LeftArm','RightArm','LeftForeArm','RightForeArm','LeftHand','RightHand'].forEach(n=>{ const b=pod3dBone(modelScene,n); if(b) _pod3d.gbones[n]={b:b, q:b.quaternion.clone()}; });
+         _pod3d.gbones={}; _pod3d._ge=0; _pod3d.gc=null; _pod3d.gmodel=modelScene; _pod3d.fb=undefined; ['Hips','Spine','Spine1','Spine2','Neck','Head','LeftArm','RightArm','LeftForeArm','RightForeArm','LeftHand','RightHand'].forEach(n=>{ const b=pod3dBone(modelScene,n); if(b) _pod3d.gbones[n]={b:b, q:b.quaternion.clone()}; });
     }catch(e){}
   } else {
     try{ if(_pod3d.idleClip && T.AnimationMixer){
@@ -5445,35 +5445,57 @@ function pod3dGesture(open){
     set('RightForeArm', 1.45, 0.0,  0.15);
     return;
   }
-  // حالتِ نرمال — ژستِ «پوز‌به‌پوز»: بین پوزهای طبیعیِ مجری نرم حرکت می‌کند و هر حرکتِ بعدی
-  // از پوزِ فعلی (مقصدِ قبلی) نرم به مقصدِ بعدی می‌رود (easing؛ مبدا = مقصدِ قبلی).
-  if(!_pod3d.gc){ const r=POD_GEST_POSES[0]; _pod3d.gc={LA:r.LA.slice(),RA:r.RA.slice(),LF:r.LF.slice(),RF:r.RF.slice(),LH:r.LH.slice(),RH:r.RH.slice()}; _pod3d.gtg=POD_GEST_POSES[0]; _pod3d.gsw=t+1.0; _pod3d.gi=0; }
-  if(t>=_pod3d.gsw){
-    if(!speaking || energy<0.12){ _pod3d.gtg=POD_GEST_POSES[0]; _pod3d.gi=0; _pod3d.gsw=t+2.4+Math.random()*2.6; }   // سکوت ⇒ پوزِ استراحت
-    else { let ni; do{ ni=Math.floor(Math.random()*POD_GEST_POSES.length); }while(ni===_pod3d.gi && POD_GEST_POSES.length>1); _pod3d.gi=ni; _pod3d.gtg=POD_GEST_POSES[ni]; _pod3d.gsw=t+1.4+Math.random()*1.7; }
+  if(hm==='present'){
+    // ژستِ مجری (۸ حالت) — با «جهت‌دهیِ فضای‌جهانی» (مستقل از محورِ استخوان). «جلو = به‌سمتِ دوربین (+Z)».
+    const P=_pod3d.gp||(_pod3d.gp={i:0, sw:t+1.0});
+    if(t>=P.sw){ if(!speaking||energy<0.12){ P.i=0; P.sw=t+2.4+Math.random()*2.6; }
+      else { let ni; do{ ni=Math.floor(Math.random()*POD_GEST_POSES.length); }while(ni===P.i && POD_GEST_POSES.length>1); P.i=ni; P.sw=t+1.4+Math.random()*1.7; } }
+    const pose=POD_GEST_POSES[P.i]; const dt=(_pod3d.dt||0.016); const k=1-Math.pow(0.04, dt);
+    const La=G['LeftArm'],Lf=G['LeftForeArm'],Lh=G['LeftHand'],Ra=G['RightArm'],Rf=G['RightForeArm'],Rh=G['RightHand'];
+    const aim=(A,B,dir)=>{ if(!A||!B) return; const tl=pod3dAimTargetLocal(A.b,B.b,dir); if(tl) A.b.quaternion.slerp(tl,k); };
+    aim(La,Lf,pose.LA); aim(Lf,Lh,pose.LF); aim(Ra,Rf,pose.RA); aim(Rf,Rh,pose.RF);
+    if(Lh){ const q=new T.Quaternion().setFromEuler(new T.Euler(pose.LH[0],pose.LH[1],pose.LH[2],'XYZ')); Lh.b.quaternion.copy(Lh.q).multiply(q); }
+    if(Rh){ const q=new T.Quaternion().setFromEuler(new T.Euler(pose.RH[0],pose.RH[1],pose.RH[2],'XYZ')); Rh.b.quaternion.copy(Rh.q).multiply(q); }
+    try{ pod3dFingerCurl(0.14); }catch(e){}   // انگشتِ کمی جمع/طبیعی
+    return;
   }
-  const dt=(_pod3d.dt||0.016); const kk=1-Math.pow(0.03, dt);   // نرمیِ گذار (~۰٫۴ ثانیه تا رسیدن)
-  const g=_pod3d.gc, tg=_pod3d.gtg;
-  ['LA','RA','LF','RF','LH','RH'].forEach(k=>{ const c=g[k], to=tg[k]; for(let i=0;i<3;i++) c[i]+=(to[i]-c[i])*kk; });
-  const brA=Math.sin(t*0.8)*0.012;   // ریزتنفس روی همان پوز تا زنده بماند
-  set('LeftArm',  g.LA[0]+brA*0.2, g.LA[1], g.LA[2]);
-  set('RightArm', g.RA[0]+brA*0.2, g.RA[1], g.RA[2]);
-  set('LeftForeArm',  g.LF[0]+Math.sin(t*1.05)*0.01, g.LF[1], g.LF[2]);
-  set('RightForeArm', g.RF[0]+Math.sin(t*1.02+0.5)*0.01, g.RF[1], g.RF[2]);
-  const LH=G['LeftHand'], RH=G['RightHand'];
-  if(LH){ const q=new T.Quaternion().setFromEuler(new T.Euler(g.LH[0], g.LH[1]+Math.sin(t*1.2)*0.02, g.LH[2],'XYZ')); LH.b.quaternion.copy(LH.q).multiply(q); }
-  if(RH){ const q=new T.Quaternion().setFromEuler(new T.Euler(g.RH[0], g.RH[1]-Math.sin(t*1.25)*0.02, g.RH[2],'XYZ')); RH.b.quaternion.copy(RH.q).multiply(q); }
+  // حالتِ نرمالِ امن (پیش‌فرض) — ملایم، دست‌ها پایینِ جلو، هرگز پشتِ سر/بدن نمی‌روند
+  const em=Math.max(0, Math.sin(t*0.3)*Math.sin(t*0.16+0.5))*energy;
+  set('LeftArm',  Math.sin(t*0.6)*0.012,   0,  0.02);
+  set('RightArm', Math.sin(t*0.55+1)*0.012,0, -0.02);
+  set('LeftForeArm',  0.12+em*0.14, 0.03, 0);
+  set('RightForeArm', 0.12+em*0.14,-0.03, 0);
+  const LHn=G['LeftHand'], RHn=G['RightHand'];
+  if(LHn){ const q=new T.Quaternion().setFromEuler(new T.Euler(0, Math.sin(t*1.1)*0.03, 0,'XYZ')); LHn.b.quaternion.copy(LHn.q).multiply(q); }
+  if(RHn){ const q=new T.Quaternion().setFromEuler(new T.Euler(0,-Math.sin(t*1.15)*0.03, 0,'XYZ')); RHn.b.quaternion.copy(RHn.q).multiply(q); }
 }
-// پوزهای طبیعیِ ژستِ مجری (دلتای اویلر نسبت به پوزِ «دست پایین»؛ [X,Y,Z]). ترتیب: استراحت، کفِ‌باز، اشارهٔ بالا، هردو‌وسط، بازِ‌چپ، بازِ‌راست، هرمی، ضربِ‌راست
+// انگشت‌ها را کمی جمع/طبیعی می‌کند (به‌جای صافِ خشکِ پیش‌فرض) — جهتِ خم تجربی است
+function pod3dFingerBones(){ if(_pod3d.fb!==undefined) return _pod3d.fb; _pod3d.fb=[];
+  try{ const sc=_pod3d.gmodel; if(sc&&sc.traverse){ sc.traverse(o=>{ if((o.isBone||o.type==='Bone')&&/Hand(Thumb|Index|Middle|Ring|Pinky|Little)\d/i.test(o.name||'')){ _pod3d.fb.push({b:o, q:o.quaternion.clone(), th:/Thumb/i.test(o.name)}); } }); } }catch(e){}
+  return _pod3d.fb; }
+function pod3dFingerCurl(amt){ const fb=pod3dFingerBones(); if(!fb||!fb.length||!THREE) return; const T=THREE;
+  for(let i=0;i<fb.length;i++){ const f=fb[i]; const a=f.th?amt*0.35:amt;
+    const q=new T.Quaternion().setFromEuler(new T.Euler(0,0,a,'XYZ')); f.b.quaternion.copy(f.q).multiply(q); } }
+// کواترنیونِ محلیِ هدف تا استخوانِ B (که فرزندش C است) در فضای‌جهانی به سمتِ dir اشاره کند (مستقل از محورِ استخوان)
+function pod3dAimTargetLocal(B,C,dir){ const T=THREE; if(!B||!C||!B.parent) return null;
+  try{ const bp=new T.Vector3(), cp=new T.Vector3(); B.getWorldPosition(bp); C.getWorldPosition(cp);
+    const cur=cp.clone().sub(bp); if(cur.lengthSq()<1e-9) return null; cur.normalize();
+    const tgt=new T.Vector3(dir[0],dir[1],dir[2]).normalize();
+    const delta=new T.Quaternion().setFromUnitVectors(cur,tgt);
+    const pw=new T.Quaternion(); B.parent.getWorldQuaternion(pw); const pwi=pw.clone().invert();
+    return pwi.multiply(delta).multiply(pw).multiply(B.quaternion.clone());
+  }catch(e){ return null; } }
+// پوزهای مجری به‌صورتِ «جهتِ فضای‌جهانی» که هر استخوان به آن اشاره کند. قاب: پایین=-Y، جلو(به‌دوربین)=+Z، +X=سمتِ چپِ مدل.
+// LA/RA=جهتِ بازو، LF/RF=جهتِ ساعد (هدفِ دست)، LH/RH=چرخشِ کوچکِ مچ (اویلر). ترتیب مطابقِ عکسِ ۸حالته.
 const POD_GEST_POSES=[
-  {n:'rest',    LA:[0,0,0.03],   RA:[0,0,-0.03],   LF:[0.16,0.06,0.02], RF:[0.16,-0.06,-0.02], LH:[0.05,0,0],    RH:[0.05,0,0]},
-  {n:'openBoth',LA:[0.04,0,0.06],RA:[0.04,0,-0.06],LF:[0.5,0.12,0],     RF:[0.5,-0.12,0],      LH:[0.22,0,-0.32],RH:[0.22,0,0.32]},
-  {n:'indexR',  LA:[0,0,0.03],   RA:[0.18,0,-0.02],LF:[0.16,0.06,0],    RF:[1.0,0,0.05],       LH:[0.05,0,0],    RH:[0.05,0,0]},
-  {n:'midBoth', LA:[0.05,0,0.08],RA:[0.05,0,-0.08],LF:[0.6,0.16,0],     RF:[0.6,-0.16,0],      LH:[0.1,0,-0.15], RH:[0.1,0,0.15]},
-  {n:'sideL',   LA:[0.08,0,0.24],RA:[0,0,-0.03],   LF:[0.34,0.12,0],    RF:[0.16,-0.06,0],     LH:[0.2,0,-0.4],  RH:[0.05,0,0]},
-  {n:'sideR',   LA:[0,0,0.03],   RA:[0.08,0,-0.24],LF:[0.16,0.06,0],    RF:[0.34,-0.12,0],     LH:[0.05,0,0],    RH:[0.2,0,0.4]},
-  {n:'steeple', LA:[0.02,0,0.07],RA:[0.02,0,-0.07],LF:[0.56,0.2,0],     RF:[0.56,-0.2,0],      LH:[0.15,0,-0.25],RH:[0.15,0,0.25]},
-  {n:'beatR',   LA:[0.02,0,0.05],RA:[0.05,0,-0.05],LF:[0.22,0.06,0],    RF:[0.42,-0.1,0],      LH:[0.08,0,0],    RH:[0.14,0,0.2]}
+  {n:'rest',    LA:[0.06,-1,0.10], RA:[-0.06,-1,0.10], LF:[0.05,-0.45,0.90], RF:[-0.05,-0.45,0.90], LH:[0.1,0,0],  RH:[0.1,0,0]},
+  {n:'openBoth',LA:[0.16,-1,0.14], RA:[-0.16,-1,0.14], LF:[0.28,-0.15,0.95], RF:[-0.28,-0.15,0.95], LH:[0.25,0,0], RH:[0.25,0,0]},
+  {n:'indexR',  LA:[0.06,-1,0.10], RA:[-0.05,-0.65,0.42], LF:[0.05,-0.45,0.90], RF:[-0.02,0.8,0.55], LH:[0.1,0,0], RH:[0.05,0,0]},
+  {n:'midBoth', LA:[0.10,-1,0.12], RA:[-0.10,-1,0.12], LF:[0.14,-0.25,0.95], RF:[-0.14,-0.25,0.95], LH:[0.12,0,0], RH:[0.12,0,0]},
+  {n:'sideL',   LA:[0.5,-0.85,0.2],RA:[-0.06,-1,0.10], LF:[0.6,-0.12,0.72],  RF:[-0.05,-0.45,0.90], LH:[0.2,0,0],  RH:[0.1,0,0]},
+  {n:'sideR',   LA:[0.06,-1,0.10], RA:[-0.5,-0.85,0.2],LF:[0.05,-0.45,0.90], RF:[-0.6,-0.12,0.72],  LH:[0.1,0,0],  RH:[0.2,0,0]},
+  {n:'steeple', LA:[0.06,-1,0.12], RA:[-0.06,-1,0.12], LF:[-0.12,-0.12,0.94],RF:[0.12,-0.12,0.94],  LH:[0.15,0,0], RH:[0.15,0,0]},
+  {n:'beatR',   LA:[0.06,-1,0.10], RA:[-0.08,-1,0.12], LF:[0.05,-0.45,0.90], RF:[-0.1,-0.2,0.94],   LH:[0.1,0,0],  RH:[0.14,0,0]}
 ];
 // بندانگشتیِ آواتار را از رندرِ زنده می‌گیرد و کش می‌کند (برای گالریِ تنظیمات)
 function pod3dThumbKey(url){ return 'pod3dthumb:'+(url||''); }
@@ -5830,7 +5852,8 @@ function renderPodCfg(){
       const curUrl=c.av3dUrl||pod3dDefaultUrl();
       h+=`<div class="qbg-sub" style="margin-top:4px">با همان صدا/متن لب می‌زند، پلک می‌زند و بدنش حرکتِ طبیعی دارد. بارِ اول به اینترنت نیاز دارد، بعد کش می‌شود.</div>`;
       h+=`<label class="qbg-lbl" style="margin-top:8px">ژستِ دست‌ها</label>`;
-      h+=`<div class="pod-seg">`+[['normal','🙌 حرکتِ نرمال'],['back','🧍 دست پشتِ کمر']].map(o=>`<button class="${(c.handMode||'normal')===o[0]?'on':''}" onclick="podCfgPick('handMode','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
+      h+=`<div class="pod-seg">`+[['normal','🙌 نرمال'],['present','🎤 ژستِ مجری'],['back','🧍 پشتِ کمر']].map(o=>`<button class="${(c.handMode||'normal')===o[0]?'on':''}" onclick="podCfgPick('handMode','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
+      h+=`<div class="qbg-sub" style="margin-top:4px">«ژستِ مجری» ۸ پوزِ رو‌به‌دوربین با انگشتِ طبیعی را اجرا می‌کند (آزمایشی — اگر دست‌ها درست جلو نیامدند، یک عکس بفرست تا جهت را اصلاح کنم).</div>`;
       h+=`<label class="qbg-lbl" style="margin-top:8px">گالریِ چهره‌ها (یک لمس)</label>`;
       const galBtn=(url,fa,delId)=>{ const th=pod3dGetThumb(url);
         const inner=th?`<img class="pod-gal-th" src="${th}" alt="">`:`<span class="pod-gal-ph">🧑</span>`;
