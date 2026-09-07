@@ -2316,7 +2316,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۸۴</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۸۵</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3651,6 +3651,7 @@ function podCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(POD_CFG_KEY)
     mDxM:(typeof o.mDxM==='number'?o.mDxM:0), mDyM:(typeof o.mDyM==='number'?o.mDyM:0), mScaleM:(typeof o.mScaleM==='number'?o.mScaleM:1),
     eDx:(typeof o.eDx==='number'?o.eDx:0), eDy:(typeof o.eDy==='number'?o.eDy:0), eScale:(typeof o.eScale==='number'?o.eScale:1),
     imgQuality:(['low','medium','high'].indexOf(o.imgQuality)>=0?o.imgQuality:'medium'),
+    bgPlay:(o.bgPlay!==false), handMode:(o.handMode==='back'?'back':'normal'),
     content:podContentCfg(o.content) }; }
 // تنظیماتِ محتوایِ پادکست: کدام موضوع‌ها بحث شوند (هر کدام قابلِ فعال/غیرفعال) + بازهٔ مرورِ قند
 function podContentCfg(cc){ cc=cc||{};
@@ -5428,27 +5429,34 @@ function pod3dGesture(open){
   _pod3d._ge=(_pod3d._ge==null?eTarget:_pod3d._ge*0.9+eTarget*0.1);
   const energy=_pod3d._ge;
   const set=(name,ex,ey,ez)=>{ const o=G[name]; if(!o) return; const q=new T.Quaternion().setFromEuler(new T.Euler(ex,ey,ez,'XYZ')); o.b.quaternion.copy(o.q).multiply(q); };
-  // ژستِ «تأکیدی» گاه‌به‌گاه: پیک‌های آهسته و نامنظم (مثلِ وقتی آدم برای رساندنِ منظور دست تکان می‌دهد)
-  const emphL=Math.max(0, Math.sin(t*0.47)*Math.sin(t*0.19+0.6))*energy;
-  const emphR=Math.max(0, Math.sin(t*0.41+1.3)*Math.sin(t*0.23))*energy;
-  // تنفس + تابِ طبیعیِ بدن (لایه‌های چندفرکانسه با نسبت‌های نامنظم → غیرِتکراری)
-  const sX=Math.sin(t*0.9)*0.014 + energy*Math.sin(t*2.1)*0.02;
-  const sY=Math.sin(t*0.47)*0.012 + energy*Math.sin(t*1.6)*0.03;
-  set('Spine',  sX*0.5, sY*0.5, Math.sin(t*0.37)*0.012);
-  set('Spine1', sX*0.45, sY*0.45, Math.sin(t*0.29)*0.008);
+  // تنفس + تابِ ملایمِ بدن/سر (همیشه، صرف‌نظر از حالتِ دست)
+  const sX=Math.sin(t*0.9)*0.013, sY=Math.sin(t*0.47)*0.011;
+  set('Spine',  sX*0.5, sY*0.5, Math.sin(t*0.37)*0.01);
+  set('Spine1', sX*0.45, sY*0.45, 0);
   set('Spine2', sX*0.35, sY*0.35, 0);
-  set('Neck', -energy*Math.sin(t*2.7)*0.045 + Math.sin(t*0.6)*0.006, energy*Math.sin(t*1.2)*0.05, Math.sin(t*0.8)*0.012);
-  set('Head', -energy*Math.sin(t*2.7+0.6)*0.05 + Math.sin(t*0.9)*0.012, energy*Math.sin(t*1.7)*0.05 + (emphL-emphR)*0.06, energy*Math.sin(t*2.2)*0.02);
-  // بازوها: بیشترِ وقت آرام کنارِ بدن؛ روی تأکید کمی باز و بالا می‌آیند (نه مانکن‌وار خشک)
-  const idleL=Math.sin(t*0.73)*0.02, idleR=Math.sin(t*0.67+1.1)*0.02;
-  set('LeftArm',  idleL + emphL*0.16,  0,  -emphL*0.14 - energy*0.02);   // z منفی = کمی به بدن نزدیک/باز
-  set('RightArm', idleR + emphR*0.16,  0,   emphR*0.14 + energy*0.02);
-  // ساعد و دست: ژستِ روان و متنوع؛ روی تأکید بالا می‌آید و برمی‌گردد
-  set('LeftForeArm',  (0.05 + emphL*0.55 + energy*Math.sin(t*1.9)*0.05), energy*Math.sin(t*1.3)*0.05,  emphL*0.12);
-  set('RightForeArm', (0.05 + emphR*0.55 + energy*Math.sin(t*1.7+0.8)*0.05), -energy*Math.sin(t*1.5)*0.05, -emphR*0.12);
+  set('Neck', -energy*Math.sin(t*2.4)*0.035 + Math.sin(t*0.6)*0.006, energy*Math.sin(t*1.2)*0.04, Math.sin(t*0.8)*0.01);
+  set('Head', -energy*Math.sin(t*2.4+0.6)*0.04 + Math.sin(t*0.9)*0.01, energy*Math.sin(t*1.6)*0.04, energy*Math.sin(t*2.0)*0.015);
+  const hm=(podCfg().handMode||'normal');
+  if(hm==='back'){
+    // دست‌ها ثابت پشتِ کمر (تا مچ) — پوزِ آرام و پایدارِ مجری، بدونِ ژست (تجربی؛ اگر جهت اشتباه بود علامت‌ها را عوض می‌کنیم)
+    set('LeftArm',  -0.12, 0.05, -0.30);
+    set('RightArm', -0.12,-0.05,  0.30);
+    set('LeftForeArm',  1.45, 0.0, -0.15);
+    set('RightForeArm', 1.45, 0.0,  0.15);
+    return;
+  }
+  // حالتِ نرمال — ملایم و «کنترل‌شده»: دست‌ها کنارِ بدن، ژستِ کوچکِ رو‌به‌جلو؛ سقفِ خمِ ساعد کم تا هرگز بالا/پشتِ سر نرود
+  const emph=Math.max(0, Math.sin(t*0.35)*Math.sin(t*0.17+0.6))*energy;
+  const swayL=Math.sin(t*0.7)*0.015, swayR=Math.sin(t*0.66+1.1)*0.015;
+  set('LeftArm',  swayL + emph*0.06, 0, -0.03);
+  set('RightArm', swayR + emph*0.06, 0,  0.03);
+  const fL=Math.min(0.34, 0.08 + emph*0.26 + energy*Math.sin(t*1.6)*0.03);   // سقفِ ~۰٫۳۴ رادیان
+  const fR=Math.min(0.34, 0.08 + emph*0.26 + energy*Math.sin(t*1.5+0.7)*0.03);
+  set('LeftForeArm',  fL, 0.04, 0);
+  set('RightForeArm', fR,-0.04, 0);
   const LH=G['LeftHand'], RH=G['RightHand'];
-  if(LH){ const q=new T.Quaternion().setFromEuler(new T.Euler(emphL*0.2, Math.sin(t*1.4)*0.05, 0,'XYZ')); LH.b.quaternion.copy(LH.q).multiply(q); }
-  if(RH){ const q=new T.Quaternion().setFromEuler(new T.Euler(emphR*0.2, -Math.sin(t*1.6)*0.05, 0,'XYZ')); RH.b.quaternion.copy(RH.q).multiply(q); }
+  if(LH){ const q=new T.Quaternion().setFromEuler(new T.Euler(emph*0.1, Math.sin(t*1.2)*0.04, 0,'XYZ')); LH.b.quaternion.copy(LH.q).multiply(q); }
+  if(RH){ const q=new T.Quaternion().setFromEuler(new T.Euler(emph*0.1,-Math.sin(t*1.3)*0.04, 0,'XYZ')); RH.b.quaternion.copy(RH.q).multiply(q); }
 }
 // بندانگشتیِ آواتار را از رندرِ زنده می‌گیرد و کش می‌کند (برای گالریِ تنظیمات)
 function pod3dThumbKey(url){ return 'pod3dthumb:'+(url||''); }
@@ -5783,6 +5791,8 @@ function renderPodCfg(){
     if(c.avMode==='3d'){
       const curUrl=c.av3dUrl||pod3dDefaultUrl();
       h+=`<div class="qbg-sub" style="margin-top:4px">با همان صدا/متن لب می‌زند، پلک می‌زند و بدنش حرکتِ طبیعی دارد. بارِ اول به اینترنت نیاز دارد، بعد کش می‌شود.</div>`;
+      h+=`<label class="qbg-lbl" style="margin-top:8px">ژستِ دست‌ها</label>`;
+      h+=`<div class="pod-seg">`+[['normal','🙌 حرکتِ نرمال'],['back','🧍 دست پشتِ کمر']].map(o=>`<button class="${(c.handMode||'normal')===o[0]?'on':''}" onclick="podCfgPick('handMode','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
       h+=`<label class="qbg-lbl" style="margin-top:8px">گالریِ چهره‌ها (یک لمس)</label>`;
       const galBtn=(url,fa,delId)=>{ const th=pod3dGetThumb(url);
         const inner=th?`<img class="pod-gal-th" src="${th}" alt="">`:`<span class="pod-gal-ph">🧑</span>`;
@@ -14884,7 +14894,9 @@ function chatSyncInsets(){
   if(ab) cx.style.setProperty('--cx-top', ab.offsetHeight+'px');
   if(dk) cx.style.setProperty('--cx-bot', dk.offsetHeight+'px');
 }
-window.addEventListener('resize', ()=>{ try{ chatSyncInsets(); }catch(e){} });
+window.addEventListener('resize', ()=>{ try{ chatSyncInsets(); }catch(e){} try{ if((_pod.avMode||'photo')==='3d' && _pod3d && _pod3d.ren){ podAvResizeSoon(); } }catch(e){} });
+// چرخشِ گوشی: بافرِ رندرِ سه‌بعدی باید با نسبتِ تازه هماهنگ شود وگرنه تصویر کشیده می‌شود
+window.addEventListener('orientationchange', ()=>{ try{ if((_pod.avMode||'photo')==='3d' && _pod3d && _pod3d.ren){ podAvResizeSoon(); setTimeout(podAvResizeSoon,350); } }catch(e){} });
 // فالبکِ سبک: اگر مدل خطِ پیشنهاد را نگذاشت، با یک تماسِ کوتاه ۳ سوالِ بعدی بگیر
 async function chatFetchSuggestions(prov, question, answer){
   try{
