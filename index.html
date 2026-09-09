@@ -2326,7 +2326,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۴.۳</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۴.۴</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5992,7 +5992,7 @@ async function podLoadAvThumbs(){
   }
   try{ if(document.getElementById('podCfgModal').classList.contains('show')) renderPodCfg(); }catch(e){}
 }
-function podCloseCfg(){ const m=document.getElementById('podCfgModal'); if(m) m.classList.remove('show'); try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} podTestStop(); }
+function podCloseCfg(){ const m=document.getElementById('podCfgModal'); if(m) m.classList.remove('show'); try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} podTestStop(); try{ podStopTestMusic(); if(_pod._testMusicKill){ clearTimeout(_pod._testMusicKill); _pod._testMusicKill=0; } }catch(e){} }
 // ── کنترلِ ولوم و انتخابِ آهنگِ زمینه (تبِ 🎵 موزیک) ──
 function podCfgVol(kind,val){ const v=(parseFloat(faToEnDigits(val))||0)/100; const patch={}; patch[kind]=v; podCfgSet(patch);
   if(kind==='voiceVol'){ const l=document.getElementById('podVoiceVolLbl'); if(l) l.textContent=faDigits(Math.round(v*100))+'٪'; podApplyVoiceVol(); }
