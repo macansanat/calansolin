@@ -2320,7 +2320,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۹۶</b> · انتشار: ۱۴۰۵/۰۶/۱۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۹۷</b> · انتشار: ۱۴۰۵/۰۶/۱۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3628,7 +3628,7 @@ let _pod={ mode:'idle', cloud:false, ttsProv:'', music:null,
   analyser:null, raf:0, avImg:null, avImgGender:'', avBusy:false, musicKill:0, rawChunks:null, rawType:'',
   avFrames:null, avLayers:null, avLayersFor:'', avGeom:null, avW:null, avSway:null, blinkNext:0, blinkAt:0, avTmp:null,
   buffers:[], durs:[], cum:[0], totalDur:0, allFetched:false, playIdx:0, startCtx:0, startOff:0, playing:false, waiting:false,
-  audioEl:null, elUrls:[], elIdx:0, elMode:false, elBuffers:[], elRaw:[], elType:'', elSingle:false, visSegTexts:null, _visSig:'' };
+  audioEl:null, elUrls:[], elIdx:0, elMode:false, elBuffers:[], elRaw:[], elType:'', elSingle:false, visSegTexts:null, segDurs:[], _visSig:'' };
 const POD_RATING_FA={great:'عالی',good:'خوب',ok:'معمولی',bad:'سخت'};
 // صداهای انتخابیِ هر سرویس (id واقعیِ سرویس + برچسبِ فارسی)
 const POD_VOICES={
@@ -3986,7 +3986,7 @@ function podcastStart(rec){
   _pod.ttsProv=podTTSProvider();
   _pod.cloud = !!_pod.ttsProv;
   _pod.estDur = Math.max(60, Math.round(podWordCount(rec.script)/2.4));
-  _pod.script = rec.script||''; _pod.visTL=null; _pod.visIdx=0; _pod.visSegTexts=null; _pod._visSig='';   // متن برای زمان‌بندیِ شکلِ دهان
+  _pod.script = rec.script||''; _pod.visTL=null; _pod.visIdx=0; _pod.visSegTexts=null; _pod.segDurs=[]; _pod._visSig='';   // متن برای زمان‌بندیِ شکلِ دهان
   _pod.mode='playing'; _pod.t0=Date.now(); _pod.prep=_pod.cloud;
   podEngineReset(); podProgressStart(); renderPodcastCard();
   if(_pod.cloud){
@@ -4255,8 +4255,8 @@ function podElEl(){ if(!_pod.audioEl){ const a=new Audio(); a.preload='auto'; tr
     _pod.audioEl=a; } return _pod.audioEl; }
 // آزادسازیِ المان در لمسِ کاربر (iOS اجازهٔ play بعد از await نمی‌دهد مگر یک‌بار در جسچر آزاد شود)
 function podElUnlock(){ try{ const a=podElEl(); if(!a.dataset||!a.dataset.unlocked){ a.src=POD_SILENT_WAV; const pr=a.play(); if(pr&&pr.then) pr.then(()=>{ try{a.pause();a.currentTime=0;}catch(e){} }).catch(()=>{}); if(a.dataset) a.dataset.unlocked='1'; } }catch(e){} }
-function podElReset(){ try{ const a=_pod.audioEl; if(a){ a.pause(); } }catch(e){} (_pod.elUrls||[]).forEach(u=>{ try{ URL.revokeObjectURL(u); }catch(e){} }); _pod.elUrls=[]; _pod.elIdx=0; _pod.elMode=false; _pod.playing=false; _pod.elBuffers=[]; _pod.elRaw=[]; _pod.elType=''; _pod.elSingle=false; _pod.visSegTexts=null; _pod._visSig=''; }
-function podElPush(rawBytes, type, dur, abuf){ let url=''; try{ url=URL.createObjectURL(new Blob([rawBytes],{type:type||'audio/mpeg'})); }catch(e){ return; } _pod.elUrls.push(url); dur=dur||0; _pod.durs.push(dur); _pod.cum.push((_pod.cum[_pod.cum.length-1]||0)+dur); _pod.totalDur+=dur; _pod.elRaw.push(rawBytes); if(abuf) _pod.elBuffers.push(abuf); if(type) _pod.elType=type; }
+function podElReset(){ try{ const a=_pod.audioEl; if(a){ a.pause(); } }catch(e){} (_pod.elUrls||[]).forEach(u=>{ try{ URL.revokeObjectURL(u); }catch(e){} }); _pod.elUrls=[]; _pod.elIdx=0; _pod.elMode=false; _pod.playing=false; _pod.elBuffers=[]; _pod.elRaw=[]; _pod.elType=''; _pod.elSingle=false; _pod.visSegTexts=null; _pod.segDurs=[]; _pod._visSig=''; }
+function podElPush(rawBytes, type, dur, abuf){ let url=''; try{ url=URL.createObjectURL(new Blob([rawBytes],{type:type||'audio/mpeg'})); }catch(e){ return; } _pod.elUrls.push(url); dur=dur||0; _pod.durs.push(dur); (_pod.segDurs=_pod.segDurs||[]).push(dur);   /* مستقل: podElConsolidate آرایهٔ durs را تک‌عنصری می‌کند */ _pod.cum.push((_pod.cum[_pod.cum.length-1]||0)+dur); _pod.totalDur+=dur; _pod.elRaw.push(rawBytes); if(abuf) _pod.elBuffers.push(abuf); if(type) _pod.elType=type; }
 // چند AudioBuffer را به یک WAVِ ۱۶بیتیِ mono درمی‌آورد (برای صدای غیرِ mp3 مثل Gemini)
 function podAudioBuffersToWav(buffers){ if(!buffers||!buffers.length) return null;
   const sr=buffers[0].sampleRate||24000; let n=0; buffers.forEach(b=>{ n+=b.length; });
@@ -5026,11 +5026,48 @@ function podBuildVisemeTL(script, dur){
   for(let i=0;i<vis.length;i++){ at[i]=acc*scale; acc+=wt[i]; }
   return { at, vis, op, n:vis.length, dur };
 }
+// ⭐ لنگرزدنِ خطِ زمانی به مرزِ قطعه‌ها: متنِ هر قطعه دقیقاً روی مدتِ واقعیِ صوتِ
+// همان قطعه کشیده می‌شود ⇒ خطا داخلِ یک قطعه محدود می‌ماند و در طولِ پادکست
+// جمع نمی‌شود (علتِ «لب کمی جلو/عقب می‌افتد»).
+// ⚠️ درسِ ۲۳.۹۵: podElConsolidate آرایهٔ _pod.durs را تک‌عنصری می‌کند؛ برای همین از
+// _pod.segDurs استفاده می‌کنیم و فقط وقتی داده کامل و سالم است این مسیر فعال می‌شود.
+function podBuildVisemeTLSegs(texts, durs){
+  if(!texts||!texts.length||!durs||durs.length!==texts.length) return null;
+  let sum=0; for(let i=0;i<durs.length;i++){ if(!(durs[i]>0)) return null; sum+=durs[i]; }
+  if(!(sum>1)) return null;
+  const vis=[], op=[], atArr=[]; let tAcc=0;
+  for(let i=0;i<texts.length;i++){
+    const str=String(texts[i]||''); const segDur=durs[i];
+    const V=[], O=[], w=[]; let total=0, lastVowel='A';
+    for(let j=0;j<str.length;j++){ const e=podVisemeFor(str[j]); let v=e.v,o=e.o;
+      if(v==='_'){ v=lastVowel; o=0.5; } else if(v==='A'||v==='AH'||v==='E'||v==='O') lastVowel=v;
+      V.push(v); O.push(o); w.push(e.w); total+=e.w; }
+    if(!total){ tAcc+=segDur; continue; }
+    const scale=segDur/total; let acc=0;
+    for(let j=0;j<V.length;j++){ atArr.push(tAcc+acc*scale); vis.push(V[j]); op.push(O[j]); acc+=w[j]; }
+    tAcc+=segDur;
+  }
+  if(!vis.length) return null;
+  return { at:Float64Array.from(atArr), vis, op, n:vis.length, dur:tAcc };
+}
 function podEnsureVisemeTL(){
   const dur = _pod.cloud ? podTotalKnown() : _pod.estDur;
   if(!_pod.script || !(dur>1)){ _pod.visTL=null; return; }
-  if(_pod.visTL && Math.abs((_pod.visTL.dur||0)-dur) < 1.5) return;   // فقط وقتی مدت واقعاً عوض شد بازبساز
-  _pod.visTL = podBuildVisemeTL(_pod.script, dur); _pod.visIdx=0;
+  // مسیرِ دقیق‌تر — فقط وقتی مدتِ همهٔ قطعه‌ها اندازه‌گیری شده و با کلِ صوت هم‌خوان است
+  const segT=_pod.visSegTexts, segD=_pod.segDurs;
+  if(_pod.elMode && segT && segD && segT.length && segD.length===segT.length){
+    let sum=0, ok=true;
+    for(let i=0;i<segD.length;i++){ if(!(segD[i]>0)){ ok=false; break; } sum+=segD[i]; }
+    if(ok && sum>1 && _pod.totalDur>1 && Math.abs(sum-_pod.totalDur)<=Math.max(2, _pod.totalDur*0.15)){
+      const sig='S'+segT.length+'|'+Math.round(sum*4);
+      if(_pod.visTL && _pod._visSig===sig) return;
+      const tl=podBuildVisemeTLSegs(segT, segD);
+      if(tl){ _pod.visTL=tl; _pod.visIdx=0; _pod._visSig=sig; return; }
+    }
+  }
+  // فالبکِ امتحان‌شده: کلِ متن روی کلِ مدت
+  if(_pod.visTL && !_pod._visSig && Math.abs((_pod.visTL.dur||0)-dur) < 1.5) return;   // فقط وقتی مدت واقعاً عوض شد بازبساز
+  _pod.visTL = podBuildVisemeTL(_pod.script, dur); _pod.visIdx=0; _pod._visSig='';
 }
 function podVisemeAt(el){
   const T=_pod.visTL; if(!T||!T.n) return null;
@@ -12782,10 +12819,15 @@ function renderExLogEntry(){
   // ورزش دلخواه
   h+=`<div style="margin-top:8px"><input type="text" id="exCustomName" placeholder="یا ورزش دلخواه..." style="width:45%"> <input type="text" id="exCustomSet" placeholder="ست/زمان" style="width:30%"> <button class="quick-btn" style="font-size:11px" onclick="addCustomEx()">+</button></div>`;
   h+=`<div id="exTodayList" style="margin-top:10px"></div>`;
-  h+=`<button class="quick-btn" style="width:100%;margin-top:10px" onclick="saveExToday()">💾 ثبت ورزش امروز</button>`;
+  h+=`<button class="quick-btn" id="exSaveBtn" style="width:100%;margin-top:10px" onclick="saveExToday()">💾 ثبت ورزش</button>`;
+  h+=`<button class="quick-btn" id="exCancelEdit" style="width:100%;margin-top:6px;display:none" onclick="exEditCancel()">↩︎ لغو ویرایش</button>`;
   box.innerHTML=h;
   window._exToday=window._exToday||[];
   renderExTodayList();
+  if(window._editExTs){   // اگر وسطِ ویرایش بودیم، حالتِ ویرایش را دوباره نشان بده
+    const b=document.getElementById('exSaveBtn'); if(b) b.textContent='✅ ذخیرهٔ ویرایش';
+    const c=document.getElementById('exCancelEdit'); if(c) c.style.display='';
+  }
 }
 function addExToToday(){
   const sel=document.getElementById('exAddSelect'); if(!sel||!sel.value) return;
@@ -12816,16 +12858,38 @@ function renderExTodayList(){
   box.innerHTML=h;
 }
 function rmExToday(i){ window._exToday.splice(i,1); renderExTodayList(); }
+// ⭐ تایم‌استامپ را از تاریخِ انتخابیِ کاربر بساز (نه Date.now) — وگرنه ورزشِ دیروز
+// در گزارشِ روزانه/پادکست روی «امروز» می‌افتد (همه از dayKey(ts) می‌خوانند).
+function exTsFrom(dateStr, timeStr){
+  const pj=parseJDate(dateStr); if(!pj) return Date.now();
+  const g=j2g(pj[0],pj[1],pj[2]);
+  let hh=NaN, mm=0;
+  if(timeStr){ const tp=String(timeStr).split(':'); hh=parseInt(tp[0],10); mm=parseInt(tp[1],10)||0; }
+  if(isNaN(hh)){
+    const now=new Date();
+    if(dayKey(new Date(g[0],g[1]-1,g[2]))===dayKey(now)) return now.getTime();
+    hh=12; mm=0;   // بدونِ ساعت: ظهر تا هیچ لبه‌ای روز را جابه‌جا نکند
+  }
+  const dt=new Date(g[0],g[1]-1,g[2],hh,mm);
+  return isNaN(dt.getTime())?Date.now():dt.getTime();
+}
 function saveExToday(){
   const list=window._exToday||[];
   if(!list.length){ alert('حداقل یک حرکت اضافه کن'); return; }
   const date=document.getElementById('exDate').value.trim();
   const timeEl=document.getElementById('exTime'); const time=timeEl?timeEl.value:'';
   const slotEl=document.getElementById('exSlot'); const slot=slotEl?slotEl.value:'';
-  const d=loadExLog();
-  d.entries.push({date, time, slot, items:[...list], ts:Date.now()});
+  const ts=exTsFrom(date,time);
+  const d=loadExLog(); d.entries=d.entries||[];
+  if(window._editExTs){                       // حالتِ ویرایش: رکورد در جا آپدیت می‌شود
+    const i=d.entries.findIndex(e=>e.ts===window._editExTs);
+    if(i>=0) d.entries[i]=Object.assign({}, d.entries[i], {date, time, slot, items:[...list], ts});
+    else d.entries.push({date, time, slot, items:[...list], ts});
+    window._editExTs=0;
+  } else d.entries.push({date, time, slot, items:[...list], ts});
   saveExLog(d);
   window._exToday=[];
+  exEditUIReset();
   renderExTodayList();
   renderExHistory();
   const c=document.getElementById('c-ex-history'); if(c) c.classList.remove('closed');
@@ -13314,11 +13378,40 @@ function renderExHistory(){
   entries.slice(0,20).forEach(e=>{
     const meta=[e.time?faDigits(e.time):'', e.slot||''].filter(Boolean).join(' · ');
     h+=`<div style="background:var(--panel-2);border-radius:8px;padding:9px;margin-bottom:6px">
-      <div style="font-size:12px;font-weight:600;color:var(--teal);margin-bottom:4px">${faDigits(e.date)}${meta?` <span style="color:var(--muted);font-weight:500">— ${meta}</span>`:''}</div>`;
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <div style="flex:1;min-width:0;font-size:12px;font-weight:600;color:var(--teal)">${faDigits(e.date)}${meta?` <span style="color:var(--muted);font-weight:500">— ${meta}</span>`:''}</div>
+        <button onclick="exHistEdit(${e.ts})" title="ویرایش" style="background:none;border:none;color:var(--teal);cursor:pointer;font-size:13px;padding:2px 4px">✏️</button>
+        <button onclick="exHistDel(${e.ts})" title="حذف" style="background:none;border:none;color:#c66;cursor:pointer;font-size:13px;padding:2px 4px">🗑</button>
+      </div>`;
     e.items.forEach(it=>{ h+=`<div style="font-size:11.5px;color:var(--ink)">• ${it.name} <span style="color:var(--muted);font-size:10.5px">(${it.set})</span></div>`; });
     h+=`</div>`;
   });
   box.innerHTML=h;
+}
+function exEditUIReset(){
+  window._editExTs=0;
+  const b=document.getElementById('exSaveBtn'); if(b) b.textContent='💾 ثبت ورزش';
+  const c=document.getElementById('exCancelEdit'); if(c) c.style.display='none';
+}
+function exHistEdit(ts){
+  const d=loadExLog(); const e=(d.entries||[]).find(x=>x.ts===ts); if(!e) return;
+  window._exToday=(e.items||[]).map(it=>Object.assign({},it));
+  window._editExTs=ts;
+  const di=document.getElementById('exDate'); if(di) di.value=e.date||'';
+  const ti=document.getElementById('exTime'); if(ti) ti.value=e.time||'';
+  const si=document.getElementById('exSlot'); if(si) si.value=e.slot||'';
+  const b=document.getElementById('exSaveBtn'); if(b) b.textContent='✅ ذخیرهٔ ویرایش';
+  const c=document.getElementById('exCancelEdit'); if(c) c.style.display='';
+  renderExTodayList();
+  const box=document.getElementById('exLogEntry'); if(box&&box.scrollIntoView) box.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function exEditCancel(){ window._exToday=[]; exEditUIReset(); renderExTodayList(); }
+function exHistDel(ts){
+  if(!confirm('این جلسهٔ ورزش حذف شود؟')) return;
+  const d=loadExLog(); d.entries=(d.entries||[]).filter(x=>x.ts!==ts); saveExLog(d);
+  if(window._editExTs===ts) exEditCancel();
+  renderExHistory();
+  try{ if(typeof renderDashboard==='function') renderDashboard(); }catch(e){}
 }
 function renderExerciseTab(){
   renderExSafety();
