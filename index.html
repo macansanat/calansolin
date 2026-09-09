@@ -2326,7 +2326,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۴.۴</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۴.۵</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3904,13 +3904,19 @@ function podContentSig(){ try{ return JSON.stringify(podCfg().content||{}); }cat
 // درسِ ۲۴.۲: نسخهٔ قبلی فقط یک droneِ بم بود ⇒ صدای «بوووم». حالا هر آهنگ یک
 // ملودیِ ملایمِ جعبه‌موسیقی/کالیمبا روی یک پدِ نرم + اکوی فضایی است. اسکِیل‌ها
 // فرکانسِ واقعیِ نت‌اند (پنتاتونیک/ماژورِ آرام). rest=احتمالِ مکث، tempo=فاصلهٔ نت‌ها(ms).
+// ── آهنگ‌های زمینه: چند نوع «تولیدشونده» (بدونِ فایل/اینترنت) ──
+// type: nature (اقیانوس/جنگل/باران با نویزِ فیلترشده)، cinematic (پدِ متحولِ ۴صدایی +
+// اوستیناتوی آرام، در حال‌وهوای موسیقیِ فیلم)، melody (جعبه‌موسیقی). همه زیرِ صدای گوینده.
+// نکتهٔ صادقانه: نسخهٔ رسمیِ فیلم‌ها (کپی‌رایت) قابلِ جاسازی نیست؛ این‌ها اورجینال‌اند در همان حال.
 const POD_MUSIC_PRESETS={
-  calm:  { fa:'✨ آرامشِ فضایی', scale:[261.63,293.66,329.63,392.00,440.00,523.25,587.33,659.25], wave:'triangle', pad:[196.00,293.66], lp:2800, tempo:820,  rest:0.16, noteLen:2.6, echo:0.34, echoFb:0.30 },
-  ocean: { fa:'🌊 اقیانوسِ آرام', scale:[220.00,261.63,293.66,329.63,392.00,440.00,523.25], wave:'sine',     pad:[164.81,246.94], lp:1700, tempo:1280, rest:0.24, noteLen:3.4, echo:0.5,  echoFb:0.36 },
-  zen:   { fa:'🎐 ذنِ شرقی',      scale:[293.66,329.63,349.23,440.00,466.16,587.33,659.25], wave:'triangle', pad:[220.00,329.63], lp:3200, tempo:1040, rest:0.28, noteLen:2.4, echo:0.4,  echoFb:0.33 },
-  night: { fa:'🌙 شبِ لالایی',    scale:[261.63,293.66,329.63,349.23,392.00,440.00,523.25], wave:'sine',     pad:[174.61,261.63], lp:1500, tempo:1480, rest:0.30, noteLen:3.6, echo:0.46, echoFb:0.30 },
-  forest:{ fa:'🍃 جنگلِ سبز',     scale:[329.63,392.00,440.00,493.88,587.33,659.25,783.99], wave:'triangle', pad:[196.00,293.66], lp:3400, tempo:680,  rest:0.12, noteLen:1.9, echo:0.28, echoFb:0.28 },
-  off:   { fa:'🔇 بدونِ موزیک',   off:true }
+  cosmos: { fa:'🌌 کیهان (سبکِ فیلم‌های فضایی)', type:'cinematic', root:130.81, lp:2200, tempo:900,  echo:0.5,  echoFb:0.34, motif:[0,7,10,7], padGain:0.055 },
+  cinema: { fa:'🎬 سینماییِ احساسی',            type:'cinematic', root:146.83, lp:1850, tempo:1350, echo:0.55, echoFb:0.36, motif:[0,3,7,3], padGain:0.06, warm:true },
+  ocean:  { fa:'🌊 موجِ اقیانوس',   type:'ocean',  lp:2600, echo:0.4, echoFb:0.24 },
+  forest: { fa:'🌲 جنگل و پرنده‌ها', type:'forest', lp:5200, echo:0.3, echoFb:0.2 },
+  rain:   { fa:'🌧 بارانِ آرام',     type:'rain',   lp:6500, echo:0.25, echoFb:0.18 },
+  calm:   { fa:'✨ پیانوی آرام',      type:'melody', scale:[261.63,293.66,329.63,392.00,440.00,523.25,587.33,659.25], wave:'triangle', pad:[196.00,293.66], lp:2800, tempo:820, rest:0.16, noteLen:2.6, echo:0.34, echoFb:0.30 },
+  zen:    { fa:'🎐 ذنِ شرقی',        type:'melody', scale:[293.66,329.63,349.23,440.00,466.16,587.33,659.25], wave:'triangle', pad:[220.00,329.63], lp:3200, tempo:1040, rest:0.28, noteLen:2.4, echo:0.4, echoFb:0.33 },
+  off:    { fa:'🔇 بدونِ موزیک', off:true }
 };
 // ولومِ موزیک هنگام پخش: اسلایدرِ ۰..۱ به گِینِ باسِ موسیقی نگاشت می‌شود (۰٫۵→۰٫۳۰، شنیدنی زیرِ صدا)
 function podMusicPlayGain(){ const v=podCfg().musicVol; return Math.max(0, Math.min(0.6, (typeof v==='number'?v:0.5)*0.6)); }
@@ -3935,44 +3941,99 @@ function _podMkNote(ctx, P, dst, delayNode, t, freq){
     o2.connect(g2); g2.connect(out); o2.start(t); o2.stop(t+nl);
   }catch(e){}
 }
-// موتورِ مشترکِ ساختِ موسیقی (برای پخشِ واقعی و تست). یک شیءِ کنترل برمی‌گرداند.
-function _podStartMusicNodes(ctx, P, targetGain){
+// بافرِ نویزِ صورتی (۲ثانیه، لوپ) — پایهٔ صداهای طبیعت. برای هر کانتکست کش می‌شود.
+let _podNoiseCache=null;
+function _podNoiseBuf(ctx){ if(_podNoiseCache&&_podNoiseCache.ctx===ctx) return _podNoiseCache.buf;
+  const len=Math.floor((ctx.sampleRate||44100)*2)||88200; const buf=ctx.createBuffer(1,len,ctx.sampleRate||44100); const d=buf.getChannelData(0);
+  let b0=0,b1=0,b2=0; for(let i=0;i<len;i++){ const w=Math.random()*2-1; b0=0.99765*b0+w*0.0990460; b1=0.96300*b1+w*0.2965164; b2=0.57000*b2+w*1.0526913; d[i]=(b0+b1+b2+w*0.1848)*0.16; }
+  _podNoiseCache={ctx,buf}; return buf; }
+// یک جیک‌جیکِ پرنده (چند سوییپِ سریعِ فرکانس)
+function _podBird(ctx,dst,t){ try{
+  const o=ctx.createOscillator(); o.type='sine'; const f0=1900+Math.random()*1500; o.frequency.setValueAtTime(f0,t);
+  const n=2+Math.floor(Math.random()*3); let tt=t;
+  for(let i=0;i<n;i++){ o.frequency.exponentialRampToValueAtTime(f0*(1.18+Math.random()*0.22), tt+0.045); o.frequency.exponentialRampToValueAtTime(f0*0.92, tt+0.095); tt+=0.12; }
+  const g=ctx.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.11,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,tt+0.05);
+  let out=dst; if(ctx.createStereoPanner){ const pan=ctx.createStereoPanner(); pan.pan.value=Math.random()*1.4-0.7; pan.connect(dst); out=pan; }
+  o.connect(g); g.connect(out); o.start(t); o.stop(tt+0.15);
+}catch(e){} }
+// ── سازوکارِ مشترکِ خروجی (master + لوپَس + اکو) ──
+function _podMusicBus(ctx,P,targetGain){
   const master=ctx.createGain(); master.gain.value=0.0001; master.connect(ctx.destination);
   master.gain.setTargetAtTime(targetGain, ctx.currentTime, 1.0);
   const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=P.lp||2600; lp.Q.value=0.4; lp.connect(master);
-  // اکو برای فضاداربودن (جعبه‌موسیقی در سالن)
   let delay=null;
-  try{ delay=ctx.createDelay(1.2); delay.delayTime.value=P.echo||0.34; const fb=ctx.createGain(); fb.gain.value=P.echoFb||0.3;
-    const wet=ctx.createGain(); wet.gain.value=0.55; delay.connect(fb); fb.connect(delay); delay.connect(wet); wet.connect(lp); }catch(e){ delay=null; }
-  // پدِ نرمِ میانی (نه بمِ بوم‌دار) — گِینِ خیلی کم
-  const pad=[];
-  (P.pad||[]).forEach((f,idx)=>{ const o=ctx.createOscillator(); o.type='sine'; o.frequency.value=f; const g=ctx.createGain(); g.gain.value=idx===0?0.05:0.032; o.connect(g); g.connect(lp); o.start(); pad.push(o); });
-  const state={ idx:Math.floor((P.scale.length||5)/2) };
-  const nextFreq=()=>{ const sc=P.scale; const r=Math.random();
-    if(r<0.13){ state.idx=Math.floor(Math.random()*sc.length); }   // پرشِ گاه‌به‌گاه برای تنوعِ ملودی
-    else { const step=(r<0.62)?(Math.random()<0.5?1:-1):(Math.random()<0.5?2:-2); state.idx=Math.max(0,Math.min(sc.length-1, state.idx+step)); }
-    return sc[state.idx]; };
-  return { ctx, master, drone:pad, lfo:null, delay, nextFreq, lp, P };
+  try{ delay=ctx.createDelay(1.5); delay.delayTime.value=P.echo||0.34; const fb=ctx.createGain(); fb.gain.value=P.echoFb||0.3; const wet=ctx.createGain(); wet.gain.value=0.5; delay.connect(fb); fb.connect(delay); delay.connect(wet); wet.connect(lp); }catch(e){ delay=null; }
+  return { ctx, master, lp, delay, _srcs:[], _nodes:(delay?[delay]:[]), _timers:[], stopped:false };
 }
+// ── ژنراتورها ──
+function _gen_melody(ctx,P,bus){ const pg=P.padGain||0.05;
+  (P.pad||[]).forEach((f,idx)=>{ const o=ctx.createOscillator(); o.type='sine'; o.frequency.value=f; const g=ctx.createGain(); g.gain.value=idx===0?pg:pg*0.64; o.connect(g); g.connect(bus.lp); o.start(); bus._srcs.push(o); bus._nodes.push(g); });
+  const stt={idx:Math.floor((P.scale.length||5)/2)};
+  const nextFreq=()=>{ const sc=P.scale; const r=Math.random();
+    if(r<0.13){ stt.idx=Math.floor(Math.random()*sc.length); }
+    else { const step=(r<0.62)?(Math.random()<0.5?1:-1):(Math.random()<0.5?2:-2); stt.idx=Math.max(0,Math.min(sc.length-1, stt.idx+step)); }
+    return sc[stt.idx]; };
+  const tick=()=>{ if(bus.stopped) return; if(Math.random()<(P.rest||0.18)) return; _podMkNote(ctx,P,bus.lp,bus.delay,ctx.currentTime+0.03,nextFreq()); };
+  tick(); bus._timers.push(setInterval(tick, P.tempo||900));
+}
+function _gen_ocean(ctx,P,bus){
+  const src=ctx.createBufferSource(); src.buffer=_podNoiseBuf(ctx); src.loop=true;
+  const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=110;
+  const bp=ctx.createBiquadFilter(); bp.type='lowpass'; bp.frequency.value=480; bp.Q.value=0.7;
+  const swell=ctx.createGain(); swell.gain.value=0.55;
+  src.connect(hp); hp.connect(bp); bp.connect(swell); swell.connect(bus.lp); src.start();
+  const lfo=ctx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.085; const lg=ctx.createGain(); lg.gain.value=0.42; lfo.connect(lg); lg.connect(swell.gain);
+  const fg=ctx.createGain(); fg.gain.value=260; lfo.connect(fg); fg.connect(bp.frequency); lfo.start();
+  const lfo2=ctx.createOscillator(); lfo2.type='sine'; lfo2.frequency.value=0.053; const lg2=ctx.createGain(); lg2.gain.value=0.2; lfo2.connect(lg2); lg2.connect(swell.gain); lfo2.start();
+  bus._srcs.push(src,lfo,lfo2); bus._nodes.push(hp,bp,swell,lg,fg,lg2);
+}
+function _gen_forest(ctx,P,bus){
+  const src=ctx.createBufferSource(); src.buffer=_podNoiseBuf(ctx); src.loop=true;
+  const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=700; bp.Q.value=0.5;
+  const wind=ctx.createGain(); wind.gain.value=0.21;
+  src.connect(bp); bp.connect(wind); wind.connect(bus.lp); src.start();
+  const lfo=ctx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.06; const lg=ctx.createGain(); lg.gain.value=0.07; lfo.connect(lg); lg.connect(wind.gain); lfo.start();
+  bus._srcs.push(src,lfo); bus._nodes.push(bp,wind,lg);
+  const tick=()=>{ if(bus.stopped) return; if(Math.random()<0.5) return; _podBird(ctx,bus.lp,ctx.currentTime+0.05); if(Math.random()<0.28) _podBird(ctx,bus.lp,ctx.currentTime+0.38); };
+  bus._timers.push(setInterval(tick, 1500));
+}
+function _gen_rain(ctx,P,bus){
+  const src=ctx.createBufferSource(); src.buffer=_podNoiseBuf(ctx); src.loop=true;
+  const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=780;
+  const lp2=ctx.createBiquadFilter(); lp2.type='lowpass'; lp2.frequency.value=6800;
+  const g=ctx.createGain(); g.gain.value=0.28;
+  src.connect(hp); hp.connect(lp2); lp2.connect(g); g.connect(bus.lp); src.start();
+  const lfo=ctx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.13; const lg=ctx.createGain(); lg.gain.value=0.03; lfo.connect(lg); lg.connect(g.gain); lfo.start();
+  bus._srcs.push(src,lfo); bus._nodes.push(hp,lp2,g,lg);
+}
+function _gen_cinematic(ctx,P,bus){
+  const root=P.root||130.81; const st=sm=>root*Math.pow(2,sm/12);
+  const prog = P.warm ? [[0,3,7,10],[-5,-2,3,7],[-4,0,3,8],[-2,1,5,8]]
+                      : [[0,3,7,10],[-3,0,4,7],[-5,-1,2,7],[2,5,9,12]];
+  const voices=[]; const pg=P.padGain||0.055;
+  for(let i=0;i<4;i++){ const o=ctx.createOscillator(); o.type=P.warm?'sawtooth':'triangle'; o.frequency.value=st(prog[0][i]);
+    const g=ctx.createGain(); g.gain.value=0.0001; g.gain.setTargetAtTime(i===0?pg:pg*0.8, ctx.currentTime, 2.2);
+    o.connect(g); g.connect(bus.lp); o.start(); voices.push(o); bus._srcs.push(o); bus._nodes.push(g); }
+  let ci=0;
+  bus._timers.push(setInterval(()=>{ if(bus.stopped) return; ci=(ci+1)%prog.length; const t=ctx.currentTime; prog[ci].forEach((sm,i)=>{ if(voices[i]) voices[i].frequency.setTargetAtTime(st(sm),t,1.6); }); }, 15000));
+  const motif=P.motif||[0,7,3,10]; let mi=0; const mp={wave:P.warm?'triangle':'sine', noteLen:P.warm?3.0:2.4};
+  const tick=()=>{ if(bus.stopped) return; const sm=motif[mi%motif.length]; mi++; _podMkNote(ctx, mp, bus.lp, bus.delay, ctx.currentTime+0.03, st(prog[ci][0]+12+sm)); };
+  tick(); bus._timers.push(setInterval(tick, P.tempo||900));
+}
+const _POD_GENS={ melody:_gen_melody, ocean:_gen_ocean, forest:_gen_forest, rain:_gen_rain, cinematic:_gen_cinematic };
+function _podRunMusic(ctx,P,targetGain){ const bus=_podMusicBus(ctx,P,targetGain); try{ (_POD_GENS[P.type||'melody']||_gen_melody)(ctx,P,bus); }catch(e){} return bus; }
+function _podKillBus(m, delayMs){ if(!m) return; m.stopped=true;
+  try{ (m._timers||[]).forEach(t=>clearInterval(t)); }catch(e){}
+  try{ m.master.gain.setTargetAtTime(0.0001,(m.ctx&&m.ctx.currentTime)||0,0.3); }catch(e){}
+  setTimeout(()=>{ (m._srcs||[]).forEach(o=>{try{o.stop();}catch(_){}}); (m._nodes||[]).forEach(n=>{try{n.disconnect();}catch(_){}}); try{ m.master.disconnect(); }catch(e){} }, delayMs||700); }
 function podMusicStart(){
   const ctx=wkEnsureAudio(); if(!ctx) return; podMusicStop();
   const P=POD_MUSIC_PRESETS[podCfg().musicTrack]||POD_MUSIC_PRESETS.calm;
   if(P.off) return;   // «بدونِ موزیک»
-  if(_pod.musicKill){ clearTimeout(_pod.musicKill); _pod.musicKill=0; }   // نگذار پاک‌سازیِ قبلی، موزیکِ تازه را قطع کند
   try{ if(ctx.state==='suspended'&&ctx.resume) ctx.resume(); }catch(e){}
-  try{
-    const M=_podStartMusicNodes(ctx, P, podMusicPlayGain());
-    const tick=()=>{ if(!_pod.music) return; if(Math.random()<(P.rest||0.18)) return; _podMkNote(ctx, P, M.lp, M.delay, ctx.currentTime+0.03, M.nextFreq()); };
-    tick();
-    M.bellTimer=setInterval(tick, P.tempo||900);
-    _pod.music=M;
-  }catch(e){}
+  try{ _pod.music=_podRunMusic(ctx, P, podMusicPlayGain()); }catch(e){}
 }
-function podMusicStop(){ const m=_pod.music; if(!m) return; _pod.music=null;
-  try{ clearInterval(m.bellTimer); m.master.gain.setTargetAtTime(0.0001, m.ctx.currentTime, 0.4);
-    if(_pod.musicKill) clearTimeout(_pod.musicKill);
-    _pod.musicKill=setTimeout(()=>{ _pod.musicKill=0; try{ (m.drone||[]).forEach(o=>{try{o.stop();}catch(_){}}); }catch(e){} try{ if(m.lfo) m.lfo.stop(); }catch(e){} try{ if(m.delay) m.delay.disconnect(); }catch(e){} try{ m.master.disconnect(); }catch(e){} }, 800);
-  }catch(e){} }
+function podMusicStop(){ const m=_pod.music; if(!m) return; _pod.music=null; _podKillBus(m,850); }
 function podMusicGain(v){ const m=_pod.music; if(m){ try{ m.master.gain.setTargetAtTime(v, m.ctx.currentTime, 0.3); }catch(e){} } }
 /* ---- موتورِ پخش و پیشرفت (چند-قطعه‌ای، با اسکراب) ---- */
 function podEngineReset(){ _pod.buffers=[]; _pod.durs=[]; _pod.cum=[0]; _pod.totalDur=0; _pod.allFetched=false; _pod.playIdx=0; _pod.startCtx=0; _pod.startOff=0; _pod.playing=false; _pod.waiting=false; _pod.fromCache=false; _pod.rawChunks=null; _pod.rawType=''; }
@@ -6003,20 +6064,13 @@ function podPickMusic(k){ if(!POD_MUSIC_PRESETS[k]) return; podCfgSet({musicTrac
   try{ if(_pod.mode==='playing' && !POD_MUSIC_PRESETS[k].off){ podMusicStart(); podMusicGain(podMusicPlayGain()); } else if(_pod.mode==='playing'){ podMusicStop(); } }catch(e){}
   renderPodCfg();
   uiToast&&uiToast('✓ آهنگِ زمینه انتخاب شد'); }
-function podStopTestMusic(){ const m=_pod._testMusic; if(!m) return; _pod._testMusic=null;
-  try{ clearInterval(m.bellTimer); }catch(e){}
-  try{ m.master.gain.setTargetAtTime(0.0001,(m.ctx&&m.ctx.currentTime)||0,0.2); }catch(e){}
-  setTimeout(()=>{ try{ (m.drone||[]).forEach(o=>{try{o.stop();}catch(_){}}); }catch(e){} try{ if(m.lfo) m.lfo.stop(); }catch(e){} try{ if(m.delay) m.delay.disconnect(); }catch(e){} try{ m.master.disconnect(); }catch(e){} },500); }
+function podStopTestMusic(){ const m=_pod._testMusic; if(!m) return; _pod._testMusic=null; if(_pod._testMusicKill){ clearTimeout(_pod._testMusicKill); _pod._testMusicKill=0; } _podKillBus(m,500); }
 function podTestMusic(k){ const P=POD_MUSIC_PRESETS[k]; if(!P||P.off) return; const ctx=wkEnsureAudio(); if(!ctx) return;
   podStopTestMusic(); try{ if(ctx.state==='suspended'&&ctx.resume) ctx.resume(); }catch(e){}
   try{
-    const M=_podStartMusicNodes(ctx, P, Math.max(0.24,podMusicPlayGain()));   // برای تست کمی بلندتر تا خوب شنیده شود
-    const tick=()=>{ if(!_pod._testMusic) return; if(Math.random()<(P.rest||0.18)) return; _podMkNote(ctx, P, M.lp, M.delay, ctx.currentTime+0.03, M.nextFreq()); };
-    tick();
-    M.bellTimer=setInterval(tick, P.tempo||900);
-    _pod._testMusic=M;
+    _pod._testMusic=_podRunMusic(ctx, P, Math.max(0.28,podMusicPlayGain()));   // برای تست کمی بلندتر تا خوب شنیده شود
     if(_pod._testMusicKill) clearTimeout(_pod._testMusicKill);
-    _pod._testMusicKill=setTimeout(()=>{ podStopTestMusic(); },10000);   // تستِ ۱۰ثانیه‌ای، خودکار قطع
+    _pod._testMusicKill=setTimeout(()=>{ podStopTestMusic(); },12000);   // تستِ ۱۲ثانیه‌ای، خودکار قطع
   }catch(e){}
 }
 function podCfgPick(k,v){ const patch={}; patch[k]=v; podCfgSet(patch);
