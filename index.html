@@ -120,7 +120,13 @@ body.nav-bottom{padding-bottom:100px}
 .pod-gcell .cap{font-size:11px;color:var(--muted)}
 .pod-gcell.on .fr{border-color:var(--teal);box-shadow:0 0 0 1.5px var(--teal)}
 .pod-eyeprev{width:100%;max-width:260px;height:130px;border-radius:12px;background:var(--field);border:1px solid var(--line);display:block;margin:8px auto 0}
-.pod-3d-host{position:absolute;inset:0;width:100%;height:100%}
+.pod-3d-bg{position:absolute;inset:0;width:100%;height:100%;z-index:0;display:block}
+.pod-bg-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+.pod-bg-b{position:relative;padding:0;border:2px solid var(--line);border-radius:12px;overflow:hidden;background:var(--field);cursor:pointer;display:flex;flex-direction:column}
+.pod-bg-b.on{border-color:var(--teal);box-shadow:0 0 0 2px rgba(63,185,163,.3)}
+.pod-bg-th{width:100%;height:auto;display:block;aspect-ratio:120/74;background:#0b1220}
+.pod-bg-cap{font-size:11.5px;font-weight:700;padding:5px 6px;color:var(--ink);text-align:center}
+.pod-3d-host{position:absolute;inset:0;width:100%;height:100%;z-index:1}
 .pod-av--3d .pod-av-stage{height:300px;transition:height .35s ease}
 .pod-av--3d.pod-av--play .pod-av-stage{height:460px}
 .pod-3d-zoom{position:absolute;top:8px;left:8px;z-index:4;display:flex;flex-direction:column;gap:6px}
@@ -2326,7 +2332,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۴.۵</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۴.۶</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3669,6 +3675,8 @@ function podCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(POD_CFG_KEY)
     eDx:(typeof o.eDx==='number'?o.eDx:0), eDy:(typeof o.eDy==='number'?o.eDy:0), eScale:(typeof o.eScale==='number'?o.eScale:1),
     imgQuality:(['low','medium','high'].indexOf(o.imgQuality)>=0?o.imgQuality:'medium'),
     bgPlay:(o.bgPlay!==false), handMode:(['back','present'].indexOf(o.handMode)>=0?o.handMode:'normal'),
+    avBg:(o.avBg!==false), avBgMode:(o.avBgMode==='manual'?'manual':'auto'),
+    avBgScene:((typeof POD_BG_SCENES!=='undefined'&&POD_BG_SCENES[o.avBgScene])?o.avBgScene:'ocean'),
     voiceVol:(typeof o.voiceVol==='number'?Math.max(0,Math.min(1.5,o.voiceVol)):1.0),
     musicVol:(typeof o.musicVol==='number'?Math.max(0,Math.min(1,o.musicVol)):0.5),
     musicTrack:((typeof POD_MUSIC_PRESETS!=='undefined'&&POD_MUSIC_PRESETS[o.musicTrack])?o.musicTrack:'calm'),
@@ -5549,6 +5557,111 @@ function pod3dApplyFrame(){
     cam.lookAt&&cam.lookAt(hx, aimY, 0);
   }catch(e){}
 }
+// ═══ پس‌زمینهٔ متحرکِ مجریِ سه‌بعدی (canvas 2D پشتِ WebGL؛ صحنه‌های پروسیجرال) ═══
+// alpha:true رندرر ⇒ این لایه از پشتِ آواتار دیده می‌شود. هر صحنه یک draw(ctx,w,h,t,st) دارد.
+const POD_BG_SCENES={
+  ocean:  { fa:'موجِ اقیانوس', emoji:'🌊', draw:_bgOcean },
+  forest: { fa:'جنگل',         emoji:'🌲', draw:_bgForest },
+  rain:   { fa:'باران',        emoji:'🌧', draw:_bgRain },
+  cosmos: { fa:'کیهان',        emoji:'🌌', draw:_bgCosmos },
+  sunset: { fa:'غروبِ آفتاب',  emoji:'🌅', draw:_bgSunset },
+  office: { fa:'دفترِ کار',    emoji:'🏢', draw:_bgOffice },
+  clinic: { fa:'مطب/بیمارستان', emoji:'🏥', draw:_bgClinic },
+  studio: { fa:'استودیو',      emoji:'🎙', draw:_bgStudio }
+};
+function _bgFill(ctx,w,h,stops){ const g=ctx.createLinearGradient(0,0,0,h); stops.forEach(s=>g.addColorStop(s[0],s[1])); ctx.fillStyle=g; ctx.fillRect(0,0,w,h); }
+function _bgOcean(ctx,w,h,t){
+  _bgFill(ctx,w,h,[[0,'#0b1e3a'],[0.5,'#245078'],[0.55,'#16466b'],[1,'#08203a']]);
+  ctx.save(); ctx.globalAlpha=0.55; const gl=ctx.createRadialGradient(w*0.72,h*0.18,2,w*0.72,h*0.18,h*0.3);
+  gl.addColorStop(0,'rgba(255,244,210,0.95)'); gl.addColorStop(1,'rgba(255,244,210,0)'); ctx.fillStyle=gl; ctx.fillRect(0,0,w,h); ctx.restore();
+  for(let L=0;L<4;L++){ const y=h*0.52+L*h*0.11, amp=2.5+L*2.4, spd=0.35+L*0.22;
+    ctx.beginPath(); ctx.moveTo(0,y);
+    for(let x=0;x<=w;x+=8) ctx.lineTo(x, y+Math.sin(x*0.028+t*spd+L)*amp);
+    ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.closePath();
+    ctx.fillStyle=`rgba(${26+L*10},${86+L*20},${128+L*18},0.34)`; ctx.fill(); }
+  ctx.save(); ctx.globalAlpha=0.22; ctx.strokeStyle='rgba(205,232,255,0.8)'; ctx.lineWidth=1;
+  for(let i=0;i<6;i++){ const y=h*0.56+i*h*0.07; ctx.beginPath();
+    for(let x=0;x<=w;x+=6) ctx.lineTo(x, y+Math.sin(x*0.05+t*(0.6+i*0.12))*2); ctx.stroke(); } ctx.restore();
+}
+function _bgForest(ctx,w,h,t){
+  _bgFill(ctx,w,h,[[0,'#cdeccb'],[0.45,'#7cc088'],[1,'#265a35']]);
+  ctx.save(); ctx.globalAlpha=0.16; const rg=ctx.createRadialGradient(w*0.3,-h*0.1,8,w*0.3,-h*0.1,h*1.25);
+  rg.addColorStop(0,'rgba(255,255,205,0.95)'); rg.addColorStop(1,'rgba(255,255,205,0)'); ctx.fillStyle=rg; ctx.fillRect(0,0,w,h); ctx.restore();
+  const layers=[['#39714a',0.60,0.24],['#255230',0.71,0.4],['#173a20',0.82,0.58]];
+  layers.forEach((L,li)=>{ ctx.fillStyle=L[0]; const base=h*L[1], sway=Math.sin(t*L[2])*3, th=h*(0.14+li*0.05), n=5+li*2;
+    for(let i=0;i<=n;i++){ const cx=(i/n)*w+sway*(li+1)*0.5, tw=w/n*0.95;
+      ctx.beginPath(); ctx.moveTo(cx,base-th); ctx.lineTo(cx-tw*0.5,base); ctx.lineTo(cx+tw*0.5,base); ctx.closePath(); ctx.fill(); }
+    ctx.fillRect(0,base,w,h); });
+  ctx.save(); for(let i=0;i<14;i++){ const px=(i*97+t*11*(0.5+(i%3)*0.25))%w, py=h*0.28+((i*57)%Math.max(1,Math.floor(h*0.45)))+Math.sin(t*0.8+i)*6;
+    ctx.globalAlpha=0.2+0.2*Math.sin(t*1.3+i); ctx.fillStyle='rgba(255,255,215,0.9)'; ctx.beginPath(); ctx.arc(px,py,1.5,0,7); ctx.fill(); } ctx.restore();
+}
+function _bgRain(ctx,w,h,t,st){
+  _bgFill(ctx,w,h,[[0,'#2b3540'],[1,'#141a24']]);
+  if(!st.drops){ st.drops=[]; for(let i=0;i<90;i++) st.drops.push({x:Math.random(),y:Math.random(),l:6+Math.random()*10,s:0.5+Math.random()*0.6}); }
+  ctx.save(); ctx.strokeStyle='rgba(170,195,225,0.35)'; ctx.lineWidth=1;
+  st.drops.forEach(d=>{ d.y+=d.s*0.02; if(d.y>1) d.y-=1; const x=d.x*w, y=d.y*h; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-2,y+d.l); ctx.stroke(); }); ctx.restore();
+  ctx.save(); ctx.globalAlpha=0.06+0.03*Math.sin(t*0.7); ctx.fillStyle='#aeb9c8'; ctx.fillRect(0,h*0.6,w,h*0.4); ctx.restore();
+}
+function _bgCosmos(ctx,w,h,t,st){
+  if(!st.stars){ st.stars=[]; for(let i=0;i<80;i++) st.stars.push({x:Math.random(),y:Math.random(),r:Math.random()*1.3+0.3,p:Math.random()*6}); }
+  const g=ctx.createRadialGradient(w*0.5,h*0.4,8,w*0.5,h*0.4,h*1.1); g.addColorStop(0,'#241a3a'); g.addColorStop(0.5,'#130f24'); g.addColorStop(1,'#060410'); ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+  [['rgba(126,86,205,0.16)',0.32,0.34],['rgba(64,120,205,0.13)',0.68,0.5]].forEach(nb=>{ const r=ctx.createRadialGradient(w*nb[1],h*nb[2],4,w*nb[1],h*nb[2],h*0.5); r.addColorStop(0,nb[0]); r.addColorStop(1,'transparent'); ctx.fillStyle=r; ctx.fillRect(0,0,w,h); });
+  st.stars.forEach(s=>{ const x=((s.x+t*0.004)%1)*w, y=s.y*h, tw=0.5+0.5*Math.sin(t*1.5+s.p); ctx.globalAlpha=0.3+0.7*tw; ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x,y,s.r,0,7); ctx.fill(); }); ctx.globalAlpha=1;
+  const sp=(t*0.15)%9; if(sp<1.1){ const sx=w*(0.15+sp*0.6), sy=h*(0.12+sp*0.2); ctx.save(); ctx.globalAlpha=0.7*(1-sp/1.1); ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(sx-26,sy-10); ctx.stroke(); ctx.restore(); }
+}
+function _bgSunset(ctx,w,h,t){
+  _bgFill(ctx,w,h,[[0,'#3a2a5a'],[0.4,'#c96b6b'],[0.62,'#f0a35e'],[0.7,'#7a4a86'],[1,'#2c2350']]);
+  ctx.save(); const sy=h*0.6; const gl=ctx.createRadialGradient(w*0.5,sy,3,w*0.5,sy,h*0.35); gl.addColorStop(0,'rgba(255,235,180,0.95)'); gl.addColorStop(0.5,'rgba(255,180,110,0.5)'); gl.addColorStop(1,'rgba(255,180,110,0)'); ctx.fillStyle=gl; ctx.fillRect(0,0,w,h);
+  ctx.fillStyle='rgba(255,240,200,0.95)'; ctx.beginPath(); ctx.arc(w*0.5,sy,Math.min(w,h)*0.10,0,7); ctx.fill(); ctx.restore();
+  for(let L=0;L<3;L++){ const y=h*0.66+L*h*0.12, amp=2+L*2; ctx.beginPath(); ctx.moveTo(0,y); for(let x=0;x<=w;x+=8) ctx.lineTo(x,y+Math.sin(x*0.02+t*(0.3+L*0.2)+L)*amp); ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.closePath(); ctx.fillStyle=`rgba(${60+L*10},${30+L*10},${70+L*15},0.4)`; ctx.fill(); }
+}
+function _bgOffice(ctx,w,h,t){
+  _bgFill(ctx,w,h,[[0,'#3b4658'],[1,'#222a38']]);
+  // پنجرهٔ نورانی
+  ctx.save(); const wx=w*0.58,wy=h*0.12,ww=w*0.34,wh=h*0.4; const wg=ctx.createLinearGradient(wx,wy,wx,wy+wh); wg.addColorStop(0,'#9fc6e8'); wg.addColorStop(1,'#5f88b0'); ctx.fillStyle=wg; ctx.fillRect(wx,wy,ww,wh);
+  ctx.strokeStyle='#2a3340'; ctx.lineWidth=3; ctx.strokeRect(wx,wy,ww,wh); ctx.beginPath(); ctx.moveTo(wx+ww/2,wy); ctx.lineTo(wx+ww/2,wy+wh); ctx.moveTo(wx,wy+wh/2); ctx.lineTo(wx+ww,wy+wh/2); ctx.stroke();
+  // نورِ نرمِ لرزان از پنجره
+  ctx.globalAlpha=0.10+0.03*Math.sin(t*0.5); const lg=ctx.createRadialGradient(wx+ww*0.5,wy+wh*0.5,5,wx+ww*0.5,wy+wh*0.5,h*0.7); lg.addColorStop(0,'rgba(200,225,255,0.9)'); lg.addColorStop(1,'transparent'); ctx.fillStyle=lg; ctx.fillRect(0,0,w,h); ctx.restore();
+  // میزِ کار (سایه)
+  ctx.fillStyle='#1a2028'; ctx.fillRect(0,h*0.80,w,h*0.2);
+}
+function _bgClinic(ctx,w,h,t){
+  _bgFill(ctx,w,h,[[0,'#eaf4f8'],[0.7,'#cfe6ee'],[1,'#a9cfdb']]);
+  ctx.save(); ctx.globalAlpha=0.5; ctx.fillStyle='#ffffff';
+  for(let i=0;i<3;i++){ ctx.fillRect(w*(0.1+i*0.32), h*0.14, w*0.2, h*0.5); } ctx.restore();
+  // صلیبِ درمانی محو
+  ctx.save(); ctx.globalAlpha=0.10+0.03*Math.sin(t*0.6); ctx.fillStyle='#3aa0b8'; const cx=w*0.5,cy=h*0.32,s=Math.min(w,h)*0.09; ctx.fillRect(cx-s*0.33,cy-s,s*0.66,s*2); ctx.fillRect(cx-s,cy-s*0.33,s*2,s*0.66); ctx.restore();
+  ctx.fillStyle='#dfeef2'; ctx.fillRect(0,h*0.78,w,h*0.22);
+}
+function _bgStudio(ctx,w,h,t){
+  const g=ctx.createRadialGradient(w*0.5,h*0.12,6,w*0.5,h*0.5,h*1.05); g.addColorStop(0,'rgba(154,134,224,0.42)'); g.addColorStop(0.52,'rgba(63,185,163,0.16)'); g.addColorStop(1,'rgba(16,22,34,0.6)'); ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+  ctx.save(); ctx.globalAlpha=0.12+0.04*Math.sin(t*0.5); const sp=ctx.createRadialGradient(w*0.5,h*0.16,4,w*0.5,h*0.16,h*0.6); sp.addColorStop(0,'rgba(255,255,255,0.7)'); sp.addColorStop(1,'transparent'); ctx.fillStyle=sp; ctx.fillRect(0,0,w,h); ctx.restore();
+}
+// صحنهٔ مؤثر: در حالتِ auto از آهنگ، در حالتِ manual انتخابِ کاربر
+function pod3dBgScene(){ const c=podCfg(); if(c.avBgMode==='manual') return POD_BG_SCENES[c.avBgScene]?c.avBgScene:'ocean';
+  const map={ocean:'ocean',forest:'forest',rain:'rain',cosmos:'cosmos',cinema:'sunset',calm:'studio',zen:'forest',off:'studio'};
+  return map[c.musicTrack]||'studio'; }
+let _pod3dBg={ raf:0, st:{}, scene:'', last:0 };
+function pod3dBgStop(){ if(_pod3dBg.raf){ cancelAnimationFrame(_pod3dBg.raf); _pod3dBg.raf=0; } }
+function pod3dBgStart(){ pod3dBgStop(); _pod3dBg.st={}; _pod3dBg.scene=''; _pod3dBgLoop(); }
+function _pod3dBgLoop(){
+  const cv=document.getElementById('pod3dBg'); if(!cv){ _pod3dBg.raf=0; return; }
+  const now=performance.now();
+  if(now-_pod3dBg.last>=33){   // ~۳۰fps کافی و کم‌مصرف
+    _pod3dBg.last=now;
+    const host=cv.parentElement; const w=(host&&host.clientWidth)||cv.clientWidth||300, h=(host&&host.clientHeight)||cv.clientHeight||300;
+    const dpr=Math.min(2,window.devicePixelRatio||1); const pw=Math.max(1,Math.round(w*dpr)), ph=Math.max(1,Math.round(h*dpr));
+    if(cv.width!==pw||cv.height!==ph){ cv.width=pw; cv.height=ph; }
+    const ctx=cv.getContext('2d'); if(ctx){ const sc=pod3dBgScene(); if(sc!==_pod3dBg.scene){ _pod3dBg.scene=sc; _pod3dBg.st={}; }
+      ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+      const S=POD_BG_SCENES[sc]||POD_BG_SCENES.studio; try{ S.draw(ctx,w,h,now/1000,_pod3dBg.st); }catch(e){} }
+  }
+  _pod3dBg.raf=requestAnimationFrame(_pod3dBgLoop);
+}
+// یک فریمِ ثابت برای کاورِ منو
+function pod3dBgThumb(sceneId, cv){ if(!cv) return; const ctx=cv.getContext('2d'); if(!ctx) return; const w=cv.width, h=cv.height;
+  ctx.clearRect(0,0,w,h); const S=POD_BG_SCENES[sceneId]; if(!S) return; try{ S.draw(ctx,w,h,0.6,{}); }catch(e){} }
+
 function pod3dZoom(mult){
   const z=Math.max(0.5, Math.min(2.2, (podCfg().av3dZoom||1)*mult));
   podCfgSet({av3dZoom:z}); pod3dApplyFrame();
@@ -5921,7 +6034,7 @@ function renderPodcastCard(){
   const avOn=c.avatar; _pod.avMode=c.avMode;
   const av3d = c.avMode==='3d';
   const avInner = av3d
-    ? `<div id="pod3dHost" class="pod-3d-host"></div><div class="pod-3d-zoom"><button onclick="pod3dZoom(1.18)" title="نزدیک‌تر">＋</button><button onclick="pod3dZoom(0.85)" title="دورتر">－</button></div>`
+    ? `${c.avBg?'<canvas id="pod3dBg" class="pod-3d-bg"></canvas>':''}<div id="pod3dHost" class="pod-3d-host"></div><div class="pod-3d-zoom"><button onclick="pod3dZoom(1.18)" title="نزدیک‌تر">＋</button><button onclick="pod3dZoom(0.85)" title="دورتر">－</button></div>`
     : (_pod.avImg
       ? `<img class="pod-av-img" src="${_pod.avImg}" alt="مجریِ پادکست"><canvas id="podAvCanvas" class="pod-av-cv"></canvas>`
       : `<div class="pod-av-ph">${podAvatarSilhouetteSVG(c.avGender)}</div>`);
@@ -5954,8 +6067,8 @@ function renderPodcastCard(){
     </div>
     <div class="pod-note">هر روز متفاوت و بر اساسِ عملکردِ توست. آموزشی و عمومی — جایگزینِ توصیهٔ پزشک نیست.</div>
   </div>`;
-  if(av3d){ try{ pod3dEnsure(c.avGender); }catch(e){} }
-  else { pod3dStopLoop(); if(avOn && _pod.avImg){ podAvBuildLayers().then(()=>{ try{ podAvDraw(); }catch(e){} }).catch(()=>{}); } }
+  if(av3d){ try{ pod3dEnsure(c.avGender); }catch(e){} try{ if(c.avBg) pod3dBgStart(); else pod3dBgStop(); }catch(e){} }
+  else { pod3dStopLoop(); try{ pod3dBgStop(); }catch(e){} if(avOn && _pod.avImg){ podAvBuildLayers().then(()=>{ try{ podAvDraw(); }catch(e){} }).catch(()=>{}); } }
   if(playing) podReactStart(); else podReactStop();
   try{ podAvApplyModes(); podAvFloatObserve(box); if(avOn) podAvShowControls(); }catch(e){}
 }
@@ -6059,6 +6172,7 @@ function podCfgVol(kind,val){ const v=(parseFloat(faToEnDigits(val))||0)/100; co
   if(kind==='voiceVol'){ const l=document.getElementById('podVoiceVolLbl'); if(l) l.textContent=faDigits(Math.round(v*100))+'٪'; podApplyVoiceVol(); }
   else { const l=document.getElementById('podMusicVolLbl'); if(l) l.textContent=faDigits(Math.round(v*100))+'٪'; try{ if(_pod.music) podMusicGain(podMusicPlayGain()); }catch(e){} }
 }
+function podBgPick(k){ if(!POD_BG_SCENES[k]) return; podCfgSet({avBgScene:k, avBgMode:'manual'}); _pod3dBg.scene=''; renderPodCfg(); uiToast&&uiToast('✓ صحنهٔ پس‌زمینه انتخاب شد'); }
 function podPickMusic(k){ if(!POD_MUSIC_PRESETS[k]) return; podCfgSet({musicTrack:k}); try{ podStopTestMusic(); }catch(e){}
   // اگر پادکست در حال پخش است، آهنگ را زنده عوض کن
   try{ if(_pod.mode==='playing' && !POD_MUSIC_PRESETS[k].off){ podMusicStart(); podMusicGain(podMusicPlayGain()); } else if(_pod.mode==='playing'){ podMusicStop(); } }catch(e){}
@@ -6159,6 +6273,18 @@ function renderPodCfg(){
       h+=`<label class="qbg-lbl" style="margin-top:8px">ژستِ دست‌ها</label>`;
       h+=`<div class="pod-seg">`+[['normal','🙌 نرمال'],['present','🎤 ژستِ مجری'],['back','🧍 پشتِ کمر']].map(o=>`<button class="${(c.handMode||'normal')===o[0]?'on':''}" onclick="podCfgPick('handMode','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
       h+=`<div class="qbg-sub" style="margin-top:4px">«ژستِ مجری» ۸ پوزِ رو‌به‌دوربین با انگشتِ طبیعی را اجرا می‌کند (آزمایشی — اگر دست‌ها درست جلو نیامدند، یک عکس بفرست تا جهت را اصلاح کنم).</div>`;
+      // ── پس‌زمینهٔ متحرک ──
+      h+=`<label class="qbg-lbl" style="margin-top:12px">🌄 پس‌زمینهٔ متحرک</label>`;
+      h+=`<div class="pod-seg">`+[['on','روشن',true],['off','خاموش',false]].map(o=>`<button class="${c.avBg===o[2]?'on':''}" onclick="podCfgPick('avBg',${o[2]})">${o[1]}</button>`).join('')+`</div>`;
+      if(c.avBg){
+        h+=`<label class="qbg-lbl" style="margin-top:8px">انتخابِ صحنه</label>`;
+        h+=`<div class="pod-seg">`+[['auto','🎵 هماهنگ با موزیک'],['manual','🖐 دلخواه']].map(o=>`<button class="${c.avBgMode===o[0]?'on':''}" onclick="podCfgPick('avBgMode','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
+        if(c.avBgMode==='auto'){
+          h+=`<div class="qbg-sub" style="margin-top:4px">صحنه خودکار با آهنگِ زمینه هماهنگ می‌شود: موجِ اقیانوس ⇐ اقیانوس، جنگل ⇐ جنگل، باران، کیهان، سینمایی ⇐ غروب و…</div>`;
+        } else {
+          h+=`<div class="pod-bg-grid">`+Object.keys(POD_BG_SCENES).map(k=>`<button class="pod-bg-b ${c.avBgScene===k?'on':''}" onclick="podBgPick('${k}')"><canvas class="pod-bg-th" data-scene="${k}" width="120" height="74"></canvas><span class="pod-bg-cap">${POD_BG_SCENES[k].emoji} ${POD_BG_SCENES[k].fa}</span></button>`).join('')+`</div>`;
+        }
+      }
       h+=`<label class="qbg-lbl" style="margin-top:8px">گالریِ چهره‌ها (یک لمس)</label>`;
       const galBtn=(url,fa,delId)=>{ const th=pod3dGetThumb(url);
         const inner=th?`<img class="pod-gal-th" src="${th}" alt="">`:`<span class="pod-gal-ph">🧑</span>`;
@@ -6238,6 +6364,7 @@ function renderPodCfg(){
   }
   } // پایانِ تبِ مجری
   box.innerHTML=h;
+  try{ box.querySelectorAll('.pod-bg-th').forEach(cv=>{ pod3dBgThumb(cv.getAttribute('data-scene'), cv); }); }catch(e){}
 }
 // جابه‌جاییِ تبِ تنظیماتِ پادکست (صدا / مجری) — برای شلوغ‌نشدن
 function podCfgTab(t){ _pod.cfgTab=t; try{ renderPodCfg(); }catch(e){} }
