@@ -836,6 +836,10 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .qmeal-amt{margin:0}
 .qmeal-cval{font-size:13px;font-weight:800;color:var(--teal);white-space:nowrap;text-align:center}
 .qmeal-freq{display:block;width:100%;text-align:right;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin-bottom:6px;font-family:inherit;font-size:12.5px;color:var(--ink);cursor:pointer}
+.qmeal-comp-wrap{display:flex;flex-wrap:wrap;gap:6px}
+.qmeal-comp{background:var(--field);border:1px solid var(--line);border-radius:999px;padding:7px 11px;font-family:inherit;font-size:12px;color:var(--ink);cursor:pointer;transition:all .12s}
+.qmeal-comp.on{background:var(--teal-dim);border-color:var(--teal);color:var(--teal);font-weight:700}
+.qmeal-comp-n{display:inline-block;min-width:16px;text-align:center;background:var(--teal);color:#04120e;border-radius:999px;padding:0 5px;margin-inline-start:3px;font-size:11px}
 .saved-meal{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px}
 .saved-meal .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .saved-meal .mtype{font-weight:800;color:var(--amber);font-size:14px}
@@ -1219,8 +1223,9 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <div><label class="qbg-lbl">ساعت</label><input type="time" id="qmealTime" class="qbg-in"></div>
     </div>
     <label class="qbg-lbl" style="margin-top:12px">غذاها</label>
-    <div class="pod-seg" style="margin-bottom:8px"><button type="button" onclick="qmealToggleFreq()">⭐ پرمصرف</button><button type="button" onclick="qmealTogglePaste()">📋 پیست خوراکی‌ها</button></div>
+    <div class="pod-seg" style="margin-bottom:8px"><button type="button" onclick="qmealToggleFreq()">⭐ پرمصرف</button><button type="button" onclick="qmealToggleComp()">🍵 همراه‌ها</button><button type="button" onclick="qmealTogglePaste()">📋 پیست خوراکی‌ها</button></div>
     <div id="qmealFreqPanel" style="display:none;margin-bottom:8px"></div>
+    <div id="qmealCompPanel" style="display:none;margin-bottom:8px"></div>
     <div id="qmealPastePanel" style="display:none;margin-bottom:8px"><textarea id="qmealPasteBox" class="qbg-in" rows="2" placeholder="مثلاً: سیب قرمز، نان سنگک، ماست"></textarea><button type="button" class="mini-btn" style="margin-top:6px" onclick="qmealPasteFoods()">✓ تشخیص و افزودن</button></div>
     <div class="food-search-wrap">
       <input type="text" class="food-search" id="qmealFoodSearch" placeholder="🔍 جست‌وجوی غذا…" oninput="qmealSearch(this)" onfocus="qmealSearch(this)" autocomplete="off">
@@ -2320,7 +2325,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۹۹</b> · انتشار: ۱۴۰۵/۰۶/۱۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۴.۰</b> · انتشار: ۱۴۰۵/۰۶/۱۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -2721,6 +2726,8 @@ const DB = {
     "چای با ۱ حبه قند":{ "فنجان":5 },
     "چای با ۲ حبه قند":{ "فنجان":9 },
     "چای بدون قند":{ "فنجان":0 },
+    "چای (ساده)":{ "فنجان":0,"لیوان":0,"استکان":0 },
+    "چای با ۳ حبه قند":{ "فنجان":13 },
     "قهوه تلخ":{ "فنجان":0 },
     "قهوه با شیر و شکر":{ "فنجان":12 },
     "نسکافه شیرین":{ "لیوان":18 },
@@ -2806,6 +2813,11 @@ const DB = {
     "گز":{ "قطعه":9 },
     "سوهان":{ "قطعه":11 },
     "نقل/نبات":{ "قاشق غذاخوری":12 },
+    "پولکی":{ "عدد":5 },
+    "پولکی رژیمی (بدون قند)":{ "عدد":0 },
+    "استویا (شیرین‌کننده)":{ "عدد":0,"ساشه":0,"قطره":0,"قاشق چای‌خوری":0 },
+    "قند رژیمی/آسپارتام":{ "عدد":0,"قرص":0 },
+    "شکلات تلخ رژیمی (بدون قند)":{ "مربع کوچک":1 },
     "لواشک":{ "برگ":10,"کف دست":8 },
     "ترشک":{ "کف دست":7 },
     "آبنبات":{ "عدد":6 },
@@ -8095,6 +8107,45 @@ function qmealRenderFreq(){ const p=document.getElementById('qmealFreqPanel'); l
 function qmealAddFreq(i){ const g=(window._qmealFreq||[])[i]; if(!g) return; (g.foods||[]).forEach(f=>{ const nm=String(f).replace(/^\s*[\p{Emoji}\u200d\ufe0f]+\s*/u,'').trim(); let found=null; for(const c in DB){ if(DB[c][nm]){ found={cat:c,item:nm}; break; } } if(found) _qmealItems.push({cat:found.cat,item:found.item,unit:Object.keys(DB[found.cat][found.item])[0]||'',amt:1}); }); if(g.carb){ _qmealCarbManual=true; document.getElementById('qmealCarb').value=String(g.carb); } qmealRenderPicked(); if(g.carb) document.getElementById('qmealCarb').value=String(g.carb); document.getElementById('qmealFreqPanel').style.display='none'; }
 // پیست
 function qmealTogglePaste(){ const p=document.getElementById('qmealPastePanel'); const on=p.style.display==='none'; document.getElementById('qmealFreqPanel').style.display='none'; p.style.display=on?'block':'none'; }
+// ===== منویِ «همراه‌ها» — چیزهایی که معمولاً همراهِ چای/میان‌وعده خورده می‌شوند =====
+// هر مورد به یک غذای واقعیِ DB اشاره دارد تا محاسبهٔ کرب/ویرایش/نمایش یکسان بماند.
+const MEAL_COMPANIONS=[
+  ['شیرینی و قند','قند/شکر'],
+  ['شیرینی و قند','نقل/نبات'],
+  ['شیرینی و قند','پولکی'],
+  ['شیرینی و قند','پولکی رژیمی (بدون قند)'],
+  ['شیرینی و قند','استویا (شیرین‌کننده)'],
+  ['شیرینی و قند','قند رژیمی/آسپارتام'],
+  ['شیرینی و قند','خرما (شیرینی)'],
+  ['شیرینی و قند','بیسکویت ساده'],
+  ['شیرینی و قند','شیرینی خشک'],
+  ['شیرینی و قند','کیک ساده'],
+  ['شیرینی و قند','شکلات تلخ'],
+  ['شیرینی و قند','شکلات تلخ رژیمی (بدون قند)'],
+  ['شیرینی و قند','کلوچه'],
+  ['شیرینی و قند','نان چای'],
+  ['شیرینی و قند','عسل'],
+  ['شیرینی و قند','گز']
+];
+function qmealToggleComp(){ const p=document.getElementById('qmealCompPanel'); const on=p.style.display==='none';
+  document.getElementById('qmealFreqPanel').style.display='none'; document.getElementById('qmealPastePanel').style.display='none';
+  p.style.display=on?'block':'none'; if(on) qmealRenderComp(); }
+function _qmealCompCount(cat,item){ let n=0; (_qmealItems||[]).forEach(x=>{ if(x.cat===cat&&x.item===item) n+=(parseFloat(x.amt)||0); }); return n; }
+function qmealRenderComp(){ const p=document.getElementById('qmealCompPanel'); if(!p) return;
+  let h='<div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">با چای/میان‌وعده چه خوردی؟ روی هرکدام بزن تا تعدادش زیاد شود:</div><div class="qmeal-comp-wrap">';
+  MEAL_COMPANIONS.forEach(([cat,item])=>{ if(!(DB[cat]&&DB[cat][item])) return;
+    const n=_qmealCompCount(cat,item);
+    h+=`<button type="button" class="qmeal-comp${n>0?' on':''}" onclick="qmealAddComp('${cat.replace(/'/g,"\\'")}','${item.replace(/'/g,"\\'")}')">${itemEmoji(cat,item)} ${item}${n>0?` <b class="qmeal-comp-n">${faDigits(n)}</b>`:''}</button>`;
+  });
+  h+='</div>';
+  p.innerHTML=h;
+}
+function qmealAddComp(cat,item){ if(!(DB[cat]&&DB[cat][item])) return;
+  const i=(_qmealItems||[]).findIndex(x=>x.cat===cat&&x.item===item);
+  if(i>=0){ _qmealItems[i].amt=(parseFloat(_qmealItems[i].amt)||0)+1; }
+  else { _qmealItems.push({cat,item,unit:Object.keys(DB[cat][item])[0]||'',amt:1}); }
+  _qmealCarbManual=false; qmealRenderPicked(); qmealRenderComp();
+}
 function qmealPasteFoods(){ const raw=(document.getElementById('qmealPasteBox').value||'').trim(); if(!raw) return; raw.split(/[،,\n]+/).map(s=>s.trim()).filter(Boolean).forEach(nm0=>{ const nm=nm0.replace(/^\s*[\p{Emoji}\u200d\ufe0f]+\s*/u,'').trim(); const nn=normalizeFa(nm); let found=null; for(const c in DB){ for(const it in DB[c]){ if(normalizeFa(it)===nn||normalizeFa(it).includes(nn)){ found={cat:c,item:it}; break; } } if(found)break; } if(found) _qmealItems.push({cat:found.cat,item:found.item,unit:Object.keys(DB[found.cat][found.item])[0]||'',amt:1}); }); _qmealCarbManual=false; document.getElementById('qmealPasteBox').value=''; document.getElementById('qmealPastePanel').style.display='none'; qmealRenderPicked(); }
 function saveQuickMeal(){
   const foods=_qmealItems.map(x=>`${itemEmoji(x.cat,x.item)} ${x.item}`+((x.amt&&x.unit)?` (${faDigits(x.amt)} ${x.unit})`:''));
