@@ -2320,7 +2320,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۹۷</b> · انتشار: ۱۴۰۵/۰۶/۱۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۹۸</b> · انتشار: ۱۴۰۵/۰۶/۱۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -16904,59 +16904,76 @@ function normalizeColloquial(s){
     .replace(/میگو/g,'میگو')
     .replace(/سیبزمینی/g,'سیب‌زمینی');
 }
+// ⭐ تقسیمِ سطحِ بالا: فقط روی جداکننده‌های خارج از پرانتز می‌شکند تا
+// «(پروتئینی، بدون قند افزوده)» تکه‌تکه نشود. «و» اینجا جداکننده نیست
+// (چون در نامِ غذاها می‌آید: «سوپ مرغ و جو») و فقط به‌عنوان فالبک استفاده می‌شود.
+function _foodSplitTop(note){
+  const seps='،,/\n'; const out=[]; let buf='', depth=0;
+  for(let k=0;k<note.length;k++){ const ch=note[k];
+    if(ch==='('||ch==='（'){ depth++; buf+=ch; continue; }
+    if(ch===')'||ch==='）'){ if(depth>0) depth--; buf+=ch; continue; }
+    if(depth===0 && seps.indexOf(ch)>=0){ if(buf.trim()) out.push(buf.trim()); buf=''; continue; }
+    buf+=ch;
+  }
+  if(buf.trim()) out.push(buf.trim());
+  return out;
+}
+// یک تکه را به بهترین غذای دیتابیس تطبیق می‌دهد؛ اگر چیزی پیدا نشد null برمی‌گرداند.
+function _matchOneFood(part){
+  const norm=normalizeColloquial(normalizeFa(faNum(part)));
+  const numMatch=norm.match(/(\d+(\.\d+)?)/);
+  const qty=numMatch?parseFloat(numMatch[1]):1;
+  const stop=['عدد','گرم','قاشق','کف','دست','لقمه','یک','پرس','فنجان','لیوان','کاسه','بشقاب','با','حبه','دانه','تکه','برش','متوسط','بزرگ','کوچک','پخته','ای','تابه'];
+  const noteWords=norm.replace(/\d+(\.\d+)?/g,' ').split(/\s+/).filter(w=>w.length>=2 && !stop.includes(w));
+  if(noteWords.length===0) return null;
+  let best=null,bestScore=0;
+  SEARCH_INDEX.forEach(entry=>{
+    const enorm=normalizeColloquial(entry.norm);
+    const itemWords=enorm.split(/\s+/).filter(w=>w.length>=2 && !stop.includes(w));
+    if(itemWords.length===0) return;
+    let score=0, matchedItemWords=0, matchedNoteWords=new Set();
+    itemWords.forEach(iw=>{
+      let matched=false;
+      noteWords.forEach((nw,ni)=>{
+        if(nw===iw){ score+=iw.length*3; matched=true; matchedNoteWords.add(ni); }
+        else if(nw.length>=3&&iw.length>=3 && (nw.startsWith(iw)||iw.startsWith(nw))){ score+=Math.min(iw.length,nw.length); matched=true; matchedNoteWords.add(ni); }
+      });
+      if(matched) matchedItemWords++;
+    });
+    const itemCoverage=matchedItemWords/itemWords.length;
+    const noteCoverage=matchedNoteWords.size/noteWords.length;
+    if(itemCoverage<0.5) score*=0.25;
+    if(itemWords.length===1 && noteWords.includes(itemWords[0])) score+=15;
+    if(itemWords[0]===noteWords[0]) score+=12;
+    if(noteWords.length===1 && (entry.cat==='خورش و غذای اصلی'||entry.cat==='غذاهای سنتی ایرانی') && itemWords.length>1) score*=0.5;
+    if(score>bestScore){ bestScore=score; best=entry; }
+  });
+  if(!(best && bestScore>=8)) return null;
+  const units=DB[best.cat][best.item];
+  let unit=Object.keys(units)[0];
+  for(const u of Object.keys(units)){
+    if(norm.includes(normalizeFa(u))){ unit=u; break; }
+  }
+  const per=units[unit]||0;
+  const carb=per*qty;
+  return {cat:best.cat,item:best.item,unit,qty,carb:Math.round(carb),raw:part,emoji:itemEmoji(best.cat,best.item)};
+}
 function matchNoteFoods(note){
-  // نوت را با / یا ، یا خط تیره یا «و» می‌شکنیم
   if(!note) return {items:[],carb:0};
-  const parts=note.split(/[\/،,\n]+|\sو\s/).map(s=>s.trim()).filter(Boolean);
+  const parts=_foodSplitTop(note);
   let items=[], totalCarb=0;
   parts.forEach(part=>{
-    const norm=normalizeColloquial(normalizeFa(faNum(part)));
-    const numMatch=norm.match(/(\d+(\.\d+)?)/);
-    const qty=numMatch?parseFloat(numMatch[1]):1;
-    // کلمات متن (بدون اعداد و واحدها و کلمات پرتکرار بی‌معنی)
-    const stop=['عدد','گرم','قاشق','کف','دست','لقمه','یک','پرس','فنجان','لیوان','کاسه','بشقاب','با','حبه','دانه','تکه','برش','متوسط','بزرگ','کوچک','پخته','ای','تابه'];
-    const noteWords=norm.replace(/\d+(\.\d+)?/g,' ').split(/\s+/).filter(w=>w.length>=2 && !stop.includes(w));
-    if(noteWords.length===0){ items.push({raw:part,unmatched:true}); return; }
-    let best=null,bestScore=0;
-    SEARCH_INDEX.forEach(entry=>{
-      const enorm=normalizeColloquial(entry.norm);
-      const itemWords=enorm.split(/\s+/).filter(w=>w.length>=2 && !stop.includes(w));
-      if(itemWords.length===0) return;
-      let score=0, matchedItemWords=0, matchedNoteWords=new Set();
-      itemWords.forEach(iw=>{
-        let matched=false;
-        noteWords.forEach((nw,ni)=>{
-          if(nw===iw){ score+=iw.length*3; matched=true; matchedNoteWords.add(ni); }
-          else if(nw.length>=3&&iw.length>=3 && (nw.startsWith(iw)||iw.startsWith(nw))){ score+=Math.min(iw.length,nw.length); matched=true; matchedNoteWords.add(ni); }
-        });
-        if(matched) matchedItemWords++;
-      });
-      // نسبت تطبیق: چند درصد کلمات آیتم و چند درصد کلمات متن تطبیق خوردند
-      const itemCoverage=matchedItemWords/itemWords.length;
-      const noteCoverage=matchedNoteWords.size/noteWords.length;
-      // جریمه‌ی سنگین اگر بخش زیادی از آیتم تطبیق نخورده (مثل «سیب» از «قیمه سیب‌زمینی»)
-      if(itemCoverage<0.5) score*=0.25;
-      // پاداش اگر نام تک‌کلمه‌ای دقیقاً برابر باشد (سیب، قند، نان)
-      if(itemWords.length===1 && noteWords.includes(itemWords[0])) score+=15;
-      // پاداش اگر کلمه‌ی اولِ آیتم با کلمه‌ی اولِ متن یکی باشد (سیب → «سیب قرمز» نه «خورش سیب»)
-      if(itemWords[0]===noteWords[0]) score+=12;
-      // جریمه‌ی خفیف برای خورش/غذای اصلی وقتی متن خیلی کوتاه است (یک میوه‌ی ساده به‌احتمال زیاد خورش نیست)
-      if(noteWords.length===1 && (entry.cat==='خورش و غذای اصلی'||entry.cat==='غذاهای سنتی ایرانی') && itemWords.length>1) score*=0.5;
-      if(score>bestScore){ bestScore=score; best=entry; }
-    });
-    if(best && bestScore>=8){
-      const units=DB[best.cat][best.item];
-      let unit=Object.keys(units)[0];
-      for(const u of Object.keys(units)){
-        if(norm.includes(normalizeFa(u))){ unit=u; break; }
-      }
-      const per=units[unit]||0;
-      const carb=per*qty;
-      totalCarb+=carb;
-      items.push({cat:best.cat,item:best.item,unit,qty,carb:Math.round(carb),raw:part,emoji:itemEmoji(best.cat,best.item)});
-    } else {
-      items.push({raw:part,unmatched:true});
+    part=part.trim(); if(!part) return;
+    // ۱) اول کلِ تکه را تطبیق بده (نامِ چندکلمه‌ایِ حاویِ «و» مثل «سوپ مرغ و جو» سالم می‌ماند)
+    let m=_matchOneFood(part);
+    if(m){ items.push(m); totalCarb+=m.carb||0; return; }
+    // ۲) فالبک: اگر کلِ تکه نخورد و «و» داشت، شاید دو غذای جدا باشند («نان و پنیر»)
+    if(/\sو\s/.test(part)){
+      let any=false;
+      part.split(/\sو\s/).forEach(sub=>{ sub=sub.trim(); if(!sub) return; const sm=_matchOneFood(sub); if(sm){ items.push(sm); totalCarb+=sm.carb||0; any=true; } });
+      if(any) return;
     }
+    items.push({raw:part,unmatched:true});
   });
   return {items,carb:Math.round(totalCarb)};
 }
