@@ -2333,7 +2333,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۴.۷</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۴.۸</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3675,7 +3675,7 @@ function podCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(POD_CFG_KEY)
     mDxM:(typeof o.mDxM==='number'?o.mDxM:0), mDyM:(typeof o.mDyM==='number'?o.mDyM:0), mScaleM:(typeof o.mScaleM==='number'?o.mScaleM:1),
     eDx:(typeof o.eDx==='number'?o.eDx:0), eDy:(typeof o.eDy==='number'?o.eDy:0), eScale:(typeof o.eScale==='number'?o.eScale:1),
     imgQuality:(['low','medium','high'].indexOf(o.imgQuality)>=0?o.imgQuality:'medium'),
-    bgPlay:(o.bgPlay!==false), handMode:(['back','present'].indexOf(o.handMode)>=0?o.handMode:'normal'),
+    bgPlay:(o.bgPlay!==false), handMode:(['back','present','paper'].indexOf(o.handMode)>=0?o.handMode:'normal'),
     avBg:(o.avBg!==false), avBgMode:(o.avBgMode==='manual'?'manual':'auto'),
     avBgScene:((typeof POD_BG_SCENES!=='undefined'&&POD_BG_SCENES[o.avBgScene])?o.avBgScene:'ocean'),
     voiceVol:(typeof o.voiceVol==='number'?Math.max(0,Math.min(1.5,o.voiceVol)):1.0),
@@ -5454,7 +5454,9 @@ function pod3dInitStage(host){
   const root=new T.Group(); scene.add(root);
   _pod3d.ren=ren; _pod3d.scene=scene; _pod3d.cam=cam; _pod3d.root=root; _pod3d.host=host; _pod3d.ready=true;
 }
-function pod3dClearRoot(){ const r=_pod3d.root; if(!r) return; while(r.children&&r.children.length) r.remove(r.children[r.children.length-1]); _pod3d.parts=null; _pod3d.morphs=null; _pod3d.modelRoot=null; _pod3d.gltf=false; _pod3d.headGroup=null; }
+function pod3dClearRoot(){ const r=_pod3d.root; if(!r) return; while(r.children&&r.children.length) r.remove(r.children[r.children.length-1]);
+  try{ const P=_pod3d.props; if(P) [P.badge,P.papers].forEach(o=>o&&o.traverse&&o.traverse(m=>{ if(m.geometry&&m.geometry.dispose) m.geometry.dispose(); if(m.material){ if(m.material.map&&m.material.map.dispose) m.material.map.dispose(); m.material.dispose&&m.material.dispose(); } })); }catch(e){}
+  _pod3d.props=null; _pod3d.parts=null; _pod3d.morphs=null; _pod3d.modelRoot=null; _pod3d.gltf=false; _pod3d.headGroup=null; }
 // چهرهٔ سادهٔ درون‌ساخته (فالبک)
 function pod3dInitProcedural(gender){
   pod3dClearRoot(); const T=THREE;
@@ -5517,7 +5519,7 @@ function pod3dSetupModel(modelScene, gender, url){
          pod3dPoseArmsDown(modelScene, 'RightArm','RightForeArm', new T.Vector3(-0.25,-1,0.08));
          modelScene.updateMatrixWorld&&modelScene.updateMatrixWorld(true); _pod3d.posed=true;
          // استخوان‌ها را برای «حرکتِ زندهٔ بدن/دست/سر هنگام صحبت» ذخیره کن (کواترنیونِ پایهٔ همین ژست)
-         _pod3d.gbones={}; _pod3d._ge=0; _pod3d.gc=null; _pod3d.gp=null; _pod3d.gmodel=modelScene; _pod3d.fb=undefined; _pod3d.fgs=undefined; ['Hips','Spine','Spine1','Spine2','Neck','Head','LeftArm','RightArm','LeftForeArm','RightForeArm','LeftHand','RightHand'].forEach(n=>{ const b=pod3dBone(modelScene,n); if(b) _pod3d.gbones[n]={b:b, q:b.quaternion.clone()}; });
+         _pod3d.gbones={}; _pod3d._ge=0; _pod3d.gc=null; _pod3d.gp=null; _pod3d.gmodel=modelScene; _pod3d.fb=undefined; _pod3d.fgs=undefined; _pod3d.htip=undefined; _pod3d.pp=null; _pod3d.rd=null; _pod3d.props=null; ['Hips','Spine','Spine1','Spine2','Neck','Head','LeftArm','RightArm','LeftForeArm','RightForeArm','LeftHand','RightHand'].forEach(n=>{ const b=pod3dBone(modelScene,n); if(b) _pod3d.gbones[n]={b:b, q:b.quaternion.clone()}; });
     }catch(e){}
   } else {
     try{ if(_pod3d.idleClip && T.AnimationMixer){
@@ -5759,6 +5761,33 @@ function pod3dGesture(open){
   set('Neck', -energy*Math.sin(t*2.4)*0.035 + Math.sin(t*0.6)*0.006, energy*Math.sin(t*1.2)*0.04, Math.sin(t*0.8)*0.01);
   set('Head', -energy*Math.sin(t*2.4+0.6)*0.04 + Math.sin(t*0.9)*0.01, energy*Math.sin(t*1.6)*0.04, energy*Math.sin(t*2.0)*0.015);
   const hm=(podCfg().handMode||'normal');
+  if(hm!=='paper' && _pod3d.props) pod3dPropsShow(false);
+  if(hm==='paper'){
+    // 📄 برگه‌خوان (۲۴.۸): برگه‌های گزارش در دستِ چپ، دستِ راست آزاد برای توضیح/اشاره؛
+    // سر گاهی روی برگه‌ها خم می‌شود و می‌خواند، ورق می‌زند و دوباره به دوربین برمی‌گردد.
+    const P=_pod3d.pp||(_pod3d.pp={i:0, sw:t+1.2});
+    const dt=(_pod3d.dt||0.016); const k=1-Math.pow(0.04, dt);
+    if(t>=P.sw){ if(!speaking||energy<0.12){ P.i=0; P.sw=t+2.6+Math.random()*2.8; }
+      else { let ni; do{ ni=Math.floor(Math.random()*POD_PAPER_POSES.length); }while(ni===P.i && POD_PAPER_POSES.length>1); P.i=ni; P.sw=t+1.8+Math.random()*2.2;
+        if(POD_PAPER_POSES[P.i].flip){ pod3dPropsEnsure(); pod3dPropsFlip(t); } } }
+    const pose=POD_PAPER_POSES[P.i]||POD_PAPER_POSES[0];
+    const La=G['LeftArm'],Lf=G['LeftForeArm'],Lh=G['LeftHand'],Ra=G['RightArm'],Rf=G['RightForeArm'],Rh=G['RightHand'];
+    const aimP=(A,B,dir)=>{ if(!A||!B) return; const tl=pod3dAimTargetLocal(A.b,B.b,dir,A.q); if(tl) A.b.quaternion.slerp(tl,k); };
+    aimP(La,Lf,pose.LA); aimP(Lf,Lh,pose.LF); aimP(Ra,Rf,pose.RA); aimP(Rf,Rh,pose.RF);
+    if(Lh){ const q=new T.Quaternion().setFromEuler(new T.Euler(pose.LH[0],pose.LH[1],pose.LH[2],'XYZ')); Lh.b.quaternion.copy(Lh.q).multiply(q); }
+    if(Rh){ const q=new T.Quaternion().setFromEuler(new T.Euler(pose.RH[0],pose.RH[1],pose.RH[2],'XYZ')); Rh.b.quaternion.copy(Rh.q).multiply(q); }
+    try{ const sh=pod3dPoseFingers(pose); pod3dApplyFingers(sh[0], sh[1], k); }catch(e){}
+    // چرخهٔ نگاه: چند ثانیه روی برگه (خواندن) و بعد به دوربین (توضیح‌دادن)
+    const R=_pod3d.rd||(_pod3d.rd={ph:0, until:t+2.2, p:0});
+    if(t>=R.until){ R.ph=R.ph?0:1; R.until=t+(R.ph?(1.5+Math.random()*1.7):(2.6+Math.random()*3.0)); }
+    const reading=(speaking&&(R.ph||pose.rd))?1:0;
+    R.p+=((reading?0.42:0)-R.p)*Math.min(1,k*0.7);
+    const Hb=G['Head'], Nb=G['Neck'], tip=pod3dHeadTip();
+    if(Nb&&Hb) pod3dBoneLook(Nb, Hb.b, R.p*0.38, new T.Quaternion().setFromEuler(new T.Euler(Math.sin(t*0.6)*0.006, energy*Math.sin(t*1.2)*0.03, Math.sin(t*0.8)*0.01,'XYZ')));
+    if(Hb&&tip)  pod3dBoneLook(Hb, tip,   R.p*0.72, new T.Quaternion().setFromEuler(new T.Euler(Math.sin(t*0.9)*0.01, energy*Math.sin(t*1.6)*0.035, energy*Math.sin(t*2.0)*0.015,'XYZ')));
+    const PR=pod3dPropsEnsure(); if(PR){ pod3dPropsShow(true); pod3dPropsUpdate(t, reading); }
+    return;
+  }
   if(hm==='back'){
     // دست‌ها ثابت پشتِ کمر (تا مچ) — پوزِ آرام و پایدارِ مجری، بدونِ ژست (تجربی؛ اگر جهت اشتباه بود علامت‌ها را عوض می‌کنیم)
     set('LeftArm',  -0.12, 0.05, -0.30);
@@ -5806,7 +5835,8 @@ function pod3dFingerGroups(){ if(_pod3d.fgs!==undefined) return _pod3d.fgs; _pod
 // میزانِ جمع‌شدنِ هر انگشت برای هر «شکلِ دست» [شست، اشاره، وسط، حلقه، کوچک] (۰=باز، ۱=جمع)
 const POD_FING={ relax:[0.25,0.28,0.32,0.36,0.4], open:[0.05,0.03,0.03,0.03,0.06],
   point:[0.45,0.0,0.95,1.0,1.0], fist:[0.7,0.95,0.95,0.95,0.95], steeple:[0.12,0.06,0.06,0.06,0.1],
-  ok:[0.6,0.6,0.1,0.08,0.12] };   // شست و اشاره جمع (حلقه)، بقیه باز
+  ok:[0.6,0.6,0.1,0.08,0.12],   // شست و اشاره جمع (حلقه)، بقیه باز
+  grip:[0.5,0.68,0.72,0.74,0.76] };   // گرفتنِ برگه/دسته‌کاغذ (نیمه‌جمع، نه مشت)
 function pod3dApplyFingers(shL, shR, k){ const G=pod3dFingerGroups(); if(!G||!THREE) return; const T=THREE;
   const fns=['thumb','index','middle','ring','pinky'];
   const ax=(a)=>POD_FING_AXIS==='y'?new T.Euler(0,POD_FING_SIGN*a,0,'XYZ'):POD_FING_AXIS==='z'?new T.Euler(0,0,POD_FING_SIGN*a,'XYZ'):new T.Euler(POD_FING_SIGN*a,0,0,'XYZ');
@@ -5816,6 +5846,7 @@ function pod3dApplyFingers(shL, shR, k){ const G=pod3dFingerGroups(); if(!G||!TH
   one('L',shL); one('R',shR); }
 // شکلِ دستِ هر پوز را از نامش استنتاج می‌کند
 function pod3dPoseFingers(pose){ const n=pose.n||''; let l='relax', r='relax';
+  if(pose.fL||pose.fR){ return [pose.fL||'relax', pose.fR||(pod3dPoseFingers({n:n})[1])]; }   // پوزهای برگه‌خوان: دستِ نگه‌دارنده صریح، دستِ آزاد از نامِ پوز
   if(/openBoth|wideOpen|reachOut|midBoth|bothUp|twoUp|calmDown|questionBoth/.test(n)){ l='open'; r='open'; }
   if(/steeple|clasp/.test(n)){ l='steeple'; r='steeple'; }
   if(/indexR|pointFwdR|raiseHiR|chopR|indexHiR/.test(n)) r='point';
@@ -5893,6 +5924,171 @@ const POD_GEST_POSES=[
   {n:'indexHiR', LA:[0.06,-1,0.10], RA:[-0.1,-0.2,0.42],  LF:[0.05,-0.45,0.9], RF:[-0.03,0.95,0.28], LH:[0.1,0,0], RH:[0.05,0,0]},  // اشارهٔ انگشتِ بالاترِ راست
   {n:'questionBoth',LA:[0.3,-0.85,0.28],RA:[-0.3,-0.85,0.28],LF:[0.4,-0.05,0.82],RF:[-0.4,-0.05,0.82],LH:[0.25,0,0],RH:[0.25,0,0]}  // هر دو کفِ باز رو‌به‌بالا (پرسشی)
 ];
+// ═══════════ 📄 حالتِ «برگه‌خوانِ مجری» (۲۴.۸) ═══════════
+// مجری یک دسته برگهٔ گزارش در دستِ چپ دارد، با دستِ راست توضیح می‌دهد/اشاره می‌کند،
+// گاهی سرش روی برگه‌ها خم می‌شود و می‌خواند، ورق می‌زند و دوباره به دوربین نگاه می‌کند.
+// روی کتش هم کارتِ شناساییِ «دستیارِ دیابت — شرکت ماکان صنعت» نصب است.
+// ⚠️ همهٔ پروپ‌ها فرزندِ `_pod3d.root` اند (نه استخوان) و هر فریم از «موقعیتِ جهانیِ استخوان»
+// جای‌گذاری می‌شوند ⇒ مستقل از محورِ محلی/rest-poseِ استخوان (همان درسِ ۲۳.۸۸/۲۴.۱).
+// حالت‌های قبلی (normal/present/back) دست‌نخورده‌اند؛ این شاخه کاملاً جداست.
+
+// دستِ چپ برگه‌ها را نگه می‌دارد (جهتِ جهانی: پایین=-Y، جلو=+Z، چپِ مدل=+X)
+const POD_HOLD_L={LA:[0.16,-0.97,0.20], LF:[-0.38,0.22,0.90], LH:[0.30,0,0]};
+const POD_PROP_SIDE=-1;   // کارتِ سینه سمتِ راستِ مدل (چپِ تصویر) تا با برگه‌های دستِ چپ تداخل نکند
+
+// پوزهای برگه‌خوان: بازوی چپ همیشه «نگه‌دارندهٔ برگه» است و بازوی راست از پوزهای
+// از‌قبل‌کالیبره‌شدهٔ POD_GEST_POSES می‌آید (کالیبراسیونِ تأییدشدهٔ کاربر دوباره استفاده می‌شود).
+const POD_PAPER_POSES=(function(){
+  const pick=['rest','indexR','beatR','palmUpR','pointFwdR','stopR','okR','chinR','palmSideR','indexHiR','oneOutR','raiseHiR','chopR'];
+  const out=pick.map(n=>{ const p=POD_GEST_POSES.filter(x=>x.n===n)[0]||POD_GEST_POSES[0];
+    return {n:'p_'+p.n, LA:POD_HOLD_L.LA, LF:POD_HOLD_L.LF, LH:POD_HOLD_L.LH,
+            RA:p.RA, RF:p.RF, RH:p.RH, fL:'grip', fR:null}; });
+  // هر دو دست روی برگه‌ها (خواندنِ دقیق) — قرینهٔ پوزِ نگه‌دارنده
+  out.push({n:'p_both', rd:1, LA:POD_HOLD_L.LA, LF:POD_HOLD_L.LF, LH:POD_HOLD_L.LH,
+            RA:[-0.16,-0.97,0.20], RF:[0.38,0.22,0.90], RH:[0.30,0,0], fL:'grip', fR:'grip'});
+  out.push({n:'p_bothLow', rd:1, LA:[0.14,-0.99,0.14], LF:[-0.34,0.02,0.94], LH:[0.26,0,0],
+            RA:[-0.14,-0.99,0.14], RF:[0.34,0.02,0.94], RH:[0.26,0,0], fL:'grip', fR:'grip'});
+  // ورق‌زدن: دستِ راست به لبهٔ بالاییِ برگه می‌رود (انیمیشنِ ورق هم‌زمان اجرا می‌شود)
+  out.push({n:'p_flip', flip:1, rd:1, LA:POD_HOLD_L.LA, LF:POD_HOLD_L.LF, LH:POD_HOLD_L.LH,
+            RA:[-0.14,-0.90,0.32], RF:[0.46,0.40,0.79], RH:[0.28,0,0], fL:'grip', fR:'point'});
+  return out;
+})();
+
+// واحدِ اندازه = فاصلهٔ دو شانه (پروپ‌ها نسبت به آناتومیِ خودِ مدل مقیاس می‌شوند، نه عددِ ثابت)
+function pod3dPropUnit(){ const G=_pod3d.gbones; if(!G||!THREE) return 0; const T=THREE;
+  try{ const a=G['LeftArm'], b=G['RightArm']; if(!a||!b) return 0;
+    const p=new T.Vector3(), q=new T.Vector3(); a.b.getWorldPosition(p); b.b.getWorldPosition(q);
+    const d=p.distanceTo(q); return (d>0.02&&d<3)?d:0; }catch(e){ return 0; } }
+
+// ── بافتِ کارتِ شناساییِ روی کت ──
+function _podTexBadge(){
+  const cv=document.createElement('canvas'); cv.width=256; cv.height=340; const c=cv.getContext('2d');
+  const FF='"Vazirmatn",sans-serif';
+  c.clearRect(0,0,256,340);
+  c.fillStyle='#c3cad4'; c.fillRect(102,2,52,30); c.fillStyle='#7d8896'; c.fillRect(114,10,28,9);   // گیرهٔ کارت
+  const x=8,y=30,w=240,h=304,r=16;
+  c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath();
+  const g=c.createLinearGradient(0,y,0,y+h); g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#e8eef3'); c.fillStyle=g; c.fill();
+  c.lineWidth=4; c.strokeStyle='#16323c'; c.stroke();
+  c.save(); c.clip();
+  c.fillStyle='#12444a'; c.fillRect(x,y,w,62);
+  c.fillStyle='#3fb9a3'; c.fillRect(x,y+62,w,5);
+  c.direction='rtl'; c.textAlign='center';
+  c.fillStyle='#eafff8'; c.font='bold 27px '+FF; c.fillText('دستیارِ دیابت',128,y+42);
+  // عکسِ پرسنلی (سایه‌نمای ساده)
+  c.fillStyle='#cfdae2'; c.beginPath(); c.arc(128,y+128,44,0,7); c.fill();
+  c.fillStyle='#8fa1b6'; c.beginPath(); c.arc(128,y+112,17,0,7); c.fill();
+  c.beginPath(); c.arc(128,y+162,28,Math.PI,0); c.fill();
+  c.fillStyle='#16323c'; c.font='bold 23px '+FF; c.fillText('مجریِ پادکست',128,y+200);
+  c.fillStyle='#5b6b7a'; c.font='bold 18px '+FF; c.fillText('شرکت ماکان صنعت',128,y+226);
+  c.fillStyle='#16323c'; for(let i=0;i<26;i++){ const bw=(i%3===0?4:(i%2?2:3)); c.fillRect(36+i*7,y+248,bw,26); }   // بارکد
+  c.fillStyle='#8fa1b6'; c.font='bold 14px '+FF; c.fillText('ID ۰۰۱',128,y+292);
+  c.restore();
+  return cv;
+}
+// ── بافتِ برگهٔ گزارش (۱=با تیتر، ۲=خط‌های ساده، ۳=خط+نمودار بدونِ متن؛ ورقِ ورق‌خور آینه‌ای می‌شود) ──
+function _podTexPaper(v){
+  const cv=document.createElement('canvas'); cv.width=320; cv.height=440; const c=cv.getContext('2d');
+  const FF='"Vazirmatn",sans-serif';
+  const bg=c.createLinearGradient(0,0,0,440); bg.addColorStop(0,'#ffffff'); bg.addColorStop(1,'#eef1f4'); c.fillStyle=bg; c.fillRect(0,0,320,440);
+  c.strokeStyle='#c8d0d8'; c.lineWidth=3; c.strokeRect(1.5,1.5,317,437);
+  let top=26;
+  if(v===1){
+    c.fillStyle='#12444a'; c.fillRect(14,14,292,52);
+    c.fillStyle='#3fb9a3'; c.fillRect(14,66,292,4);
+    c.direction='rtl'; c.textAlign='right';
+    c.fillStyle='#eafff8'; c.font='bold 22px '+FF; c.fillText('گزارشِ سلامتِ کاربر',292,38);
+    c.fillStyle='#9fd9cd'; c.font='bold 14px '+FF; c.fillText('دستیارِ دیابت — مرورِ روزانه',292,58);
+    top=92;
+  }
+  const line=(yy,wd,dark)=>{ c.fillStyle=dark?'#5c6b78':'#aab5c0'; c.fillRect(306-wd,yy,wd,7); };
+  let yy=top;
+  for(let i=0;i<7;i++){ line(yy, 120+((i*67)%160), i%3===0); yy+=19; }
+  // نمودارِ کوچکِ داده
+  const cx=18, cy=yy+6, cw=284, ch=92;
+  c.fillStyle='#f2f6f8'; c.fillRect(cx,cy,cw,ch); c.strokeStyle='#d5dde3'; c.lineWidth=2; c.strokeRect(cx,cy,cw,ch);
+  const bars=[0.42,0.68,0.35,0.86,0.55,0.72,0.48];
+  bars.forEach((b,i)=>{ const bw=24, bx=cx+16+i*38, bh=(ch-18)*b; c.fillStyle=(b>0.8?'#e0688a':'#3fb9a3'); c.fillRect(bx,cy+ch-8-bh,bw,bh); });
+  c.strokeStyle='#c2ccd4'; c.beginPath(); c.moveTo(cx+4,cy+ch-8); c.lineTo(cx+cw-4,cy+ch-8); c.stroke();
+  yy=cy+ch+16;
+  for(let i=0;i<5&&yy<420;i++){ line(yy, 100+((i*83)%180), i===0); yy+=19; }
+  return cv;
+}
+
+// پروپ‌ها را یک‌بار می‌سازد (کارتِ سینه + دستهٔ برگه با ورقِ ورق‌خور)
+function pod3dPropsEnsure(){
+  if(_pod3d.props) return _pod3d.props;
+  if(!THREE||!_pod3d.root||!_pod3d.gbones) return null;
+  const T=THREE;
+  try{
+    const U=pod3dPropUnit(); if(!U) return null;
+    const Mat=(T.MeshLambertMaterial||T.MeshBasicMaterial);
+    const mk=(cv,w,h)=>{ const tex=new T.CanvasTexture(cv); try{ if(T.sRGBEncoding) tex.encoding=T.sRGBEncoding; }catch(e){}
+      const m=new T.Mesh(new T.PlaneGeometry(w,h), new Mat({map:tex, side:T.DoubleSide, alphaTest:0.5}));
+      m.frustumCulled=false; m.renderOrder=2; return m; };
+    const bw=U*0.20, badge=mk(_podTexBadge(), bw, bw*(340/256));
+    const pw=U*0.55, ph=pw*1.36;
+    const papers=new T.Group();
+    const s1=mk(_podTexPaper(2), pw, ph);
+    const s2=mk(_podTexPaper(1), pw*0.985, ph*0.985); s2.position.set(U*0.010, U*0.006, ph*0.006);
+    const piv=new T.Group(); piv.position.set(-pw/2, 0, ph*0.013);      // لولا روی لبهٔ کناری
+    const s3=mk(_podTexPaper(3), pw*0.97, ph*0.97); s3.position.set(pw/2, U*0.010, 0);
+    piv.add(s3); papers.add(s1); papers.add(s2); papers.add(piv);
+    _pod3d.root.add(badge); _pod3d.root.add(papers);
+    _pod3d.props={badge:badge, papers:papers, piv:piv, U:U, pw:pw, ph:ph, fa:0, fs:0, ft:0, f0:null, pos:null};
+  }catch(e){ _pod3d.props=null; }
+  return _pod3d.props;
+}
+function pod3dPropsShow(on){ const P=_pod3d.props; if(!P) return; P.badge.visible=!!on; P.papers.visible=!!on; }
+function pod3dPropsFlip(t){ const P=_pod3d.props; if(!P) return; if(P.f0!=null && (t-P.f0)<1.15) return;
+  P.fs=P.fa||0; P.ft=(Math.abs(P.fs)<0.1?-Math.PI:0); P.f0=t; }
+// هر فریم: کارت روی سینه و برگه‌ها در دست جای‌گذاری می‌شوند (از موقعیتِ جهانیِ استخوان)
+function pod3dPropsUpdate(t, reading){
+  const P=_pod3d.props, G=_pod3d.gbones; if(!P||!G||!THREE) return; const T=THREE;
+  const mq=new T.Quaternion(); if(_pod3d.modelRoot) _pod3d.modelRoot.getWorldQuaternion(mq);
+  const fwd=new T.Vector3(0,0,1).applyQuaternion(mq), up=new T.Vector3(0,1,0).applyQuaternion(mq), lft=new T.Vector3(1,0,0).applyQuaternion(mq);
+  const U=P.U;
+  const chest=G['Spine2']||G['Spine1']||G['Spine'];
+  if(chest){ const cp=new T.Vector3(); chest.b.getWorldPosition(cp);
+    cp.addScaledVector(fwd,U*0.40).addScaledVector(lft,U*0.34*POD_PROP_SIDE).addScaledVector(up,U*0.02);
+    P.badge.position.copy(cp); P.badge.quaternion.copy(mq); P.badge.rotateX(-0.14); }
+  const lh=G['LeftHand'];
+  if(lh){ const hp=new T.Vector3(); lh.b.getWorldPosition(hp);
+    hp.addScaledVector(up,P.ph*0.34).addScaledVector(fwd,U*0.06);
+    if(!P.pos) P.pos=hp.clone(); else P.pos.lerp(hp,0.3);
+    P.papers.position.copy(P.pos); P.papers.quaternion.copy(mq);
+    P.papers.rotateX(-0.55-(reading?0.16:0)); P.papers.rotateY(0.10); }
+  if(P.f0!=null){ const k=Math.max(0,Math.min(1,(t-P.f0)/1.05)); const e=k*k*(3-2*k); P.fa=P.fs+(P.ft-P.fs)*e; if(k>=1) P.f0=null; }
+  P.piv.rotation.y=P.fa||0;
+}
+// ── نگاه به برگه/دوربین: استخوان B را (که فرزندش C است) به‌اندازهٔ pitch حولِ محورِ Xِ مدل خم می‌کند ──
+// همان ریاضیِ pod3dAimTargetLocal با مبنایِ «پوزِ استراحت» ⇒ بدونِ انباشتِ چرخش (درسِ ۲۴.۱).
+function pod3dBoneLook(B, C, pitch, sway){
+  const T=THREE; if(!B||!C||!B.b.parent) return false;
+  try{
+    const pw=new T.Quaternion(); B.b.parent.getWorldQuaternion(pw);
+    const cl=C.position.clone(); if(cl.lengthSq()<1e-9) return false; cl.normalize();
+    const cur=cl.applyQuaternion(pw.clone().multiply(B.q));
+    const mq=new T.Quaternion(); if(_pod3d.modelRoot) _pod3d.modelRoot.getWorldQuaternion(mq);
+    const ax=new T.Vector3(1,0,0).applyQuaternion(mq);
+    const tgt=cur.clone().applyAxisAngle(ax, pitch);
+    const delta=new T.Quaternion().setFromUnitVectors(cur,tgt);
+    const q=pw.clone().invert().multiply(delta).multiply(pw).multiply(B.q);
+    if(sway) q.multiply(sway);
+    B.b.quaternion.copy(q); return true;
+  }catch(e){ return false; }
+}
+// نوکِ سر (HeadTop_End یا هر استخوانِ فرزندی که رو‌به‌بالای سر است) — برای خم‌کردنِ سر
+function pod3dHeadTip(){
+  if(_pod3d.htip!==undefined) return _pod3d.htip; _pod3d.htip=null;
+  try{ const H=_pod3d.gbones&&_pod3d.gbones['Head']; if(!H) return null;
+    let best=null; (H.b.children||[]).forEach(ch=>{ if(!(ch.isBone||ch.type==='Bone')) return;
+      const p=ch.position, l=Math.sqrt(p.x*p.x+p.y*p.y+p.z*p.z); if(l<1e-6) return;
+      const uy=p.y/l; if(uy>0.6 && (!best||uy>best.uy)) best={b:ch,uy:uy}; });
+    _pod3d.htip=best?best.b:null;
+  }catch(e){ _pod3d.htip=null; }
+  return _pod3d.htip;
+}
 // بندانگشتیِ آواتار را از رندرِ زنده می‌گیرد و کش می‌کند (برای گالریِ تنظیمات)
 function pod3dThumbKey(url){ return 'pod3dthumb:'+(url||''); }
 function pod3dGetThumb(url){ try{ return localStorage.getItem(pod3dThumbKey(url))||''; }catch(e){ return ''; } }
@@ -6309,8 +6505,8 @@ function renderPodCfg(){
       const curUrl=c.av3dUrl||pod3dDefaultUrl();
       h+=`<div class="qbg-sub" style="margin-top:4px">با همان صدا/متن لب می‌زند، پلک می‌زند و بدنش حرکتِ طبیعی دارد. بارِ اول به اینترنت نیاز دارد، بعد کش می‌شود.</div>`;
       h+=`<label class="qbg-lbl" style="margin-top:8px">ژستِ دست‌ها</label>`;
-      h+=`<div class="pod-seg">`+[['normal','🙌 نرمال'],['present','🎤 ژستِ مجری'],['back','🧍 پشتِ کمر']].map(o=>`<button class="${(c.handMode||'normal')===o[0]?'on':''}" onclick="podCfgPick('handMode','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
-      h+=`<div class="qbg-sub" style="margin-top:4px">«ژستِ مجری» ۸ پوزِ رو‌به‌دوربین با انگشتِ طبیعی را اجرا می‌کند (آزمایشی — اگر دست‌ها درست جلو نیامدند، یک عکس بفرست تا جهت را اصلاح کنم).</div>`;
+      h+=`<div class="pod-seg">`+[['normal','🙌 نرمال'],['present','🎤 ژستِ مجری'],['back','🧍 پشتِ کمر'],['paper','📄 برگه‌خوان']].map(o=>`<button class="${(c.handMode||'normal')===o[0]?'on':''}" onclick="podCfgPick('handMode','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
+      h+=`<div class="qbg-sub" style="margin-top:4px">«ژستِ مجری» ۳۴ پوزِ رو‌به‌دوربین با انگشتِ طبیعی را اجرا می‌کند. «📄 برگه‌خوان» = کارتِ شناساییِ «دستیارِ دیابت / ماکان صنعت» روی کت + برگه‌های گزارش در دست: گاهی سرش را روی برگه‌ها خم می‌کند و می‌خواند، ورق می‌زند و دوباره رو‌به‌دوربین توضیح می‌دهد (آزمایشی — اگر جای کارت/برگه دقیق نبود یک عکس بفرست تا تنظیم کنم).</div>`;
       // ── پس‌زمینهٔ متحرک ──
       h+=`<label class="qbg-lbl" style="margin-top:12px">🌄 پس‌زمینهٔ متحرک</label>`;
       h+=`<div class="pod-seg">`+[['on','روشن',true],['off','خاموش',false]].map(o=>`<button class="${c.avBg===o[2]?'on':''}" onclick="podCfgPick('avBg',${o[2]})">${o[1]}</button>`).join('')+`</div>`;
