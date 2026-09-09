@@ -2320,7 +2320,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۹۵</b> · انتشار: ۱۴۰۵/۰۶/۱۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۹۶</b> · انتشار: ۱۴۰۵/۰۶/۱۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5026,44 +5026,11 @@ function podBuildVisemeTL(script, dur){
   for(let i=0;i<vis.length;i++){ at[i]=acc*scale; acc+=wt[i]; }
   return { at, vis, op, n:vis.length, dur };
 }
-// ۲۳.۹۵ — زمان‌بندیِ قطعه‌به‌قطعه: هر قطعهٔ TTS به مدتِ واقعیِ صوتِ خودش کشیده می‌شود
-// ⇒ سرعتِ گفتار در طولِ پادکست ثابت فرض نمی‌شود و لب دیگر جلو/عقب نمی‌افتد (drift).
-function podBuildVisemeTLSegs(texts, durs, fallbackTotal){
-  if(!texts||!texts.length) return null;
-  let knownDur=0, knownChars=0;
-  for(let i=0;i<texts.length;i++){ const d=durs&&durs[i]||0; if(d>0){ knownDur+=d; knownChars+=Math.max(1,String(texts[i]||'').length); } }
-  const perChar = knownChars>0 ? knownDur/knownChars
-    : (fallbackTotal>0 ? fallbackTotal/Math.max(1, texts.join('').length) : 0.06);
-  const vis=[], op=[], atArr=[]; let tAcc=0, any=false;
-  for(let i=0;i<texts.length;i++){
-    const s=String(texts[i]||''); if(!s) continue;
-    let segDur=durs&&durs[i]||0; if(!(segDur>0)) segDur=Math.max(0.3, s.length*perChar);
-    const V=[], O=[], w=[]; let total=0, lastVowel='A';
-    for(let j=0;j<s.length;j++){ const e=podVisemeFor(s[j]); let v=e.v,o=e.o;
-      if(v==='_'){ v=lastVowel; o=0.5; } else if(v==='A'||v==='AH'||v==='E'||v==='O') lastVowel=v;
-      V.push(v); O.push(o); w.push(e.w); total+=e.w; }
-    if(!total){ tAcc+=segDur; continue; }
-    const scale=segDur/total; let acc=0;
-    for(let j=0;j<V.length;j++){ atArr.push(tAcc+acc*scale); vis.push(V[j]); op.push(O[j]); acc+=w[j]; any=true; }
-    tAcc+=segDur;
-  }
-  if(!any) return null;
-  return { at:Float64Array.from(atArr), vis, op, n:vis.length, dur:tAcc };
-}
 function podEnsureVisemeTL(){
   const dur = _pod.cloud ? podTotalKnown() : _pod.estDur;
-  if(!(dur>1)){ _pod.visTL=null; return; }
-  // ترجیح: زمان‌بندیِ قطعه‌به‌قطعه بر پایهٔ مدتِ واقعیِ هر قطعه (سینکِ دقیق‌ترِ لب با پلیرِ <audio>)
-  if(_pod.elMode && _pod.visSegTexts && _pod.visSegTexts.length){
-    const durs=_pod.durs||[]; const known=durs.filter(d=>d>0).length;
-    const sig=_pod.visSegTexts.length+'|'+known+'|'+Math.round(dur*4);
-    if(_pod.visTL && _pod._visSig===sig) return;
-    const tl=podBuildVisemeTLSegs(_pod.visSegTexts, durs, dur);
-    if(tl){ _pod.visTL=tl; _pod.visIdx=0; _pod._visSig=sig; return; }
-  }
-  if(!_pod.script) { _pod.visTL=null; return; }
-  if(_pod.visTL && !_pod._visSig && Math.abs((_pod.visTL.dur||0)-dur) < 1.5) return;   // فقط وقتی مدت واقعاً عوض شد بازبساز
-  _pod.visTL = podBuildVisemeTL(_pod.script, dur); _pod.visIdx=0; _pod._visSig='';
+  if(!_pod.script || !(dur>1)){ _pod.visTL=null; return; }
+  if(_pod.visTL && Math.abs((_pod.visTL.dur||0)-dur) < 1.5) return;   // فقط وقتی مدت واقعاً عوض شد بازبساز
+  _pod.visTL = podBuildVisemeTL(_pod.script, dur); _pod.visIdx=0;
 }
 function podVisemeAt(el){
   const T=_pod.visTL; if(!T||!T.n) return null;
@@ -5110,7 +5077,7 @@ function podReactStart(){
     // ۲۳.۱۱ — اگر خطِ زمانیِ متن هست، «شکل» را از متن بگیر و «بازشدن» را از صدا (بلندی).
     podEnsureVisemeTL();
     let want='X', sec='', secW=0, tl=null, tlGate=1;
-    if(_pod.visTL){ const el=(_pod.cloud?podElapsed():((Date.now()-_pod.t0)/1000))+0.05; tl=podVisemeAt(el); }   // پیش‌بینیِ ۵۰ms (لب کمی جلوتر ⇒ طبیعی‌تر)
+    if(_pod.visTL){ const el=_pod.cloud?podElapsed():((Date.now()-_pod.t0)/1000); tl=podVisemeAt(el); }
     if(tl){
       // ۲۳.۱۲ — نویزگیت: دامنهٔ دهان از انرژیِ واقعیِ صدا گرفته می‌شود، نه فقط از متن.
       // مشکل: خطِ زمانیِ متن یکنواخت پخش می‌شود ولی صدای واقعی بین کلمات/جملات مکث دارد؛
