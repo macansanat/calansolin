@@ -2333,7 +2333,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۴.۹</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۴.۱۰</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5934,7 +5934,7 @@ const POD_GEST_POSES=[
 
 // دستِ راست برگه‌ها را نگه می‌دارد و دستِ چپ آزاد است (جهتِ جهانی: پایین=-Y، جلو=+Z، چپِ مدل=+X)
 // چیدمان دقیقاً مطابقِ عکسِ مرجعِ کاربر: کارت روی سینهٔ چپ (راستِ تصویر)، برگه‌ها در دستِ راست (چپِ تصویر).
-const POD_HOLD_R={RA:[-0.16,-0.97,0.20], RF:[0.38,0.22,0.90], RH:[0.30,0,0]};
+const POD_HOLD_R={RA:[-0.15,-0.99,0.13], RF:[0.55,0.02,0.80], RH:[0.34,0,0]};
 const POD_PROP_SIDE=1;    // کارتِ سینه سمتِ چپِ مدل (راستِ تصویر) — تداخلی با برگه‌های دستِ راست ندارد
 
 // پوزهای برگه‌خوان: بازوی چپ همیشه «نگه‌دارندهٔ برگه» است و بازوی راست از پوزهای
@@ -5948,10 +5948,10 @@ const POD_PAPER_POSES=(function(){
   // هر دو دست روی برگه‌ها (خواندنِ دقیق) — قرینهٔ پوزِ نگه‌دارنده
   out.push({n:'p_both', rd:1, RA:POD_HOLD_R.RA, RF:POD_HOLD_R.RF, RH:POD_HOLD_R.RH,
             LA:mx(POD_HOLD_R.RA), LF:mx(POD_HOLD_R.RF), LH:POD_HOLD_R.RH, fL:'grip', fR:'grip'});
-  out.push({n:'p_bothLow', rd:1, RA:[-0.14,-0.99,0.14], RF:[0.34,0.02,0.94], RH:[0.26,0,0],
-            LA:[0.14,-0.99,0.14], LF:[-0.34,0.02,0.94], LH:[0.26,0,0], fL:'grip', fR:'grip'});
-  out.push({n:'p_bothHigh', rd:1, RA:[-0.18,-0.92,0.26], RF:[0.40,0.40,0.82], RH:[0.34,0,0],
-            LA:[0.18,-0.92,0.26], LF:[-0.40,0.40,0.82], LH:[0.34,0,0], fL:'grip', fR:'grip'});
+  out.push({n:'p_bothLow', rd:1, RA:[-0.13,-1.0,0.10], RF:[0.36,-0.12,0.92], RH:[0.30,0,0],
+            LA:[0.13,-1.0,0.10], LF:[-0.36,-0.12,0.92], LH:[0.30,0,0], fL:'grip', fR:'grip'});
+  out.push({n:'p_bothHigh', rd:1, RA:[-0.17,-0.97,0.18], RF:[0.40,0.20,0.89], RH:[0.36,0,0],
+            LA:[0.17,-0.97,0.18], LF:[-0.40,0.20,0.89], LH:[0.36,0,0], fL:'grip', fR:'grip'});
   // ورق‌زدن: دستِ چپ به لبهٔ بالاییِ برگه می‌رود (انیمیشنِ ورق هم‌زمان اجرا می‌شود)
   out.push({n:'p_flip', flip:1, rd:1, RA:POD_HOLD_R.RA, RF:POD_HOLD_R.RF, RH:POD_HOLD_R.RH,
             LA:[0.14,-0.90,0.32], LF:[-0.46,0.40,0.79], LH:[0.28,0,0], fR:'grip', fL:'point'});
@@ -6048,13 +6048,13 @@ function pod3dPropsEnsure(){
     const mk=(cv,w,h)=>{ const tex=new T.CanvasTexture(cv); try{ if(T.sRGBEncoding) tex.encoding=T.sRGBEncoding; }catch(e){}
       const m=new T.Mesh(new T.PlaneGeometry(w,h), new Mat({map:tex, side:T.DoubleSide, alphaTest:0.5}));
       m.frustumCulled=false; m.renderOrder=2; return m; };
-    const bw=U*0.27, badge=mk(_podTexBadge(), bw, bw*(420/512));
-    const pw=U*0.55, ph=pw*1.36;
+    const bw=U*0.30, badge=mk(_podTexBadge(), bw, bw*(420/512));
+    const pw=U*0.50, ph=pw*1.38;
     const papers=new T.Group();
     const s1=mk(_podTexPaper(2), pw, ph);
     const s2=mk(_podTexPaper(1), pw*0.985, ph*0.985); s2.position.set(U*0.010, U*0.006, ph*0.006);
     const piv=new T.Group(); piv.position.set(-pw/2, 0, ph*0.013);      // لولا روی لبهٔ کناری
-    const s3=mk(_podTexPaper(3), pw*0.97, ph*0.97); s3.position.set(pw/2, U*0.010, 0);
+    const s3=mk(_podTexPaper(3), pw*0.97, ph*0.97); s3.position.set(pw/2, 0, 0);
     piv.add(s3); papers.add(s1); papers.add(s2); papers.add(piv);
     _pod3d.root.add(badge); _pod3d.root.add(papers);
     _pod3d.props={badge:badge, papers:papers, piv:piv, U:U, pw:pw, ph:ph, fa:0, fs:0, ft:0, f0:null, pos:null};
@@ -6062,8 +6062,7 @@ function pod3dPropsEnsure(){
   return _pod3d.props;
 }
 function pod3dPropsShow(on){ const P=_pod3d.props; if(!P) return; P.badge.visible=!!on; P.papers.visible=!!on; }
-function pod3dPropsFlip(t){ const P=_pod3d.props; if(!P) return; if(P.f0!=null && (t-P.f0)<1.15) return;
-  P.fs=P.fa||0; P.ft=(Math.abs(P.fs)<0.1?-Math.PI:0); P.f0=t; }
+function pod3dPropsFlip(t){ const P=_pod3d.props; if(!P||P.f0!=null) return; P.f0=t; }
 // هر فریم: کارت روی سینه و برگه‌ها در دست جای‌گذاری می‌شوند (از موقعیتِ جهانیِ استخوان)
 function pod3dPropsUpdate(t, reading){
   const P=_pod3d.props, G=_pod3d.gbones; if(!P||!G||!THREE) return; const T=THREE;
@@ -6072,15 +6071,22 @@ function pod3dPropsUpdate(t, reading){
   const U=P.U;
   const chest=G['Spine2']||G['Spine1']||G['Spine'];
   if(chest){ const cp=new T.Vector3(); chest.b.getWorldPosition(cp);
-    cp.addScaledVector(fwd,U*0.40).addScaledVector(lft,U*0.34*POD_PROP_SIDE).addScaledVector(up,U*0.02);
+    cp.addScaledVector(fwd,U*0.40).addScaledVector(lft,U*0.36*POD_PROP_SIDE).addScaledVector(up,-U*0.06);
     P.badge.position.copy(cp); P.badge.quaternion.copy(mq); P.badge.rotateX(-0.14); }
-  const lh=G['RightHand'];
+  const lh=G['RightHand'], fa=G['RightForeArm'];
   if(lh){ const hp=new T.Vector3(); lh.b.getWorldPosition(hp);
-    hp.addScaledVector(up,P.ph*0.34).addScaledVector(fwd,U*0.06);
+    // نقطهٔ گرفتن را از مچ به وسطِ کفِ دست ببر (امتدادِ ساعد) وگرنه برگه کنارِ دست معلق به‌نظر می‌رسد
+    if(fa){ const ep=new T.Vector3(); fa.b.getWorldPosition(ep); const ax=hp.clone().sub(ep); if(ax.lengthSq()>1e-8) hp.addScaledVector(ax.normalize(), U*0.17); }
+    hp.addScaledVector(up,P.ph*0.28).addScaledVector(fwd,-U*0.02);
     if(!P.pos) P.pos=hp.clone(); else P.pos.lerp(hp,0.3);
     P.papers.position.copy(P.pos); P.papers.quaternion.copy(mq);
-    P.papers.rotateX(-0.55-(reading?0.16:0)); P.papers.rotateY(-0.10); }
-  if(P.f0!=null){ const k=Math.max(0,Math.min(1,(t-P.f0)/1.05)); const e=k*k*(3-2*k); P.fa=P.fs+(P.ft-P.fs)*e; if(k>=1) P.f0=null; }
+    P.papers.rotateX(-0.72-(reading?0.14:0)); P.papers.rotateY(-0.10); }
+  // ورقِ بالایی بلند می‌شود، می‌چرخد و دوباره روی دسته می‌خوابد (هرگز در حالتِ «بازِ دوبرگی» نمی‌ماند)
+  if(P.f0!=null){ const e=t-P.f0, A=2.85, sm=k=>k*k*(3-2*k);
+    if(e<0.75) P.fa=-A*sm(e/0.75);
+    else if(e<0.92) P.fa=-A;
+    else if(e<1.5) P.fa=-A*(1-sm((e-0.92)/0.58));
+    else { P.fa=0; P.f0=null; } }
   P.piv.rotation.y=P.fa||0;
 }
 // ── نگاه به برگه/دوربین: استخوان B را (که فرزندش C است) به‌اندازهٔ pitch حولِ محورِ Xِ مدل خم می‌کند ──
