@@ -277,6 +277,7 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .pod-seg button{flex:1;min-width:64px;background:var(--field);border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:10px 6px;font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;transition:all .15s}
 .pod-seg button.on{background:var(--teal-dim);border-color:var(--teal);color:#eafff8}
 .pod-vrow{display:flex;align-items:center;gap:8px;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-bottom:7px}
+.pod-vol{width:100%;margin:8px 0 2px;accent-color:var(--teal);height:26px;cursor:pointer}
 .pod-vrow.on{border-color:var(--teal);background:var(--teal-dim)}
 .pod-vname{flex:1;min-width:0;font-size:12.5px;font-weight:700;color:var(--ink)}
 .pod-vtest{flex:0 0 auto;border:1px solid var(--teal-dim);background:transparent;color:var(--teal);border-radius:9px;padding:6px 9px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer}
@@ -2325,7 +2326,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۴.۱</b> · انتشار: ۱۴۰۵/۰۶/۱۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۴.۲</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3668,6 +3669,9 @@ function podCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(POD_CFG_KEY)
     eDx:(typeof o.eDx==='number'?o.eDx:0), eDy:(typeof o.eDy==='number'?o.eDy:0), eScale:(typeof o.eScale==='number'?o.eScale:1),
     imgQuality:(['low','medium','high'].indexOf(o.imgQuality)>=0?o.imgQuality:'medium'),
     bgPlay:(o.bgPlay!==false), handMode:(['back','present'].indexOf(o.handMode)>=0?o.handMode:'normal'),
+    voiceVol:(typeof o.voiceVol==='number'?Math.max(0,Math.min(1.5,o.voiceVol)):1.0),
+    musicVol:(typeof o.musicVol==='number'?Math.max(0,Math.min(1,o.musicVol)):0.5),
+    musicTrack:((typeof POD_MUSIC_PRESETS!=='undefined'&&POD_MUSIC_PRESETS[o.musicTrack])?o.musicTrack:'calm'),
     content:podContentCfg(o.content) }; }
 // تنظیماتِ محتوایِ پادکست: کدام موضوع‌ها بحث شوند (هر کدام قابلِ فعال/غیرفعال) + بازهٔ مرورِ قند
 function podContentCfg(cc){ cc=cc||{};
@@ -3893,26 +3897,44 @@ async function podcastGenerate(force){
 // امضایِ تنظیماتِ محتوا (لحن + موضوع‌ها + بازهٔ قند) — با تغییرش، پادکستِ امروز از نو ساخته می‌شود
 function podContentSig(){ try{ return JSON.stringify(podCfg().content||{}); }catch(e){ return ''; } }
 /* ---- موزیکِ محیطیِ نرم (Web Audio) ---- */
+// ── آهنگ‌های زمینه (همه پروسیجرال با Web Audio؛ فایلِ صوتی لازم نیست) ──
+// همه ملایم و آرامش‌بخش؛ فقط در حال/زمان‌بندی/تیمبر فرق دارند. lp=کاتِ فیلترِ پایین‌گذر،
+// drone=هارمونی‌های پیوسته، bellRate=فاصلهٔ نت‌های تک، wave=شکلِ موج، bellWave=موجِ نت‌ها.
+const POD_MUSIC_PRESETS={
+  calm:  { fa:'✨ آرامشِ فضایی', scale:[196,247,294,392,494], oct:0.5, lp:900,  wave:'sine',     bellWave:'sine',     bellRate:4200, bellProb:0.7,  bellGain:0.075, lfo:0.07 },
+  ocean: { fa:'🌊 اقیانوسِ آرام', scale:[174,220,262,349,392], oct:0.5, lp:620,  wave:'sine',     bellWave:'triangle', bellRate:6000, bellProb:0.55, bellGain:0.06,  lfo:0.045 },
+  zen:   { fa:'🎐 ذنِ شرقی',      scale:[220,264,330,396,440], oct:1.0, lp:1400, wave:'triangle', bellWave:'sine',     bellRate:5200, bellProb:0.6,  bellGain:0.08,  lfo:0.06 },
+  night: { fa:'🌙 شبِ لالایی',    scale:[196,233,294,349,440], oct:0.5, lp:520,  wave:'sine',     bellWave:'sine',     bellRate:7000, bellProb:0.5,  bellGain:0.055, lfo:0.035 },
+  forest:{ fa:'🍃 جنگلِ سبز',     scale:[208,247,311,370,466], oct:1.0, lp:1050, wave:'triangle', bellWave:'triangle', bellRate:4800, bellProb:0.65, bellGain:0.07,  lfo:0.05 },
+  off:   { fa:'🔇 بدونِ موزیک',   off:true }
+};
+// ولومِ موزیک هنگام پخش: اسلایدرِ ۰..۱ به گِینِ واقعیِ ۰..۰٫۲۴ نگاشت می‌شود (۰٫۵→۰٫۱۲، شنیدنی زیرِ صدا)
+function podMusicPlayGain(){ const v=podCfg().musicVol; return Math.max(0, Math.min(0.24, (typeof v==='number'?v:0.5)*0.24)); }
+// ولومِ صدای گوینده را روی هر دو مسیر (Web Audio و <audio>) اعمال می‌کند
+function podApplyVoiceVol(){ const vv=Math.max(0,Math.min(1.5, podCfg().voiceVol));
+  try{ if(_pod.voiceGain) _pod.voiceGain.gain.setTargetAtTime(vv, (_wkAudioCtx&&_wkAudioCtx.currentTime)||0, 0.05); }catch(e){}
+  try{ if(_pod.audioEl) _pod.audioEl.volume=Math.max(0,Math.min(1,vv)); }catch(e){} }
 function podMusicStart(){
   const ctx=wkEnsureAudio(); if(!ctx) return; podMusicStop();
+  const P=POD_MUSIC_PRESETS[podCfg().musicTrack]||POD_MUSIC_PRESETS.calm;
+  if(P.off) return;   // «بدونِ موزیک»
   if(_pod.musicKill){ clearTimeout(_pod.musicKill); _pod.musicKill=0; }   // نگذار پاک‌سازیِ قبلی، موزیکِ تازه را قطع کند
   try{ if(ctx.state==='suspended'&&ctx.resume) ctx.resume(); }catch(e){}   // کانتکست باید زنده باشد وگرنه موزیکِ پخشِ دوم بی‌صدا می‌ماند
   try{
     const master=ctx.createGain(); master.gain.value=0.0001; master.connect(ctx.destination);
-    master.gain.setTargetAtTime(0.09, ctx.currentTime, 1.4);   // ملایم اما شنیدنی، زیرِ صدا
-    const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=850; lp.Q.value=0.5; lp.connect(master);
-    const scales=[[196,247,294,392,494],[220,277,330,440,554],[174,220,262,349,440],[208,262,311,415,523]];
-    const scale=scales[(new Date().getDate())%scales.length];
-    const base=scale[0]/2;
+    master.gain.setTargetAtTime(podMusicPlayGain(), ctx.currentTime, 1.4);   // ملایم اما شنیدنی، زیرِ صدا
+    const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=P.lp; lp.Q.value=0.5; lp.connect(master);
+    const scale=P.scale;
+    const base=scale[0]*(P.oct||0.5);
     const drone=[];
-    [[base,0.5],[base*1.5,0.3],[base*2,0.18]].forEach(pr=>{ const o=ctx.createOscillator(); o.type='sine'; o.frequency.value=pr[0]; const g=ctx.createGain(); g.gain.value=pr[1]; o.connect(g); g.connect(lp); o.start(); drone.push(o); });
-    const lfo=ctx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.07; const lg=ctx.createGain(); lg.gain.value=0.014; lfo.connect(lg); lg.connect(master.gain); lfo.start();
+    [[base,0.5],[base*1.5,0.3],[base*2,0.18]].forEach(pr=>{ const o=ctx.createOscillator(); o.type=P.wave||'sine'; o.frequency.value=pr[0]; const g=ctx.createGain(); g.gain.value=pr[1]; o.connect(g); g.connect(lp); o.start(); drone.push(o); });
+    const lfo=ctx.createOscillator(); lfo.type='sine'; lfo.frequency.value=P.lfo||0.07; const lg=ctx.createGain(); lg.gain.value=0.014; lfo.connect(lg); lg.connect(master.gain); lfo.start();
     const bell=()=>{ if(!_pod.music) return; const t=ctx.currentTime+0.02; const f=scale[Math.floor(Math.random()*scale.length)]*2;
-      const o=ctx.createOscillator(); o.type='sine'; o.frequency.value=f; const g=ctx.createGain();
-      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.075,t+0.5); g.gain.exponentialRampToValueAtTime(0.0001,t+2.6);
+      const o=ctx.createOscillator(); o.type=P.bellWave||'sine'; o.frequency.value=f; const g=ctx.createGain();
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(P.bellGain||0.075,t+0.5); g.gain.exponentialRampToValueAtTime(0.0001,t+2.6);
       let dst=lp; if(ctx.createStereoPanner){ const pan=ctx.createStereoPanner(); pan.pan.value=Math.random()*1.2-0.6; pan.connect(lp); dst=pan; }
       o.connect(g); g.connect(dst); o.start(t); o.stop(t+2.8); };
-    const bellTimer=setInterval(()=>{ if(Math.random()<0.7) bell(); }, 4200);
+    const bellTimer=setInterval(()=>{ if(Math.random()<(P.bellProb||0.7)) bell(); }, P.bellRate||4200);
     _pod.music={ ctx, master, drone, lfo, bellTimer };
   }catch(e){}
 }
@@ -3938,7 +3960,7 @@ function podVoiceOut(ctx){
   if(!ctx) return null;
   if(!_pod.voiceGain || _pod.voiceGain.context!==ctx){
     try{
-      _pod.voiceGain=ctx.createGain(); _pod.voiceGain.gain.value=1.0; _pod.voiceGain.connect(ctx.destination);
+      _pod.voiceGain=ctx.createGain(); _pod.voiceGain.gain.value=Math.max(0,Math.min(1.5,podCfg().voiceVol)); _pod.voiceGain.connect(ctx.destination);
       _pod.analyser=ctx.createAnalyser(); _pod.analyser.fftSize=256; _pod.analyser.smoothingTimeConstant=0.75; _pod.voiceGain.connect(_pod.analyser);
     }catch(e){}
   }
@@ -3958,14 +3980,14 @@ function podPlayFrom(idx, off){
 function podSeek(sec){
   if(_pod.elMode){ const maxKnown=_pod.elUrls.length?_pod.cum[_pod.elUrls.length]:0; let t=Math.max(0,Math.min(sec,Math.max(0,maxKnown-0.1)));
     let idx=0; while(idx<_pod.elUrls.length-1 && _pod.cum[idx+1]<=t) idx++;
-    if(_pod.mode==='paused') _pod.mode='playing'; podMusicGain(0.05); podElLoadPlay(idx, t-(_pod.cum[idx]||0)); podProgressStart(); renderPodcastCard(); return; }
+    if(_pod.mode==='paused') _pod.mode='playing'; podMusicGain(podMusicPlayGain()); podElLoadPlay(idx, t-(_pod.cum[idx]||0)); podProgressStart(); renderPodcastCard(); return; }
   const ctx=_wkAudioCtx; if(!ctx||!_pod.cloud) return;
   const maxKnown=_pod.buffers.length?_pod.cum[_pod.buffers.length]:0;
   let t=Math.max(0, Math.min(sec, Math.max(0,maxKnown-0.1)));
   let idx=0; while(idx<_pod.buffers.length-1 && _pod.cum[idx+1]<=t) idx++;
   if(_pod.mode==='paused'){ _pod.mode='playing'; }
   try{ if(ctx.state==='suspended'&&ctx.resume) ctx.resume(); }catch(e){}
-  podMusicGain(0.05); podPlayFrom(idx, t-(_pod.cum[idx]||0)); podProgressStart(); renderPodcastCard();
+  podMusicGain(podMusicPlayGain()); podPlayFrom(idx, t-(_pod.cum[idx]||0)); podProgressStart(); renderPodcastCard();
 }
 function podSliderInput(v){ _pod.seeking=true; const cur=document.getElementById('podCur'); if(cur) cur.textContent=podFmtTime(+v); }
 function podSliderChange(v){ _pod.seeking=false; if(_pod.cloud) podSeek(+v); }
@@ -4034,15 +4056,15 @@ function podcastResume(){
   _pod.mode='playing';
   try{
     if(_pod.elMode){
-      podMusicGain(0.05);
+      podMusicGain(podMusicPlayGain());
       const t=Math.max(0,_pod.pausePos||0); let idx=0; while(idx<_pod.elUrls.length-1 && _pod.cum[idx+1]<=t) idx++;
       podElLoadPlay(idx, t-(_pod.cum[idx]||0));
     } else if(_pod.cloud){
       const ctx=_wkAudioCtx; if(ctx&&(ctx.state==='suspended'||ctx.state==='interrupted')&&ctx.resume) ctx.resume().catch(()=>{});
-      podMusicGain(0.05);
+      podMusicGain(podMusicPlayGain());
       const t=Math.max(0,_pod.pausePos||0); let idx=0; while(idx<_pod.buffers.length-1 && _pod.cum[idx+1]<=t) idx++;
       podPlayFrom(idx, t-(_pod.cum[idx]||0));
-    } else { if(window.speechSynthesis) speechSynthesis.resume(); podMusicGain(0.09); }
+    } else { if(window.speechSynthesis) speechSynthesis.resume(); podMusicGain(podMusicPlayGain()); }
   }catch(e){}
   podProgressStart(); podMediaPos(); renderPodcastCard();
 }
@@ -4220,7 +4242,7 @@ async function podCloudSpeak(full){
   // ۱) کش: اگر همین متن با همین صدا قبلاً ساخته شده (هر روزی)، بدونِ هیچ درخواستی پخش کن (رایگان و فوری)
   try{ const hit=await podCacheGet(key);
     if(hit && hit.chunks && hit.chunks.length){ try{ podAudioTouch(key); }catch(e){}
-      _pod.prep=false; podMusicStart(); podMusicGain(0.05); _pod.fromCache=true;
+      _pod.prep=false; podMusicStart(); podMusicGain(podMusicPlayGain()); _pod.fromCache=true;
       _pod.rawChunks=hit.chunks; _pod.rawType=hit.type||'audio/mpeg';
       for(let i=0;i<hit.chunks.length;i++){ if(_pod.mode==='idle') return;
         let buf; try{ buf=await podDecode(ctx, hit.chunks[i].slice(0)); }catch(e){ continue; }
@@ -4238,7 +4260,7 @@ async function podCloudSpeak(full){
   if(!first) throw new Error('first chunk failed');
   if(_pod.mode==='idle') return;
   raw.push(first.raw); rawType=first.type||rawType; podPushBuffer(first.audio);
-  _pod.prep=false; podMusicStart(); podMusicGain(0.05); podPlayFrom(0,0); renderPodcastCard();
+  _pod.prep=false; podMusicStart(); podMusicGain(podMusicPlayGain()); podPlayFrom(0,0); renderPodcastCard();
   let fails=0;
   for(let i=1;i<chunks.length;i++){
     while(_pod.mode!=='idle' && i>_pod.playIdx+2){ await podSleep(400); }
@@ -4260,7 +4282,7 @@ async function podCloudSpeak(full){
    قفل‌صفحه/نوتیف می‌دهد. لب‌سینک در این حالت زمان‌محور است (بدونِ analyser). */
 const POD_SILENT_WAV='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
 function podBgEnabled(){ return podCfg().bgPlay!==false; }   // پیش‌فرض روشن
-function podElEl(){ if(!_pod.audioEl){ const a=new Audio(); a.preload='auto'; try{ a.setAttribute('playsinline',''); a.setAttribute('webkit-playsinline',''); }catch(e){}
+function podElEl(){ if(!_pod.audioEl){ const a=new Audio(); a.preload='auto'; try{ a.volume=Math.max(0,Math.min(1,podCfg().voiceVol)); }catch(e){} try{ a.setAttribute('playsinline',''); a.setAttribute('webkit-playsinline',''); }catch(e){}
     a.addEventListener('ended',()=>{ if(_pod.elMode && _pod.mode==='playing') podElLoadPlay(_pod.elIdx+1,0); });
     a.addEventListener('error',()=>{ if(_pod.elMode && _pod.mode==='playing') podElLoadPlay(_pod.elIdx+1,0); });
     a.addEventListener('timeupdate',()=>{ podMediaPos(); });
@@ -4313,7 +4335,7 @@ async function podCloudSpeakEl(full){
   try{ const hit=await podCacheGet(key);
     if(hit && hit.chunks && hit.chunks.length){ try{ podAudioTouch(key); }catch(e){}
       _pod.prep=false; _pod.fromCache=true; _pod.rawChunks=hit.chunks; _pod.rawType=hit.type||'audio/mpeg';
-      podMusicStart(); podMusicGain(0.05);
+      podMusicStart(); podMusicGain(podMusicPlayGain());
       for(let i=0;i<hit.chunks.length;i++){ if(_pod.mode==='idle') return;
         let dur=0, ab=null; try{ ab=await podDecode(ctx, hit.chunks[i].slice(0)); dur=ab.duration||0; }catch(e){ dur=0; }
         podElPush(hit.chunks[i], _pod.rawType, dur, ab);
@@ -4331,7 +4353,7 @@ async function podCloudSpeakEl(full){
   if(_pod.mode==='idle') return;
   raw.push(first.raw); rawType=first.type||rawType;
   podElPush(first.raw, rawType, (first.audio&&first.audio.duration)||0, first.audio);
-  _pod.prep=false; podMusicStart(); podMusicGain(0.05); podElLoadPlay(0,0); podMediaSessionSet(); renderPodcastCard();
+  _pod.prep=false; podMusicStart(); podMusicGain(podMusicPlayGain()); podElLoadPlay(0,0); podMediaSessionSet(); renderPodcastCard();
   let fails=0;
   for(let i=1;i<chunks.length;i++){
     while(_pod.mode!=='idle' && i>_pod.elIdx+2){ await podSleep(400); }
@@ -5937,6 +5959,38 @@ async function podLoadAvThumbs(){
   try{ if(document.getElementById('podCfgModal').classList.contains('show')) renderPodCfg(); }catch(e){}
 }
 function podCloseCfg(){ const m=document.getElementById('podCfgModal'); if(m) m.classList.remove('show'); try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} podTestStop(); }
+// ── کنترلِ ولوم و انتخابِ آهنگِ زمینه (تبِ 🎵 موزیک) ──
+function podCfgVol(kind,val){ const v=(parseFloat(faToEnDigits(val))||0)/100; const patch={}; patch[kind]=v; podCfgSet(patch);
+  if(kind==='voiceVol'){ const l=document.getElementById('podVoiceVolLbl'); if(l) l.textContent=faDigits(Math.round(v*100))+'٪'; podApplyVoiceVol(); }
+  else { const l=document.getElementById('podMusicVolLbl'); if(l) l.textContent=faDigits(Math.round(v*100))+'٪'; try{ if(_pod.music) podMusicGain(podMusicPlayGain()); }catch(e){} }
+}
+function podPickMusic(k){ if(!POD_MUSIC_PRESETS[k]) return; podCfgSet({musicTrack:k}); try{ podStopTestMusic(); }catch(e){}
+  // اگر پادکست در حال پخش است، آهنگ را زنده عوض کن
+  try{ if(_pod.mode==='playing' && !POD_MUSIC_PRESETS[k].off){ podMusicStart(); podMusicGain(podMusicPlayGain()); } else if(_pod.mode==='playing'){ podMusicStop(); } }catch(e){}
+  renderPodCfg();
+  uiToast&&uiToast('✓ آهنگِ زمینه انتخاب شد'); }
+function podStopTestMusic(){ if(_pod._testMusic){ try{ clearInterval(_pod._testMusic.bellTimer); }catch(e){} try{ _pod._testMusic.master.gain.setTargetAtTime(0.0001,(_wkAudioCtx&&_wkAudioCtx.currentTime)||0,0.2); }catch(e){}
+    const m=_pod._testMusic; _pod._testMusic=null; setTimeout(()=>{ try{ m.drone.forEach(o=>o.stop()); m.lfo.stop(); m.master.disconnect(); }catch(e){} },500); } }
+function podTestMusic(k){ const P=POD_MUSIC_PRESETS[k]; if(!P||P.off) return; const ctx=wkEnsureAudio(); if(!ctx) return;
+  podStopTestMusic(); try{ if(ctx.state==='suspended'&&ctx.resume) ctx.resume(); }catch(e){}
+  try{
+    const master=ctx.createGain(); master.gain.value=0.0001; master.connect(ctx.destination);
+    master.gain.setTargetAtTime(Math.max(0.06,podMusicPlayGain()), ctx.currentTime, 0.8);   // برای تست کمی بلندتر تا شنیده شود
+    const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=P.lp; lp.Q.value=0.5; lp.connect(master);
+    const scale=P.scale, base=scale[0]*(P.oct||0.5); const drone=[];
+    [[base,0.5],[base*1.5,0.3],[base*2,0.18]].forEach(pr=>{ const o=ctx.createOscillator(); o.type=P.wave||'sine'; o.frequency.value=pr[0]; const g=ctx.createGain(); g.gain.value=pr[1]; o.connect(g); g.connect(lp); o.start(); drone.push(o); });
+    const lfo=ctx.createOscillator(); lfo.type='sine'; lfo.frequency.value=P.lfo||0.07; const lg=ctx.createGain(); lg.gain.value=0.014; lfo.connect(lg); lg.connect(master.gain); lfo.start();
+    const bell=()=>{ if(!_pod._testMusic) return; const t=ctx.currentTime+0.02; const f=scale[Math.floor(Math.random()*scale.length)]*2;
+      const o=ctx.createOscillator(); o.type=P.bellWave||'sine'; o.frequency.value=f; const g=ctx.createGain();
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(P.bellGain||0.075,t+0.5); g.gain.exponentialRampToValueAtTime(0.0001,t+2.6);
+      o.connect(g); g.connect(lp); o.start(t); o.stop(t+2.8); };
+    bell();
+    const bellTimer=setInterval(()=>{ if(Math.random()<(P.bellProb||0.7)) bell(); }, P.bellRate||4200);
+    _pod._testMusic={ ctx, master, drone, lfo, bellTimer };
+    if(_pod._testMusicKill) clearTimeout(_pod._testMusicKill);
+    _pod._testMusicKill=setTimeout(()=>{ podStopTestMusic(); },9000);   // تستِ ۹ثانیه‌ای، خودکار قطع
+  }catch(e){}
+}
 function podCfgPick(k,v){ const patch={}; patch[k]=v; podCfgSet(patch);
   if(k==='avGender'){ _pod.avImg=null; _pod.avFrames=null; _pod.avLayers=null; _pod.avGeom=null; _pod.avGeomFixed=false; _pod.avImgGender=''; try{ podLoadAvThumbs(); }catch(e){} }
   renderPodCfg(); renderPodcastCard();
@@ -5959,7 +6013,7 @@ function renderPodCfg(){
   let h=`<div class="qbg-head"><span class="qbg-badge" style="background:rgba(154,134,224,.18)">🎧</span><div><div class="qbg-title">تنظیماتِ پادکست</div><div class="qbg-sub">مدت، سرویسِ صدا و لحن را انتخاب کن؛ هر صدا را با ▶ تست کن.</div></div></div>`;
   // تب‌بندی برای شلوغ‌نشدن: صدا / مجریِ تصویری
   const tab=_pod.cfgTab||'content';
-  h+=`<div class="pod-tabs">`+[['content','📋 محتوا'],['sound','🎧 صدا'],['avatar','🎭 مجری']].map(t=>`<button class="${tab===t[0]?'on':''}" onclick="podCfgTab('${t[0]}')">${t[1]}</button>`).join('')+`</div>`;
+  h+=`<div class="pod-tabs">`+[['content','📋 محتوا'],['sound','🎧 صدا'],['music','🎵 موزیک'],['avatar','🎭 مجری']].map(t=>`<button class="${tab===t[0]?'on':''}" onclick="podCfgTab('${t[0]}')">${t[1]}</button>`).join('')+`</div>`;
   if(tab==='content'){
   const C=c.content||podContentCfg();
   h+=`<label class="qbg-lbl">مدتِ پادکست</label><div class="pod-seg">`+POD_LENS.map(m=>`<button class="${c.minutes===m?'on':''}" onclick="podCfgPick('minutes',${m})">${faDigits(m)} دقیقه</button>`).join('')+`</div>`;
@@ -5997,6 +6051,19 @@ function renderPodCfg(){
   h+=`<div class="qbg-sub" style="margin-top:4px;line-height:1.9">با «روشن»، صدای ابری (OpenAI/Gemini) مثلِ اپ‌های موزیک تا کروم/سافاری کاملاً بسته نشده در پس‌زمینه ادامه می‌دهد و پلیرِ قفل‌صفحه/نوتیفیکیشن می‌آید. توجه: مجریِ متحرک و موزیکِ محیطی در پس‌زمینه اجرا نمی‌شوند و صدای گوشی (آفلاین) هم پس‌زمینه‌ای نیست.</div>`;
   h+=`<div class="qbg-sub" style="margin-top:14px">💰 برآوردِ هزینه و موجودیِ هوش مصنوعی به تبِ <b>«👤 پروفایل ← 🤖 هوش مصنوعی»</b> منتقل شد.</div>`;
   } // پایانِ تبِ صدا
+  if(tab==='music'){
+    const vv=Math.round(Math.max(0,Math.min(1.5,c.voiceVol))*100), mv=Math.round(Math.max(0,Math.min(1,c.musicVol))*100);
+    h+=`<div class="qbg-sub" style="margin-top:6px;line-height:1.9">ولومِ صدای گوینده و موزیکِ زمینه را جدا تنظیم کن. موزیک همیشه ملایم و زیرِ صدای گوینده پخش می‌شود.</div>`;
+    h+=`<label class="qbg-lbl" style="margin-top:12px">🎙️ ولومِ گوینده — <b id="podVoiceVolLbl">${faDigits(vv)}٪</b></label>`;
+    h+=`<input type="range" min="0" max="150" step="5" value="${vv}" class="pod-vol" oninput="podCfgVol('voiceVol',this.value)">`;
+    h+=`<label class="qbg-lbl" style="margin-top:14px">🎵 ولومِ موزیک — <b id="podMusicVolLbl">${faDigits(mv)}٪</b></label>`;
+    h+=`<input type="range" min="0" max="100" step="5" value="${mv}" class="pod-vol" oninput="podCfgVol('musicVol',this.value)">`;
+    h+=`<label class="qbg-lbl" style="margin-top:16px">🎼 آهنگِ زمینه</label>`;
+    h+=`<div class="qbg-sub" style="margin-bottom:6px">یک حالِ آرامش‌بخش انتخاب کن؛ با ▶ گوش بده.</div>`;
+    Object.keys(POD_MUSIC_PRESETS).forEach(k=>{ const P=POD_MUSIC_PRESETS[k];
+      h+=`<div class="pod-vrow ${c.musicTrack===k?'on':''}"><span class="pod-vname">${P.fa}</span>${P.off?'':`<button class="pod-vtest" onclick="podTestMusic('${k}')">▶ تست</button>`}<button class="pod-vpick" onclick="podPickMusic('${k}')">${c.musicTrack===k?'✓ انتخاب':'انتخاب'}</button></div>`; });
+    h+=`<div class="qbg-sub" style="margin-top:6px">موزیک‌ها ساخته‌شده در خودِ اپ‌اند (بدونِ نیاز به اینترنت یا فایل).</div>`;
+  } // پایانِ تبِ موزیک
   if(tab==='avatar'){
   // مجریِ تصویری (پرترهٔ AI؛ یک‌بار ساخته و برای همیشه کش می‌شود)
   h+=`<label class="qbg-lbl">مجریِ تصویری بالای پلیر</label>`;
