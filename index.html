@@ -2320,7 +2320,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۳.۹۸</b> · انتشار: ۱۴۰۵/۰۶/۱۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۳.۹۹</b> · انتشار: ۱۴۰۵/۰۶/۱۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -16924,12 +16924,15 @@ function _matchOneFood(part){
   const numMatch=norm.match(/(\d+(\.\d+)?)/);
   const qty=numMatch?parseFloat(numMatch[1]):1;
   const stop=['عدد','گرم','قاشق','کف','دست','لقمه','یک','پرس','فنجان','لیوان','کاسه','بشقاب','با','حبه','دانه','تکه','برش','متوسط','بزرگ','کوچک','پخته','ای','تابه'];
-  const noteWords=norm.replace(/\d+(\.\d+)?/g,' ').split(/\s+/).filter(w=>w.length>=2 && !stop.includes(w));
+  const stripParen=str=>str.replace(/[(（][^)）]*[)）]/g,' ');   // محتوای پرانتز (توضیح/مقدار) نباید در تطبیقِ کلمات بیاید
+  const noteWords=stripParen(norm).replace(/\d+(\.\d+)?/g,' ').split(/\s+/).filter(w=>w.length>=2 && !stop.includes(w));
   if(noteWords.length===0) return null;
   let best=null,bestScore=0;
   SEARCH_INDEX.forEach(entry=>{
-    const enorm=normalizeColloquial(entry.norm);
-    const itemWords=enorm.split(/\s+/).filter(w=>w.length>=2 && !stop.includes(w));
+    const enorm=stripParen(normalizeColloquial(entry.norm));
+    // نامِ آیتم‌های دیتابیس کیوریت‌شده‌اند: stop را اینجا اعمال نکن تا کلماتِ هویتیِ
+    // غذا (پخته/تابه‌ای/…) حذف نشوند و آیتم به تک‌کلمهٔ عمومی تبدیل نشود (باگِ «سبزی‌پلو»→«سبزی پخته»).
+    const itemWords=enorm.split(/\s+/).filter(w=>w.length>=2);
     if(itemWords.length===0) return;
     let score=0, matchedItemWords=0, matchedNoteWords=new Set();
     itemWords.forEach(iw=>{
@@ -16945,6 +16948,9 @@ function _matchOneFood(part){
     if(itemCoverage<0.5) score*=0.25;
     if(itemWords.length===1 && noteWords.includes(itemWords[0])) score+=15;
     if(itemWords[0]===noteWords[0]) score+=12;
+    // ⭐ جریمهٔ کلماتِ اضافیِ نامِ آیتم که در متن نیستند: «سبزی‌پلو» بر «سبزی‌پلو با ماهی»
+    // (ماهیِ اضافه) ترجیح دارد؛ ولی آیتم‌های تک‌کلمه‌ایِ عمومی بی‌جهت برنده نمی‌شوند.
+    score -= (itemWords.length - matchedItemWords) * 4;
     if(noteWords.length===1 && (entry.cat==='خورش و غذای اصلی'||entry.cat==='غذاهای سنتی ایرانی') && itemWords.length>1) score*=0.5;
     if(score>bestScore){ bestScore=score; best=entry; }
   });
