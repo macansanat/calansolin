@@ -2325,7 +2325,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۴.۰</b> · انتشار: ۱۴۰۵/۰۶/۱۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۴.۱</b> · انتشار: ۱۴۰۵/۰۶/۱۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5506,7 +5506,7 @@ function pod3dGesture(open){
       else { let ni; do{ ni=Math.floor(Math.random()*POD_GEST_POSES.length); }while(ni===P.i && POD_GEST_POSES.length>1); P.i=ni; P.sw=t+1.4+Math.random()*1.7; } }
     const pose=POD_GEST_POSES[P.i]; const dt=(_pod3d.dt||0.016); const k=1-Math.pow(0.04, dt);
     const La=G['LeftArm'],Lf=G['LeftForeArm'],Lh=G['LeftHand'],Ra=G['RightArm'],Rf=G['RightForeArm'],Rh=G['RightHand'];
-    const aim=(A,B,dir)=>{ if(!A||!B) return; const tl=pod3dAimTargetLocal(A.b,B.b,dir); if(tl) A.b.quaternion.slerp(tl,k); };
+    const aim=(A,B,dir)=>{ if(!A||!B) return; const tl=pod3dAimTargetLocal(A.b,B.b,dir,A.q); if(tl) A.b.quaternion.slerp(tl,k); };
     aim(La,Lf,pose.LA); aim(Lf,Lh,pose.LF); aim(Ra,Rf,pose.RA); aim(Rf,Rh,pose.RF);
     if(Lh){ const q=new T.Quaternion().setFromEuler(new T.Euler(pose.LH[0],pose.LH[1],pose.LH[2],'XYZ')); Lh.b.quaternion.copy(Lh.q).multiply(q); }
     if(Rh){ const q=new T.Quaternion().setFromEuler(new T.Euler(pose.RH[0],pose.RH[1],pose.RH[2],'XYZ')); Rh.b.quaternion.copy(Rh.q).multiply(q); }
@@ -5560,13 +5560,29 @@ function pod3dPoseFingers(pose){ const n=pose.n||''; let l='relax', r='relax';
   if(/chinL/.test(n)) l='relax';
   return [l,r]; }
 // کواترنیونِ محلیِ هدف تا استخوانِ B (که فرزندش C است) در فضای‌جهانی به سمتِ dir اشاره کند (مستقل از محورِ استخوان)
-function pod3dAimTargetLocal(B,C,dir){ const T=THREE; if(!B||!C||!B.parent) return null;
-  try{ const bp=new T.Vector3(), cp=new T.Vector3(); B.getWorldPosition(bp); C.getWorldPosition(cp);
-    const cur=cp.clone().sub(bp); if(cur.lengthSq()<1e-9) return null; cur.normalize();
-    const tgt=new T.Vector3(dir[0],dir[1],dir[2]).normalize();
-    const delta=new T.Quaternion().setFromUnitVectors(cur,tgt);
+// ⭐ نکتهٔ حیاتی (۲۴.۱): مبنا باید «پوزِ استراحتِ» استخوان باشد، نه چرخشِ فعلی‌اش.
+// اگر مبنا چرخشِ فعلی باشد، اصلاحِ کوتاه‌ترین‌کمانِ هر فریم روی حالتِ از‌قبل‌منحرف‌شده
+// سوار می‌شود و با هر تعویضِ پوز (که بازو می‌چرخد) یک چرخشِ خالص حولِ محورِ خودِ
+// استخوان انباشته می‌شود (holonomy). شبیه‌سازی: ~۹۱° بعد از ۳۰ثانیه و تا ۳۶۰° در
+// پادکستِ بلند ⇒ چرخشِ غیرطبیعیِ آرنج + پاره‌شدن/شکافِ آستینِ کت.
+// با مبنایِ استراحت، خروجی تابعِ محضِ «جهتِ هدف» است ⇒ هیچ انباشتی ممکن نیست.
+function pod3dAimTargetLocal(B,C,dir,restQ){ const T=THREE; if(!B||!C||!B.parent) return null;
+  try{
+    const tgt=new T.Vector3(dir[0],dir[1],dir[2]); if(tgt.lengthSq()<1e-9) return null; tgt.normalize();
     const pw=new T.Quaternion(); B.parent.getWorldQuaternion(pw); const pwi=pw.clone().invert();
-    return pwi.multiply(delta).multiply(pw).multiply(B.quaternion.clone());
+    let base, cur;
+    if(restQ){
+      base=restQ.clone();
+      const cl=C.position.clone(); if(cl.lengthSq()<1e-9) return null; cl.normalize();
+      // جهتِ جهانیِ فرزند اگر استخوان در پوزِ استراحت بود (تحلیلی، بدونِ وابستگی به فریمِ قبل)
+      cur=cl.applyQuaternion(pw.clone().multiply(base));
+    } else {
+      base=B.quaternion.clone();
+      const bp=new T.Vector3(), cp=new T.Vector3(); B.getWorldPosition(bp); C.getWorldPosition(cp);
+      cur=cp.clone().sub(bp); if(cur.lengthSq()<1e-9) return null; cur.normalize();
+    }
+    const delta=new T.Quaternion().setFromUnitVectors(cur,tgt);
+    return pwi.multiply(delta).multiply(pw).multiply(base);
   }catch(e){ return null; } }
 // پوزهای مجری به‌صورتِ «جهتِ فضای‌جهانی» که هر استخوان به آن اشاره کند. قاب: پایین=-Y، جلو(به‌دوربین)=+Z، +X=سمتِ چپِ مدل.
 // LA/RA=جهتِ بازو، LF/RF=جهتِ ساعد (هدفِ دست)، LH/RH=چرخشِ کوچکِ مچ (اویلر). ترتیب مطابقِ عکسِ ۸حالته.
