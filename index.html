@@ -2342,7 +2342,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۶.۰</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۶.۱</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -9372,6 +9372,7 @@ const CHAT_ROLE_CATS=[['flow','🗺️ شروعِ روند (برنامه‌ری�
     +"نقش‌های در دسترس (این‌ها شناسه و نامِ فارسیِ هرکدام است): "+list+".\n"
     +"⚠️ فقط نقش‌هایی را انتخاب کن که «واقعاً» به درخواستِ کاربر مربوط‌اند و مسیر را کوتاه و متناسب نگه دار؛ نقشِ بی‌ربط اضافه نکن. راهنمای انتخاب: برای برنامه/پیگیریِ ورزش → «مربی ورزش حرفه‌ای (coach)»؛ برای رژیم و وعدهٔ غذایی → «سرآشپز (chef)»؛ برای انگیزه/خواب/اضطراب → «روانپزشک (psych)» یا نقش‌های عمومی؛ برای قند و انسولین و تیروئید → «متخصص غدد (endo)»؛ اگر مطمئن نیستی به کدام متخصص، اول «پزشک عمومی (gp)». «متخصص نوزادان (neonat)» و موضوعاتِ بارداری فقط وقتی که کاربر واقعاً باردار است یا دربارهٔ نوزاد/بارداری می‌پرسد — برای بزرگسالِ عادی هرگز آن را نگذار. به سن و جنسیت و شرایطِ کاربر توجه کن.\n"
     +"در متنِ توضیحی همیشه «نامِ فارسیِ» نقش‌ها را بنویس (مثلاً «مربی ورزش حرفه‌ای»)، نه شناسهٔ انگلیسی مثل coach/psych را؛ شناسه‌های انگلیسی فقط داخلِ خطِ @@PLAN@@ می‌آیند.\n"
+    +"⛔ تو «هرگز» @@NEEDDATA@@ نخواه و منتظرِ داده نمان: برای چیدنِ مسیرِ مراجعه به دادهٔ ریز نیاز نداری. حتی اگر کاربر تازه‌کار است و تقریباً هیچ ثبتی ندارد، همان پیامِ اول مسیر را بچین. اگر شکایتِ بیمار روشن نبود، فقط «یک» سؤالِ کوتاه بپرس و در همان پیام هم یک مسیرِ اولیه بده.\n"
     +"در «آخرین خطِ» پاسخ دقیقاً این نشانه را بگذار (اعدادِ انگلیسی، یک خط، بدونِ توضیح): @@PLAN@@ {\"title\":\"موضوعِ بیمار\",\"steps\":[{\"role\":\"یک شناسه برای مرحله‌ی تک‌نفره\",\"roles\":[\"شناسه۱\",\"شناسه۲\"],\"why\":\"چرا این مرحله\",\"carry\":\"چه نتیجه/برگه‌ای را از مرحله‌ی قبل نزدِ این ببرد\"}]} — برای مرحله‌ی تک‌نفره فقط \"role\" و برای کنفرانس فقط \"roles\" را بگذار. شناسه‌ها را دقیقاً از فهرستِ بالا بردار. این خط را هیچ‌وقت توضیح نده.";
 })();
 function chatRoleById(id){ return CHAT_ROLES.find(r=>r.id===id)||null; }
@@ -15945,6 +15946,8 @@ function buildChatSystemPrompt(){
   "مقادیرِ مجازِ parts فقط این‌ها هستند: bg (قند)، meal (وعده و کربوهیدرات)، ins (انسولین)، med (دارو)، ex (ورزش)، sleep (خواب)، vitals (فشار و ضربان)، weight (وزن)، mood (حالِ روحی)، note (یادداشت‌ها)، lab (آزمایش).\n"+
   "فقط همان بخش‌هایی را بخواه که واقعاً لازم داری و بازه را متناسب با سؤال انتخاب کن. کاربر با یک دکمه همان را می‌فرستد و بعد تحلیلِ دقیق بده.\n"+
   "ج) این خط را هیچ‌وقت توضیح نده و در متن تکرارش نکن؛ حداکثر یک بار در هر پیام.\n"+
+  "هـ) ⛔ حلقه ممنوع: اگر بسته‌ای رسید که کمتر از خواستهٔ تو داشت (مثلاً فقط چند روز ثبت دارد)، «همان» را دوباره نخواه. با همان مقدار تحلیل کن، محدودیتش را یک جمله بگو، و بگو کاربر از این به بعد چه چیزی را ثبت کند. خطِ «📊 پوششِ واقعی» در هر بسته می‌گوید کلِ داده‌های کاربر از کِی تا کِی است — قدیمی‌تر از آن اصلاً وجود ندارد.\n"+
+  "و) حداکثر یک‌بار در کلِ گفتگو درخواستِ داده بده مگر موضوعِ کاملاً تازه‌ای مطرح شود. هرگز دو پیامِ پشتِ‌هم @@NEEDDATA@@ نگذار.\n"+
   "د) وقتی «📁 بستهٔ دادهٔ درخواستی» رسید، تحلیل را با عددها و تاریخ‌های واقعیِ همان بسته بنویس.\n"+
   persona+
   "خط قرمزها: فقط آموزشی؛ هرگز تشخیص قطعی یا دوز دقیق انسولین/دارو برای اجرا نده؛ برای تصمیم درمانی کاربر را به پزشک ارجاع بده.\n"+
@@ -15983,7 +15986,9 @@ function chatParseActions(text){
   const ins=chatExtractMarker(t,'@@INSULIN@@');
   if(ins&&ins.obj){ action={kind:'insulin',data:ins.obj}; t=(t.slice(0,ins.start)+t.slice(ins.endAbs)).trim(); }
   const nd=chatExtractMarker(t,'@@NEEDDATA@@');
-  if(nd&&nd.obj){ action={kind:'needdata',data:nd.obj}; t=(t.slice(0,nd.start)+t.slice(nd.endAbs)).trim(); }
+  // متن همیشه پاک می‌شود، ولی اگر قبلاً اقدامِ مهم‌تری (مثلِ برنامهٔ مسیرِ درمان) پیدا شده
+  // بود، جای آن را نگیرد — `action` فقط یک اسلات دارد.
+  if(nd&&nd.obj){ if(!action) action={kind:'needdata',data:nd.obj}; t=(t.slice(0,nd.start)+t.slice(nd.endAbs)).trim(); }
   return {text:t, action};
 }
 // کارتِ اقدام زیر پیامِ دستیار
@@ -17098,6 +17103,7 @@ function buildDayTimeline(days, parts){
         if(x.doctor) o.note.push('📌 برای پزشک: '+String(x.doctor).slice(0,90)); }); }); }catch(e){}
   // خروجی: جدیدترین روز اول
   const keys=Object.keys(M).sort().reverse();
+  _tlStat={n:0, first:'', last:''};
   const lines=[];
   keys.forEach(k=>{
     const o=M[k], seg=[];
@@ -17117,11 +17123,25 @@ function buildDayTimeline(days, parts){
     try{ const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); lbl=faDigits(jDateStr(j[0],j[1],j[2]))+' '+WD[d.getDay()]; }catch(e){}
     const today=(k===dayKey(new Date()));
     lines.push('• '+lbl+(today?' (امروز)':'')+' — '+seg.join(' ؛ '));
+    _tlStat.n++; if(!_tlStat.last) _tlStat.last=lbl; _tlStat.first=lbl;   // جدید→قدیم
   });
   if(!lines.length) return '';
   let out=lines.join('\n');
   if(out.length>6000){ out=out.slice(0,6000); out=out.slice(0,out.lastIndexOf('\n'))+'\n(روزهای قدیمی‌تر برای کوتاهیِ متن حذف شدند)'; }
   return '🗓 خطِ زمانیِ روزبه‌روزِ کاربر ('+faDigits(days)+' روزِ اخیر — پروندهٔ واقعیِ او؛ برای بررسیِ «هفتهٔ اخیر» دقیقاً از همین استفاده کن):\n'+out;
+}
+let _tlStat={n:0,first:'',last:''};   // آمارِ آخرین خطِ زمانیِ ساخته‌شده
+// قدیمی‌ترین و تازه‌ترین روزی که کاربر «اصلاً» چیزی ثبت کرده (فارغ از بازهٔ درخواستی)
+function dataSpanAll(){
+  let mn=null, mx=null; const see=d=>{ if(d&&!isNaN(d)){ if(!mn||d<mn)mn=d; if(!mx||d>mx)mx=d; } };
+  try{ for(const k in planData){ if(k[0]==='_'){ if(k==='_basal') for(const b in planData[k]) see(_dayFromKey(b)); continue; }
+        if(Array.isArray(planData[k])&&planData[k].length) see(_dayFromKey(k)); } }catch(e){}
+  ['bg_manual_v1','med_log_v1','journal_v1','vitals_v1','weight_log_v1','mood_log_v1','skip_log_v1'].forEach(k=>{
+    try{ (JSON.parse(localStorage.getItem(k)||'[]')||[]).forEach(x=>{ if(x&&x.iso) see(new Date(x.iso)); }); }catch(e){} });
+  try{ (loadExLog().entries||[]).forEach(e=>{ if(e&&e.ts) see(new Date(e.ts)); }); }catch(e){}
+  if(!mn||!mx) return null;
+  const fa=d=>{ try{ const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); return faDigits(jDateStr(j[0],j[1],j[2])); }catch(e){ return ''; } };
+  return {first:fa(mn), last:fa(mx), days:Math.round((mx-mn)/86400000)+1};
 }
 // ══ بستهٔ دادهٔ «درخواستی» (۲۶.۰) ══
 // به‌جای فرستادنِ همه‌چیز در هر پیام (گران و کور)، دکتر می‌گوید چه می‌خواهد و
@@ -17147,9 +17167,20 @@ function buildDataPacket(days, parts){
     try{ const lt=buildLabTrend(); if(lt) secs.push(lt); }catch(e){}
   }
   if(parts.indexOf('ins')>=0){ try{ const w=_scopeWindow('chat'); const reg=buildInsulinRegimen(w); if(reg) secs.push(reg); }catch(e){} }
-  const head='📁 بستهٔ دادهٔ درخواستی — '+names+' · بازه: '+chatDataLabel(days)+'\n'
-    +'(کاربر این داده‌ها را از پروندهٔ خودش برایت فرستاد. فقط بر اساسِ همین‌ها تحلیل کن و اگر چیزی کم داشتی، دوباره با @@NEEDDATA@@ بخواه.)';
-  if(!secs.length) return head+'\n⚠️ در این بازه هیچ ثبتی برای این بخش‌ها وجود ندارد.';
+  // ⚠️ درسِ ۲۶.۱: بدونِ «گزارشِ پوشش»، مدل فرض می‌کند داده‌ی بیشتری هست و در حلقهٔ
+  // درخواستِ دوباره گیر می‌کند (کاربر ۲۰ هفته خواست ولی فقط ۵ روز ثبت داشت).
+  let cov='';
+  try{ const sp=dataSpanAll();
+    const have=(_tlStat&&_tlStat.n)?_tlStat.n:0;
+    cov='📊 پوششِ واقعی: بازهٔ درخواستی '+chatDataLabel(days)+'؛ در این بازه '+faDigits(have)+' روز ثبت وجود دارد'
+      +((have&&_tlStat.first)?(' (از '+_tlStat.first.split(' ')[0]+' تا '+_tlStat.last.split(' ')[0]+')'):'')+'. ';
+    cov+= sp ? ('کلِ ثبت‌های کاربر در برنامه از '+sp.first+' تا '+sp.last+' است؛ قدیمی‌تر از این «هیچ داده‌ای وجود ندارد».')
+             : 'کاربر هنوز تقریباً هیچ ثبتی ندارد.';
+    cov+=' پس اگر بازهٔ خواسته‌شده خالی بود، دوباره همان را نخواه — با همین مقدار تحلیل کن و بگو برای دقتِ بیشتر چه چیزی باید ثبت شود.';
+  }catch(e){}
+  const head='📁 بستهٔ دادهٔ درخواستی — '+names+' · بازه: '+chatDataLabel(days)+'\n'+(cov?cov+'\n':'')
+    +'(کاربر این داده‌ها را از پروندهٔ خودش برایت فرستاد. فقط بر اساسِ همین‌ها تحلیل کن.)';
+  if(!secs.length) return head+'\n⚠️ در این بازه هیچ ثبتی برای این بخش‌ها وجود ندارد — با همین وضع جلو برو و دوباره درخواستِ داده نده.';
   return head+'\n'+secs.join('\n');
 }
 // انتخابگرِ بازه و بخش‌ها (هم کاربر خودش باز می‌کند، هم از کارتِ درخواستِ دکتر)
