@@ -2352,7 +2352,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۷.۱</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۷.۲</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -16334,6 +16334,7 @@ function chatStartStep(idx, si){
   if(j) jrUpdate(j.id, jj=>{ if(jj.steps[si]) jj.steps[si].chatId=nid; });
   window._roleAsked=nid; renderChatTab();
   uiToast('✓ گفتگو با «'+lead+'» باز شد');
+  jrAutoStartVisit(nid);
 }
 // شروعِ روندِ جدید (چتِ برنامه‌ریز)
 function chatStartJourneyNew(){ const o=chatLoad(); const nid='c'+Date.now().toString(36);
@@ -16388,14 +16389,24 @@ function chatJourneyStartStep(jid,i){ const j=jrById(jid); if(!j) return; const 
   o.chats.unshift({id:nid,title:(lead+' — '+j.goal).slice(0,50),ts:Date.now(),provider:sectionProvider('chat'),speed:'smart',roles:step.roles.slice(),projectId:j.projectId,journeyId:j.id,stepIndex:i,messages:[]});
   o.activeId=nid; chatSave(o); jrUpdate(jid,jj=>{ if(jj.steps[i]) jj.steps[i].chatId=nid; }); window._roleAsked=nid;
   chatJourneyClose(); switchTab('chat'); renderChatTab(); uiToast('✓ گفتگو با «'+lead+'» باز شد');
-  // ۲۷.۰: برگهٔ ارجاع در سیستم‌پرامپت است، پس فقط یک جملهٔ کوتاه می‌فرستیم تا پزشک
-  // «همان پیامِ اول» ویزیت را شروع کند و کاربر مجبور به توضیحِ دوباره نشود.
-  try{ const prov=sectionProvider('chat');
-    if(navigator.onLine && (hasAnyKey(prov)||VISION_PROVIDERS.some(hasAnyKey))){
-      setTimeout(()=>{ try{ const cc=chatActive(); if(cc&&cc.id===nid&&!(cc.messages||[]).length)
-        chatSend({text:'ارجاع شدم. سابقه و نتیجهٔ مرحله‌های قبل را داری؛ همین حالا ویزیتت را کامل شروع کن.', packet:'ارجاع از مرحلهٔ قبل — سابقه ضمیمه است', packetHead:'🧭 شروعِ خودکارِ ویزیت'}); }catch(e){} }, 450);
-    }
-  }catch(e){} }
+  jrAutoStartVisit(nid); }
+/* ⚠️ ۲۷.۲: مرحله از «دو» مسیر باز می‌شود — `chatStartStep` (دکمهٔ کارتِ برنامه) و
+   `chatJourneyStartStep` (پنلِ روند). شروعِ خودکار باید در هر دو صدا زده شود؛
+   بارِ اول فقط در دومی بود و کاربر می‌دید «صفحه باز شد ولی چیزی نگفت». */
+function jrAutoStartVisit(nid){
+  try{
+    if(!navigator.onLine) return;
+    if(!VISION_PROVIDERS.some(pv=>hasAnyKey(pv)&&!aiFrozen(pv))) return;
+    const go=(tries)=>{ try{ const cc=chatActive();
+      if(!(cc&&cc.id===nid&&cc.journeyId&&!(cc.messages||[]).length)) return;
+      // اگر ارسالِ قبلی هنوز در جریان است، chatSend آن را «توقف» می‌فهمد؛ کمی بعد دوباره
+      if(typeof _chatBusy!=='undefined' && _chatBusy){ if(tries>0) setTimeout(()=>go(tries-1), 1200); return; }
+      chatSend({text:'ارجاع شدم. سابقه و نتیجهٔ مرحله‌های قبل را داری؛ همین حالا ویزیتت را کامل شروع کن.',
+                packet:'ارجاع از مرحلهٔ قبل — سابقه ضمیمه است', packetHead:'🧭 شروعِ خودکارِ ویزیت'});
+    }catch(e){} };
+    setTimeout(()=>go(4), 500);
+  }catch(e){}
+}
 function chatJourneyGoPlanner(jid){ const j=jrById(jid); if(!j) return; const o=chatLoad(); const pc=o.chats.find(x=>x.id===j.plannerChatId);
   if(!pc){ uiToast('چتِ برنامه‌ریز پیدا نشد'); return; } o.activeId=j.plannerChatId; chatSave(o); chatJourneyClose(); switchTab('chat'); renderChatTab(); }
 function chatJourneySaveResult(jid){ const ta=document.getElementById('jrResult'); const v=ta?ta.value.trim():'';
@@ -16609,11 +16620,27 @@ function chatUpdateGhost(){
 }
 function chatGhostInsert(){ const inp=document.getElementById('chatInput'); if(inp&&_chatTopSug){ inp.value=_chatTopSug; chatAutoGrow(inp); inp.focus(); } chatUpdateGhost(); chatSyncInsets(); }
 // ارتفاعِ نوار بالا/داکِ پایین را اندازه می‌گیرد تا پیام‌ها درست از زیرشان رد شوند
-function chatSyncInsets(){
+let _cxRO=null;
+function _cxApplyInsets(){
   const cx=document.querySelector('.chatx'); if(!cx) return;
   const ab=cx.querySelector('.chatx-appbar'), dk=cx.querySelector('.chat-dock');
-  if(ab) cx.style.setProperty('--cx-top', ab.offsetHeight+'px');
-  if(dk) cx.style.setProperty('--cx-bot', dk.offsetHeight+'px');
+  if(ab) cx.style.setProperty('--cx-top', Math.ceil(ab.getBoundingClientRect().height)+'px');
+  if(dk) cx.style.setProperty('--cx-bot', Math.ceil(dk.getBoundingClientRect().height)+'px');
+}
+/* ⚠️ ۲۷.۲: `.chat-msgs` مطلق است و فاصله‌اش از نوارِ بالا/پایین با متغیرهای CSS تنظیم
+   می‌شود. ارتفاعِ این نوارها ثابت نیست (عنوانِ دوخطیِ پزشک، بارِ روند، پیشنهادها،
+   بزرگ‌شدنِ کادرِ متن، لودِ فونت). اگر عدد کهنه بماند، پیام‌های بالا زیرِ نوار گیر
+   می‌کنند و کاربر آن را «اسکرول کار نمی‌کند» می‌بیند. پس با ResizeObserver زنده
+   رصد می‌شود، نه فقط یک‌بار پس از رندر. */
+function chatSyncInsets(){
+  _cxApplyInsets();
+  const cx=document.querySelector('.chatx'); if(!cx) return;
+  const ab=cx.querySelector('.chatx-appbar'), dk=cx.querySelector('.chat-dock');
+  try{ if(window.ResizeObserver){
+    if(_cxRO) _cxRO.disconnect();
+    _cxRO=new ResizeObserver(()=>{ _cxApplyInsets(); });
+    if(ab) _cxRO.observe(ab); if(dk) _cxRO.observe(dk);
+  } }catch(e){}
 }
 window.addEventListener('resize', ()=>{ try{ chatSyncInsets(); }catch(e){} try{ if((_pod.avMode||'photo')==='3d' && _pod3d && _pod3d.ren){ podAvResizeSoon(); } }catch(e){} });
 // چرخشِ گوشی: بافرِ رندرِ سه‌بعدی باید با نسبتِ تازه هماهنگ شود وگرنه تصویر کشیده می‌شود
@@ -16654,7 +16681,7 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .cxa-pen{flex:0 0 auto;color:var(--muted);font-size:10px;opacity:.55}
   .chatx-title-inp{flex:1;min-width:0;background:var(--field);border:1.5px solid var(--teal);border-radius:10px;padding:8px 11px;font-family:inherit;font-size:13.5px;color:var(--ink);text-align:center;direction:rtl}
   /* ── ناحیه‌ی پیام‌ها (اسکرول) ── */
-  .chat-msgs{position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:15px;padding:calc(var(--cx-top,64px) + 10px) 14px calc(var(--cx-bot,116px) + 8px);width:100%}
+  .chat-msgs{position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:15px;padding:calc(var(--cx-top,64px) + 14px) 14px calc(var(--cx-bot,116px) + 14px);width:100%;scroll-padding-top:calc(var(--cx-top,64px) + 8px)}
   .chat-row{display:flex;flex-direction:column;max-width:90%}
   .chat-row.me{align-self:flex-start;align-items:flex-start}
   .chat-row.ai{align-self:flex-end;align-items:flex-end}
@@ -17039,6 +17066,9 @@ function renderChatTab(){
   chatRenderSuggestions(lastAi&&lastAi.suggest);
   chatUpdateGhost();
   requestAnimationFrame(()=>{ chatSyncInsets(); const m=document.getElementById('chatMsgs'); if(m) m.scrollTop=m.scrollHeight; });
+  // فونت/ایموجی و بارِ روند ممکن است بعد از فریمِ اول ارتفاع را عوض کنند
+  setTimeout(()=>{ try{ chatSyncInsets(); }catch(e){} }, 150);
+  setTimeout(()=>{ try{ chatSyncInsets(); }catch(e){} }, 500);
 }
 // ── پیوست‌ها ─────────────────────────────────────────
 let _chatAttach=[];      // [{kind:'image', mediaType,b64,dataURL} | {kind:'file', name, text}]
