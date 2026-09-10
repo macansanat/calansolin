@@ -2352,7 +2352,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۷.۶</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۷.۷</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4188,7 +4188,14 @@ function podcastStart(rec){
   _pod.mode='playing'; _pod.t0=Date.now(); _pod.prep=_pod.cloud;
   podEngineReset(); podProgressStart(); renderPodcastCard();
   if(_pod.cloud){
-    const cloudFail=(e)=>{ _pod.cloud=false; _pod.elMode=false; _pod.prep=false; try{ console.warn('podcast cloud TTS failed:', e&&e.message||e); }catch(_){}; uiToast&&uiToast('صدای ابری نشد؛ با صدای گوشی پخش می‌شود'); podMusicStart(); podProgressStart(); podBrowserSpeak(rec.script); renderPodcastCard(); };
+    const cloudFail=(e)=>{ _pod.cloud=false; _pod.elMode=false; _pod.prep=false;
+      const m=String((e&&e.message)||e||''); try{ console.warn('podcast cloud TTS failed:', m); }catch(_){}
+      const quota=/\b(429|402)\b|quota|exceed|rate limit|resource_exhausted|insufficient|billing/i.test(m);
+      const auth=/\b(401|403)\b|invalid|unauthor|کلیدی ثبت نشده/i.test(m);
+      uiToast&&uiToast(quota?'سهمیهٔ همهٔ کلیدهای صدای ابری پر شد؛ با صدای گوشی خوانده می‌شود'
+                      :auth?'کلیدِ صدای ابری پذیرفته نشد؛ با صدای گوشی خوانده می‌شود'
+                      :'صدای ابری نشد؛ با صدای گوشی پخش می‌شود');
+      podMusicStart(); podProgressStart(); podBrowserSpeak(rec.script); renderPodcastCard(); };
     if(podBgEnabled()) podCloudSpeakEl(rec.script).catch(cloudFail);   // پخشِ پس‌زمینه‌ایِ المان‌محور (پیش‌فرض)
     else podCloudSpeak(rec.script).catch(cloudFail);                    // مسیرِ Web Audio (اگر پس‌زمینه خاموش شد)
   } else if(podCfg().prov!=='device'){                                   // آفلاین/بی‌کلید: اول کشِ صوتِ قبلی را امتحان کن (نه مستقیم صدای گوشی)
@@ -4355,7 +4362,7 @@ async function _podTTSOne(pv, text){
   for(let i=0;i<keys.length;i++){
     try{ return (pv==='gemini') ? await podGeminiTTS(text, null, keys[i]) : await podOpenAITTS(text, null, keys[i]); }
     catch(e){ lastErr=e; const m=String((e&&e.message)||e);
-      const quota=/\(429\)|\(402\)|quota|exceed|rate limit|insufficient|billing/i.test(m);
+      const quota=/\b(429|402)\b|quota|exceed|rate limit|resource_exhausted|insufficient|billing/i.test(m);
       if(quota && i<keys.length-1) continue;   // کلیدِ پشتیبانِ همان سرویس
       throw e; }
   }
@@ -4376,7 +4383,7 @@ async function podTTSFetch(text){
       return out;
     }catch(e){ lastErr=e; const m=String((e&&e.message)||e);
       // فقط خطای «این سرویس نمی‌تواند» باعثِ سوییچ شود؛ خطای موقت را podFetchBuffer دوباره تلاش می‌کند
-      const hard=/\(4\d\d\)|quota|exceed|rate limit|insufficient|billing|invalid|unauthor|location|not supported|کلیدی ثبت نشده/i.test(m);
+      const hard=/\b4\d\d\b|quota|exceed|rate limit|resource_exhausted|insufficient|billing|invalid|unauthor|location|not supported|کلیدی ثبت نشده/i.test(m);
       if(!hard) throw e;
     }
   }
@@ -4390,7 +4397,8 @@ async function podOpenAITTS(text,voice,keyOv){
     ? pTxt('tts.formal','به فارسی با لحنی گرم، آرام، دلنشین و محترمانه مثلِ گویندهٔ حرفه‌ایِ پادکستِ سلامت صحبت کن؛ شمرده، دلگرم‌کننده و روان.')
     : pTxt('tts.casual','به فارسی کاملاً خودمونی و محاوره‌ای صحبت کن، انگار با یک دوستِ صمیمی داری گپ می‌زنی — طبیعی، گرم، پرانرژی و بی‌تکلف؛ نه مثلِ خواندنِ متن، بلکه مثلِ حرف‌زدنِ واقعیِ روزمره با مکث‌ها و آهنگِ طبیعیِ گفتار.');
   let res=await mk({ model:'gpt-4o-mini-tts', voice, input:text, response_format:'mp3', instructions:instr });
-  if(!res.ok){ res=await mk({ model:'tts-1', voice, input:text, response_format:'mp3' }); if(!res.ok) throw new Error('OpenAI TTS '+res.status); }
+  if(!res.ok){ res=await mk({ model:'tts-1', voice, input:text, response_format:'mp3' });
+    if(!res.ok){ let d=''; try{ d=(await res.text()).slice(0,160); }catch(e){} throw new Error('OpenAI ('+res.status+'): TTS — '+d); } }
   podCostAdd((Math.max(1,(text||'').length)/900)*POD_COST.ttsPerMin);   // تخمینِ دقیقهٔ صدا از طولِ متن (~۹۰۰ نویسه در دقیقه)
   return { buf:await res.arrayBuffer(), type:'audio/mpeg' };
 }
@@ -4400,11 +4408,11 @@ async function podGeminiTTS(text,voice,keyOv){
   const body={ contents:[{parts:[{text:'با لحنی گرم، آرام و دلنشین بخوان: '+text}]}],
     generationConfig:{ responseModalities:['AUDIO'], speechConfig:{ voiceConfig:{ prebuiltVoiceConfig:{ voiceName:voice } } } } };
   const res=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
-  if(!res.ok) throw new Error('Gemini TTS '+res.status);
+  if(!res.ok){ let d=''; try{ d=(await res.text()).slice(0,160); }catch(e){} throw new Error('Gemini ('+res.status+'): TTS — '+d); }
   const data=await res.json();
   const part=(((data.candidates||[])[0]||{}).content||{}).parts||[];
   const aud=part.find(p=>p&&p.inlineData&&p.inlineData.data);
-  if(!aud) throw new Error('Gemini TTS: no audio');
+  if(!aud) throw new Error('Gemini (502): TTS بدونِ خروجیِ صوتی');
   let rate=24000; const mt=aud.inlineData.mimeType||''; const rm=mt.match(/rate=(\d+)/); if(rm) rate=parseInt(rm[1],10)||24000;
   return { buf:podPcmToWav(aud.inlineData.data, rate), type:'audio/wav' };
 }
@@ -4444,8 +4452,11 @@ async function podFetchBuffer(text, tries){
     if(_pod.mode==='idle') return null;
     try{ const out=await podTTSFetch(text); const audio=await podDecode(ctx, out.buf.slice(0)); return {audio, raw:out.buf, type:out.type}; }
     catch(e){ const m=String(e&&e.message||e);
-      const retry=/429|408|409|425|500|502|503|504|overload|rate|quota|exceed|unavailable|timeout|network|decode|internal/i.test(m);
-      if(a<tries-1){ await podSleep(retry?1500*(a+1):600); continue; }
+      // سهمیه/کلیدِ نامعتبر را podTTSFetch با کلید و سرویسِ دیگر امتحان کرده؛ تکرارِ اینجا
+      // فقط وقت‌کشی است. پس بدونِ تلاشِ دوباره رد شو (ولی throw نکن تا پخش ادامه پیدا کند).
+      const hard=/\b(429|402|401|403)\b|quota|exceed|rate limit|resource_exhausted|insufficient|billing|invalid|unauthor/i.test(m);
+      const retry=!hard && /408|409|425|500|502|503|504|overload|unavailable|timeout|network|decode|internal/i.test(m);
+      if(!hard && a<tries-1){ await podSleep(retry?1500*(a+1):600); continue; }
       try{ console.warn('podcast chunk failed:', m); }catch(_){}
       return null;
     }
