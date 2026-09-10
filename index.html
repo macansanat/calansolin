@@ -2342,7 +2342,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۵.۹</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۶.۰</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4210,7 +4210,7 @@ const POD_CHAT_CAP=1200;   // سقفِ نویسه فقط در «خواندنِ �
 // متنِ AI را برای «خوانده‌شدن» تمیز می‌کند: مارک‌داون، جدول، لینک، ایموجی و خط‌های فرمانِ داخلی حذف
 function podPlainText(text, cap){
   let t=String(text||'');
-  t=t.replace(/@@(SUGGEST|MEAL|WORKOUT|PLAN|INSULIN)@@[\s\S]*?(\n|$)/g,'\n');      // خط‌های فرمانِ داخلی
+  t=t.replace(/@@(SUGGEST|MEAL|WORKOUT|PLAN|INSULIN|NEEDDATA)@@[\s\S]*?(\n|$)/g,'\n');      // خط‌های فرمانِ داخلی
   t=t.replace(/```[\s\S]*?```/g,' ').replace(/`([^`]*)`/g,'$1');                   // بلاک/تکه‌کد
   t=t.replace(/!\[[^\]]*\]\([^)]*\)/g,' ').replace(/\[([^\]]*)\]\([^)]*\)/g,'$1'); // تصویر و لینک
   t=t.replace(/^\s*\|[\s:|-]+\|\s*$/gm,'');                                        // خطِ جداکنندهٔ جدول
@@ -15926,7 +15926,9 @@ function chatSetProvider(sel){ const o=chatLoad(); const c=chatActive(o); if(c){
 function chatSetSpeed(sel){ const o=chatLoad(); const c=chatActive(o); if(c){ c.speed=sel.value; chatSave(o); } }
 function buildChatSystemPrompt(){
   // ⚠️ چت باید «پرونده» ببیند نه خلاصهٔ آماری: بازهٔ مستقل ۳۰ روزه + خطِ زمانیِ ۱۴ روزِ روزبه‌روز
-  let snap; try{ snap=buildHealthSnapshot('chat',{timelineDays:14}); }catch(e){ snap={text:''}; }
+  // ۲۶.۰: به‌صورت پیش‌فرض فقط «شناسنامه + خلاصهٔ سبک» می‌رود (ارزان). ریزِ روزبه‌روز را
+  // دکتر با @@NEEDDATA@@ می‌خواهد و کاربر با یک کلیک می‌فرستد.
+  let snap; try{ snap=buildHealthSnapshot('chat'); }catch(e){ snap={text:''}; }
   let extra=''; try{ const p=profGet(); if(p.gender) extra='جنسیت: '+(p.gender==='male'?'مرد':p.gender==='female'?'زن':p.gender)+'\n'; }catch(e){}
   let persona=''; try{ persona=chatRolesSys(chatActive())+'\n'; }catch(e){}
   let suggest=''; try{ if(chatSuggestOn()) suggest='\nدر پایانِ هر پاسخ، دقیقاً یک خطِ جدا با این قالب بگذار (برای پیشنهادِ سوال بعدی به کاربر): «@@SUGGEST@@ سوال۱ || سوال۲ || سوال۳» — دو یا سه سوالِ کوتاهِ فارسی (هرکدام کمتر از ۷ کلمه) که کاربر احتمالاً بعد از این می‌پرسد، از زبانِ خودِ کاربر (اول‌شخص). این خط را هیچ‌وقت توضیح نده.\n'; }catch(e){}
@@ -15936,6 +15938,14 @@ function buildChatSystemPrompt(){
   "۲) نامِ انسولین/دارو را «حدس نزن». فقط همان نام‌هایی را به کار ببر که در پرونده آمده‌اند. هرگز نپرس «کِی از فلان انسولین به فلان عوض کردی» مگر خودِ پرونده نشان دهد نام عوض شده.\n"+
   "۳) وقتی می‌پرسد «هفتهٔ اخیرم را بررسی کن» یا «وضعیتم چطور بوده»، از خطِ زمانیِ روزبه‌روز استفاده کن: روزهای مشخص، عددهای واقعی و الگوها را نام ببر (مثلاً «۱۴۰۵/۰۶/۱۵ بعدِ ناهار ۲۴۰ شد»)، نه جملهٔ کلی.\n"+
   "۴) عددها و تاریخ‌ها را از پرونده نقل کن، نه از حافظه؛ چیزی که در پرونده نیست را از خودت نساز.\n"+
+  "📁 روالِ درخواستِ داده (مهم): آنچه پایین آمده فقط «شناسنامه و خلاصه» است؛ ریزِ روزبه‌روز همراهش نیست تا بی‌جهت هزینه نشود.\n"+
+  "الف) اگر گفتگو تازه است و کاربر هنوز نگفته چه می‌خواهد، اول کوتاه و صمیمی بپرس «موضوع/شکایتت چیست؟» — مثلِ شروعِ ویزیت.\n"+
+  "ب) هر وقت برای جوابِ درست به دادهٔ دقیق نیاز داری (مثلاً قندِ دو هفتهٔ اخیر یا وعده‌ها و انسولینِ یک هفته)، در انتهای همان پیام دقیقاً این خط را بگذار:\n"+
+  "@@NEEDDATA@@ {\"days\":14, \"parts\":[\"bg\",\"ins\",\"meal\"], \"why\":\"چرا این داده لازم است — یک جملهٔ کوتاه\"}\n"+
+  "مقادیرِ مجازِ parts فقط این‌ها هستند: bg (قند)، meal (وعده و کربوهیدرات)، ins (انسولین)، med (دارو)، ex (ورزش)، sleep (خواب)، vitals (فشار و ضربان)، weight (وزن)، mood (حالِ روحی)، note (یادداشت‌ها)، lab (آزمایش).\n"+
+  "فقط همان بخش‌هایی را بخواه که واقعاً لازم داری و بازه را متناسب با سؤال انتخاب کن. کاربر با یک دکمه همان را می‌فرستد و بعد تحلیلِ دقیق بده.\n"+
+  "ج) این خط را هیچ‌وقت توضیح نده و در متن تکرارش نکن؛ حداکثر یک بار در هر پیام.\n"+
+  "د) وقتی «📁 بستهٔ دادهٔ درخواستی» رسید، تحلیل را با عددها و تاریخ‌های واقعیِ همان بسته بنویس.\n"+
   persona+
   "خط قرمزها: فقط آموزشی؛ هرگز تشخیص قطعی یا دوز دقیق انسولین/دارو برای اجرا نده؛ برای تصمیم درمانی کاربر را به پزشک ارجاع بده.\n"+
   extra+
@@ -15972,6 +15982,8 @@ function chatParseActions(text){
   if(plan&&plan.obj){ action={kind:'plan',data:plan.obj}; t=(t.slice(0,plan.start)+t.slice(plan.endAbs)).trim(); }
   const ins=chatExtractMarker(t,'@@INSULIN@@');
   if(ins&&ins.obj){ action={kind:'insulin',data:ins.obj}; t=(t.slice(0,ins.start)+t.slice(ins.endAbs)).trim(); }
+  const nd=chatExtractMarker(t,'@@NEEDDATA@@');
+  if(nd&&nd.obj){ action={kind:'needdata',data:nd.obj}; t=(t.slice(0,nd.start)+t.slice(nd.endAbs)).trim(); }
   return {text:t, action};
 }
 // کارتِ اقدام زیر پیامِ دستیار
@@ -15996,6 +16008,17 @@ function chatActionCard(m,idx){
     const lst=ins.map(x=>`<span class="cact-chip">${escVision((x.kind==='basal'?'پایه: ':'سریع: ')+(x.name||'')+(x.dose!=null?(' · '+x.dose+' واحد'):'')+(x.time?(' · '+x.time):''))}</span>`).join('');
     return `<div class="cact"><div class="cact-h">💉 ${escVision(d.title||'برنامهٔ انسولین')} <span style="color:var(--muted);font-weight:600">(یادآوری)</span></div>${lst?`<div class="cact-items">${lst}</div>`:''}
       <div class="cact-btns"><button type="button" class="cact-b" onclick="chatInsulinToPlan(${idx})">🗓 افزودن به برنامهٔ هفتگی</button></div></div>`;
+  }
+  if(a.kind==='needdata'){
+    let parts=(Array.isArray(d.parts)?d.parts:[]).filter(x=>CHAT_DATA_PARTS.some(p=>p[0]===x));
+    if(!parts.length) parts=CHAT_DATA_PARTS.map(x=>x[0]);
+    const days=Math.max(1,Math.min(400, parseInt(faToEnDigits(String(d.days||14)),10)||14));
+    const lst=parts.map(x=>`<span class="cact-chip">${escVision(chatPartLabel(x))}</span>`).join('');
+    const pj=JSON.stringify(parts).replace(/"/g,'&quot;');
+    return `<div class="cact"><div class="cact-h">📁 دکتر این داده‌ها را می‌خواهد <span style="color:var(--muted);font-weight:600">· ${escVision(chatDataLabel(days))}</span></div>`
+      +(d.why?`<div class="cact-m">${escVision(String(d.why).slice(0,140))}</div>`:'')
+      +`${lst?`<div class="cact-items">${lst}</div>`:''}
+      <div class="cact-btns"><button type="button" class="cact-b" onclick="chatNeedSend(${days},${pj})">📤 ارسالِ همین‌ها</button><button type="button" class="cact-b alt" onclick="chatDataPickerOpen(${days},${pj})">✏️ تغییرِ بازه/بخش‌ها</button></div></div>`;
   }
   if(a.kind==='plan'){ return chatPlanCard(m,idx); }
   return '';
@@ -16571,7 +16594,9 @@ function chatBubble(m,idx){ const me=m.role==='user';
   let att='';
   if(Array.isArray(m.images)) att+=m.images.map(im=>`<img class="cimg" src="${im.dataURL||im}" alt="">`).join('');
   if(Array.isArray(m.files)) att+=m.files.map(f=>`<span class="cfile">📎 ${escVision(f.name||'فایل')}</span>`).join('');
-  const body=me?(escVision(m.content||'').replace(/\n/g,'<br>')):labAiFmt(m.content||'');
+  let body=me?(escVision(m.content||'').replace(/\n/g,'<br>')):labAiFmt(m.content||'');
+  // بستهٔ داده کاملش به مدل می‌رود ولی در گفتگو فقط یک چیپِ کوتاه دیده می‌شود
+  if(me&&m.packet) body=`<div class="cact" style="margin:0"><div class="cact-h">📁 دادهٔ فرستاده‌شده به دکتر</div><div class="cact-m">${escVision(String(m.packet))}</div></div>`;
   const acts=me
     ? `<button class="chat-act" onclick="chatCopyMsg(${idx})" title="کپی">📋</button><button class="chat-act" onclick="chatEditMsg(${idx})" title="ویرایش">✏️</button><button class="chat-act" onclick="chatDeleteMsg(${idx})" title="حذف">🗑</button>`
     : `<button class="chat-act" onclick="chatCopyMsg(${idx})" title="کپی">📋</button><button class="chat-act" onclick="chatReadMsg(${idx},this)" title="خواندن">🔊</button><button class="chat-act" onclick="chatDeleteMsg(${idx})" title="حذف">🗑</button>`;
@@ -16643,6 +16668,7 @@ function renderChatTab(){
           <button type="button" class="chat-tool" onclick="chatAttachMenu()" title="پیوست">+</button>
           <div class="chat-pills">
             <button type="button" class="chat-pill role" onclick="chatRolePicker()" title="انتخاب متخصص/نقش"><b>${escVision(chatRolesLabel(c))}</b></button>
+            <button type="button" class="chat-pill" onclick="chatDataPickerOpen(14)" title="فرستادنِ دادهٔ پرونده به دکتر"><b>📁 پرونده</b></button>
             <button type="button" class="chat-pill" onclick="chatProviderMenu()" title="سرویس"><b>${escVision(PROVIDER_NAMES[prov]||prov)}</b></button>
             <button type="button" class="chat-pill spd ${spd==='fast'?'fast':''}" onclick="chatToggleSpeed()" title="حالت"><span class="dot"></span><b>${spd==='fast'?'سریع':'دقیق'}</b></button>
           </div>
@@ -16753,10 +16779,13 @@ function chatSheet(title, opts){ chatSheetClose();
 function chatSheetPick(i){ const a=_chatSheetActs[i]; chatSheetClose(); if(a) a(); }
 function chatSheetClose(){ const b=document.getElementById('chatSheetBg'); if(b) b.remove(); }
 // ── ارسال (استریم کلمه‌کلمه) ──────────────────────────
-async function chatSend(){
+function chatNeedSend(days, parts){ const txt=buildDataPacket(days, parts);
+  chatSend({text:txt, packet:(parts||[]).map(chatPartLabel).join('، ')+' · '+chatDataLabel(days)}); }
+async function chatSend(opts){
+  opts=(opts&&typeof opts==='object'&&typeof opts.text==='string')?opts:{};   // کلیکِ دکمه Event می‌فرستد
   if(_chatBusy){ _chatAbort=true; return; }   // دکمه در حالت توقف
   const inp=document.getElementById('chatInput'); if(!inp) return;
-  const txt=(inp.value||'').trim();
+  const txt=(opts.text!=null?String(opts.text):(inp.value||'')).trim();
   if(!txt && !_chatAttach.length) return;
   const o=chatLoad(); const c=chatActive(o); if(!c) return;
   const prov=c.provider||sectionProvider('chat');
@@ -16768,12 +16797,13 @@ async function chatSend(){
   let content=txt;
   files.forEach(f=>{ content+=(content?'\n\n':'')+'محتوای فایل «'+f.name+'»:\n'+f.text; });
   const umsg={role:'user',content:content||'(عکس)',ts:Date.now()};
+  if(opts.packet) umsg.packet=opts.packet;                                    // حباب فشرده نمایش داده شود
   if(imgs.length) umsg.images=imgs.map(im=>({dataURL:im.dataURL}));
   if(files.length) umsg.files=files.map(f=>({name:f.name}));
   c.messages.push(umsg);
   chatRenderSuggestions([]);   // پیشنهادهای قبلی را پاک کن
   if(!c.title||c.title==='گفتگوی جدید') c.title=(txt||'گفتگوی تصویری').slice(0,26);
-  chatSave(o); inp.value=''; chatAutoGrow(inp); _chatAttach=[]; chatRenderAttach();
+  chatSave(o); if(opts.text==null){ inp.value=''; chatAutoGrow(inp); } _chatAttach=[]; chatRenderAttach();
   renderChatMessages(c);
   const mb=document.getElementById('chatMsgs');
   // حباب زنده‌ی پاسخ
@@ -16788,7 +16818,7 @@ async function chatSend(){
   let _shown=0, _streamDone=false, _revealResolve=null;
   const _revealDone=new Promise(res=>{ _revealResolve=res; });
   // خطِ «@@SUGGEST@@» را از نمایش حذف کن (حتی وقتی نیمه‌کاره استریم می‌شود)
-  const stripSug=s=>String(s).replace(/@@(SUGGEST|MEAL|WORKOUT|PLAN|INSULIN)@@[\s\S]*$/,'').replace(/\n*@[@A-Z]*$/,'');
+  const stripSug=s=>String(s).replace(/@@(SUGGEST|MEAL|WORKOUT|PLAN|INSULIN|NEEDDATA)@@[\s\S]*$/,'').replace(/\n*@[@A-Z]*$/,'');
   const paintReveal=()=>{ const b=bubble(); if(!b) return;
     const cur=(_shown<acc.length || !_streamDone)?'<span class="chat-cur"></span>':'';
     b.innerHTML=labAiFmt(stripSug(acc.slice(0,_shown)))+cur; if(mb) mb.scrollTop=mb.scrollHeight; };
@@ -17008,8 +17038,10 @@ function buildInsulinRegimen(win){
     +'هرگز نامِ انسولینِ دیگری را به او نسبت نده و نپرس «کِی عوضش کردی» مگر خودش گفته باشد): '+out.join(' | ');
 }
 // خطِ زمانیِ روزبه‌روز — پروندهٔ واقعیِ کاربر، نه فقط میانگین
-function buildDayTimeline(days){
-  days=Math.max(1,Math.min(31,days||14));
+function buildDayTimeline(days, parts){
+  days=Math.max(1,Math.min(400,days||14));
+  const P=(parts&&parts.length)?new Set(parts):null;
+  const on=k=>!P||P.has(k);
   const jl=k=>{ try{ const a=JSON.parse(localStorage.getItem(k)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } };
   const t0=new Date(); t0.setHours(0,0,0,0);
   const start=new Date(t0); start.setDate(start.getDate()-(days-1));
@@ -17022,44 +17054,44 @@ function buildDayTimeline(days){
   const D=k=>(M[k]=M[k]||{bg:[],cgm:[],meal:[],ins:[],ex:[],med:[],skip:[],misc:[],note:[]});
   const push=(iso,fn)=>{ const d=new Date(iso); if(!inR(d)) return; const k=kOf(d); if(k) fn(D(k),d); };
   // قندِ دستی
-  try{ loadBG().forEach(x=>{ if(!x||!x.iso||x.glu==null) return;
+  if(on('bg')) try{ loadBG().forEach(x=>{ if(!x||!x.iso||x.glu==null) return;
     push(x.iso,(o,d)=>o.bg.push(faDigits(hm(d))+' '+faDigits(Math.round(x.glu))+(x.meal?('/'+x.meal):''))); }); }catch(e){}
   // CGM (خلاصهٔ روزانه؛ لیستِ خام هزاران خوانش است)
-  try{ (window._cgmReadings||[]).forEach(r=>{ if(!r||!r.t||!r.t.dateObj||!inR(r.t.dateObj)) return;
+  if(on('bg')) try{ (window._cgmReadings||[]).forEach(r=>{ if(!r||!r.t||!r.t.dateObj||!inR(r.t.dateObj)) return;
     const k=kOf(r.t.dateObj); if(k) D(k).cgm.push(r.glu); }); }catch(e){}
   // وعده‌ها و انسولینِ سریع
   try{ for(const k in planData){ if(k[0]==='_'||!Array.isArray(planData[k])) continue;
       const d=_dayFromKey(k); if(!inR(d)) continue;
       planData[k].forEach(e=>{ if(!e||e.planned) return; const o=D(k);
         const food=(e.foods||[]).join('، ');
-        if(food||e.carb) o.meal.push((e.time?faDigits(e.time)+' ':'')+(e.type||'وعده')+(food?(' — '+food):'')+(e.carb?(' ['+faDigits(e.carb)+'گ کرب]'):''));
-        if(e.insDose) o.ins.push((e.time?faDigits(e.time)+' ':'')+(e.insType||'سریع')+' '+faDigits(e.insDose)+'و'+(e.mealType?(' برای '+e.mealType):''));
-        if(e.bgBefore) o.bg.push('قبلِ وعده '+faDigits(e.bgBefore));
-        if(e.bgAfter) o.bg.push('بعدِ وعده '+faDigits(e.bgAfter));
-        if(e.note) o.note.push(String(e.note).slice(0,70));
+        if((food||e.carb)&&on('meal')) o.meal.push((e.time?faDigits(e.time)+' ':'')+(e.type||'وعده')+(food?(' — '+food):'')+(e.carb?(' ['+faDigits(e.carb)+'گ کرب]'):''));
+        if(e.insDose&&on('ins')) o.ins.push((e.time?faDigits(e.time)+' ':'')+(e.insType||'سریع')+' '+faDigits(e.insDose)+'و'+(e.mealType?(' برای '+e.mealType):''));
+        if(e.bgBefore&&on('bg')) o.bg.push('قبلِ وعده '+faDigits(e.bgBefore));
+        if(e.bgAfter&&on('bg')) o.bg.push('بعدِ وعده '+faDigits(e.bgAfter));
+        if(e.note&&on('note')) o.note.push(String(e.note).slice(0,70));
       }); } }catch(e){}
   // انسولینِ پایه
-  try{ const bz=(planData||{})._basal||{}; for(const k in bz){ const d=_dayFromKey(k); if(!inR(d)) continue;
+  if(on('ins')) try{ const bz=(planData||{})._basal||{}; for(const k in bz){ const d=_dayFromKey(k); if(!inR(d)) continue;
       const b=bz[k]; if(b&&b.dose) D(k).ins.push((b.time?faDigits(b.time)+' ':'')+(b.type||'پایه')+' '+faDigits(b.dose)+'و [پایه]'); } }catch(e){}
   // ورزش
-  try{ (loadExLog().entries||[]).forEach(e=>{ if(!e||!e.ts) return;
+  if(on('ex')) try{ (loadExLog().entries||[]).forEach(e=>{ if(!e||!e.ts) return;
       push(e.ts,(o)=>o.ex.push(((e.items||[]).map(i=>i.name).filter(Boolean).slice(0,4).join('، '))||'تمرین')); }); }catch(e){}
-  try{ loadExercise().forEach(x=>{ const iso=x&&(x.iso||x.start); if(!iso) return;
+  if(on('ex')) try{ loadExercise().forEach(x=>{ const iso=x&&(x.iso||x.start); if(!iso) return;
       push(iso,(o)=>o.ex.push((x.what||'ورزش')+(x.dur?(' '+faDigits(x.dur)+'دق'):''))); }); }catch(e){}
   // دارو / نزده‌ها
-  try{ jl('med_log_v1').forEach(x=>{ if(!x||!x.iso) return; push(x.iso,(o)=>o.med.push(String(x.name||'دارو'))); }); }catch(e){}
-  try{ jl('skip_log_v1').forEach(x=>{ if(!x||!x.iso) return;
+  if(on('med')) try{ jl('med_log_v1').forEach(x=>{ if(!x||!x.iso) return; push(x.iso,(o)=>o.med.push(String(x.name||'دارو'))); }); }catch(e){}
+  if(on('med')||on('ins')) try{ jl('skip_log_v1').forEach(x=>{ if(!x||!x.iso) return;
       push(x.iso,(o)=>o.skip.push((x.kind==='insulin'?'انسولین ':'دارو ')+String(x.name||''))); }); }catch(e){}
   // خواب / فشار / وزن / حال / یادداشت
-  try{ jl('sleep_log_v1').forEach(x=>{ if(!x) return; const pj=parseJDate(x.date); if(!pj) return;
+  if(on('sleep')) try{ jl('sleep_log_v1').forEach(x=>{ if(!x) return; const pj=parseJDate(x.date); if(!pj) return;
       const g=j2g(pj[0],pj[1],pj[2]); const d=new Date(g[0],g[1]-1,g[2]); if(!inR(d)) return;
       const k=kOf(d); if(k) D(k).misc.push('خواب '+faDigits(x.hours)+'س'+(x.quality?(' ('+x.quality+')'):'')); }); }catch(e){}
-  try{ jl('vitals_v1').forEach(x=>{ if(!x||!x.iso) return;
+  if(on('vitals')) try{ jl('vitals_v1').forEach(x=>{ if(!x||!x.iso) return;
       push(x.iso,(o)=>{ const p=[]; if(x.sys&&x.dia) p.push('فشار '+faDigits(x.sys)+'/'+faDigits(x.dia)); if(x.hr) p.push('ضربان '+faDigits(x.hr)); if(p.length) o.misc.push(p.join(' ')); }); }); }catch(e){}
-  try{ jl('weight_log_v1').forEach(x=>{ if(!x||!x.iso||!x.kg) return; push(x.iso,(o)=>o.misc.push('وزن '+faDigits(x.kg)+'kg')); }); }catch(e){}
-  try{ jl('mood_log_v1').forEach(x=>{ if(!x||!x.iso) return;
+  if(on('weight')) try{ jl('weight_log_v1').forEach(x=>{ if(!x||!x.iso||!x.kg) return; push(x.iso,(o)=>o.misc.push('وزن '+faDigits(x.kg)+'kg')); }); }catch(e){}
+  if(on('mood')) try{ jl('mood_log_v1').forEach(x=>{ if(!x||!x.iso) return;
       push(x.iso,(o)=>{ o.misc.push('حال: '+String(x.mood||'')); if(x.note) o.note.push(String(x.note).slice(0,70)); }); }); }catch(e){}
-  try{ jl('journal_v1').forEach(x=>{ if(!x||!x.iso) return;
+  if(on('note')) try{ jl('journal_v1').forEach(x=>{ if(!x||!x.iso) return;
       push(x.iso,(o)=>{ if(x.rating) o.misc.push('روز: '+((typeof JRN_RATING!=='undefined'&&JRN_RATING[x.rating])||x.rating));
         (x.tags||[]).slice(0,4).forEach(t=>o.misc.push('#'+t));
         if(x.note) o.note.push(String(x.note).slice(0,110));
@@ -17090,6 +17122,75 @@ function buildDayTimeline(days){
   let out=lines.join('\n');
   if(out.length>6000){ out=out.slice(0,6000); out=out.slice(0,out.lastIndexOf('\n'))+'\n(روزهای قدیمی‌تر برای کوتاهیِ متن حذف شدند)'; }
   return '🗓 خطِ زمانیِ روزبه‌روزِ کاربر ('+faDigits(days)+' روزِ اخیر — پروندهٔ واقعیِ او؛ برای بررسیِ «هفتهٔ اخیر» دقیقاً از همین استفاده کن):\n'+out;
+}
+// ══ بستهٔ دادهٔ «درخواستی» (۲۶.۰) ══
+// به‌جای فرستادنِ همه‌چیز در هر پیام (گران و کور)، دکتر می‌گوید چه می‌خواهد و
+// کاربر با یک کلیک همان را در همان بازه می‌فرستد.
+const CHAT_DATA_PARTS=[
+  ['bg','🩸 قند خون'],['meal','🍽️ وعده‌ها و کربوهیدرات'],['ins','💉 انسولین'],
+  ['med','💊 داروها'],['ex','🏃 ورزش'],['sleep','😴 خواب'],['vitals','❤️ فشار و ضربان'],
+  ['weight','⚖️ وزن'],['mood','🙂 حالِ روحی'],['note','📓 یادداشت‌ها'],['lab','🧪 آزمایش‌ها']
+];
+const CHAT_DATA_RANGES=[[1,'امروز'],[3,'۳ روز'],[7,'۱ هفته'],[14,'۲ هفته'],[30,'۱ ماه'],[90,'۳ ماه'],[180,'۶ ماه'],[365,'۱ سال']];
+function chatDataLabel(days){ const r=CHAT_DATA_RANGES.find(x=>x[0]===+days); return r?r[1]:(faDigits(days)+' روز'); }
+function chatPartLabel(id){ const r=CHAT_DATA_PARTS.find(x=>x[0]===id); return r?r[1]:id; }
+// بسته را می‌سازد: سرصفحه + خطِ زمانیِ فیلترشده + آزمایش (اگر خواسته شده)
+function buildDataPacket(days, parts){
+  days=Math.max(1,Math.min(400,+days||14));
+  parts=(parts&&parts.length)?parts.slice():CHAT_DATA_PARTS.map(x=>x[0]);
+  const names=parts.map(chatPartLabel).join('، ');
+  const secs=[];
+  const tl=buildDayTimeline(days, parts.filter(x=>x!=='lab'));
+  if(tl) secs.push(tl);
+  if(parts.indexOf('lab')>=0){
+    try{ const lc=buildLabAIContext(); if(lc) secs.push('🧪 آخرین برگهٔ آزمایش ('+lc.date+'): '+lc.lines.slice(0,45).join(' ؛ ')); }catch(e){}
+    try{ const lt=buildLabTrend(); if(lt) secs.push(lt); }catch(e){}
+  }
+  if(parts.indexOf('ins')>=0){ try{ const w=_scopeWindow('chat'); const reg=buildInsulinRegimen(w); if(reg) secs.push(reg); }catch(e){} }
+  const head='📁 بستهٔ دادهٔ درخواستی — '+names+' · بازه: '+chatDataLabel(days)+'\n'
+    +'(کاربر این داده‌ها را از پروندهٔ خودش برایت فرستاد. فقط بر اساسِ همین‌ها تحلیل کن و اگر چیزی کم داشتی، دوباره با @@NEEDDATA@@ بخواه.)';
+  if(!secs.length) return head+'\n⚠️ در این بازه هیچ ثبتی برای این بخش‌ها وجود ندارد.';
+  return head+'\n'+secs.join('\n');
+}
+// انتخابگرِ بازه و بخش‌ها (هم کاربر خودش باز می‌کند، هم از کارتِ درخواستِ دکتر)
+let _cdSel=null, _cdDays=14;
+function chatDataPickerOpen(days, parts){
+  try{ ensureChatCss&&ensureChatCss(); }catch(e){}
+  const old=document.getElementById('cdBg'); if(old) old.remove();
+  _cdDays=Math.max(1,Math.min(400,+days||14));
+  _cdSel=new Set((parts&&parts.length)?parts:CHAT_DATA_PARTS.map(x=>x[0]));
+  const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='cdBg';
+  bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
+  bg.innerHTML='<div class="chat-rename" role="dialog" aria-modal="true" style="max-width:440px">'
+    +'<h4>📁 چه داده‌ای، از چه بازه‌ای؟</h4>'
+    +'<div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:10px">فقط همین‌ها برای دکتر فرستاده می‌شود — نه بیشتر. هرچه کمتر، ارزان‌تر و دقیق‌تر.</div>'
+    +'<div id="cdBody"></div>'
+    +'<div class="chat-rename-btns" style="margin-top:12px"><button type="button" class="crn-btn crn-cancel" onclick="document.getElementById(\'cdBg\').remove()">لغو</button>'
+    +'<button type="button" class="crn-btn crn-ok" onclick="chatDataSend()">📤 ارسال به دکتر</button></div></div>';
+  document.body.appendChild(bg); chatDataPickerRender();
+}
+function chatDataPickerRender(){
+  const b=document.getElementById('cdBody'); if(!b) return;
+  b.innerHTML='<div style="font-weight:800;font-size:12.5px;color:var(--teal);margin-bottom:6px">بازهٔ زمانی</div>'
+    +'<div class="qmeal-comp-wrap" style="margin-bottom:12px">'
+    +CHAT_DATA_RANGES.map(r=>`<button type="button" class="qmeal-comp${_cdDays===r[0]?' on':''}" onclick="_cdDays=${r[0]};chatDataPickerRender()">${r[1]}</button>`).join('')
+    +'</div>'
+    +'<div style="font-weight:800;font-size:12.5px;color:var(--teal);margin-bottom:6px">بخش‌ها '
+    +'<span style="font-weight:400;color:var(--muted);cursor:pointer;text-decoration:underline" onclick="chatDataAll()">همه</span> · '
+    +'<span style="font-weight:400;color:var(--muted);cursor:pointer;text-decoration:underline" onclick="chatDataNone()">هیچ‌کدام</span></div>'
+    +'<div class="qmeal-comp-wrap">'
+    +CHAT_DATA_PARTS.map(p=>`<button type="button" class="qmeal-comp${_cdSel.has(p[0])?' on':''}" onclick="chatDataTog('${p[0]}')">${p[1]}</button>`).join('')
+    +'</div>';
+}
+function chatDataTog(id){ if(_cdSel.has(id)) _cdSel.delete(id); else _cdSel.add(id); chatDataPickerRender(); }
+function chatDataAll(){ _cdSel=new Set(CHAT_DATA_PARTS.map(x=>x[0])); chatDataPickerRender(); }
+function chatDataNone(){ _cdSel=new Set(); chatDataPickerRender(); }
+function chatDataSend(){
+  const parts=[..._cdSel]; if(!parts.length){ uiToast('حداقل یک بخش را انتخاب کن'); return; }
+  const days=_cdDays; const bg=document.getElementById('cdBg'); if(bg) bg.remove();
+  const txt=buildDataPacket(days, parts);
+  const chip=parts.map(chatPartLabel).join('، ')+' · '+chatDataLabel(days);
+  chatSend({text:txt, packet:chip});
 }
 // روندِ آزمایش‌ها در چند برگهٔ آخر (نه فقط آخرین برگه)
 function buildLabTrend(){
