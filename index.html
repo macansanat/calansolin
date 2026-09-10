@@ -2352,7 +2352,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۶.۸</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۶.۹</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -9385,6 +9385,9 @@ const COACH_SYS="تو یک مربیِ ورزشیِ حرفه‌ای و قهرما
   +"وقتی برنامه‌ی نهایی آماده و موردِ تأییدِ کاربر شد، در «آخرین خطِ» پاسخ دقیقاً این نشانه را بگذار (اعدادِ داخلِ JSON انگلیسی، بدونِ توضیح، در یک خط): @@WORKOUT@@ {\"title\":\"نام برنامه\",\"exercises\":[{\"n\":\"نام حرکت\",\"pose\":\"یکی از این‌ها: walk/march/squat/chair/pushup/plank/heel/stretch/leg_raise/breath/neck\",\"set\":\"مثل ۳ ست × ۱۰ یا ۱۰ دقیقه\",\"desc\":\"روشِ انجامِ کوتاه\",\"benefit\":\"فایده برای متابولیسم/قند\"}]} — برای «pose» نزدیک‌ترین حرکت را از همان فهرست انتخاب کن. این خط را هیچ‌وقت توضیح نده و تا نهایی‌نشدن نگذار. (کاربر می‌تواند این برنامه را با یک دکمه به «برنامهٔ هفتگی»اش برای روزهای دلخواه اضافه کند.)"
   +"\n\n⚠️ «pose» فقط یک کدِ فنیِ داخلیِ همان خطِ @@WORKOUT@@ است (برای انیمیشنِ آدمک) و «هرگز» نباید در متنِ خواندنیِ برنامه بیاید. در متنِ برنامه هیچ‌وقت کلمهٔ pose یا «پوست» یا کدهای انگلیسی مثل pushup/plank/squat را ننویس؛ فقط نامِ فارسیِ حرکت (مثلاً «شنا روی دیوار»، «پلانک») را به‌عنوان تیتر بیاور و زیرش ست/تکرار، روشِ انجام و فایده را بنویس."+CHAT_CONVO_RULE;
 const CHAT_ROLES=[
+  // ⚠️ چتِ آزاد عمداً sys خالی دارد؛ `buildChatSystemPrompt` برایش هیچ متنی نمی‌سازد
+  // (نه شخصیت، نه پرونده، نه قاعده، نه پیشنهادِ سؤال) تا فقط پیام‌های خودِ کاربر برود.
+  {id:'free',   name:'چتِ آزاد',                    emoji:'💬', cat:'flow', desc:'بدونِ پرونده و پرامپت — ارزان‌ترین حالت، مثلِ یک چتِ ساده', sys:''},
   {id:'planner',name:'برنامه‌ریزِ مسیرِ درمان',      emoji:'🗺️', cat:'flow', desc:'⭐ شروع از اینجا — مسیرِ مراجعه را می‌چیند', sys:''/*با IIFE پایین ست می‌شود*/},
   {id:'gp',     name:'پزشک عمومی',                   emoji:'🩹', cat:'doc', desc:'اول با او؛ می‌گوید به کدام متخصص بروی', sys:'تو یک «پزشکِ عمومیِ» باتجربه و به‌روز هستی. کارِ تو این است که «پیش از مراجعه به متخصص‌ها» با بیمار صحبت کنی: شرح‌حال، علائم و داده‌هایش را بسنجی، اقدام‌های اولیه و آزمایش‌های لازم را بگویی، و مهم‌تر از همه راهنمایی کنی که برای این مشکل باید به کدام پزشکِ متخصص (یا چند متخصص) مراجعه کند و با چه اولویتی. علائمِ خطر و موارد اورژانسی را صریح مشخص کن. '+CHAT_MASTERY+' آموزشی بمان و تشخیص و تجویزِ نهایی را به پزشکِ معالج بسپار.'+pTxt('shared.lab',LAB_ORDER_HINT)+pTxt('shared.visit',DOC_VISIT_RULE)},
   {id:'endo',   name:'متخصص غدد و داخلی',            emoji:'🩺', cat:'doc', desc:'دیابت، تیروئید، هورمون، انسولین', sys:docSys('غدد و داخلی','مدیریتِ انسولین و قندِ خون، مقاومت به انسولین، تیروئید و هورمون‌ها، تنظیمِ داروهای دیابت.'), _doc:['غدد و داخلی','مدیریتِ انسولین و قندِ خون، مقاومت به انسولین، تیروئید و هورمون‌ها، تنظیمِ داروهای دیابت.']},
@@ -9502,7 +9505,7 @@ function promptRegistry(){
   (CHAT_ROLES||[]).forEach(r=>{ (byCat[r.cat]=byCat[r.cat]||[]).push(r); });
   const catFa={flow:'🧭 مسیر و مشاوره', doc:'🩺 پزشکانِ متخصص', life:'🥗 سبکِ زندگی'};
   Object.keys(byCat).forEach(cat=>{
-    G.push({g:(catFa[cat]||cat), items:byCat[cat].map(r=>({
+    G.push({g:(catFa[cat]||cat), items:byCat[cat].filter(r=>roleSysDefault(r).trim()).map(r=>({
       id:'role.'+r.id, t:r.emoji+' '+r.name,
       d:(r._doc?'ساخته‌شده از قاعده‌های مشترکِ بالا؛ اگر اینجا ویرایش کنی، همان متنِ ویرایش‌شده جایگزینِ کلِ نقش می‌شود.':(r.desc||'')),
       def:()=>roleSysDefault(r) })) });
@@ -16091,6 +16094,8 @@ function buildChatSystemPrompt(){
   // ۲۶.۰: به‌صورت پیش‌فرض فقط «شناسنامه + خلاصهٔ سبک» می‌رود (ارزان). ریزِ روزبه‌روز را
   // دکتر با @@NEEDDATA@@ می‌خواهد و کاربر با یک کلیک می‌فرستد.
   // ۲۶.۳: «برنامه‌ریزِ مسیرِ درمان» فقط مسیر می‌چیند و به پرونده نیازی ندارد ⇒ متنِ حداقلی.
+  // ۲۶.۹: «چتِ آزاد» ⇒ هیچ سیستم‌پرامپتی نمی‌رود (نه شخصیت، نه پرونده، نه قاعده)
+  try{ const ids0=chatRolesOf(chatActive()); if(ids0.length===1 && ids0[0]==='free') return ''; }catch(e){}
   let _planOnly=false; try{ const ids=chatRolesOf(chatActive()); _planOnly=(ids.length===1&&ids[0]==='planner'); }catch(e){}
   let snap; try{ snap=_planOnly?{label:'',text:''}:buildHealthSnapshot('chat'); }catch(e){ snap={text:''}; }
   if(_planOnly){
@@ -16937,7 +16942,7 @@ function renderChatTab(){
         <div class="chat-capsule-row">
           <button type="button" class="chat-tool" onclick="chatPlusMenu()" title="افزودن و تنظیمات">+</button>
           <div class="chat-pills">
-            <button type="button" class="chat-pill role" onclick="chatOptsMenu()" title="پزشک · مدل · سرعت · پرونده"><b>${escVision(chatRolesLabel(c))}</b><span style="color:var(--muted);font-weight:600;margin-inline-start:5px">⚙️</span></button>
+            <button type="button" class="chat-pill role" onclick="chatOptsMenu()" title="پزشک · مدل · سرعت · پرونده"><b>${escVision(chatRolesLabel(c))}</b>${chatIsFree(c)?'<span style="color:var(--muted);font-weight:600;margin-inline-start:5px">· بدونِ پرامپت</span>':''}<span style="color:var(--muted);font-weight:600;margin-inline-start:5px">⚙️</span></button>
           </div>
           <button type="button" class="chat-tool" id="chatMicBtn" onclick="chatVoiceInput()" title="گفتار به متن">🎙️</button>
           <button type="button" class="chat-tool" onclick="chatLiveOpen()" title="گفتگوی صوتی زنده">📞</button>
@@ -16970,7 +16975,9 @@ function renderChatTab(){
     if(!roleIds.length){
       mb.innerHTML=`<div class="chat-welcome"><div class="cw-emoji">🩺</div><div class="cw-t">با کدام متخصص صحبت می‌کنی؟</div><div class="cw-s">یک متخصص یا مربی انتخاب کن — یا چند پزشک را با هم برای یک <b>کنفرانس</b> دربارهٔ خودت.</div><button type="button" class="cw-btn" onclick="chatRolePicker()">👥 انتخاب متخصص</button></div>`;
     } else {
-      mb.innerHTML=`<div class="chat-welcome"><div class="cw-emoji">${escVision((chatRoleById(roleIds[0])||{}).emoji||'🤖')}</div><div class="cw-t">${escVision(chatRolesLabel(c))}</div><div class="cw-s">با آگاهی از قند، تغذیه، انسولین، ورزش و آزمایش‌هایت آماده‌ام — بپرس. <span onclick="chatRolePicker()" style="color:var(--teal);cursor:pointer;text-decoration:underline">تغییر متخصص</span></div></div>`;
+      mb.innerHTML=(roleIds.length===1&&roleIds[0]==='free')
+        ? `<div class="chat-welcome"><div class="cw-emoji">💬</div><div class="cw-t">چتِ آزاد</div><div class="cw-s">هیچ پرامپت و هیچ داده‌ای از پرونده‌ات فرستاده نمی‌شود — فقط همان چیزی که خودت می‌نویسی. ارزان‌ترین حالت. <span onclick="chatRolePicker()" style="color:var(--teal);cursor:pointer;text-decoration:underline">تغییر به متخصص</span></div></div>`
+        : `<div class="chat-welcome"><div class="cw-emoji">${escVision((chatRoleById(roleIds[0])||{}).emoji||'🤖')}</div><div class="cw-t">${escVision(chatRolesLabel(c))}</div><div class="cw-s">با آگاهی از قند، تغذیه، انسولین، ورزش و آزمایش‌هایت آماده‌ام — بپرس. <span onclick="chatRolePicker()" style="color:var(--teal);cursor:pointer;text-decoration:underline">تغییر متخصص</span></div></div>`;
     }
   }
   else renderChatMessages(c);
@@ -17021,7 +17028,7 @@ function chatOptsMenu(){
     {ic:'🩺', label:'پزشک / متخصص', sub:chatRolesLabel(c), act:()=>chatRolePicker()},
     {ic:'🧠', label:'مدلِ هوش مصنوعی', sub:chatModelLabel(c), act:()=>chatModelMenu()},
     {ic:(fast?'⚡':'🎯'), label:'حالتِ پاسخ — '+(fast?'سریع':'دقیق'), sub:(fast?'ارزان‌تر و کوتاه‌تر':'فکرِ بیشتر و دقیق‌تر')+' · برای تغییر بزن', act:()=>{ chatToggleSpeed(); }},
-    {ic:'📁', label:'فرستادنِ دادهٔ پرونده', sub:'انتخابِ بازه و بخش‌ها', act:()=>chatDataPickerOpen(14)}
+    {ic:'📁', label:'فرستادنِ دادهٔ پرونده', sub:chatIsFree(c)?'در چتِ آزاد هم می‌توانی دستی بفرستی':'انتخابِ بازه و بخش‌ها', act:()=>chatDataPickerOpen(14)}
   ]);
 }
 function chatAttachMenu(){
@@ -17055,6 +17062,7 @@ function chatProviderMenu(){ const o=chatLoad(); const c=chatActive(o); if(!c) r
    هر نقش می‌تواند مدلِ خودش را داشته باشد: مثلاً غدد با قوی‌ترین مدل، سرآشپز با ارزان‌ترین.
    انتخاب روی «نقش» ذخیره می‌شود نه روی گفتگو، تا در همهٔ گفتگوهای همان پزشک اعمال شود. */
 const CHAT_ROLE_MODEL_KEY='chat_role_model_v1';
+function chatIsFree(c){ const ids=chatRolesOf(c||chatActive()); return ids.length===1 && ids[0]==='free'; }
 function chatRoleKey(c){ const ids=chatRolesOf(c); if(!ids.length) return '_none'; if(ids.length===1) return ids[0]; return '_conf'; }
 function chatRoleModels(){ try{ const o=JSON.parse(localStorage.getItem(CHAT_ROLE_MODEL_KEY)||'{}'); return (o&&typeof o==='object')?o:{}; }catch(e){ return {}; } }
 function chatRoleModelId(c){ return chatRoleModels()[chatRoleKey(c||chatActive())]||''; }
@@ -17183,7 +17191,7 @@ async function chatSend(opts){
     if(_chatLiveOn) chatSpeak(clean);
     else if(chatAutoReadOn()){ try{ podSpeakText(clean,{cap:POD_CHAT_CAP, silent:true}); }catch(e){} }
     // اگر پیشنهادها نیامد ولی روشن است، جداگانه و سبک بگیر (تا کاربر بی‌پیشنهاد نماند)
-    if(chatSuggestOn() && (!parsed.suggestions||!parsed.suggestions.length) && navigator.onLine){
+    if(chatSuggestOn() && !chatIsFree(c) && (!parsed.suggestions||!parsed.suggestions.length) && navigator.onLine){
       chatFetchSuggestions(prov, umsg.content, clean).then(list=>{
         if(!list||!list.length) return;
         try{ const oo=chatLoad(); const cc=chatActive(oo); const lm=cc&&cc.messages[cc.messages.length-1]; if(lm&&lm.role==='assistant'){ lm.suggest=list; chatSave(oo); } }catch(e){}
