@@ -2352,7 +2352,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۶.۵</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۶.۶</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -16741,9 +16741,11 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .rp-ok{background:linear-gradient(145deg,var(--teal),var(--teal-dim));border:none;color:#fff;border-radius:12px;padding:10px 20px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer}
   .chat-sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150;display:flex;align-items:flex-end;justify-content:center;animation:chatFade .18s}
   @keyframes chatFade{from{opacity:0}}
-  .chat-sheet{width:100%;max-width:520px;background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px 20px 0 0;padding:14px 14px 20px;box-shadow:0 -8px 30px rgba(0,0,0,.5);animation:chatUp .22s cubic-bezier(.4,0,.2,1)}
+  .chat-sheet{width:100%;max-width:520px;background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px 20px 0 0;padding:0 14px 20px;box-shadow:0 -8px 30px rgba(0,0,0,.5);animation:chatUp .22s cubic-bezier(.4,0,.2,1);max-height:84vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
   @keyframes chatUp{from{transform:translateY(40px);opacity:.4}}
-  .chat-sheet h4{margin:2px 0 12px;font-size:13.5px;color:var(--teal);text-align:center}
+  .chat-sheet h4{position:sticky;top:0;z-index:2;margin:0 -14px 12px;padding:13px 44px 11px;font-size:13.5px;color:var(--teal);text-align:center;background:var(--panel-2);border-bottom:1px solid var(--line)}
+  .chat-sheet h4::before{content:'';position:absolute;top:5px;left:50%;transform:translateX(-50%);width:38px;height:4px;border-radius:3px;background:var(--line)}
+  .chat-sheet .sh-x{position:absolute;top:8px;inset-inline-end:8px;width:30px;height:30px;border-radius:50%;background:var(--field);border:1px solid var(--line);color:var(--muted);font-size:15px;cursor:pointer;line-height:1}
   .chat-sheet .opt{display:flex;align-items:center;gap:10px;padding:12px 13px;border-radius:13px;border:1px solid var(--line);background:var(--field);margin-bottom:8px;cursor:pointer;font-size:13px;font-weight:700;color:var(--ink);transition:.13s}
   .chat-sheet .opt.on{border-color:var(--teal);background:rgba(63,185,163,.12)}
   .chat-sheet .opt .ic{font-size:17px}
@@ -16853,12 +16855,9 @@ function renderChatTab(){
           <div class="chat-ghost" id="chatGhost" hidden><span class="cg-txt" id="chatGhostTxt"></span><button type="button" class="cg-key" onclick="chatGhostInsert()" title="درج در کادر">درج ↵</button></div>
         </div>
         <div class="chat-capsule-row">
-          <button type="button" class="chat-tool" onclick="chatAttachMenu()" title="پیوست">+</button>
+          <button type="button" class="chat-tool" onclick="chatPlusMenu()" title="افزودن و تنظیمات">+</button>
           <div class="chat-pills">
-            <button type="button" class="chat-pill role" onclick="chatRolePicker()" title="انتخاب متخصص/نقش"><b>${escVision(chatRolesLabel(c))}</b></button>
-            <button type="button" class="chat-pill" onclick="chatDataPickerOpen(14)" title="فرستادنِ دادهٔ پرونده به دکتر"><b>📁 پرونده</b></button>
-            <button type="button" class="chat-pill" onclick="chatModelMenu()" title="مدلِ این پزشک"><b>🧠 ${escVision(chatModelLabel(c))}</b></button>
-            <button type="button" class="chat-pill spd ${spd==='fast'?'fast':''}" onclick="chatToggleSpeed()" title="حالت"><span class="dot"></span><b>${spd==='fast'?'سریع':'دقیق'}</b></button>
+            <button type="button" class="chat-pill role" onclick="chatOptsMenu()" title="پزشک · مدل · سرعت · پرونده"><b>${escVision(chatRolesLabel(c))}</b><span style="color:var(--muted);font-weight:600;margin-inline-start:5px">⚙️</span></button>
           </div>
           <button type="button" class="chat-tool" id="chatMicBtn" onclick="chatVoiceInput()" title="گفتار به متن">🎙️</button>
           <button type="button" class="chat-tool" onclick="chatLiveOpen()" title="گفتگوی صوتی زنده">📞</button>
@@ -16927,6 +16926,24 @@ function chatRenderAttach(){ const box=document.getElementById('chatAttachPrev')
   chatSyncInsets();
 }
 function chatRmAttach(i){ _chatAttach.splice(i,1); chatRenderAttach(); }
+// «+» حالا دو گزینهٔ تجمعی دارد تا نوارِ پایین شلوغ نشود (بازخوردِ کاربر ۲۶.۶)
+function chatPlusMenu(){
+  const c=chatActive();
+  chatSheet('➕ افزودن و تنظیمات', [
+    {ic:'📎', label:'پیوست و فایل', sub:'عکس از گالری · دوربین · فایلِ متنی', act:()=>chatAttachMenu()},
+    {ic:'⚙️', label:'تنظیماتِ این گفتگو', sub:c?(chatRolesLabel(c)+' · '+chatModelLabel(c)):'پزشک · مدل · سرعت · پرونده', act:()=>chatOptsMenu()}
+  ]);
+}
+function chatOptsMenu(){
+  const c=chatActive(); if(!c) return;
+  const fast=(c.speed==='fast');
+  chatSheet('⚙️ تنظیماتِ گفتگو', [
+    {ic:'🩺', label:'پزشک / متخصص', sub:chatRolesLabel(c), act:()=>chatRolePicker()},
+    {ic:'🧠', label:'مدلِ هوش مصنوعی', sub:chatModelLabel(c), act:()=>chatModelMenu()},
+    {ic:(fast?'⚡':'🎯'), label:'حالتِ پاسخ — '+(fast?'سریع':'دقیق'), sub:(fast?'ارزان‌تر و کوتاه‌تر':'فکرِ بیشتر و دقیق‌تر')+' · برای تغییر بزن', act:()=>{ chatToggleSpeed(); }},
+    {ic:'📁', label:'فرستادنِ دادهٔ پرونده', sub:'انتخابِ بازه و بخش‌ها', act:()=>chatDataPickerOpen(14)}
+  ]);
+}
 function chatAttachMenu(){
   chatSheet('پیوست کردن', [
     {ic:'🖼️', label:'عکس از گالری', sub:'ارسال تصویر برای تحلیل', act:()=>{ const el=document.getElementById('chatFileImg'); if(el){el.value='';el.click();} }},
@@ -16985,7 +17002,9 @@ function chatModelMenu(){ const c=chatActive(); if(!c) return;
         label:m.label+' — '+PROVIDER_NAMES[pv],
         sub:(m.tier||'')+(froz?' · فریز':(has?'':' · بدونِ کلید')),
         on:m.id===cur,
-        act:()=>{ if(!has){ uiToast('برای «'+PROVIDER_NAMES[pv]+'» کلید نداری'); return; } setChatRoleModel(m.id); } }); }); });
+        act:()=>{ if(!has){ uiToast('برای «'+PROVIDER_NAMES[pv]+'» کلید نداری'); return; }
+          if(aiFrozen(pv)){ if(!confirm('سرویسِ «'+PROVIDER_NAMES[pv]+'» فریز است. فعالش کنم و همین مدل را انتخاب کنم؟')) return; setAiFrozen(pv,false); }
+          setChatRoleModel(m.id); } }); }); });
   opts.push({ ic:'🔀', label:'تغییرِ سرویس (بدونِ سنجاقِ مدل)', sub:'فقط برای همین گفتگو', on:false, act:()=>chatProviderMenu() });
   chatSheet('🧠 مدلِ «'+chatRolesLabel(c)+'»', opts);
 }
@@ -16995,7 +17014,7 @@ let _chatSheetActs=[];
 function chatSheet(title, opts){ chatSheetClose();
   _chatSheetActs=opts.map(o=>o.act);
   const bg=document.createElement('div'); bg.className='chat-sheet-bg'; bg.id='chatSheetBg'; bg.onclick=e=>{ if(e.target===bg) chatSheetClose(); };
-  bg.innerHTML=`<div class="chat-sheet"><h4>${escVision(title)}</h4>${opts.map((o,i)=>
+  bg.innerHTML=`<div class="chat-sheet"><h4>${escVision(title)}<button type="button" class="sh-x" onclick="chatSheetClose()" aria-label="بستن">✕</button></h4>${opts.map((o,i)=>
     `<div class="opt ${o.on?'on':''}" onclick="chatSheetPick(${i})"><span class="ic">${o.ic||'•'}</span><div><div>${escVision(o.label)}</div>${o.sub?`<div class="sub">${escVision(o.sub)}</div>`:''}</div></div>`).join('')}</div>`;
   document.body.appendChild(bg);
 }
