@@ -2352,7 +2352,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۶.۷</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۶.۸</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4233,7 +4233,7 @@ const POD_CHAT_CAP=1200;   // سقفِ نویسه فقط در «خواندنِ �
 // متنِ AI را برای «خوانده‌شدن» تمیز می‌کند: مارک‌داون، جدول، لینک، ایموجی و خط‌های فرمانِ داخلی حذف
 function podPlainText(text, cap){
   let t=String(text||'');
-  t=t.replace(/@@(SUGGEST|MEAL|WORKOUT|PLAN|INSULIN|NEEDDATA|LAB)@@[\s\S]*?(\n|$)/g,'\n');      // خط‌های فرمانِ داخلی
+  t=t.replace(/@@(SUGGEST|MEAL|WORKOUT|PLAN|INSULIN|NEEDDATA|LAB|STEPDONE)@@[\s\S]*?(\n|$)/g,'\n');      // خط‌های فرمانِ داخلی
   t=t.replace(/```[\s\S]*?```/g,' ').replace(/`([^`]*)`/g,'$1');                   // بلاک/تکه‌کد
   t=t.replace(/!\[[^\]]*\]\([^)]*\)/g,' ').replace(/\[([^\]]*)\]\([^)]*\)/g,'$1'); // تصویر و لینک
   t=t.replace(/^\s*\|[\s:|-]+\|\s*$/gm,'');                                        // خطِ جداکنندهٔ جدول
@@ -16099,9 +16099,25 @@ function buildChatSystemPrompt(){
   }
   let extra=''; try{ const p=profGet(); if(p.gender) extra='جنسیت: '+(p.gender==='male'?'مرد':p.gender==='female'?'زن':p.gender)+'\n'; }catch(e){}
   let persona=''; try{ persona=chatRolesSys(chatActive())+'\n'; }catch(e){}
+  // ۲۶.۸: اگر این گفتگو یک «مرحله از روندِ درمان» است، پزشک باید در پایانِ ویزیت
+  // نتیجهٔ مرحله را با نشانه بدهد تا کاربر با یک دکمه ثبت کند و به مرحلهٔ بعد برود.
+  let stepIns=''; try{ const cc=chatActive();
+    if(cc && cc.journeyId && typeof cc.stepIndex==='number'){
+      const jj=jrById(cc.journeyId); const st=jj&&(jj.steps||[])[cc.stepIndex];
+      if(st){
+        stepIns='\n🧭 این گفتگو «مرحلهٔ '+faDigits(String(cc.stepIndex+1))+' از '+faDigits(String(jj.steps.length))+'» در مسیرِ درمانِ «'+String(jj.goal||'')+'» است.'
+          +(st.why?(' هدفِ این مرحله: '+st.why+'.'):'')
+          +(st.carry?(' آنچه از مرحلهٔ قبل آورده شده: '+st.carry+'.'):'')
+          +'\nوقتی ویزیتت تمام شد و نتیجهٔ نهایی را دادی، در «آخرین خطِ» همان پیام دقیقاً این نشانه را بگذار (یک خط، بدونِ توضیح):\n'
+          +'@@STEPDONE@@ {"outcome":"جمع‌بندی و تجویزِ نهاییِ این مرحله در ۲ تا ۳ خطِ کوتاه","next":"چه چیزی را باید نزدِ پزشکِ بعدی ببرد"}\n'
+          +'این نشانه را همان پیامِ اول که ویزیت را کامل کردی بگذار؛ منتظرِ پیامِ بعدیِ کاربر نمان و هیچ‌وقت توضیحش نده.\n';
+      }
+    }
+  }catch(e){}
   let suggest=''; try{ if(chatSuggestOn()) suggest='\nدر پایانِ هر پاسخ، دقیقاً یک خطِ جدا با این قالب بگذار (برای پیشنهادِ سوال بعدی به کاربر): «@@SUGGEST@@ سوال۱ || سوال۲ || سوال۳» — دو یا سه سوالِ کوتاهِ فارسی (هرکدام کمتر از ۷ کلمه) که کاربر احتمالاً بعد از این می‌پرسد، از زبانِ خودِ کاربر (اول‌شخص). این خط را هیچ‌وقت توضیح نده.\n'; }catch(e){}
   return pTxt('chat.base', CHAT_BASE_SYS)+
   persona+
+  stepIns+
   "خط قرمزها: فقط آموزشی؛ هرگز تشخیص قطعی یا دوز دقیق انسولین/دارو برای اجرا نده؛ برای تصمیم درمانی کاربر را به پزشک ارجاع بده.\n"+
   extra+
   suggest+
@@ -16124,7 +16140,8 @@ function chatExtractMarker(text, marker){
   let depth=0,end=-1; for(let i=s;i<after.length;i++){ const ch=after[i]; if(ch==='{')depth++; else if(ch==='}'){ depth--; if(depth===0){ end=i; break; } } }
   if(end<0) return null;
   const jsonStr=after.slice(s,end+1); let obj=null;
-  try{ obj=JSON.parse(faToEnDigits(jsonStr)); }catch(e){ try{ obj=JSON.parse(jsonStr); }catch(_){ return null; } }
+  // اول خام (تا اعدادِ فارسیِ داخلِ متن‌ها سالم بمانند)، بعد تبدیلِ رقم برای JSONهایی که عددِ فارسی دارند
+  try{ obj=JSON.parse(jsonStr); }catch(e){ try{ obj=JSON.parse(faToEnDigits(jsonStr)); }catch(_){ return null; } }
   return {obj, start:idx, endAbs:idx+marker.length+end+1};
 }
 function chatParseActions(text){
@@ -16137,6 +16154,8 @@ function chatParseActions(text){
   if(plan&&plan.obj){ action={kind:'plan',data:plan.obj}; t=(t.slice(0,plan.start)+t.slice(plan.endAbs)).trim(); }
   const ins=chatExtractMarker(t,'@@INSULIN@@');
   if(ins&&ins.obj){ action={kind:'insulin',data:ins.obj}; t=(t.slice(0,ins.start)+t.slice(ins.endAbs)).trim(); }
+  const sd=chatExtractMarker(t,'@@STEPDONE@@');
+  if(sd&&sd.obj){ action={kind:'stepdone',data:sd.obj}; t=(t.slice(0,sd.start)+t.slice(sd.endAbs)).trim(); }
   const lb=chatExtractMarker(t,'@@LAB@@');
   if(lb&&lb.obj){ action={kind:'lab',data:lb.obj}; t=(t.slice(0,lb.start)+t.slice(lb.endAbs)).trim(); }
   const nd=chatExtractMarker(t,'@@NEEDDATA@@');
@@ -16167,6 +16186,18 @@ function chatActionCard(m,idx){
     const lst=ins.map(x=>`<span class="cact-chip">${escVision((x.kind==='basal'?'پایه: ':'سریع: ')+(x.name||'')+(x.dose!=null?(' · '+x.dose+' واحد'):'')+(x.time?(' · '+x.time):''))}</span>`).join('');
     return `<div class="cact"><div class="cact-h">💉 ${escVision(d.title||'برنامهٔ انسولین')} <span style="color:var(--muted);font-weight:600">(یادآوری)</span></div>${lst?`<div class="cact-items">${lst}</div>`:''}
       <div class="cact-btns"><button type="button" class="cact-b" onclick="chatInsulinToPlan(${idx})">🗓 افزودن به برنامهٔ هفتگی</button></div></div>`;
+  }
+  if(a.kind==='stepdone'){
+    const c=chatActive(); const j=(c&&c.journeyId)?jrById(c.journeyId):null;
+    const si=(c&&typeof c.stepIndex==='number')?c.stepIndex:-1;
+    if(!j||si<0) return '';
+    const n=(j.steps||[]).length; const nx=_jrNextStep(j,si);
+    const nxLbl=(nx>=0)? jrRolesNames((j.steps[nx]||{}).roles||[]) : '';
+    return `<div class="cact"><div class="cact-h">🧭 پایانِ مرحلهٔ ${faDigits(String(si+1))} از ${faDigits(String(n))}</div>`
+      +(d.outcome?`<div class="cact-m">${escVision(String(d.outcome).slice(0,220))}</div>`:'')
+      +(d.next?`<div class="cact-items"><span class="cact-chip">برای مرحلهٔ بعد: ${escVision(String(d.next).slice(0,90))}</span></div>`:'')
+      +`<div class="cact-btns"><button type="button" class="cact-b" onclick="chatStepDoneGo(${idx})">${nx>=0?('✅ ثبت و رفتن به '+escVision(nxLbl||'مرحلهٔ بعد')):'🏁 ثبت و پایانِ روند'}</button>`
+      +`<button type="button" class="cact-b alt" onclick="chatStepDoneEdit(${idx})">✏️ ویرایشِ نتیجه</button></div></div>`;
   }
   if(a.kind==='lab'){
     const ks=(Array.isArray(d.tests)?d.tests:[]).filter(k=>findLabTest(k));
@@ -16314,7 +16345,10 @@ function jrReportHTML(j){
   return h;
 }
 function chatJourneyStartStep(jid,i){ const j=jrById(jid); if(!j) return; const step=(j.steps||[])[i]; if(!step||!step.roles.length) return;
-  const o=chatLoad(); const nid='c'+Date.now().toString(36); const lead=step.roles.length>1?'کنفرانس':chatRoleById(step.roles[0]).name;
+  const o=chatLoad();
+  // اگر گفتگوی این مرحله از قبل هست، همان را باز کن (نه یک گفتگوی تکراری)
+  if(step.chatId){ const ex=o.chats.find(x=>x.id===step.chatId);
+    if(ex){ o.activeId=ex.id; chatSave(o); chatJourneyClose(); switchTab('chat'); renderChatTab(); return; } } const nid='c'+Date.now().toString(36); const lead=step.roles.length>1?'کنفرانس':chatRoleById(step.roles[0]).name;
   o.chats.unshift({id:nid,title:(lead+' — '+j.goal).slice(0,50),ts:Date.now(),provider:sectionProvider('chat'),speed:'smart',roles:step.roles.slice(),projectId:j.projectId,journeyId:j.id,stepIndex:i,messages:[]});
   o.activeId=nid; chatSave(o); jrUpdate(jid,jj=>{ if(jj.steps[i]) jj.steps[i].chatId=nid; }); window._roleAsked=nid;
   chatJourneyClose(); switchTab('chat'); renderChatTab(); uiToast('✓ گفتگو با «'+lead+'» باز شد'); }
@@ -16324,7 +16358,12 @@ function chatJourneySaveResult(jid){ const ta=document.getElementById('jrResult'
   jrUpdate(jid,j=>{ j.result=v; if(v) j.status='done'; });
   chatJourneyClose(); renderChatTab(); uiToast(v?'✓ روند پایان یافت':'✓ ذخیره شد'); }
 // ثبت/ویرایشِ نتیجه‌ی مرحله (پاپ‌آپ) — با خلاصه‌ی AI و ویرایشِ دستی
-function chatFinishStep(){ const c=chatActive(); if(!c||!c.journeyId) return; const j=jrById(c.journeyId); if(!j) return; if(typeof c.stepIndex!=='number') return; chatJourneyEditOutcome(j.id, c.stepIndex, {returnPlanner:true}); }
+// دکمهٔ نوارِ روند: اگر پزشک نشانهٔ پایانِ مرحله را داده بود همان را ثبت کن و برو جلو،
+// وگرنه پاپ‌آپِ ثبتِ دستی (با خلاصهٔ خودکار) باز شود.
+function chatFinishStep(){ const c=chatActive(); if(!c||!c.journeyId) return; const j=jrById(c.journeyId); if(!j) return; if(typeof c.stepIndex!=='number') return;
+  const idx=(c.messages||[]).map((m,i)=>({m,i})).reverse().find(x=>x.m&&x.m.action&&x.m.action.kind==='stepdone');
+  if(idx){ chatStepDoneEdit(idx.i); return; }
+  chatJourneyEditOutcome(j.id, c.stepIndex, {nextStep:true}); }
 function chatJourneyEditOutcome(jid,i,opts){ opts=opts||{}; const j=jrById(jid); if(!j) return; const s=(j.steps||[])[i]; if(!s) return; try{ ensureChatCss(); }catch(e){} chatJourneyClose();
   const b0=document.getElementById('jrOutBg'); if(b0) b0.remove();
   const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='jrOutBg'; bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
@@ -16333,13 +16372,16 @@ function chatJourneyEditOutcome(jid,i,opts){ opts=opts||{}; const j=jrById(jid);
     <textarea id="jrOutTxt" class="qbg-in" style="min-height:120px;line-height:1.9;resize:vertical" placeholder="تجویز/جمع‌بندیِ این مرحله…">${escVision(s.outcome||'')}</textarea>
     <div style="margin-top:8px"><button type="button" class="crn-btn" id="jrSumBtn" style="background:var(--field);border:1px solid var(--teal-dim);color:var(--teal);width:100%">✨ خلاصه‌ی خودکار از گفتگو</button></div>
     <div class="chat-rename-btns" style="margin-top:10px"><button type="button" class="crn-btn crn-cancel" onclick="document.getElementById('jrOutBg').remove()">انصراف</button>
-      <button type="button" class="crn-btn crn-ok" id="jrOutSave">${opts.returnPlanner?'ثبت و بازگشت به برنامه‌ریز':'ذخیره'}</button></div></div>`;
+      <button type="button" class="crn-btn crn-ok" id="jrOutSave">${opts.nextStep?'✅ ثبت و مرحلهٔ بعد':(opts.returnPlanner?'ثبت و بازگشت به برنامه‌ریز':'ذخیره')}</button></div></div>`;
   document.body.appendChild(bg);
   const sb=document.getElementById('jrSumBtn'); sb.onclick=()=>jrSummarizeInto(s.chatId);
   document.getElementById('jrOutSave').onclick=()=>{ const v=(document.getElementById('jrOutTxt').value||'').trim();
     jrUpdate(jid,jj=>{ if(jj.steps[i]){ jj.steps[i].outcome=v; jj.steps[i].done=!!v; jj.steps[i].ts=Date.now(); } });
     const bb=document.getElementById('jrOutBg'); if(bb) bb.remove(); uiToast('✓ نتیجه ثبت شد');
-    if(opts.returnPlanner) jrReturnToPlanner(jid,i,v); else renderChatTab(); };
+    if(opts.nextStep){ const jj=jrById(jid); const nx=_jrNextStep(jj,i);
+      if(nx>=0){ uiToast('مرحلهٔ بعد باز شد'); chatJourneyStartStep(jid,nx); }
+      else { jrUpdate(jid,z=>{ if(!z.result) z.result=v; z.status='done'; }); uiToast('🏁 همهٔ مرحله‌ها تمام شد'); renderChatTab(); chatOpenJourney(jid); } }
+    else if(opts.returnPlanner) jrReturnToPlanner(jid,i,v); else renderChatTab(); };
   setTimeout(()=>{ const t=document.getElementById('jrOutTxt'); if(t) t.focus(); },60);
 }
 function jrSummarizeInto(chatId){ const ta=document.getElementById('jrOutTxt'); if(!ta) return;
@@ -16358,6 +16400,44 @@ function jrReturnToPlanner(jid,i,outcome){ const j=jrById(jid); if(!j) return; c
   const roleNm=jrRolesNames((j.steps[i]||{}).roles||[]);
   const msg='نتیجه‌ی مرحله‌ی '+faDigits(String(i+1))+' ('+roleNm+'): '+(outcome||'—')+'\nحالا مرحله‌ی بعدی را بگو و در صورت لزوم مسیر را به‌روزرسانی کن.';
   setTimeout(()=>{ const inp=document.getElementById('chatInput'); if(inp){ inp.value=msg; if(typeof chatAutoGrow==='function') chatAutoGrow(inp); } if(typeof chatSend==='function') chatSend(); },420);
+}
+// اولین مرحلهٔ انجام‌نشده بعد از i (وگرنه هر مرحلهٔ انجام‌نشده؛ وگرنه ۱-)
+function _jrNextStep(j,i){ const st=(j&&j.steps)||[];
+  for(let k=i+1;k<st.length;k++) if(!st[k].done) return k;
+  for(let k=0;k<st.length;k++) if(k!==i && !st[k].done) return k;
+  return -1; }
+function _chatStepCtx(idx){ const c=chatActive(); if(!c||!c.journeyId) return null;
+  const j=jrById(c.journeyId); if(!j) return null;
+  const si=(typeof c.stepIndex==='number')?c.stepIndex:-1; if(si<0) return null;
+  const m=c.messages&&c.messages[idx]; const d=(m&&m.action&&m.action.kind==='stepdone')?m.action.data:{};
+  return {c,j,si,d:d||{}}; }
+// ثبتِ نتیجهٔ مرحله و رفتنِ خودکار به مرحلهٔ بعدی روند
+function chatStepDoneGo(idx, outcomeOverride){
+  const x=_chatStepCtx(idx); if(!x){ uiToast('این گفتگو بخشی از یک روند نیست'); return; }
+  const out=String(outcomeOverride!=null?outcomeOverride:(x.d.outcome||'')).trim() || 'نتیجه‌ای ثبت نشد';
+  const carry=String(x.d.next||'').trim();
+  jrUpdate(x.j.id, jj=>{ const st=jj.steps[x.si]; if(st){ st.outcome=out; st.done=true; st.ts=Date.now(); }
+    const nx=_jrNextStep(jj,x.si); if(nx>=0 && carry && !jj.steps[nx].carry) jj.steps[nx].carry=carry; });
+  const j2=jrById(x.j.id); const nx=_jrNextStep(j2,x.si);
+  if(nx<0){ jrUpdate(x.j.id, jj=>{ if(!jj.result) jj.result=out; jj.status='done'; });
+    uiToast('🏁 همهٔ مرحله‌ها تمام شد'); renderChatTab(); chatOpenJourney(x.j.id); return; }
+  uiToast('✓ نتیجهٔ مرحله ثبت شد — مرحلهٔ بعد باز شد');
+  chatJourneyStartStep(x.j.id, nx);
+}
+// ویرایشِ متنِ نتیجه پیش از ثبت
+function chatStepDoneEdit(idx){
+  const x=_chatStepCtx(idx); if(!x) return;
+  try{ ensureChatCss(); }catch(e){}
+  const b0=document.getElementById('jrOutBg'); if(b0) b0.remove();
+  const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='jrOutBg'; bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
+  bg.innerHTML='<div class="chat-rename" role="dialog" aria-modal="true" style="max-width:470px">'
+    +'<h4>📝 نتیجهٔ مرحله — '+escVision(jrRolesNames((x.j.steps[x.si]||{}).roles||[])||'')+'</h4>'
+    +'<textarea id="jrOutTxt" class="qbg-in" style="min-height:120px;line-height:1.9;resize:vertical">'+escVision(String(x.d.outcome||''))+'</textarea>'
+    +'<div class="chat-rename-btns" style="margin-top:10px"><button type="button" class="crn-btn crn-cancel" onclick="document.getElementById(\'jrOutBg\').remove()">انصراف</button>'
+    +'<button type="button" class="crn-btn crn-ok" id="jrOutSave2">✅ ثبت و مرحلهٔ بعد</button></div></div>';
+  document.body.appendChild(bg);
+  document.getElementById('jrOutSave2').onclick=()=>{ const v=(document.getElementById('jrOutTxt').value||'').trim();
+    const bb=document.getElementById('jrOutBg'); if(bb) bb.remove(); chatStepDoneGo(idx, v); };
 }
 function chatMealAdd(idx,dest){
   const c=chatActive(); const m=c&&c.messages&&c.messages[idx]; const d=m&&m.action&&m.action.data; if(!d){ return; }
@@ -16902,7 +16982,7 @@ function renderChatTab(){
     const stepDone=(si>=0 && jr.steps[si] && jr.steps[si].done);
     const label=isPlanner?('🧭 برنامه‌ریزِ روند: '+escVision(jr.goal)):('🧭 '+escVision(jr.goal)+' · مرحله '+faDigits(String(si+1))+' از '+faDigits(String(jr.steps.length)));
     const bar=`<div class="chat-jbar"><span class="jb-goal" onclick="chatOpenJourney('${jr.id}')">${label}</span>`
-      +((!isPlanner&&si>=0)?`<button type="button" class="jb-btn${stepDone?' done':''}" onclick="chatFinishStep()">${stepDone?'✓ ثبت‌شده':'✔ ثبت نتیجه و بازگشت'}</button>`:'')
+      +((!isPlanner&&si>=0)?`<button type="button" class="jb-btn${stepDone?' done':''}" onclick="chatFinishStep()">${stepDone?'✓ ثبت‌شده':'✔ ثبت نتیجه و مرحلهٔ بعد'}</button>`:'')
       +`<button type="button" class="jb-btn alt" onclick="chatOpenJourney('${jr.id}')" title="گزارش روند">📋</button></div>`;
     if(mb) mb.insertAdjacentHTML('afterbegin', bar);
   }
@@ -17061,7 +17141,7 @@ async function chatSend(opts){
   let _shown=0, _streamDone=false, _revealResolve=null;
   const _revealDone=new Promise(res=>{ _revealResolve=res; });
   // خطِ «@@SUGGEST@@» را از نمایش حذف کن (حتی وقتی نیمه‌کاره استریم می‌شود)
-  const stripSug=s=>String(s).replace(/@@(SUGGEST|MEAL|WORKOUT|PLAN|INSULIN|NEEDDATA|LAB)@@[\s\S]*$/,'').replace(/\n*@[@A-Z]*$/,'');
+  const stripSug=s=>String(s).replace(/@@(SUGGEST|MEAL|WORKOUT|PLAN|INSULIN|NEEDDATA|LAB|STEPDONE)@@[\s\S]*$/,'').replace(/\n*@[@A-Z]*$/,'');
   const paintReveal=()=>{ const b=bubble(); if(!b) return;
     const cur=(_shown<acc.length || !_streamDone)?'<span class="chat-cur"></span>':'';
     b.innerHTML=labAiFmt(stripSug(acc.slice(0,_shown)))+cur; if(mb) mb.scrollTop=mb.scrollHeight; };
