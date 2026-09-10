@@ -2342,7 +2342,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۵.۸</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۵.۹</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3521,6 +3521,25 @@ async function storageSet(k,v){
   try{ if(window.storage){ await window.storage.set(k,v,false); return; } }catch(e){}
   try{ localStorage.setItem(k,v); }catch(e){}
 }
+/* ══ پلِ پروفایل (۲۵.۹) ══
+   پروفایل با `storageSet` ذخیره می‌شود که ناهم‌زمان است و اگر `window.storage`
+   وجود داشته باشد **اصلاً در localStorage نمی‌نویسد**. ولی ۹ جای برنامه — از جمله
+   `buildHealthSnapshot` که پروندهٔ کاربر را برای هوش مصنوعی می‌سازد — پروفایل را
+   هم‌زمان از localStorage می‌خواندند و بنابراین **خالی** می‌گرفتند (سن/وزن/انسولین
+   به AI نمی‌رسید). از این پس همه از `profGet()` می‌خوانند و هر نوشتنی از
+   `profSet()` رد می‌شود تا هر دو نسخه یکی بمانند. */
+let _profCache=null;
+function profGet(){
+  if(_profCache) return _profCache;
+  try{ const raw=localStorage.getItem(PKEY); if(raw){ const o=JSON.parse(raw); if(o&&typeof o==='object') return (_profCache=o); } }catch(e){}
+  return {};
+}
+function profSet(p){
+  _profCache=(p&&typeof p==='object')?p:{};
+  try{ localStorage.setItem(PKEY, JSON.stringify(_profCache)); }catch(e){}   // آینهٔ هم‌زمان
+  try{ storageSet(PKEY, JSON.stringify(_profCache)); }catch(e){}             // نسخهٔ ماندگار
+  return _profCache;
+}
 
 /* ====== داشبورد خانه ====== */
 function dashAgo(date){
@@ -3543,7 +3562,7 @@ function buildYesterdayReview(){
   const y=new Date(); y.setDate(y.getDate()-1); y.setHours(0,0,0,0);
   const key=dayKey(y);
   const sameDay=iso=>{ try{ return dayKey(new Date(iso))===key; }catch(e){ return false; } };
-  let prof={}; try{ prof=JSON.parse(localStorage.getItem(PKEY)||'{}'); }catch(e){}
+  let prof={}; try{ prof=profGet(); }catch(e){}
   // تغذیه + انسولین
   let meals=0, carb=0, bolusShots=0, hasBasal=false;
   try{ const arr=(planData&&planData[key])||[]; meals=arr.length;
@@ -7268,7 +7287,7 @@ function dashExtraSlides(){
     } else out.push(_gc('❤️','فشار و ضربان','', _gce('فشار/ضربانی ثبت نشده.<br>از ＋ ثبت کن.')));
   }catch(e){}
   // وزنِ فعلی + روند
-  try{ let pr={}; try{ pr=JSON.parse(localStorage.getItem(PKEY)||'{}')||{}; }catch(e){}
+  try{ let pr={}; try{ pr=profGet(); }catch(e){}
     let wl=jl('weight_log_v1').filter(x=>x&&x.kg).sort((a,b)=>new Date(a.iso)-new Date(b.iso));
     const cur=wl.length?wl[wl.length-1].kg:(pr.weight?+pr.weight:null);
     const start=(pr.weightStart&&+pr.weightStart)||(wl.length?wl[0].kg:cur);
@@ -8209,7 +8228,7 @@ function quickAdd(type){
   else if(type==='sleep') openQEntry('qsleepModal','qsleepDateWrap',null,['qsleepHours'],'qsleepHours','qsleepQual');
   else if(type==='mood') openQEntry('qmoodModal','qmoodDateWrap','qmoodTime',['qmoodNote'],null,'qmoodPick');
   else if(type==='vitals') openQEntry('qvitModal','qvitDateWrap','qvitTime',['qvitSys','qvitDia','qvitHr'],'qvitSys');
-  else if(type==='weight'){ _editWtIso=null; openQEntry('qwtModal','qwtDateWrap','qwtTime',['qwtKg'],'qwtKg'); try{ const t=document.querySelector('#qwtModal .qbg-title'); if(t) t.textContent='وزنِ فعلی'; const raw=localStorage.getItem(PKEY); const p=raw?JSON.parse(raw):{}; const el=document.getElementById('qwtKg'); if(el&&p.weight) el.placeholder='فعلی: '+faDigits(p.weight)+' — وزنِ تازه را وارد کن'; }catch(e){} }
+  else if(type==='weight'){ _editWtIso=null; openQEntry('qwtModal','qwtDateWrap','qwtTime',['qwtKg'],'qwtKg'); try{ const t=document.querySelector('#qwtModal .qbg-title'); if(t) t.textContent='وزنِ فعلی'; const p=profGet(); const el=document.getElementById('qwtKg'); if(el&&p.weight) el.placeholder='فعلی: '+faDigits(p.weight)+' — وزنِ تازه را وارد کن'; }catch(e){} }
   else if(type==='journal') openJournalQuick();
   else if(type==='aidoctor'){ if(typeof chatStartJourneyNew==='function') chatStartJourneyNew(); else switchTab('chat'); }
 }
@@ -8251,7 +8270,7 @@ function saveQuickWeight(){
     localStorage.setItem('weight_log_v1', JSON.stringify(wl));
     // «وزنِ فعلی» پروفایل = آخرین ثبت (بر اساسِ تاریخ)
     const sorted=wl.filter(z=>z&&z.kg).sort((a,b)=>new Date(a.iso)-new Date(b.iso)); const latest=sorted.length?sorted[sorted.length-1].kg:kg;
-    const raw=localStorage.getItem(PKEY); const p=raw?JSON.parse(raw):{}; p.weight=String(latest); if(!p.weightStart) p.weightStart=String(sorted.length?sorted[0].kg:kg); localStorage.setItem(PKEY,JSON.stringify(p));
+    const p=profGet(); p.weight=String(latest); if(!p.weightStart) p.weightStart=String(sorted.length?sorted[0].kg:kg); profSet(p);
     const el=document.getElementById('weight'); if(el) el.value=String(latest);
     const els=document.getElementById('weightStart'); if(els&&!els.value) els.value=String(sorted.length?sorted[0].kg:kg);
   }catch(e){}
@@ -8304,7 +8323,7 @@ function weightHistOpen(){
 function weightHistDel(iso){ if(!confirm('این ثبتِ وزن حذف شود؟')) return;
   try{ let wl=JSON.parse(localStorage.getItem('weight_log_v1')||'[]')||[]; wl=wl.filter(x=>x&&x.iso!==iso); localStorage.setItem('weight_log_v1',JSON.stringify(wl));
     const rem=wl.filter(x=>x&&x.kg).sort((a,b)=>new Date(a.iso)-new Date(b.iso));
-    const raw=localStorage.getItem(PKEY); const p=raw?JSON.parse(raw):{}; if(rem.length){ p.weight=String(rem[rem.length-1].kg); localStorage.setItem(PKEY,JSON.stringify(p)); const el=document.getElementById('weight'); if(el) el.value=String(rem[rem.length-1].kg); }
+    const p=profGet(); if(rem.length){ p.weight=String(rem[rem.length-1].kg); profSet(p); const el=document.getElementById('weight'); if(el) el.value=String(rem[rem.length-1].kg); }
   }catch(e){}
   weightHistOpen(); try{ if(typeof renderDashboard==='function') renderDashboard(); }catch(e){}
 }
@@ -9555,7 +9574,7 @@ async function saveProfile(){
   const p={diabetesType:val('diabetesType'),basalInsulin:val('basalInsulin'),insulinType:val('insulinType'),age:val('age'),weight:val('weight'),weightStart:val('weightStart'),gender:val('gender'),tdd:val('tdd'),ic:val('icRatio'),isf:val('isf'),
     firstName:val('pfFirst').trim(),lastName:val('pfLast').trim(),mobile:val('pfMobile').trim(),email:val('pfEmail').trim(),
     conditions:[..._pfConds], condCustom:_pfCustom.slice()};
-  await storageSet(PKEY,JSON.stringify(p)); showSaved(p);
+  profSet(p); await storageSet(PKEY,JSON.stringify(p)); showSaved(p);
   if(typeof updateProfileCardTitle==='function') updateProfileCardTitle();
   try{ if(typeof renderLabSchedule==='function') renderLabSchedule(); }catch(e){}
 }
@@ -9580,7 +9599,7 @@ const LAB_SCHEDULE={
 };
 function labIntervalFa(m){ return m<=1?'ماهانه':m===2?'هر ۲ ماه':m===3?'هر ۳ ماه (فصلی)':m===6?'هر ۶ ماه':m===12?'سالانه':('هر '+faDigits(m)+' ماه'); }
 function renderLabSchedule(){ const box=document.getElementById('labSchedule'); if(!box) return;
-  let p={}; try{ p=JSON.parse(localStorage.getItem(PKEY)||'{}'); }catch(e){}
+  let p={}; try{ p=profGet(); }catch(e){}
   const conds=(p.conditions||[]); const map={}; let any=false;
   const add=list=>list.forEach(x=>{ if(!map[x.t]||x.m<map[x.t]) map[x.t]=x.m; });
   conds.forEach(c=>{ if(LAB_SCHEDULE[c]){ add(LAB_SCHEDULE[c]); any=true; } });
@@ -9625,7 +9644,7 @@ function editProfile(){
 }
 async function loadProfile(){
   const raw=await storageGet(PKEY); if(!raw) return;
-  try{ const p=JSON.parse(raw);
+  try{ const p=JSON.parse(raw); profSet(p);   // آینه‌کردن در localStorage تا خواننده‌های هم‌زمان (از جمله پروندهٔ AI) پر باشند
     if(p.diabetesType) document.getElementById('diabetesType').value=p.diabetesType;
     if(p.basalInsulin) document.getElementById('basalInsulin').value=p.basalInsulin;
     document.getElementById('insulinType').value=p.insulinType||'rapid';
@@ -9730,7 +9749,7 @@ function updateProfileCardTitle(){
   const pc=document.getElementById('c-profile'); if(!pc) return;
   const span=pc.querySelector('h2 > span'); if(!span) return;
   let title='پروفایل و انسولین روزانه';
-  try{ const p=JSON.parse(localStorage.getItem(PKEY)||'{}'); const parts=[];
+  try{ const p=profGet(); const parts=[];
     if(p.diabetesType) parts.push('دیابت '+(DTYPE_FA[p.diabetesType]||p.diabetesType));
     if(p.gender) parts.push(p.gender==='male'?'مرد':'زن');
     if(p.age) parts.push(faDigits(p.age)+' ساله');
@@ -15908,7 +15927,7 @@ function chatSetSpeed(sel){ const o=chatLoad(); const c=chatActive(o); if(c){ c.
 function buildChatSystemPrompt(){
   // ⚠️ چت باید «پرونده» ببیند نه خلاصهٔ آماری: بازهٔ مستقل ۳۰ روزه + خطِ زمانیِ ۱۴ روزِ روزبه‌روز
   let snap; try{ snap=buildHealthSnapshot('chat',{timelineDays:14}); }catch(e){ snap={text:''}; }
-  let extra=''; try{ const p=JSON.parse(localStorage.getItem(PKEY)||'{}'); if(p.gender) extra='جنسیت: '+(p.gender==='male'?'مرد':p.gender==='female'?'زن':p.gender)+'\n'; }catch(e){}
+  let extra=''; try{ const p=profGet(); if(p.gender) extra='جنسیت: '+(p.gender==='male'?'مرد':p.gender==='female'?'زن':p.gender)+'\n'; }catch(e){}
   let persona=''; try{ persona=chatRolesSys(chatActive())+'\n'; }catch(e){}
   let suggest=''; try{ if(chatSuggestOn()) suggest='\nدر پایانِ هر پاسخ، دقیقاً یک خطِ جدا با این قالب بگذار (برای پیشنهادِ سوال بعدی به کاربر): «@@SUGGEST@@ سوال۱ || سوال۲ || سوال۳» — دو یا سه سوالِ کوتاهِ فارسی (هرکدام کمتر از ۷ کلمه) که کاربر احتمالاً بعد از این می‌پرسد، از زبانِ خودِ کاربر (اول‌شخص). این خط را هیچ‌وقت توضیح نده.\n'; }catch(e){}
   return "تو «دیابوت» هستی؛ یک دستیار هوشمند، همدل و عملگرای دیابت که همه‌ی اطلاعات متابولیک این کاربر را می‌داند. همیشه فارسی، کوتاه، دقیق و کاربردی جواب بده و از داده‌های کاربر برای شخصی‌سازی استفاده کن.\n"+
@@ -16979,6 +16998,11 @@ function buildInsulinRegimen(win){
       return k+' (میانگین '+faDigits(avg)+' واحد، '+faDigits(o.n)+' ثبت'+(t?('، اغلب ساعت '+faDigits(t)):'')+')'; }).join('؛ '); };
   const out=[]; const b=fmt(basal,'انسولینِ پایه'), r=fmt(rapid,'انسولینِ سریع');
   if(b) out.push(b); if(r) out.push(r);
+  // اگر در این بازه ثبتی نبود، لااقل آنچه در پروفایل اعلام کرده گفته شود
+  try{ const p=profGet();
+    if(!b && p.basalInsulin) out.push('انسولینِ پایه (طبقِ پروفایل، بدونِ ثبتِ روزانه در این بازه): '+p.basalInsulin);
+    if(!r && p.insulinType) out.push('انسولینِ وعده (طبقِ پروفایل): '+(p.insulinType==='regular'?'کوتاه‌اثر (رگولار)':'سریع‌اثر'));
+  }catch(e){}
   if(!out.length) return '';
   return '💉 رژیمِ انسولینِ کاربر (از ثبت‌های خودش استخراج شده — این‌ها نامِ دقیقِ انسولینِ اوست؛ '
     +'هرگز نامِ انسولینِ دیگری را به او نسبت نده و نپرس «کِی عوضش کردی» مگر خودش گفته باشد): '+out.join(' | ');
@@ -17090,12 +17114,14 @@ function buildHealthSnapshot(scope, opts){
   const jl=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'[]'); }catch(e){ return []; } };
   const L=[];
   let minD=null,maxD=null; const seen=d=>{ if(d&&!isNaN(d)){ if(!minD||d<minD)minD=d; if(!maxD||d>maxD)maxD=d; } };
-  try{ const p=JSON.parse(localStorage.getItem(PKEY)||'{}'); const pp=[];
+  try{ const p=profGet(); const pp=[];
     if(p.firstName) pp.push('نامِ کاربر: '+p.firstName+' (می‌توانی گاهی با اسمِ کوچک صدایش کنی)');
     if(p.diabetesType) pp.push('دیابت '+(DTYPE_FA[p.diabetesType]||p.diabetesType));
     if(p.gender) pp.push(p.gender==='male'?'مرد':p.gender==='female'?'زن':p.gender);
     if(p.age) pp.push('سن '+p.age);
     if(p.weight){ let w='وزنِ فعلی '+p.weight+'kg'; if(p.weightStart && +p.weightStart!==+p.weight){ const d=Math.round((+p.weight-+p.weightStart)*10)/10; w+=' (از '+p.weightStart+'kg شروع؛ '+(d<0?('کاهشِ '+Math.abs(d)):('افزایشِ '+d))+'kg)'; } pp.push(w); }
+    if(p.basalInsulin) pp.push('انسولینِ پایه‌ای که در پروفایل ثبت کرده: '+p.basalInsulin);
+    if(p.insulinType) pp.push('نوعِ انسولینِ وعده: '+(p.insulinType==='regular'?'کوتاه‌اثر (رگولار)':'سریع‌اثر'));
     if(p.tdd) pp.push('TDD '+p.tdd); if(p.ic) pp.push('I:C 1:'+p.ic); if(p.isf) pp.push('ISF '+p.isf);
     if(pp.length) L.push('پروفایل: '+pp.join('، '));
     // بیماری‌ها/وضعیت‌ها — کلِ هوش مصنوعی باید نسبت به این‌ها حساس باشد
@@ -17107,7 +17133,15 @@ function buildHealthSnapshot(scope, opts){
     try{ let wl=JSON.parse(localStorage.getItem('weight_log_v1')||'[]')||[]; wl=wl.filter(x=>x&&x.kg).sort((a,b)=>new Date(a.iso)-new Date(b.iso));
       if(wl.length){ const start=(p.weightStart&&+p.weightStart)|| wl[0].kg; const cur=wl[wl.length-1].kg; const d=Math.round((cur-start)*10)/10;
         const recent=wl.slice(-6).map(x=>(x.date?x.date+': ':'')+faDigits(x.kg)+'kg').join('؛ ');
-        let s='روندِ وزنِ کاربر — وزنِ اولیه '+faDigits(start)+'kg، فعلی '+faDigits(cur)+'kg'+(d!==0?(' ('+(d<0?'کاهشِ '+faDigits(Math.abs(d)):'افزایشِ '+faDigits(d))+'kg)'):'')+'. ثبت‌های اخیر: '+recent+'. دربارهٔ این تغییراتِ وزنی هم راهنمایی و نظر بده.';
+        // «مدت» هم مهم است: کاهشِ ۵ کیلو در یک ماه با ۵ کیلو در یک سال زمین تا آسمان فرق دارد
+        let dur='', rate='';
+        try{ const d0=new Date(wl[0].iso), d1=new Date(wl[wl.length-1].iso);
+          const nd=Math.max(1,Math.round((d1-d0)/86400000));
+          dur=(nd>=60)?('حدود '+faDigits(Math.round(nd/30))+' ماه'):(nd>=14?('حدود '+faDigits(Math.round(nd/7))+' هفته'):(faDigits(nd)+' روز'));
+          if(nd>=14&&d!==0) rate='؛ یعنی حدود '+faDigits(Math.abs(Math.round((d/nd)*30*10)/10))+'kg در ماه';
+          dur=' (از '+(wl[0].date||'اولین ثبت')+' تا '+(wl[wl.length-1].date||'آخرین ثبت')+' = '+dur+')';
+        }catch(e){}
+        let s='روندِ وزنِ کاربر — وزنِ اولیه '+faDigits(start)+'kg، فعلی '+faDigits(cur)+'kg'+(d!==0?(' ('+(d<0?'کاهشِ '+faDigits(Math.abs(d)):'افزایشِ '+faDigits(d))+'kg)'):'')+dur+rate+'. ثبت‌های اخیر: '+recent+'. دربارهٔ این تغییراتِ وزنی هم راهنمایی و نظر بده.';
         L.push(s); }
     }catch(e){}
   }catch(e){}
