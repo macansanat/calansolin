@@ -2333,7 +2333,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۴.۱۱</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۴.۱۲</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5836,7 +5836,8 @@ function pod3dFingerGroups(){ if(_pod3d.fgs!==undefined) return _pod3d.fgs; _pod
 const POD_FING={ relax:[0.25,0.28,0.32,0.36,0.4], open:[0.05,0.03,0.03,0.03,0.06],
   point:[0.45,0.0,0.95,1.0,1.0], fist:[0.7,0.95,0.95,0.95,0.95], steeple:[0.12,0.06,0.06,0.06,0.1],
   ok:[0.6,0.6,0.1,0.08,0.12],   // شست و اشاره جمع (حلقه)، بقیه باز
-  grip:[0.5,0.68,0.72,0.74,0.76] };   // گرفتنِ برگه/دسته‌کاغذ (نیمه‌جمع، نه مشت)
+  grip:[0.5,0.68,0.72,0.74,0.76],   // گرفتنِ برگه/دسته‌کاغذ (نیمه‌جمع، نه مشت)
+  flat:[0.32,0.16,0.16,0.18,0.22] };   // کفِ تقریباً صاف زیرِ برگه — نوکِ انگشت از صفحهٔ برگه بیرون نمی‌زند
 function pod3dApplyFingers(shL, shR, k){ const G=pod3dFingerGroups(); if(!G||!THREE) return; const T=THREE;
   const fns=['thumb','index','middle','ring','pinky'];
   const ax=(a)=>POD_FING_AXIS==='y'?new T.Euler(0,POD_FING_SIGN*a,0,'XYZ'):POD_FING_AXIS==='z'?new T.Euler(0,0,POD_FING_SIGN*a,'XYZ'):new T.Euler(POD_FING_SIGN*a,0,0,'XYZ');
@@ -5934,27 +5935,29 @@ const POD_GEST_POSES=[
 
 // دستِ راست برگه‌ها را نگه می‌دارد و دستِ چپ آزاد است (جهتِ جهانی: پایین=-Y، جلو=+Z، چپِ مدل=+X)
 // چیدمان دقیقاً مطابقِ عکسِ مرجعِ کاربر: کارت روی سینهٔ چپ (راستِ تصویر)، برگه‌ها در دستِ راست (چپِ تصویر).
-const POD_HOLD_R={RA:[-0.15,-0.99,0.13], RF:[0.55,0.02,0.80], RH:[0.34,0,0]};
+const POD_HOLD_R={RA:[-0.15,-0.99,0.34], RF:[0.50,0.06,0.86], RH:[0.34,0,0]};
 const POD_PROP_SIDE=1;    // کارتِ سینه سمتِ چپِ مدل (راستِ تصویر) — تداخلی با برگه‌های دستِ راست ندارد
 
 // پوزهای برگه‌خوان: بازوی چپ همیشه «نگه‌دارندهٔ برگه» است و بازوی راست از پوزهای
 // از‌قبل‌کالیبره‌شدهٔ POD_GEST_POSES می‌آید (کالیبراسیونِ تأییدشدهٔ کاربر دوباره استفاده می‌شود).
 const POD_PAPER_POSES=(function(){
-  const mx=v=>[-v[0],v[1],v[2]];   // قرینه‌سازیِ جهت (همان الگویی که در جفت‌های okR/okL تأیید شده)
+  // قرینه‌سازیِ جهت + **بایاسِ بیرونی**: دستِ آزاد باید از ناحیهٔ برگه (جلوی مرکزِ سینه) فاصله بگیرد،
+  // وگرنه انگشت‌ها از تویِ برگه می‌زنند بیرون (باگِ اسکرین‌شاتِ کاربر).
+  const mx=(v,out)=>[-v[0]+(out||0), v[1], v[2]];
   const pick=['rest','indexR','beatR','palmUpR','pointFwdR','stopR','okR','chinR','palmSideR','indexHiR','oneOutR','raiseHiR','chopR'];
   const out=pick.map(n=>{ const p=POD_GEST_POSES.filter(x=>x.n===n)[0]||POD_GEST_POSES[0];
     return {n:'p_'+p.n, RA:POD_HOLD_R.RA, RF:POD_HOLD_R.RF, RH:POD_HOLD_R.RH,
-            LA:mx(p.RA), LF:mx(p.RF), LH:p.RH, fR:'grip', fL:pod3dPoseFingers(p)[1]}; });
+            LA:mx(p.RA,0.14), LF:mx(p.RF,0.30), LH:p.RH, fR:'flat', fL:pod3dPoseFingers(p)[1]}; });
   // هر دو دست روی برگه‌ها (خواندنِ دقیق) — قرینهٔ پوزِ نگه‌دارنده
   out.push({n:'p_both', rd:1, RA:POD_HOLD_R.RA, RF:POD_HOLD_R.RF, RH:POD_HOLD_R.RH,
-            LA:mx(POD_HOLD_R.RA), LF:mx(POD_HOLD_R.RF), LH:POD_HOLD_R.RH, fL:'grip', fR:'grip'});
+            LA:mx(POD_HOLD_R.RA,0.02), LF:mx(POD_HOLD_R.RF,0.06), LH:POD_HOLD_R.RH, fL:'flat', fR:'flat'});
   out.push({n:'p_bothLow', rd:1, RA:[-0.13,-1.0,0.10], RF:[0.36,-0.12,0.92], RH:[0.30,0,0],
-            LA:[0.13,-1.0,0.10], LF:[-0.36,-0.12,0.92], LH:[0.30,0,0], fL:'grip', fR:'grip'});
+            LA:[0.13,-1.0,0.10], LF:[-0.36,-0.12,0.92], LH:[0.30,0,0], fL:'flat', fR:'flat'});
   out.push({n:'p_bothHigh', rd:1, RA:[-0.17,-0.97,0.18], RF:[0.40,0.20,0.89], RH:[0.36,0,0],
-            LA:[0.17,-0.97,0.18], LF:[-0.40,0.20,0.89], LH:[0.36,0,0], fL:'grip', fR:'grip'});
+            LA:[0.17,-0.97,0.18], LF:[-0.40,0.20,0.89], LH:[0.36,0,0], fL:'flat', fR:'flat'});
   // ورق‌زدن: دستِ چپ به لبهٔ بالاییِ برگه می‌رود (انیمیشنِ ورق هم‌زمان اجرا می‌شود)
   out.push({n:'p_flip', flip:1, rd:1, RA:POD_HOLD_R.RA, RF:POD_HOLD_R.RF, RH:POD_HOLD_R.RH,
-            LA:[0.14,-0.90,0.32], LF:[-0.46,0.40,0.79], LH:[0.28,0,0], fR:'grip', fL:'point'});
+            LA:[0.15,-0.94,0.28], LF:[-0.34,0.10,0.93], LH:[0.28,0,0], fR:'flat', fL:'point'});
   return out;
 })();
 
@@ -6073,11 +6076,18 @@ function pod3dChestDepth(){
     const cp=new T.Vector3(); ch.b.getWorldPosition(cp);
     const mq=new T.Quaternion(); _pod3d.modelRoot.getWorldQuaternion(mq);
     const fwd=new T.Vector3(0,0,1).applyQuaternion(mq), lft=new T.Vector3(1,0,0).applyQuaternion(mq), up=new T.Vector3(0,1,0).applyQuaternion(mq);
-    // پرتو از لبهٔ *داخلیِ* کارت (نزدیک‌ترین نقطه به مرکزِ سینه = عمیق‌ترین جا) تا کلِ کارت جلوی سطح بماند
-    const org=cp.clone().addScaledVector(lft,U*0.30*POD_PROP_SIDE).addScaledVector(up,-U*0.06).addScaledVector(fwd,U*3);
-    const rc=new T.Raycaster(org, fwd.clone().negate(), 0, U*6);
-    const hit=rc.intersectObject(_pod3d.modelRoot, true);
-    if(hit&&hit.length){ const d=U*3-hit[0].distance; if(d>-U && d<U*1.5) _pod3d.chestD=d; }
+    // ⭐ چند نمونه روی کلِ سطحِ کارت و انتخابِ **جلوترین** سطح (یقهٔ کت از سینه جلوتر است!)
+    let best=null;
+    for(let i=-2;i<=2;i++){ for(let j=-1;j<=1;j++){
+      const org=cp.clone()
+        .addScaledVector(lft, U*(0.30*POD_PROP_SIDE + i*0.038))
+        .addScaledVector(up,  U*(-0.06 + j*0.045))
+        .addScaledVector(fwd, U*3);
+      const rc=new T.Raycaster(org, fwd.clone().negate(), 0, U*6);
+      const hit=rc.intersectObject(_pod3d.modelRoot, true);
+      if(hit&&hit.length){ const d=U*3-hit[0].distance; if(d>-U && d<U*1.5 && (best==null||d>best)) best=d; }
+    } }
+    if(best!=null) _pod3d.chestD=best;
   }catch(e){ _pod3d.chestD=null; }
   return _pod3d.chestD;
 }
@@ -6093,18 +6103,30 @@ function pod3dPropsUpdate(t, reading){
   if(chest){ const cp=new T.Vector3(); chest.b.getWorldPosition(cp);
     cp.addScaledVector(lft,U*0.30*POD_PROP_SIDE).addScaledVector(up,-U*0.06);
     const d=pod3dChestDepth();                      // فاصلهٔ سطحِ واقعیِ کت از استخوانِ سینه (یک‌بار با ray)
-    cp.addScaledVector(fwd, (d!=null? d : U*0.42) + U*0.045);  // کمی جلوترِ سطحِ اندازه‌گیری‌شده ⇒ هرگز داخلِ کت نمی‌رود
+    cp.addScaledVector(fwd, (d!=null? d : U*0.42) + U*0.075);  // جلوترِ *جلوترین* سطح (شاملِ یقه) ⇒ هیچ گوشه‌ای زیرِ کت نمی‌رود
     P.badge.position.copy(cp); P.badge.quaternion.copy(mq);
-    P.badge.rotateY(0.28*POD_PROP_SIDE);            // هم‌راستا با انحنایِ سینه (لبهٔ بیرونی کمی عقب)
+    P.badge.rotateY(0.16*POD_PROP_SIDE);            // شیبِ ملایمِ هم‌راستا با سینه (کم، تا لبه‌ها جلوی سطح بمانند)
     P.badge.rotateX(-0.12); }
   const lh=G['RightHand'], fa=G['RightForeArm'];
   if(lh){ const hp=new T.Vector3(); lh.b.getWorldPosition(hp);
     // نقطهٔ گرفتن را از مچ به وسطِ کفِ دست ببر (امتدادِ ساعد) وگرنه برگه کنارِ دست معلق به‌نظر می‌رسد
     if(fa){ const ep=new T.Vector3(); fa.b.getWorldPosition(ep); const ax=hp.clone().sub(ep); if(ax.lengthSq()>1e-8) hp.addScaledVector(ax.normalize(), U*0.17); }
-    hp.addScaledVector(up,P.ph*0.24).addScaledVector(fwd,-U*0.02);
+    // ⭐ اول چرخش ساخته می‌شود، بعد افست‌ها در دستگاهِ خودِ برگه اعمال می‌شوند؛
+    // وگرنه با تغییرِ شیب، لبهٔ برگه از دست جدا می‌شد یا دست از تویِ برگه می‌زد بیرون.
+    let tilt=1.35+(reading?0.08:0);   // ~۷۷ درجه: برگه رو‌به‌خودش (نه تختِ رو‌به‌دوربین)
+    // ⭐ گاردِ زاویهٔ دید: هرقدر هم برگه به‌سمتِ خودش باشد، از دوربین نباید «لبه‌ای/نامرئی» شود.
+    // (ارتفاعِ دوربین با زوم تغییر می‌کند؛ بدونِ این گارد، در زومِ کم برگه به یک خطِ سفید تبدیل می‌شد.)
+    try{ const cam=_pod3d.cam; if(cam){
+      const toCam=new T.Vector3(); cam.getWorldPosition(toCam); toCam.sub(hp).normalize();
+      const nrm=new T.Vector3(0,Math.sin(tilt),Math.cos(tilt)).applyQuaternion(mq);
+      const ang=Math.acos(Math.max(-1,Math.min(1,nrm.dot(toCam))));
+      if(ang>1.30) tilt=Math.max(0.6, tilt-(ang-1.30));
+    } }catch(e){}
+    const q=mq.clone().multiply(new T.Quaternion().setFromEuler(new T.Euler(-tilt,0,0,'XYZ')));
+    const sUp=new T.Vector3(0,1,0).applyQuaternion(q), sN=new T.Vector3(0,0,1).applyQuaternion(q);
+    hp.addScaledVector(sUp, P.ph*0.30).addScaledVector(sN, U*0.12);   // دست روی یک‌پنجمِ پایینِ برگه و **پشتِ** صفحه
     if(!P.pos) P.pos=hp.clone(); else P.pos.lerp(hp,0.3);
-    P.papers.position.copy(P.pos); P.papers.quaternion.copy(mq);
-    P.papers.rotateX(-1.00-(reading?0.15:0)); P.papers.rotateY(-0.12); }
+    P.papers.position.copy(P.pos); P.papers.quaternion.copy(q); }
   // ⭐ ورق‌زدن (۲۴.۱۱): ورقِ بالایی از لبهٔ پایین **بلند می‌شود، کمی کج و برمی‌گردد** —
   // نه چرخشِ کتابیِ ۱۸۰درجه به بیرونِ بدن (که در اسکرین‌شاتِ کاربر از کادر می‌زد بیرون).
   if(P.f0!=null){ const e=t-P.f0, A=0.95, sm=k=>k*k*(3-2*k);
@@ -6112,9 +6134,7 @@ function pod3dPropsUpdate(t, reading){
     else if(e<0.72) P.fa=A;
     else if(e<1.25) P.fa=A*(1-sm((e-0.72)/0.53));
     else { P.fa=0; P.f0=null; } }
-  const fk=(P.fa||0)/0.95;
-  P.piv.rotation.set(P.fa||0, 0, -0.16*fk);   // بلندشدن + کجیِ کوچکِ طبیعی
-  P.piv.position.x=P.pw*0.05*fk;
+  P.piv.rotation.set(P.fa||0, 0, 0);   // فقط بلندشدن از لبهٔ پایین
 }
 // ── نگاه به برگه/دوربین: استخوان B را (که فرزندش C است) به‌اندازهٔ pitch حولِ محورِ Xِ مدل خم می‌کند ──
 // همان ریاضیِ pod3dAimTargetLocal با مبنایِ «پوزِ استراحت» ⇒ بدونِ انباشتِ چرخش (درسِ ۲۴.۱).
