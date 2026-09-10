@@ -2333,7 +2333,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۴.۱۴</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۵.۰</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5519,7 +5519,7 @@ function pod3dSetupModel(modelScene, gender, url){
          pod3dPoseArmsDown(modelScene, 'RightArm','RightForeArm', new T.Vector3(-0.25,-1,0.08));
          modelScene.updateMatrixWorld&&modelScene.updateMatrixWorld(true); _pod3d.posed=true;
          // استخوان‌ها را برای «حرکتِ زندهٔ بدن/دست/سر هنگام صحبت» ذخیره کن (کواترنیونِ پایهٔ همین ژست)
-         _pod3d.gbones={}; _pod3d._ge=0; _pod3d.gc=null; _pod3d.gp=null; _pod3d.gmodel=modelScene; _pod3d.fb=undefined; _pod3d.fgs=undefined; _pod3d.htip=undefined; _pod3d.chestD=undefined; _pod3d.pp=null; _pod3d.rd=null; _pod3d.props=null; ['Hips','Spine','Spine1','Spine2','Neck','Head','LeftArm','RightArm','LeftForeArm','RightForeArm','LeftHand','RightHand'].forEach(n=>{ const b=pod3dBone(modelScene,n); if(b) _pod3d.gbones[n]={b:b, q:b.quaternion.clone()}; });
+         _pod3d.gbones={}; _pod3d._ge=0; _pod3d.gc=null; _pod3d.gp=null; _pod3d.gmodel=modelScene; _pod3d.fb=undefined; _pod3d.fgs=undefined; _pod3d.htip=undefined; _pod3d.chestD=undefined; _pod3d.flL=undefined; _pod3d.flR=undefined; _pod3d.pp=null; _pod3d.rd=null; _pod3d.props=null; ['Hips','Spine','Spine1','Spine2','Neck','Head','LeftArm','RightArm','LeftForeArm','RightForeArm','LeftHand','RightHand'].forEach(n=>{ const b=pod3dBone(modelScene,n); if(b) _pod3d.gbones[n]={b:b, q:b.quaternion.clone()}; });
     }catch(e){}
   } else {
     try{ if(_pod3d.idleClip && T.AnimationMixer){
@@ -5769,15 +5769,18 @@ function pod3dGesture(open){
     const dt=(_pod3d.dt||0.016); const k=1-Math.pow(0.04, dt);
     if(t>=P.sw){ if(!speaking||energy<0.12){ P.i=0; P.sw=t+2.6+Math.random()*2.8; }
       else { let ni; do{ ni=Math.floor(Math.random()*POD_PAPER_POSES.length); }while(ni===P.i && POD_PAPER_POSES.length>1); P.i=ni; P.sw=t+1.8+Math.random()*2.2;
-        if(POD_PAPER_POSES[P.i].flip){ pod3dPropsEnsure(); pod3dPropsFlip(t); } } }
+        if(POD_PAPER_POSES[P.i].touch){ pod3dPropsEnsure(); pod3dPropsTouch(t, POD_PAPER_POSES[P.i].touch); } } }
     const pose=POD_PAPER_POSES[P.i]||POD_PAPER_POSES[0];
     const La=G['LeftArm'],Lf=G['LeftForeArm'],Lh=G['LeftHand'],Ra=G['RightArm'],Rf=G['RightForeArm'],Rh=G['RightHand'];
     const aimP=(A,B,dir)=>{ if(!A||!B) return; const tl=pod3dAimTargetLocal(A.b,B.b,dir,A.q); if(tl) A.b.quaternion.slerp(tl,k); };
-    aimP(La,Lf,pose.LA); aimP(Lf,Lh,pose.LF); aimP(Ra,Rf,pose.RA); aimP(Rf,Rh,pose.RF);
-    // ⭐ مچِ دستِ نگه‌دارنده با **صفحهٔ برگه** هم‌راستا می‌شود (کفِ دست زیرِ کاغذ)؛
-    // با اویلرِ ثابت، کفِ دست هیچ‌وقت نمی‌چرخید و انگشت‌ها از تویِ برگه رد می‌شدند.
-    const palmR=pod3dPalmAlign('R', k), palmL=(pose.fL==='pinch')? pod3dPalmAlign('L', k) : false;
-    if(Lh&&!palmL){ const q=new T.Quaternion().setFromEuler(new T.Euler(pose.LH[0],pose.LH[1],pose.LH[2],'XYZ')); Lh.b.quaternion.copy(Lh.q).multiply(q); }
+    aimP(Ra,Rf,pose.RA); aimP(Rf,Rh,pose.RF);
+    // دستِ آزاد: یا ژستِ معمولی، یا لمس/اسکرولِ آی‌پد (با IK)
+    const PRx=pod3dPropsEnsure();
+    const touching = (pose.touch && PRx) ? pod3dPadTouch(pose, t, k, PRx) : false;
+    if(!touching){ aimP(La,Lf,pose.LA); aimP(Lf,Lh,pose.LF); }
+    // ⭐ مچِ دستِ نگه‌دارنده با **صفحهٔ آی‌پد** هم‌راستا می‌شود (کفِ دست پشتِ آن، شست روی لبه)
+    const palmR=pod3dPalmAlign('R', k), palmL=(!touching && pose.fL==='pinch')? pod3dPalmAlign('L', k) : false;
+    if(Lh&&!palmL&&!touching){ const q=new T.Quaternion().setFromEuler(new T.Euler(pose.LH[0],pose.LH[1],pose.LH[2],'XYZ')); Lh.b.quaternion.copy(Lh.q).multiply(q); }
     if(Rh&&!palmR){ const q=new T.Quaternion().setFromEuler(new T.Euler(pose.RH[0],pose.RH[1],pose.RH[2],'XYZ')); Rh.b.quaternion.copy(Rh.q).multiply(q); }
     try{ const sh=pod3dPoseFingers(pose); pod3dApplyFingers(sh[0], sh[1], k); }catch(e){}
     // چرخهٔ نگاه: چند ثانیه روی برگه (خواندن) و بعد به دوربین (توضیح‌دادن)
@@ -5788,7 +5791,7 @@ function pod3dGesture(open){
     const Hb=G['Head'], Nb=G['Neck'], tip=pod3dHeadTip();
     if(Nb&&Hb) pod3dBoneLook(Nb, Hb.b, R.p*0.38, new T.Quaternion().setFromEuler(new T.Euler(Math.sin(t*0.6)*0.006, energy*Math.sin(t*1.2)*0.03, Math.sin(t*0.8)*0.01,'XYZ')));
     if(Hb&&tip)  pod3dBoneLook(Hb, tip,   R.p*0.72, new T.Quaternion().setFromEuler(new T.Euler(Math.sin(t*0.9)*0.01, energy*Math.sin(t*1.6)*0.035, energy*Math.sin(t*2.0)*0.015,'XYZ')));
-    const PR=pod3dPropsEnsure(); if(PR){ pod3dPropsShow(true); pod3dPropsUpdate(t, reading); }
+    if(PRx){ pod3dPropsShow(true); pod3dPropsUpdate(t, reading); }
     return;
   }
   if(hm==='back'){
@@ -5959,8 +5962,10 @@ const POD_PAPER_POSES=(function(){
             LA:[0.15,-0.99,0.28], LF:[-0.48,-0.06,0.87], LH:[0.30,0,0], fL:'pinch', fR:'pinch'});
   out.push({n:'p_bothHigh', rd:1, RA:[-0.17,-0.97,0.18], RF:[0.40,0.20,0.89], RH:[0.36,0,0],
             LA:[0.17,-0.97,0.18], LF:[-0.40,0.20,0.89], LH:[0.36,0,0], fL:'pinch', fR:'pinch'});
-  // ورق‌زدن: دستِ چپ به لبهٔ بالاییِ برگه می‌رود (انیمیشنِ ورق هم‌زمان اجرا می‌شود)
-  out.push({n:'p_flip', flip:1, rd:1, RA:POD_HOLD_R.RA, RF:POD_HOLD_R.RF, RH:POD_HOLD_R.RH,
+  // لمس و اسکرولِ آی‌پد با دستِ آزاد (بازوی چپ با IK به نقطهٔ روی صفحه می‌رسد)
+  out.push({n:'p_tap', touch:'tap', rd:1, RA:POD_HOLD_R.RA, RF:POD_HOLD_R.RF, RH:POD_HOLD_R.RH,
+            LA:[0.15,-0.94,0.28], LF:[-0.34,0.10,0.93], LH:[0.28,0,0], fR:'pinch', fL:'point'});
+  out.push({n:'p_scroll', touch:'scroll', rd:1, RA:POD_HOLD_R.RA, RF:POD_HOLD_R.RF, RH:POD_HOLD_R.RH,
             LA:[0.15,-0.94,0.28], LF:[-0.34,0.10,0.93], LH:[0.28,0,0], fR:'pinch', fL:'point'});
   return out;
 })();
@@ -6015,36 +6020,78 @@ function _podTexBadge(){
   c.restore();
   return cv;
 }
-// ── بافتِ برگهٔ گزارش (۱=با تیتر، ۲=خط‌های ساده، ۳=خط+نمودار بدونِ متن؛ ورقِ ورق‌خور آینه‌ای می‌شود) ──
-function _podTexPaper(v){
-  const cv=document.createElement('canvas'); cv.width=320; cv.height=440; const c=cv.getContext('2d');
-  const FF='"Vazirmatn",sans-serif';
-  const bg=c.createLinearGradient(0,0,0,440); bg.addColorStop(0,'#ffffff'); bg.addColorStop(1,'#eef1f4'); c.fillStyle=bg; c.fillRect(0,0,320,440);
-  c.strokeStyle='#c8d0d8'; c.lineWidth=3; c.strokeRect(1.5,1.5,317,437);
-  let top=26;
-  if(v===1){
-    c.fillStyle='#12444a'; c.fillRect(14,14,292,52);
-    c.fillStyle='#3fb9a3'; c.fillRect(14,66,292,4);
-    c.direction='rtl'; c.textAlign='right';
-    c.fillStyle='#eafff8'; c.font='bold 22px '+FF; c.fillText('گزارشِ سلامتِ کاربر',292,38);
-    c.fillStyle='#9fd9cd'; c.font='bold 14px '+FF; c.fillText('دستیارِ دیابت — مرورِ روزانه',292,58);
-    top=92;
-  }
-  const line=(yy,wd,dark)=>{ c.fillStyle=dark?'#5c6b78':'#aab5c0'; c.fillRect(306-wd,yy,wd,7); };
-  let yy=top;
-  for(let i=0;i<7;i++){ line(yy, 120+((i*67)%160), i%3===0); yy+=19; }
-  // نمودارِ کوچکِ داده
-  const cx=18, cy=yy+6, cw=284, ch=92;
-  c.fillStyle='#f2f6f8'; c.fillRect(cx,cy,cw,ch); c.strokeStyle='#d5dde3'; c.lineWidth=2; c.strokeRect(cx,cy,cw,ch);
-  const bars=[0.42,0.68,0.35,0.86,0.55,0.72,0.48];
-  bars.forEach((b,i)=>{ const bw=24, bx=cx+16+i*38, bh=(ch-18)*b; c.fillStyle=(b>0.8?'#e0688a':'#3fb9a3'); c.fillRect(bx,cy+ch-8-bh,bw,bh); });
-  c.strokeStyle='#c2ccd4'; c.beginPath(); c.moveTo(cx+4,cy+ch-8); c.lineTo(cx+cw-4,cy+ch-8); c.stroke();
-  yy=cy+ch+16;
-  for(let i=0;i<5&&yy<420;i++){ line(yy, 100+((i*83)%180), i===0); yy+=19; }
+// ── آرمِ سیبِ ساده: روی canvasِ **جدا** کشیده می‌شود؛ وگرنه برشِ «گاز» سوراخِ سیاه
+// در پس‌زمینهٔ آلومینیومی می‌زند (چون destination-out همه‌چیزِ زیرش را پاک می‌کند).
+function _appleGlyph(r,col){
+  const S=Math.ceil(r*3.2), cv=document.createElement('canvas'); cv.width=S; cv.height=S;
+  const c=cv.getContext('2d'), cx=S/2, cy=S/2;
+  c.fillStyle=col;
+  c.beginPath(); c.arc(cx-r*0.44,cy+r*0.12,r*0.60,0,7); c.fill();
+  c.beginPath(); c.arc(cx+r*0.44,cy+r*0.12,r*0.60,0,7); c.fill();
+  c.beginPath(); c.ellipse(cx,cy+r*0.34,r*0.84,r*0.70,0,0,7); c.fill();
+  c.globalCompositeOperation='destination-out';
+  c.beginPath(); c.arc(cx+r*1.22,cy+r*0.06,r*0.48,0,7); c.fill();      // گازِ کناری
+  c.beginPath(); c.ellipse(cx,cy-r*0.66,r*0.30,r*0.26,0,0,7); c.fill(); // گودیِ بالا
+  c.globalCompositeOperation='source-over';
+  c.save(); c.translate(cx+r*0.20,cy-r*0.80); c.rotate(-0.6); c.fillStyle=col;
+  c.beginPath(); c.ellipse(0,0,r*0.34,r*0.15,0,0,7); c.fill(); c.restore();
   return cv;
 }
-
-// پروپ‌ها را یک‌بار می‌سازد (کارتِ سینه + دستهٔ برگه با ورقِ ورق‌خور)
+// ── پشتِ آی‌پد (رو‌به‌دوربین): آلومینیوم + آرمِ سیب + ماژولِ دوربین ──
+function _podTexIpadBack(){
+  const W=512,H=706, cv=document.createElement('canvas'); cv.width=W; cv.height=H; const c=cv.getContext('2d');
+  const g=c.createLinearGradient(0,0,W,H);
+  g.addColorStop(0,'#eceef1'); g.addColorStop(0.45,'#d5d9de'); g.addColorStop(0.75,'#bec3ca'); g.addColorStop(1,'#dadee3');
+  c.fillStyle=g; c.fillRect(0,0,W,H);
+  c.save(); c.globalAlpha=0.30;
+  const sh=c.createLinearGradient(0,H*0.15,W,H*0.55); sh.addColorStop(0,'rgba(255,255,255,0)'); sh.addColorStop(0.5,'rgba(255,255,255,0.9)'); sh.addColorStop(1,'rgba(255,255,255,0)');
+  c.fillStyle=sh; c.fillRect(0,0,W,H); c.restore();
+  { const gl=_appleGlyph(W*0.12,'#98a0aa'); c.drawImage(gl, W*0.5-gl.width/2, H*0.44-gl.height/2); }
+  const bw=W*0.20, bx=W*0.12, by=H*0.07, bh=bw;                              // ماژولِ دوربین
+  c.fillStyle='#c6cbd1'; c.beginPath(); c.moveTo(bx+16,by); c.arcTo(bx+bw,by,bx+bw,by+bh,16); c.arcTo(bx+bw,by+bh,bx,by+bh,16); c.arcTo(bx,by+bh,bx,by,16); c.arcTo(bx,by,bx+bw,by,16); c.closePath(); c.fill();
+  c.fillStyle='#2a2f36'; c.beginPath(); c.arc(bx+bw*0.5,by+bh*0.5,bw*0.28,0,7); c.fill();
+  c.fillStyle='#0c1015'; c.beginPath(); c.arc(bx+bw*0.5,by+bh*0.5,bw*0.17,0,7); c.fill();
+  c.fillStyle='#42618f'; c.beginPath(); c.arc(bx+bw*0.43,by+bh*0.43,bw*0.055,0,7); c.fill();
+  c.fillStyle='#9aa2ac'; c.textAlign='center'; c.font='600 24px "Vazirmatn",sans-serif'; c.fillText('iPad', W*0.5, H*0.94);
+  return cv;
+}
+// ── صفحهٔ نمایشِ آی‌پد (رو‌به‌خودِ مجری): داشبوردِ گزارشِ کاربر ──
+function _podTexIpadScreen(){
+  const W=512,H=706, cv=document.createElement('canvas'); cv.width=W; cv.height=H; const c=cv.getContext('2d');
+  const FF='"Vazirmatn",sans-serif';
+  c.fillStyle='#0b0f15'; c.fillRect(0,0,W,H);                     // قابِ مشکیِ دورِ صفحه
+  const x0=22,y0=26,w=W-44,h=H-52;
+  c.fillStyle='#f3f6f9'; c.fillRect(x0,y0,w,h);
+  c.direction='rtl'; c.textAlign='right';
+  c.fillStyle='#93a0ad'; c.font='600 16px '+FF; c.fillText('۹:۴۱', x0+w-14, y0+24);
+  c.fillStyle='#12444a'; c.fillRect(x0,y0+34,w,68);
+  c.fillStyle='#3fb9a3'; c.fillRect(x0,y0+102,w,4);
+  c.fillStyle='#eafff8'; c.font='bold 28px '+FF; c.fillText('دستیارِ دیابت', x0+w-18, y0+72);
+  c.fillStyle='#9fd9cd'; c.font='600 17px '+FF; c.fillText('گزارشِ سلامتِ کاربر', x0+w-18, y0+94);
+  let y=y0+130;
+  const card=(title,val,col)=>{                                   // کارت‌های آماری
+    c.fillStyle='#ffffff'; c.fillRect(x0+16,y,w-32,74);
+    c.strokeStyle='#dfe6ec'; c.lineWidth=2; c.strokeRect(x0+16,y,w-32,74);
+    c.fillStyle='#5b6b7a'; c.font='600 17px '+FF; c.fillText(title, x0+w-32, y+30);
+    c.fillStyle=col; c.font='bold 30px '+FF; c.fillText(val, x0+w-32, y+62);
+    y+=86; };
+  card('قندِ ناشتا','۱۱۲ mg/dL','#3fb9a3');
+  card('میانگینِ امروز','۱۳۸ mg/dL','#e0688a');
+  c.fillStyle='#ffffff'; c.fillRect(x0+16,y,w-32,180);            // نمودار
+  c.strokeStyle='#dfe6ec'; c.lineWidth=2; c.strokeRect(x0+16,y,w-32,180);
+  const bars=[0.45,0.72,0.38,0.88,0.55,0.70,0.50,0.62];
+  bars.forEach((b,i)=>{ const bw2=34, bx2=x0+40+i*(bw2+16), bh2=(180-40)*b;
+    c.fillStyle=(b>0.8?'#e0688a':'#3fb9a3'); c.fillRect(bx2, y+180-24-bh2, bw2, bh2); });
+  c.strokeStyle='#c9d3db'; c.beginPath(); c.moveTo(x0+28,y+180-24); c.lineTo(x0+w-28,y+180-24); c.stroke();
+  y+=196;
+  for(let i=0;i<5&&y<y0+h-30;i++){                                // ردیف‌های فهرست
+    c.fillStyle='#ffffff'; c.fillRect(x0+16,y,w-32,44); c.strokeStyle='#e7edf2'; c.lineWidth=1.5; c.strokeRect(x0+16,y,w-32,44);
+    c.fillStyle='#aab5c0'; c.fillRect(x0+40, y+18, 150+((i*53)%120), 8);
+    c.fillStyle='#3fb9a3'; c.beginPath(); c.arc(x0+w-46, y+22, 9, 0, 7); c.fill();
+    y+=52; }
+  return cv;
+}
+// پروپ‌ها را یک‌بار می‌سازد (کارتِ سینه + آی‌پد)
 function pod3dPropsEnsure(){
   if(_pod3d.props) return _pod3d.props;
   if(!THREE||!_pod3d.root||!_pod3d.gbones) return null;
@@ -6052,58 +6099,143 @@ function pod3dPropsEnsure(){
   try{
     const U=pod3dPropUnit(); if(!U) return null;
     const Mat=(T.MeshLambertMaterial||T.MeshBasicMaterial);
-    const mk=(cv,w,h)=>{ const tex=new T.CanvasTexture(cv); try{ if(T.sRGBEncoding) tex.encoding=T.sRGBEncoding; }catch(e){}
-      const m=new T.Mesh(new T.PlaneGeometry(w,h), new Mat({map:tex, side:T.DoubleSide, alphaTest:0.5}));
-      m.frustumCulled=false; m.renderOrder=2; return m; };
-    const bw=U*0.30, badge=mk(_podTexBadge(), bw, bw*(420/512));
-    const pw=U*0.50, ph=pw*1.38;
-    const papers=new T.Group();
-    const s1=mk(_podTexPaper(2), pw, ph);
-    const s2=mk(_podTexPaper(1), pw*0.985, ph*0.985); s2.position.set(U*0.010, U*0.006, ph*0.006);
-    const piv=new T.Group(); piv.position.set(0, -ph/2, ph*0.013);      // لولا روی لبهٔ پایینِ ورق (بلندشدن، نه بازشدنِ کتابی)
-    const s3=mk(_podTexPaper(3), pw*0.97, ph*0.97); s3.position.set(0, ph/2, 0);
-    piv.add(s3); papers.add(s1); papers.add(s2); papers.add(piv);
+    const tex=(cv)=>{ const tx=new T.CanvasTexture(cv); try{ if(T.sRGBEncoding) tx.encoding=T.sRGBEncoding; }catch(e){} tx.anisotropy=4; return tx; };
+    // کارتِ شناسایی
+    const bw=U*0.30;
+    const badge=new T.Mesh(new T.PlaneGeometry(bw, bw*(420/512)), new Mat({map:tex(_podTexBadge()), side:T.DoubleSide, alphaTest:0.5}));
+    badge.frustumCulled=false; badge.renderOrder=2;
+    // ── آی‌پد: جعبهٔ نازک. +Z = پشتِ آلومینیومی (رو‌به‌دوربین)، -Z = صفحهٔ نمایش (رو‌به‌مجری) ──
+    const pw=U*0.52, ph=U*0.70, pt=U*0.022;
+    const scr=tex(_podTexIpadScreen()); scr.wrapS=scr.wrapT=T.RepeatWrapping;
+    const alum=new Mat({color:0xcfd4da});
+    const mats=[alum,alum,alum,alum, new Mat({map:tex(_podTexIpadBack())}), new Mat({map:scr})];
+    const pad=new T.Mesh(new T.BoxGeometry(pw,ph,pt), mats); pad.frustumCulled=false;
+    const papers=new T.Group(); papers.add(pad);
     _pod3d.root.add(badge); _pod3d.root.add(papers);
-    _pod3d.props={badge:badge, papers:papers, piv:piv, U:U, pw:pw, ph:ph, fa:0, fs:0, ft:0, f0:null, pos:null};
+    _pod3d.props={badge:badge, papers:papers, pad:pad, scr:scr, U:U, pw:pw, ph:ph, pt:pt, pos:null, scroll:0};
   }catch(e){ _pod3d.props=null; }
   return _pod3d.props;
 }
-// ⭐⭐ کفِ دست را زیرِ برگه می‌چرخاند (۲۴.۱۳) — کاملاً مستقل از محورِ استخوانِ مدل.
-// روش: دستگاهِ مختصاتِ «کفِ دست» از **موقعیتِ خودِ استخوان‌های انگشت** ساخته می‌شود
-//   f = مچ→انگشتِ وسط، s = انگشتِ کوچک→اشاره، و کفِ دست = s×f (برای دستِ راست؛ چپ قرینه).
-// سپس دستگاهِ هدف از صفحهٔ برگه ساخته می‌شود (کفِ دست هم‌جهتِ نرمالِ برگه، انگشتان روی
-// سطحِ برگه در امتدادِ ساعد تا مچ پیچ نخورد) و چرخشِ لازم به فضای محلیِ استخوان برمی‌گردد.
-// بدونِ این، پوز فقط جهتِ ساعد را می‌داد و کفِ دست هیچ‌وقت زیرِ کاغذ نمی‌رفت.
-function pod3dPalmAlign(side, k){
-  const T=THREE, G=_pod3d.gbones, P=_pod3d.props; if(!G||!P||!T) return false;
-  const H=G[side==='R'?'RightHand':'LeftHand'], FA=G[side==='R'?'RightForeArm':'LeftForeArm'];
-  if(!H||!H.b.parent) return false;
-  const fg=pod3dFingerGroups(); const hs=fg&&fg[side]; if(!hs) return false;
+// ⭐⭐ دستگاهِ مختصاتِ «کفِ دست» را از هندسهٔ خودِ اسکلت می‌سازد (مستقل از محورِ استخوانِ مدل).
+// f = مچ→انگشتِ وسط، s = انگشتِ کوچک→اشاره، کفِ دست = s×f (دستِ چپ قرینه).
+function pod3dHandFrame(side){
+  const T=THREE; const fg=pod3dFingerGroups(); const hs=fg&&fg[side]; if(!hs) return null;
   const mid=(hs.middle&&hs.middle[0])||(hs.index&&hs.index[0]), idx=hs.index&&hs.index[0], pky=hs.pinky&&hs.pinky[0];
-  if(!mid||!idx||!pky) return false;
+  if(!mid||!idx||!pky) return null;
+  const f=mid.b.position.clone(); if(f.lengthSq()<1e-9) return null; f.normalize();
+  const sv=idx.b.position.clone().sub(pky.b.position); if(sv.lengthSq()<1e-9) return null; sv.normalize();
+  const palm=new T.Vector3().crossVectors(sv,f).normalize().multiplyScalar(side==='R'?1:-1);
+  if(!isFinite(palm.x)||palm.lengthSq()<0.5) return null;
+  const sA=new T.Vector3().crossVectors(palm,f).normalize();
+  const fA=new T.Vector3().crossVectors(sA,palm).normalize();
+  return {s:sA, p:palm, f:fA};
+}
+// مچ را طوری می‌چرخاند که «کفِ دست» به سمتِ Ptgt و «انگشتان» به سمتِ Ftgt باشند (هر دو در فضای جهانی)
+function pod3dHandOrient(side, Ftgt, Ptgt, k, fingerFirst){
+  const T=THREE, G=_pod3d.gbones; if(!G||!T) return false;
+  const H=G[side==='R'?'RightHand':'LeftHand']; if(!H||!H.b.parent) return false;
+  const fr=pod3dHandFrame(side); if(!fr) return false;
   try{
-    // دستگاهِ محلیِ دست (از هندسهٔ خودِ اسکلت)
-    const f=mid.b.position.clone(); if(f.lengthSq()<1e-9) return false; f.normalize();
-    const sv=idx.b.position.clone().sub(pky.b.position); if(sv.lengthSq()<1e-9) return false; sv.normalize();
-    const palm=new T.Vector3().crossVectors(sv,f).normalize().multiplyScalar(side==='R'?1:-1);
-    if(!isFinite(palm.x)||palm.lengthSq()<0.5) return false;
-    const sA=new T.Vector3().crossVectors(palm,f).normalize();
-    const fA=new T.Vector3().crossVectors(sA,palm).normalize();
-    // دستگاهِ هدف از صفحهٔ برگه
-    const pq=P.papers.quaternion;
-    const pN=new T.Vector3(0,0,1).applyQuaternion(pq);
-    let Ft=null;
-    if(FA){ const ep=new T.Vector3(), hp=new T.Vector3(); FA.b.getWorldPosition(ep); H.b.getWorldPosition(hp);
-      const fd=hp.sub(ep); if(fd.lengthSq()>1e-8){ fd.normalize(); Ft=fd.sub(pN.clone().multiplyScalar(fd.dot(pN))); if(Ft.lengthSq()<1e-6) Ft=null; else Ft.normalize(); } }
-    if(!Ft){ Ft=new T.Vector3(1,0,0).applyQuaternion(pq).multiplyScalar(side==='R'?1:-1); }
-    const St=new T.Vector3().crossVectors(pN,Ft).normalize();
-    const Ft2=new T.Vector3().crossVectors(St,pN).normalize();
-    const mA=new T.Matrix4().makeBasis(sA,palm,fA), mB=new T.Matrix4().makeBasis(St,pN,Ft2);
+    let P=Ptgt.clone(), F=Ftgt.clone();
+    if(P.lengthSq()<1e-9||F.lengthSq()<1e-9) return false;
+    if(fingerFirst){   // انگشت دقیقاً به هدف اشاره کند (برای لمسِ صفحه) و کف تا حدِ ممکن رو‌به‌صفحه
+      F.normalize(); P.sub(F.clone().multiplyScalar(P.dot(F)));
+      if(P.lengthSq()<1e-6) return false; P.normalize();
+    } else {           // کفِ دست دقیقاً موازیِ صفحه (برای نگه‌داشتن) و انگشت تا حدِ ممکن در امتدادِ ساعد
+      P.normalize(); F.sub(P.clone().multiplyScalar(F.dot(P)));
+      if(F.lengthSq()<1e-6) return false; F.normalize();
+    }
+    const S=new T.Vector3().crossVectors(P,F).normalize();
+    const mA=new T.Matrix4().makeBasis(fr.s,fr.p,fr.f), mB=new T.Matrix4().makeBasis(S,P,F);
     const qW=new T.Quaternion().setFromRotationMatrix(mB.multiply(mA.transpose()));
     const pw=new T.Quaternion(); H.b.parent.getWorldQuaternion(pw);
     H.b.quaternion.slerp(pw.invert().multiply(qW), k);
     return true;
   }catch(e){ return false; }
+}
+// کفِ دستِ نگه‌دارنده را با صفحهٔ آی‌پد هم‌راستا می‌کند (انگشتان در امتدادِ ساعد تا مچ پیچ نخورد)
+function pod3dPalmAlign(side, k){
+  const T=THREE, G=_pod3d.gbones, P=_pod3d.props; if(!G||!P||!T) return false;
+  const H=G[side==='R'?'RightHand':'LeftHand'], FA=G[side==='R'?'RightForeArm':'LeftForeArm'];
+  if(!H) return false;
+  try{
+    const pq=P.papers.quaternion;
+    const pN=new T.Vector3(0,0,1).applyQuaternion(pq);
+    let Ft=null;
+    if(FA){ const ep=new T.Vector3(), hp=new T.Vector3(); FA.b.getWorldPosition(ep); H.b.getWorldPosition(hp);
+      const fd=hp.sub(ep); if(fd.lengthSq()>1e-8) Ft=fd.normalize(); }
+    if(!Ft) Ft=new T.Vector3(1,0,0).applyQuaternion(pq).multiplyScalar(side==='R'?1:-1);
+    return pod3dHandOrient(side, Ft, pN, k);
+  }catch(e){ return false; }
+}
+// ⭐ IKِ دو-استخوانه: مچ را به نقطهٔ هدف می‌رساند (جهتِ آرنج با بردارِ قطب کنترل می‌شود).
+// برای «لمس/اسکرولِ آی‌پد با دستِ آزاد» لازم است — با پوزِ ثابت نمی‌شود نوکِ انگشت را روی صفحه گذاشت.
+function pod3dReach(side, target, pole, k){
+  const T=THREE, G=_pod3d.gbones; if(!G||!T) return false;
+  const A=G[side==='R'?'RightArm':'LeftArm'], F=G[side==='R'?'RightForeArm':'LeftForeArm'], H=G[side==='R'?'RightHand':'LeftHand'];
+  if(!A||!F||!H) return false;
+  try{
+    const S=new T.Vector3(); A.b.getWorldPosition(S);
+    const L1=F.b.position.length(), L2=H.b.position.length(); if(L1<1e-4||L2<1e-4) return false;
+    const d=target.clone().sub(S); let dist=d.length(); if(dist<1e-4) return false;
+    dist=Math.max(Math.abs(L1-L2)+0.02, Math.min((L1+L2)*0.985, dist));
+    const dir=d.normalize();
+    const cosA=Math.max(-1,Math.min(1,(L1*L1+dist*dist-L2*L2)/(2*L1*dist)));
+    const ang=Math.acos(cosA);
+    let per=pole.clone(); per.sub(dir.clone().multiplyScalar(per.dot(dir)));
+    if(per.lengthSq()<1e-6){ per=new T.Vector3(0,-1,0); per.sub(dir.clone().multiplyScalar(per.dot(dir))); }
+    if(per.lengthSq()<1e-6) return false; per.normalize();
+    const eDir=dir.clone().multiplyScalar(Math.cos(ang)).addScaledVector(per,Math.sin(ang)).normalize();
+    const elbow=S.clone().addScaledVector(eDir,L1);
+    const wDir=target.clone().sub(elbow); if(wDir.lengthSq()<1e-8) return false; wDir.normalize();
+    const t1=pod3dAimTargetLocal(A.b,F.b,[eDir.x,eDir.y,eDir.z],A.q); if(t1) A.b.quaternion.slerp(t1,k);
+    const t2=pod3dAimTargetLocal(F.b,H.b,[wDir.x,wDir.y,wDir.z],F.q); if(t2) F.b.quaternion.slerp(t2,k);
+    return true;
+  }catch(e){ return false; }
+}
+// طولِ انگشتِ اشاره (مچ تا نوک) از خودِ اسکلت — یک‌بار اندازه‌گیری و کش می‌شود
+function pod3dFingerLen(side){
+  const key='fl'+side; if(_pod3d[key]!==undefined) return _pod3d[key];
+  _pod3d[key]=null;
+  try{ const T=THREE, fg=pod3dFingerGroups(), hs=fg&&fg[side], G=_pod3d.gbones;
+    const H=G&&G[side==='R'?'RightHand':'LeftHand']; const arr=hs&&hs.index;
+    if(H&&arr&&arr.length){ const a=new T.Vector3(), b=new T.Vector3();
+      H.b.getWorldPosition(a); arr[arr.length-1].b.getWorldPosition(b);
+      const d=a.distanceTo(b); if(d>0.01&&d<0.5) _pod3d[key]=d; }
+  }catch(e){}
+  return _pod3d[key];
+}
+// ⭐ لمس/اسکرولِ آی‌پد با دستِ آزاد: نوکِ انگشتِ اشاره روی صفحه می‌نشیند (با IKِ دو-استخوانه)
+// و در حالتِ اسکرول، هم انگشت روی صفحه می‌لغزد و هم محتوای صفحه جابه‌جا می‌شود.
+function pod3dPadTouch(pose, t, k, P){
+  const T=THREE; if(!P||!P.q||!P.sN) return false;
+  const st=_pod3d.tch||(_pod3d.tch={t0:t, mode:pose.touch});
+  const e=Math.max(0, t-st.t0);
+  let ty=0.16, press=0;
+  if(st.mode==='scroll'){
+    const kk=Math.min(1, e/1.5), sm=kk*kk*(3-2*kk);
+    ty=0.26-0.46*sm;
+    press=(e<0.15? e/0.15 : (e<1.5? 1 : Math.max(0,1-(e-1.5)/0.35)));
+    if(st.base==null) st.base=P.scroll||0;
+    P.scroll=st.base+0.22*sm;
+  } else {
+    const cyc=e%1.05;
+    press=(cyc<0.16? cyc/0.16 : (cyc<0.34? 1-(cyc-0.16)/0.18 : 0));
+    ty=0.16-0.10*Math.floor((e%3.15)/1.05);          // سه ضربهٔ کوتاه در جاهای مختلفِ صفحه
+  }
+  try{
+    const tp=P.c.clone().addScaledVector(P.sX, P.pw*0.16).addScaledVector(P.sUp, P.ph*ty).addScaledVector(P.sN, -P.pt*0.5);
+    // ⭐ فاصلهٔ مچ از نقطهٔ لمس = **طولِ واقعیِ انگشتِ اشارهٔ همین مدل** (اندازه‌گیری‌شده، نه عددِ حدسی)
+    //   ⇒ نوکِ انگشت دقیقاً روی صفحه می‌نشیند؛ با press کمی فشار می‌دهد.
+    const fl=pod3dFingerLen('L')||P.U*0.32;
+    const appr=P.sX.clone().multiplyScalar(0.78).addScaledVector(P.sN,-0.62).normalize();   // از کنار و کمی بالای صفحه
+    const wrist=tp.clone().addScaledVector(appr, fl*(1.08-0.07*press));
+    const mq=new T.Quaternion(); if(_pod3d.modelRoot) _pod3d.modelRoot.getWorldQuaternion(mq);
+    const pole=new T.Vector3(0.55,-1,-0.12).applyQuaternion(mq).normalize();
+    if(!pod3dReach('L', wrist, pole, k)) return false;
+    pod3dHandOrient('L', appr.clone().negate(), P.sN.clone(), k, true);
+    return true;
+  }catch(e2){ return false; }
 }
 // عمقِ سطحِ کت جلوی سینه را یک‌بار با پرتابِ پرتو (ray) اندازه می‌گیرد و کش می‌کند.
 // چرا: استخوانِ Spine2 در آواتارهای مختلف در عمق‌های متفاوتی از بدن است؛ افستِ ثابت
@@ -6133,61 +6265,60 @@ function pod3dChestDepth(){
   return _pod3d.chestD;
 }
 function pod3dPropsShow(on){ const P=_pod3d.props; if(!P) return; P.badge.visible=!!on; P.papers.visible=!!on; }
-function pod3dPropsFlip(t){ const P=_pod3d.props; if(!P||P.f0!=null) return; P.f0=t; }
-// هر فریم: کارت روی سینه و برگه‌ها در دست جای‌گذاری می‌شوند (از موقعیتِ جهانیِ استخوان)
+// شروعِ حرکتِ لمس/اسکرولِ آی‌پد با دستِ آزاد
+function pod3dPropsTouch(t, mode){ _pod3d.tch={t0:t, mode:(mode==='scroll'?'scroll':'tap')}; }
+// هر فریم: کارت روی سینه و آی‌پد در دست جای‌گذاری می‌شوند (از موقعیتِ جهانیِ استخوان)
 function pod3dPropsUpdate(t, reading){
   const P=_pod3d.props, G=_pod3d.gbones; if(!P||!G||!THREE) return; const T=THREE;
   const mq=new T.Quaternion(); if(_pod3d.modelRoot) _pod3d.modelRoot.getWorldQuaternion(mq);
   const fwd=new T.Vector3(0,0,1).applyQuaternion(mq), up=new T.Vector3(0,1,0).applyQuaternion(mq), lft=new T.Vector3(1,0,0).applyQuaternion(mq);
   const U=P.U;
+  // ── کارتِ شناسایی روی کت ──
   const chest=G['Spine2']||G['Spine1']||G['Spine'];
   if(chest){ const cp=new T.Vector3(); chest.b.getWorldPosition(cp);
     cp.addScaledVector(lft,U*0.30*POD_PROP_SIDE).addScaledVector(up,-U*0.06);
-    const d=pod3dChestDepth();                      // فاصلهٔ سطحِ واقعیِ کت از استخوانِ سینه (یک‌بار با ray)
-    cp.addScaledVector(fwd, (d!=null? d : U*0.42) + U*0.075);  // جلوترِ *جلوترین* سطح (شاملِ یقه) ⇒ هیچ گوشه‌ای زیرِ کت نمی‌رود
+    const d=pod3dChestDepth();
+    cp.addScaledVector(fwd, (d!=null? d : U*0.42) + U*0.045);
     P.badge.position.copy(cp); P.badge.quaternion.copy(mq);
-    P.badge.rotateY(0.16*POD_PROP_SIDE);            // شیبِ ملایمِ هم‌راستا با سینه (کم، تا لبه‌ها جلوی سطح بمانند)
-    P.badge.rotateX(-0.12); }
+    P.badge.rotateY(0.16*POD_PROP_SIDE); P.badge.rotateX(-0.12); }
+  // ── آی‌پد در دستِ راست ──
   const lh=G['RightHand'], fa=G['RightForeArm'];
   if(lh){ const hp=new T.Vector3(); lh.b.getWorldPosition(hp);
-    // نقطهٔ گرفتن را از مچ به وسطِ کفِ دست ببر (امتدادِ ساعد) وگرنه برگه کنارِ دست معلق به‌نظر می‌رسد
+    // نقطهٔ گرفتن: از مچ به وسطِ کفِ دست (امتدادِ ساعد)
     if(fa){ const ep=new T.Vector3(); fa.b.getWorldPosition(ep); const ax=hp.clone().sub(ep); if(ax.lengthSq()>1e-8) hp.addScaledVector(ax.normalize(), U*0.17); }
-    // ⭐ اول چرخش ساخته می‌شود، بعد افست‌ها در دستگاهِ خودِ برگه اعمال می‌شوند؛
-    // وگرنه با تغییرِ شیب، لبهٔ برگه از دست جدا می‌شد یا دست از تویِ برگه می‌زد بیرون.
-    let tilt=1.35+(reading?0.08:0);   // ~۷۷ درجه: برگه رو‌به‌خودش (نه تختِ رو‌به‌دوربین)
-    // ⭐ گاردِ زاویهٔ دید: هرقدر هم برگه به‌سمتِ خودش باشد، از دوربین نباید «لبه‌ای/نامرئی» شود.
-    // (ارتفاعِ دوربین با زوم تغییر می‌کند؛ بدونِ این گارد، در زومِ کم برگه به یک خطِ سفید تبدیل می‌شد.)
-    try{ const cam=_pod3d.cam; if(cam){
+    // ⭐⭐ علامتِ شیب مثبت است: لبهٔ **بالای** آی‌پد به‌سمتِ دوربین خم می‌شود ⇒ صفحهٔ نمایش
+    // رو‌به‌بالا/عقب یعنی رو‌به‌صورتِ خودِ مجری، و پشتِ آلومینیومی (آرمِ سیب) رو‌به‌دوربین.
+    // (علامتِ منفیِ نسخه‌های قبل باعث می‌شد هرچه شیب را زیاد کنیم باز «رو‌به‌دوربین» بماند.)
+    let tilt=1.02+(reading?0.10:0);
+    try{ const cam=_pod3d.cam; if(cam){    // گارد: پشتِ آی‌پد نباید از دوربین لبه‌ای شود (آرم دیده شود)
       const toCam=new T.Vector3(); cam.getWorldPosition(toCam); toCam.sub(hp).normalize();
-      const nrm=new T.Vector3(0,Math.sin(tilt),Math.cos(tilt)).applyQuaternion(mq);
+      const nrm=new T.Vector3(0,-Math.sin(tilt),Math.cos(tilt)).applyQuaternion(mq);
       const ang=Math.acos(Math.max(-1,Math.min(1,nrm.dot(toCam))));
-      if(ang>1.30) tilt=Math.max(0.6, tilt-(ang-1.30));
+      if(ang>1.15) tilt=Math.max(0.55, tilt-(ang-1.15));
     } }catch(e){}
-    const q=mq.clone().multiply(new T.Quaternion().setFromEuler(new T.Euler(-tilt,0,0,'XYZ')));
-    const sUp=new T.Vector3(0,1,0).applyQuaternion(q), sN=new T.Vector3(0,0,1).applyQuaternion(q);
-    const sX=new T.Vector3(1,0,0).applyQuaternion(q);
-    // ⭐ ارتفاعِ صفحهٔ برگه = وسطِ «گیرهٔ» شست و انگشتان (از هندسهٔ واقعیِ دست، هر فریم)
-    //   ⇒ شست روی کاغذ و بقیهٔ انگشت‌ها زیرِ کاغذ ⇒ حسِ واقعیِ «گرفتن» (نه سینیِ باز).
+    const q=mq.clone().multiply(new T.Quaternion().setFromEuler(new T.Euler(tilt,0,0,'XYZ')));
+    const sUp=new T.Vector3(0,1,0).applyQuaternion(q), sN=new T.Vector3(0,0,1).applyQuaternion(q), sX=new T.Vector3(1,0,0).applyQuaternion(q);
+    // ارتفاعِ صفحهٔ آی‌پد = وسطِ «گیرهٔ» شست و انگشتان (از هندسهٔ واقعیِ دست، هر فریم)
     let gh=U*0.05;
     try{ const fg=pod3dFingerGroups(), H=fg&&fg.R; if(H){
       const wpos=new T.Vector3(); lh.b.getWorldPosition(wpos);
       const tipH=(arr)=>{ if(!arr||!arr.length) return null; const v=new T.Vector3(); arr[arr.length-1].b.getWorldPosition(v); return v.sub(wpos).dot(sN); };
       const dTh=tipH(H.thumb), dIx=tipH(H.index), dMd=tipH(H.middle);
       const dFg=Math.max(dIx==null?-9:dIx, dMd==null?-9:dMd);
-      if(dTh!=null && dFg>-8) gh=Math.max(dFg+U*0.018, Math.min(U*0.16, (dTh+dFg)/2));
+      if(dTh!=null && dFg>-8){   // صفحه باید **بین** نوکِ شست و نوکِ انگشتان بیفتد (گیرهٔ واقعی)
+        const lo=dFg+U*0.012, hi=dTh-U*0.012, mid=(dTh+dFg)/2;
+        // اگر شست بالای انگشتان باشد ⇒ صفحه دقیقاً وسطِ گیره؛ وگرنه (مدلِ استثنایی)
+        // صفحه بالای *هر دو* می‌رود تا هیچ انگشتی از آی‌پد بیرون نزند.
+        gh=Math.min(U*0.16, (hi>lo)? Math.min(hi, Math.max(lo, mid)) : (Math.max(dTh,dFg)+U*0.010));
+      }
     } }catch(e){}
-    // برگه از دستِ نگه‌دارنده به‌سمتِ مرکزِ بدن کشیده می‌شود (نه وسطِ دست) تا لبه‌اش تویِ آستین/بازو نرود
     hp.addScaledVector(sUp, P.ph*0.26).addScaledVector(sX, P.pw*0.34).addScaledVector(sN, gh);
     if(!P.pos) P.pos=hp.clone(); else P.pos.lerp(hp,0.3);
-    P.papers.position.copy(P.pos); P.papers.quaternion.copy(q); }
-  // ⭐ ورق‌زدن (۲۴.۱۱): ورقِ بالایی از لبهٔ پایین **بلند می‌شود، کمی کج و برمی‌گردد** —
-  // نه چرخشِ کتابیِ ۱۸۰درجه به بیرونِ بدن (که در اسکرین‌شاتِ کاربر از کادر می‌زد بیرون).
-  if(P.f0!=null){ const e=t-P.f0, A=0.95, sm=k=>k*k*(3-2*k);
-    if(e<0.55) P.fa=A*sm(e/0.55);
-    else if(e<0.72) P.fa=A;
-    else if(e<1.25) P.fa=A*(1-sm((e-0.72)/0.53));
-    else { P.fa=0; P.f0=null; } }
-  P.piv.rotation.set(P.fa||0, 0, 0);   // فقط بلندشدن از لبهٔ پایین
+    P.papers.position.copy(P.pos); P.papers.quaternion.copy(q);
+    P.q=q; P.c=P.pos.clone(); P.sUp=sUp; P.sN=sN; P.sX=sX;   // برای منطقِ لمس/اسکرول
+  }
+  // ── اسکرولِ محتوای صفحه ──
+  if(P.scr){ try{ P.scr.offset.y=P.scroll||0; }catch(e){} }
 }
 // ── نگاه به برگه/دوربین: استخوان B را (که فرزندش C است) به‌اندازهٔ pitch حولِ محورِ Xِ مدل خم می‌کند ──
 // همان ریاضیِ pod3dAimTargetLocal با مبنایِ «پوزِ استراحت» ⇒ بدونِ انباشتِ چرخش (درسِ ۲۴.۱).
@@ -6633,8 +6764,8 @@ function renderPodCfg(){
       const curUrl=c.av3dUrl||pod3dDefaultUrl();
       h+=`<div class="qbg-sub" style="margin-top:4px">با همان صدا/متن لب می‌زند، پلک می‌زند و بدنش حرکتِ طبیعی دارد. بارِ اول به اینترنت نیاز دارد، بعد کش می‌شود.</div>`;
       h+=`<label class="qbg-lbl" style="margin-top:8px">ژستِ دست‌ها</label>`;
-      h+=`<div class="pod-seg">`+[['normal','🙌 نرمال'],['present','🎤 ژستِ مجری'],['back','🧍 پشتِ کمر'],['paper','📄 برگه‌خوان']].map(o=>`<button class="${(c.handMode||'normal')===o[0]?'on':''}" onclick="podCfgPick('handMode','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
-      h+=`<div class="qbg-sub" style="margin-top:4px">«ژستِ مجری» ۳۴ پوزِ رو‌به‌دوربین با انگشتِ طبیعی را اجرا می‌کند. «📄 برگه‌خوان» = کارتِ شناساییِ «ماکان صنعت / دستیارِ دیابت» روی سینهٔ چپ + برگه‌های گزارش در دستِ راست: گاهی سرش را روی برگه‌ها خم می‌کند و می‌خواند، ورق می‌زند و دوباره رو‌به‌دوربین توضیح می‌دهد (آزمایشی — اگر جای کارت/برگه دقیق نبود یک عکس بفرست تا تنظیم کنم).</div>`;
+      h+=`<div class="pod-seg">`+[['normal','🙌 نرمال'],['present','🎤 ژستِ مجری'],['back','🧍 پشتِ کمر'],['paper','📱 آی‌پد به‌دست']].map(o=>`<button class="${(c.handMode||'normal')===o[0]?'on':''}" onclick="podCfgPick('handMode','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
+      h+=`<div class="qbg-sub" style="margin-top:4px">«ژستِ مجری» ۳۴ پوزِ رو‌به‌دوربین با انگشتِ طبیعی را اجرا می‌کند. «📱 آی‌پد به‌دست» = کارتِ شناساییِ «ماکان صنعت / دستیارِ دیابت» روی سینهٔ چپ + یک آی‌پد در دستِ راست که **صفحه‌اش رو‌به‌خودِ مجری** و پشتِ آلومینیومی‌اش رو‌به‌دوربین است: گاهی سرش را روی آن خم می‌کند و می‌خواند، با دستِ دیگر روی صفحه می‌زند یا اسکرول می‌کند، و دوباره رو‌به‌دوربین توضیح می‌دهد.</div>`;
       // ── پس‌زمینهٔ متحرک ──
       h+=`<label class="qbg-lbl" style="margin-top:12px">🌄 پس‌زمینهٔ متحرک</label>`;
       h+=`<div class="pod-seg">`+[['on','روشن',true],['off','خاموش',false]].map(o=>`<button class="${c.avBg===o[2]?'on':''}" onclick="podCfgPick('avBg',${o[2]})">${o[1]}</button>`).join('')+`</div>`;
