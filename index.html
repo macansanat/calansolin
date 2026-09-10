@@ -2342,7 +2342,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۵.۷</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۵.۸</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -15906,17 +15906,23 @@ function chatPrompt(title, initial, onOk){ chatCloseRename();
 function chatSetProvider(sel){ const o=chatLoad(); const c=chatActive(o); if(c){ c.provider=sel.value; chatSave(o); } }
 function chatSetSpeed(sel){ const o=chatLoad(); const c=chatActive(o); if(c){ c.speed=sel.value; chatSave(o); } }
 function buildChatSystemPrompt(){
-  let snap; try{ snap=buildHealthSnapshot('overview'); }catch(e){ snap={text:''}; }
+  // ⚠️ چت باید «پرونده» ببیند نه خلاصهٔ آماری: بازهٔ مستقل ۳۰ روزه + خطِ زمانیِ ۱۴ روزِ روزبه‌روز
+  let snap; try{ snap=buildHealthSnapshot('chat',{timelineDays:14}); }catch(e){ snap={text:''}; }
   let extra=''; try{ const p=JSON.parse(localStorage.getItem(PKEY)||'{}'); if(p.gender) extra='جنسیت: '+(p.gender==='male'?'مرد':p.gender==='female'?'زن':p.gender)+'\n'; }catch(e){}
   let persona=''; try{ persona=chatRolesSys(chatActive())+'\n'; }catch(e){}
   let suggest=''; try{ if(chatSuggestOn()) suggest='\nدر پایانِ هر پاسخ، دقیقاً یک خطِ جدا با این قالب بگذار (برای پیشنهادِ سوال بعدی به کاربر): «@@SUGGEST@@ سوال۱ || سوال۲ || سوال۳» — دو یا سه سوالِ کوتاهِ فارسی (هرکدام کمتر از ۷ کلمه) که کاربر احتمالاً بعد از این می‌پرسد، از زبانِ خودِ کاربر (اول‌شخص). این خط را هیچ‌وقت توضیح نده.\n'; }catch(e){}
   return "تو «دیابوت» هستی؛ یک دستیار هوشمند، همدل و عملگرای دیابت که همه‌ی اطلاعات متابولیک این کاربر را می‌داند. همیشه فارسی، کوتاه، دقیق و کاربردی جواب بده و از داده‌های کاربر برای شخصی‌سازی استفاده کن.\n"+
+  "📁 مهم — تو به «پروندهٔ کاملِ» این کاربر دسترسی داری (پایینِ همین پیام): پروفایل و بیماری‌ها، قندها، وعده‌ها و کربوهیدرات، نام و دوزِ انسولین‌ها، داروها، ورزش، خواب، فشار، وزن، حالِ روحی، یادداشت‌های دفترچه، آزمایش‌ها و روندشان، و یک «خطِ زمانیِ روزبه‌روز». قواعد:\n"+
+  "۱) هرگز نگو «اطلاعاتی از تو ندارم» یا «پرونده‌ات را ندارم». اگر چیزی واقعاً ثبت نشده، دقیق بگو کدام مورد ثبت نشده و از او بخواه ثبتش کند.\n"+
+  "۲) نامِ انسولین/دارو را «حدس نزن». فقط همان نام‌هایی را به کار ببر که در پرونده آمده‌اند. هرگز نپرس «کِی از فلان انسولین به فلان عوض کردی» مگر خودِ پرونده نشان دهد نام عوض شده.\n"+
+  "۳) وقتی می‌پرسد «هفتهٔ اخیرم را بررسی کن» یا «وضعیتم چطور بوده»، از خطِ زمانیِ روزبه‌روز استفاده کن: روزهای مشخص، عددهای واقعی و الگوها را نام ببر (مثلاً «۱۴۰۵/۰۶/۱۵ بعدِ ناهار ۲۴۰ شد»)، نه جملهٔ کلی.\n"+
+  "۴) عددها و تاریخ‌ها را از پرونده نقل کن، نه از حافظه؛ چیزی که در پرونده نیست را از خودت نساز.\n"+
   persona+
   "خط قرمزها: فقط آموزشی؛ هرگز تشخیص قطعی یا دوز دقیق انسولین/دارو برای اجرا نده؛ برای تصمیم درمانی کاربر را به پزشک ارجاع بده.\n"+
   extra+
   suggest+
   aiMemoryText()+
-  "خلاصه‌ی داده‌های کاربر:\n"+(snap.text||'(داده‌ی کافی ثبت نشده)');
+  "\n===== پروندهٔ کاربر (بازه: "+(snap.label||'')+") =====\n"+(snap.text||'(هنوز هیچ داده‌ای ثبت نشده — از کاربر بخواه اولین قند/وعده/انسولینش را ثبت کند)')+"\n===== پایانِ پرونده =====";
 }
 // جدا کردنِ خطِ پیشنهادها از متنِ پاسخ؛ خروجی: {text, suggestions[]}
 function chatParseSuggestions(raw){
@@ -16940,13 +16946,146 @@ function _dayFromKey(k){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(k)); re
 function _scopeWindow(scope){
   if(scope==='daily'){ const s=new Date(_dailyDate); s.setHours(0,0,0,0); const e=new Date(s); e.setHours(23,59,59,999);
     const j=g2j(s.getFullYear(),s.getMonth()+1,s.getDate()); return {start:s,end:e,label:jDateStr(j[0],j[1],j[2]),days:1}; }
+  if(scope==='chat'){ const days=30; const e=new Date(); e.setHours(23,59,59,999); const s=new Date(); s.setHours(0,0,0,0); s.setDate(s.getDate()-(days-1));
+    return {start:s,end:e,label:'۳۰ روز اخیر',days}; }   // ⚠️ چت نباید به _ovRange (اسلایدرِ تبِ گزارش) وابسته باشد
   if(scope==='overview'){ const days=(_ovRange==='all')?3650:_ovRange; const e=new Date(); e.setHours(23,59,59,999); const s=new Date(); s.setHours(0,0,0,0); s.setDate(s.getDate()-(days-1));
     return {start:s,end:e,label:(_ovRange==='all'?'کل داده':faDigits(_ovRange)+' روز اخیر'),days}; }
   const e=new Date(); e.setHours(23,59,59,999); const s=new Date(); s.setHours(0,0,0,0); s.setDate(s.getDate()-6);
   return {start:s,end:e,label:'۷ روز اخیر',days:7};
 }
+// ══ «پرونده»ی کاربر برای هوش مصنوعی ══
+// درسِ ۲۵.۸: خلاصهٔ آماری به‌تنهایی کافی نیست. بدونِ «نامِ انسولین» مدل نام را حدس می‌زند
+// (کاربر توجئو می‌زد و مدل از لانتوس می‌پرسید) و بدونِ «خطِ زمانیِ روزبه‌روز» نمی‌تواند
+// «یک هفتهٔ اخیرم را بررسی کن» را جواب بدهد. این سه تابع همان شکاف را پر می‌کنند.
+
+// انسولین‌هایی که کاربر «واقعاً» استفاده می‌کند — با نام، دوزِ رایج و ساعت
+function buildInsulinRegimen(win){
+  const inW=d=>d&&!isNaN(d)&&(!win||(d>=win.start&&d<=win.end));
+  const basal={}, rapid={};                      // name -> {n, sum, times:{}}
+  const add=(m,name,dose,time)=>{ name=String(name||'').trim(); if(!name) return;
+    const o=m[name]||(m[name]={n:0,sum:0,times:{}}); o.n++; o.sum+=(parseFloat(dose)||0);
+    if(time) o.times[String(time)]=(o.times[String(time)]||0)+1; };
+  try{
+    for(const k in planData){ if(k[0]==='_'||!Array.isArray(planData[k])) continue;
+      const d=_dayFromKey(k); if(!inW(d)) continue;
+      planData[k].forEach(e=>{ if(e&&e.insDose&&e.insType) add(rapid,e.insType,e.insDose,e.time); }); }
+    const bz=(planData||{})._basal||{};
+    for(const k in bz){ const d=_dayFromKey(k); if(!inW(d)) continue; const b=bz[k];
+      if(b&&b.dose) add(basal,b.type,b.dose,b.time); }
+  }catch(e){}
+  const fmt=(m,lbl)=>{ const ks=Object.keys(m).sort((a,b)=>m[b].n-m[a].n); if(!ks.length) return '';
+    return lbl+': '+ks.map(k=>{ const o=m[k]; const avg=o.n?Math.round(o.sum/o.n*10)/10:0;
+      const t=Object.keys(o.times).sort((a,b)=>o.times[b]-o.times[a])[0];
+      return k+' (میانگین '+faDigits(avg)+' واحد، '+faDigits(o.n)+' ثبت'+(t?('، اغلب ساعت '+faDigits(t)):'')+')'; }).join('؛ '); };
+  const out=[]; const b=fmt(basal,'انسولینِ پایه'), r=fmt(rapid,'انسولینِ سریع');
+  if(b) out.push(b); if(r) out.push(r);
+  if(!out.length) return '';
+  return '💉 رژیمِ انسولینِ کاربر (از ثبت‌های خودش استخراج شده — این‌ها نامِ دقیقِ انسولینِ اوست؛ '
+    +'هرگز نامِ انسولینِ دیگری را به او نسبت نده و نپرس «کِی عوضش کردی» مگر خودش گفته باشد): '+out.join(' | ');
+}
+// خطِ زمانیِ روزبه‌روز — پروندهٔ واقعیِ کاربر، نه فقط میانگین
+function buildDayTimeline(days){
+  days=Math.max(1,Math.min(31,days||14));
+  const jl=k=>{ try{ const a=JSON.parse(localStorage.getItem(k)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } };
+  const t0=new Date(); t0.setHours(0,0,0,0);
+  const start=new Date(t0); start.setDate(start.getDate()-(days-1));
+  const end=new Date(t0.getTime()+86399999);
+  const WD=['یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنج‌شنبه','جمعه','شنبه'];
+  const inR=d=>d&&!isNaN(d)&&d>=start&&d<=end;
+  const kOf=d=>{ try{ return dayKey(d); }catch(e){ return null; } };
+  const hm=d=>String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  const M={};
+  const D=k=>(M[k]=M[k]||{bg:[],cgm:[],meal:[],ins:[],ex:[],med:[],skip:[],misc:[],note:[]});
+  const push=(iso,fn)=>{ const d=new Date(iso); if(!inR(d)) return; const k=kOf(d); if(k) fn(D(k),d); };
+  // قندِ دستی
+  try{ loadBG().forEach(x=>{ if(!x||!x.iso||x.glu==null) return;
+    push(x.iso,(o,d)=>o.bg.push(faDigits(hm(d))+' '+faDigits(Math.round(x.glu))+(x.meal?('/'+x.meal):''))); }); }catch(e){}
+  // CGM (خلاصهٔ روزانه؛ لیستِ خام هزاران خوانش است)
+  try{ (window._cgmReadings||[]).forEach(r=>{ if(!r||!r.t||!r.t.dateObj||!inR(r.t.dateObj)) return;
+    const k=kOf(r.t.dateObj); if(k) D(k).cgm.push(r.glu); }); }catch(e){}
+  // وعده‌ها و انسولینِ سریع
+  try{ for(const k in planData){ if(k[0]==='_'||!Array.isArray(planData[k])) continue;
+      const d=_dayFromKey(k); if(!inR(d)) continue;
+      planData[k].forEach(e=>{ if(!e||e.planned) return; const o=D(k);
+        const food=(e.foods||[]).join('، ');
+        if(food||e.carb) o.meal.push((e.time?faDigits(e.time)+' ':'')+(e.type||'وعده')+(food?(' — '+food):'')+(e.carb?(' ['+faDigits(e.carb)+'گ کرب]'):''));
+        if(e.insDose) o.ins.push((e.time?faDigits(e.time)+' ':'')+(e.insType||'سریع')+' '+faDigits(e.insDose)+'و'+(e.mealType?(' برای '+e.mealType):''));
+        if(e.bgBefore) o.bg.push('قبلِ وعده '+faDigits(e.bgBefore));
+        if(e.bgAfter) o.bg.push('بعدِ وعده '+faDigits(e.bgAfter));
+        if(e.note) o.note.push(String(e.note).slice(0,70));
+      }); } }catch(e){}
+  // انسولینِ پایه
+  try{ const bz=(planData||{})._basal||{}; for(const k in bz){ const d=_dayFromKey(k); if(!inR(d)) continue;
+      const b=bz[k]; if(b&&b.dose) D(k).ins.push((b.time?faDigits(b.time)+' ':'')+(b.type||'پایه')+' '+faDigits(b.dose)+'و [پایه]'); } }catch(e){}
+  // ورزش
+  try{ (loadExLog().entries||[]).forEach(e=>{ if(!e||!e.ts) return;
+      push(e.ts,(o)=>o.ex.push(((e.items||[]).map(i=>i.name).filter(Boolean).slice(0,4).join('، '))||'تمرین')); }); }catch(e){}
+  try{ loadExercise().forEach(x=>{ const iso=x&&(x.iso||x.start); if(!iso) return;
+      push(iso,(o)=>o.ex.push((x.what||'ورزش')+(x.dur?(' '+faDigits(x.dur)+'دق'):''))); }); }catch(e){}
+  // دارو / نزده‌ها
+  try{ jl('med_log_v1').forEach(x=>{ if(!x||!x.iso) return; push(x.iso,(o)=>o.med.push(String(x.name||'دارو'))); }); }catch(e){}
+  try{ jl('skip_log_v1').forEach(x=>{ if(!x||!x.iso) return;
+      push(x.iso,(o)=>o.skip.push((x.kind==='insulin'?'انسولین ':'دارو ')+String(x.name||''))); }); }catch(e){}
+  // خواب / فشار / وزن / حال / یادداشت
+  try{ jl('sleep_log_v1').forEach(x=>{ if(!x) return; const pj=parseJDate(x.date); if(!pj) return;
+      const g=j2g(pj[0],pj[1],pj[2]); const d=new Date(g[0],g[1]-1,g[2]); if(!inR(d)) return;
+      const k=kOf(d); if(k) D(k).misc.push('خواب '+faDigits(x.hours)+'س'+(x.quality?(' ('+x.quality+')'):'')); }); }catch(e){}
+  try{ jl('vitals_v1').forEach(x=>{ if(!x||!x.iso) return;
+      push(x.iso,(o)=>{ const p=[]; if(x.sys&&x.dia) p.push('فشار '+faDigits(x.sys)+'/'+faDigits(x.dia)); if(x.hr) p.push('ضربان '+faDigits(x.hr)); if(p.length) o.misc.push(p.join(' ')); }); }); }catch(e){}
+  try{ jl('weight_log_v1').forEach(x=>{ if(!x||!x.iso||!x.kg) return; push(x.iso,(o)=>o.misc.push('وزن '+faDigits(x.kg)+'kg')); }); }catch(e){}
+  try{ jl('mood_log_v1').forEach(x=>{ if(!x||!x.iso) return;
+      push(x.iso,(o)=>{ o.misc.push('حال: '+String(x.mood||'')); if(x.note) o.note.push(String(x.note).slice(0,70)); }); }); }catch(e){}
+  try{ jl('journal_v1').forEach(x=>{ if(!x||!x.iso) return;
+      push(x.iso,(o)=>{ if(x.rating) o.misc.push('روز: '+((typeof JRN_RATING!=='undefined'&&JRN_RATING[x.rating])||x.rating));
+        (x.tags||[]).slice(0,4).forEach(t=>o.misc.push('#'+t));
+        if(x.note) o.note.push(String(x.note).slice(0,110));
+        if(x.doctor) o.note.push('📌 برای پزشک: '+String(x.doctor).slice(0,90)); }); }); }catch(e){}
+  // خروجی: جدیدترین روز اول
+  const keys=Object.keys(M).sort().reverse();
+  const lines=[];
+  keys.forEach(k=>{
+    const o=M[k], seg=[];
+    if(o.cgm.length){ const v=o.cgm, avg=Math.round(v.reduce((a,b)=>a+b,0)/v.length);
+      const tir=Math.round(v.filter(g=>g>=70&&g<=180).length/v.length*100);
+      seg.push('قند(CGM): میانگین '+faDigits(avg)+'، TIR '+faDigits(tir)+'٪، کمترین '+faDigits(Math.round(Math.min.apply(0,v)))+'، بیشترین '+faDigits(Math.round(Math.max.apply(0,v)))); }
+    if(o.bg.length) seg.push('قند: '+(o.bg.length>10?o.bg.slice(0,10).join(' · ')+' …':o.bg.join(' · ')));
+    if(o.meal.length) seg.push('وعده: '+o.meal.join(' | '));
+    if(o.ins.length) seg.push('انسولین: '+o.ins.join(' | '));
+    if(o.ex.length) seg.push('ورزش: '+o.ex.join(' | '));
+    if(o.med.length) seg.push('دارو: '+[...new Set(o.med)].join('، '));
+    if(o.skip.length) seg.push('⚠️ نزده: '+o.skip.join('، '));
+    if(o.misc.length) seg.push(o.misc.join(' · '));
+    if(o.note.length) seg.push('یادداشت: «'+o.note.join('» «')+'»');
+    if(!seg.length) return;
+    const d=_dayFromKey(k); let lbl=k;
+    try{ const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); lbl=faDigits(jDateStr(j[0],j[1],j[2]))+' '+WD[d.getDay()]; }catch(e){}
+    const today=(k===dayKey(new Date()));
+    lines.push('• '+lbl+(today?' (امروز)':'')+' — '+seg.join(' ؛ '));
+  });
+  if(!lines.length) return '';
+  let out=lines.join('\n');
+  if(out.length>6000){ out=out.slice(0,6000); out=out.slice(0,out.lastIndexOf('\n'))+'\n(روزهای قدیمی‌تر برای کوتاهیِ متن حذف شدند)'; }
+  return '🗓 خطِ زمانیِ روزبه‌روزِ کاربر ('+faDigits(days)+' روزِ اخیر — پروندهٔ واقعیِ او؛ برای بررسیِ «هفتهٔ اخیر» دقیقاً از همین استفاده کن):\n'+out;
+}
+// روندِ آزمایش‌ها در چند برگهٔ آخر (نه فقط آخرین برگه)
+function buildLabTrend(){
+  try{
+    const d=loadLabs(); const en=[...(d.entries||[])].sort((a,b)=>a.ts-b.ts); if(en.length<2) return '';
+    const use=en.slice(-4); const last=use[use.length-1];
+    const rows=[];
+    for(const k in last.vals){ const t=findLabTest(k); if(!t) continue;
+      const seq=use.map(e=>e.vals[k]).filter(v=>v!=null);
+      if(seq.length<2) continue;
+      if(String(seq[0])===String(seq[seq.length-1])) continue;
+      rows.push((t.en||t.fa)+': '+seq.join(' ← ')+(t.unit?(' '+t.unit):'')); }
+    if(!rows.length) return '';
+    const dates=use.map(e=>e.date).join(' ← ');
+    return '📈 روندِ آزمایش‌ها (برگه‌های '+dates+' — از قدیم به جدید): '+rows.slice(0,25).join(' ؛ ');
+  }catch(e){ return ''; }
+}
 // خلاصه‌ی کم‌حجمِ همه‌ی داده‌های سلامت در بازه (مدیریت توکن: متن فشرده، نه خام)
-function buildHealthSnapshot(scope){
+function buildHealthSnapshot(scope, opts){
+  opts=opts||{};
   const w=_scopeWindow(scope); const inWin=d=>d&&!isNaN(d)&&d>=w.start&&d<=w.end;
   const jl=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'[]'); }catch(e){ return []; } };
   const L=[];
@@ -17034,6 +17173,12 @@ function buildHealthSnapshot(scope){
       if(hr!=null) parts.push('ضربان میانگین ~'+hr+' (بیشترین '+mx('hr')+')');
       if(parts.length) L.push('فشار و ضربان: '+vt.length+' اندازه‌گیری — '+parts.join('، ')); }
   }catch(e){}
+  // حالِ روحی (تا ۲۵.۷ اصلاً به هوش مصنوعی داده نمی‌شد)
+  try{ const md=jl('mood_log_v1').filter(x=>{ const d=new Date(x.iso); if(inWin(d)){ seen(d); return true; } return false; });
+    if(md.length){ const f={}; md.forEach(x=>{ if(x.mood) f[x.mood]=(f[x.mood]||0)+1; });
+      const top=Object.keys(f).sort((a,b)=>f[b]-f[a]).map(m=>m+'×'+f[m]);
+      const nts=md.filter(x=>x.note).slice(-3).map(x=>'«'+String(x.note).slice(0,70)+'»');
+      L.push('حالِ روحی: '+md.length+' ثبت — '+top.join('، ')+(nts.length?('؛ '+nts.join(' ')):'')); } }catch(e){}
   // دفترچه‌ی روزانه (یادداشت‌های کاربر و نکته‌ها برای پزشک) — برای گزارش و مراجعه به پزشک بسیار مهم
   try{ const jr=jl('journal_v1').filter(x=>{ const d=new Date(x.iso); if(inWin(d)){ seen(d); return true; } return false; });
     if(jr.length){ const rc={great:0,good:0,ok:0,bad:0}; const tagF={};
@@ -17069,6 +17214,11 @@ function buildHealthSnapshot(scope){
       const parts=[]; if(ins.length) parts.push('انسولین: '+ins.join('، ')); if(med.length) parts.push('دارو: '+med.join('، '));
       L.push('⚠️ مواردی که کاربر «عمداً نزده/مصرف نکرده» (خودش ثبت کرده — یعنی فراموشیِ ثبت نیست، واقعاً مصرف نشده؛ در توصیه‌ها این را در نظر بگیر): '+parts.join(' ؛ ')); }
   }catch(e){}
+  // رژیمِ انسولین (نام‌ها) — بدونِ این، مدل نامِ انسولین را حدس می‌زند
+  try{ const reg=buildInsulinRegimen(w); if(reg) L.push(reg); }catch(e){}
+  try{ const lt=buildLabTrend(); if(lt) L.push(lt); }catch(e){}
+  // خطِ زمانیِ روزبه‌روز — فقط وقتی صریحاً خواسته شود (چت)، تا هزینهٔ توکنِ پادکست/گزارش بالا نرود
+  if(opts.timelineDays){ try{ const tl=buildDayTimeline(opts.timelineDays); if(tl) L.push(tl); }catch(e){} }
   return { label:w.label, text:L.join('\n') };
 }
 function HEALTH_AI_PROMPT(scope, snap){
@@ -17268,7 +17418,7 @@ function renderHealthAiPanel(scope){
     </div>`;
     return;
   }
-  const snap=buildHealthSnapshot(scope);
+  const snap=buildHealthSnapshot(scope, (scope==='overview'?{timelineDays:14}:null));
   const curHash=snap.text.trim()?_hashStr(scope+'|'+snap.text):'';
   const last=aiLastGet(scopeKey(scope));
   const stale=(last && curHash && last.hash && last.hash!==curHash);
@@ -17296,7 +17446,8 @@ async function runHealthAi(scope, force){
   const prov=sectionProvider(scope);
   if(!hasAnyKey(prov)){ box.innerHTML=aiMsgBox('🔑','کلید API لازم است','در پروفایل → بخش هوش مصنوعی کلید را وارد کن.','err'); return; }
   if(!navigator.onLine){ box.innerHTML=aiMsgBox('📡','آفلاین هستی','برای تحلیل هوش مصنوعی به اینترنت نیاز است.','err'); return; }
-  const snap=buildHealthSnapshot(scope);
+  // تحلیلِ «کلی» دستی و کش‌شده است، پس خطِ زمانیِ روزبه‌روز هم می‌گیرد (هزینه‌اش یک‌باره است)
+  const snap=buildHealthSnapshot(scope, (scope==='overview'?{timelineDays:14}:null));
   if(!snap.text.trim()){ box.innerHTML=aiMsgBox('🤔','داده‌ی کافی نیست','هنوز داده‌ی کافی برای تحلیل ثبت نشده؛ چند وعده/قند/ورزش ثبت کن.','err'); return; }
   const hash=_hashStr(scope+'|'+snap.text);
   box.innerHTML=aiEmptyState('⏳ در حال تحلیل جامع… (چند ثانیه صبر کن)');
