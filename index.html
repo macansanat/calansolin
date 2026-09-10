@@ -2352,7 +2352,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۷.۳</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۷.۴</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4161,12 +4161,20 @@ async function podcastToggle(){
   if(!rec||!rec.script){ _pod.mode='idle'; uiToast&&uiToast('نشد پادکست ساخته شود'); renderPodcastCard(); return; }
   podcastStart(rec);
 }
+/* ۲۷.۴: «خواندنِ پاسخِ چت» می‌تواند سرویس و صدای خودش را داشته باشد (مثلاً همیشه
+   جمینای)، بدونِ آنکه تنظیماتِ پادکست عوض شود. این بازنویسی فقط تا پایانِ همان
+   پخش زنده است و `podcastStopAll` پاکش می‌کند. */
+let _podTTSOv=null;
+function _podVoiceFor(prov){ const c=podCfg();
+  if(_podTTSOv){ const v=(prov==='gemini')?_podTTSOv.gVoice:_podTTSOv.oVoice; if(v) return v; }
+  return (prov==='gemini')?(c.gVoice||'Kore'):(c.oVoice||'shimmer'); }
 function podTTSProvider(){
   if(navigator.onLine===false) return '';
   const c=podCfg(); const okp=p=>hasAnyKey(p)&&!aiFrozen(p);
-  if(c.prov==='device') return '';
-  if(c.prov==='gemini') return okp('gemini')?'gemini':(okp('openai')?'openai':'');
-  if(c.prov==='openai') return okp('openai')?'openai':(okp('gemini')?'gemini':'');
+  const want=(_podTTSOv&&_podTTSOv.prov)?_podTTSOv.prov:(c.prov||'auto');
+  if(want==='device') return '';
+  if(want==='gemini') return okp('gemini')?'gemini':(okp('openai')?'openai':'');
+  if(want==='openai') return okp('openai')?'openai':(okp('gemini')?'gemini':'');
   if(okp('gemini')) return 'gemini';   // خودکار: جمینای رایگان اولویت
   if(okp('openai')) return 'openai';
   return '';
@@ -4225,7 +4233,7 @@ function podcastResume(){
   podProgressStart(); podMediaPos(); renderPodcastCard();
 }
 function podcastEnded(){ _pod.spk=false; podProgressStop(); podStopSrc(); podElStop(); podMusicStop(); _pod.mode='idle'; _pod.prep=false; try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} try{ if('mediaSession' in navigator) navigator.mediaSession.playbackState='none'; }catch(e){} const sl=document.getElementById('podSlider'); if(sl) sl.value=sl.max; renderPodcastCard(); }
-function podcastStopAll(){ _pod.spk=false; podProgressStop(); podStopSrc(); podElReset(); podMusicStop(); try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} try{ if(_wkAudioCtx&&_wkAudioCtx.state==='suspended'&&_wkAudioCtx.resume) _wkAudioCtx.resume(); }catch(e){} try{ if('mediaSession' in navigator) navigator.mediaSession.playbackState='none'; }catch(e){} _pod.mode='idle'; _pod.prep=false; }
+function podcastStopAll(){ _pod.spk=false; _podTTSOv=null; podProgressStop(); podStopSrc(); podElReset(); podMusicStop(); try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} try{ if(_wkAudioCtx&&_wkAudioCtx.state==='suspended'&&_wkAudioCtx.resume) _wkAudioCtx.resume(); }catch(e){} try{ if('mediaSession' in navigator) navigator.mediaSession.playbackState='none'; }catch(e){} _pod.mode='idle'; _pod.prep=false; }
 // ══ خواندنِ یک «متنِ دلخواه» (پاسخِ چتِ پزشک/مربی/سرآشپز) با همان مجری و موتورِ صدا ══
 // چرا از همان موتور؟ چون پخشِ پس‌زمینه‌ای، کشِ صدا، MediaSession، لب‌خوانی و مجریِ سه‌بعدی
 // همگی روی `_pod` سوارند؛ ساختِ موتورِ دوم یعنی دوباره‌کاری و دو حالتِ ناسازگار.
@@ -4261,6 +4269,8 @@ function podSpeakText(text, opts){
   if((_pod.mode==='playing'||_pod.mode==='paused') && !_pod.spk){
     if(!opts.silent) uiToast&&uiToast('پادکست در حالِ پخش است؛ اول متوقفش کن'); return false; }
   try{ podcastStopAll(); }catch(e){}
+  // سرویس/صدای مخصوصِ خواندنِ چت (اگر کاربر در تنظیماتِ چت انتخاب کرده باشد)
+  try{ const cc=chatCfg(); if(cc.ttsProv||cc.gVoice||cc.oVoice) _podTTSOv={prov:cc.ttsProv||'', gVoice:cc.gVoice||'', oVoice:cc.oVoice||''}; }catch(e){}
   _pod._viewRec=null; _pod._full=false;
   try{ podcastStart({script:t}); }catch(e){ return false; }
   _pod.spk=true;                                   // بعد از podcastStart (خودش پاکش می‌کند)
@@ -4342,7 +4352,7 @@ async function podTTSFetch(text){
   return await podOpenAITTS(text);
 }
 async function podOpenAITTS(text,voice){
-  const key=getVisionKey('openai'); if(!key) throw new Error('no key'); voice=voice||podCfg().oVoice||'shimmer';
+  const key=getVisionKey('openai'); if(!key) throw new Error('no key'); voice=voice||_podVoiceFor('openai');
   const mk=body=>fetch('https://api.openai.com/v1/audio/speech',{method:'POST',headers:{'authorization':'Bearer '+key,'content-type':'application/json'},body:JSON.stringify(body)});
   const tone=(podCfg().content&&podCfg().content.tone)||'casual';
   const instr=(tone==='formal')
@@ -4354,7 +4364,7 @@ async function podOpenAITTS(text,voice){
   return { buf:await res.arrayBuffer(), type:'audio/mpeg' };
 }
 async function podGeminiTTS(text,voice){
-  const key=getVisionKey('gemini'); if(!key) throw new Error('no key'); voice=voice||podCfg().gVoice||'Kore';
+  const key=getVisionKey('gemini'); if(!key) throw new Error('no key'); voice=voice||_podVoiceFor('gemini');
   const url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key='+encodeURIComponent(key);
   const body={ contents:[{parts:[{text:'با لحنی گرم، آرام و دلنشین بخوان: '+text}]}],
     generationConfig:{ responseModalities:['AUDIO'], speechConfig:{ voiceConfig:{ prebuiltVoiceConfig:{ voiceName:voice } } } } };
@@ -4430,7 +4440,7 @@ async function podAudioTouch(key){ let a=podAudioKeys().filter(k=>k!==key); a.un
 }
 function podHash(s){ s=String(s||''); let h=5381; for(let i=0;i<s.length;i++){ h=((h<<5)+h+s.charCodeAt(i))|0; } return (h>>>0).toString(36); }
 // کلیدِ مستقل از تاریخ: همان متن + همان صدا = همان صوت (پخشِ آرشیو رایگان می‌ماند)
-function podAudioKeyFor(prov, full){ const c=podCfg(); const voice=prov==='gemini'?c.gVoice:c.oVoice; return prov+'|'+voice+'|'+podHash(full); }
+function podAudioKeyFor(prov, full){ return prov+'|'+_podVoiceFor(prov)+'|'+podHash(full); }
 function podAudioKey(full){ return podAudioKeyFor(_pod.ttsProv, full); }
 async function podCloudSpeak(full){
   const ctx=wkEnsureAudio(); if(!ctx) throw new Error('no audio ctx');
@@ -9820,7 +9830,7 @@ async function loadProfile(){
 // کلیدهای localStorage که در بکاپ گنجانده می‌شوند (نقشه‌ی داده‌ی کاربر).
 // از مقادیر رشته‌ای مستقیم استفاده می‌شود چون بعضی از این const‌ها (CGMKEY, BGKEY, ...)
 // پایین‌تر در فایل تعریف شده‌اند و ارجاع به خودِ متغیر اینجا TDZ می‌دهد.
-const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','skip_log_v1','sleep_log_v1','mood_log_v1','vitals_v1','journal_v1','weight_log_v1','custom_foods_v1','custom_meds_v1','custom_exercises_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','ai_model_frozen_v1','ai_section_model_v1','journeys_v1','pod_cfg_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1','ai_prompts_v1','chat_role_model_v1','chat_autoread_v1'];
+const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','skip_log_v1','sleep_log_v1','mood_log_v1','vitals_v1','journal_v1','weight_log_v1','custom_foods_v1','custom_meds_v1','custom_exercises_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','ai_model_frozen_v1','ai_section_model_v1','journeys_v1','pod_cfg_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1','ai_prompts_v1','chat_role_model_v1','chat_autoread_v1','chat_cfg_v1'];
 
 async function renderProfileTab(){
   // فرم پروفایل (c-profile) حالا خودش داخل این تب است و وضعیت ذخیره‌شده را نشان می‌دهد.
@@ -17097,11 +17107,16 @@ function chatPlusMenu(){
 }
 function chatOptsMenu(){
   const c=chatActive(); if(!c) return;
-  const fast=(c.speed==='fast');
+  const fast=(c.speed==='fast'); const auto=chatAutoReadOn(); const sug=chatSuggestOn();
   chatSheet('⚙️ تنظیماتِ گفتگو', [
     {ic:'🩺', label:'پزشک / متخصص', sub:chatRolesLabel(c), act:()=>chatRolePicker()},
     {ic:'🧠', label:'مدلِ هوش مصنوعی', sub:chatModelLabel(c), act:()=>chatModelMenu()},
     {ic:(fast?'⚡':'🎯'), label:'حالتِ پاسخ — '+(fast?'سریع':'دقیق'), sub:(fast?'ارزان‌تر و کوتاه‌تر':'فکرِ بیشتر و دقیق‌تر')+' · برای تغییر بزن', act:()=>{ chatToggleSpeed(); }},
+    {ic:'🎙️', label:'صدای مجری در چت', sub:chatTTSLabel(), act:()=>chatVoiceMenu()},
+    {ic:(auto?'🔊':'🔈'), label:'خواندنِ پاسخ‌ها — '+(auto?'خودکار':'فقط با دکمهٔ 🔊'), sub:(auto?'هر پاسخ خودکار خوانده می‌شود (سقفِ ۱۲۰۰ نویسه)':'ارزان‌تر · برای تغییر بزن'), on:auto,
+     act:()=>{ setChatAutoRead(!auto); setTimeout(chatOptsMenu,120); }},
+    {ic:(sug?'💡':'💤'), label:'پیشنهادِ سؤالِ بعدی — '+(sug?'روشن':'خاموش'), sub:sug?'گاهی یک تماسِ کوتاهِ اضافه دارد':'ارزان‌تر', on:sug,
+     act:()=>{ setChatSuggest(!sug); setTimeout(chatOptsMenu,120); }},
     {ic:'📁', label:'فرستادنِ دادهٔ پرونده', sub:chatIsFree(c)?'در چتِ آزاد هم می‌توانی دستی بفرستی':'انتخابِ بازه و بخش‌ها', act:()=>chatDataPickerOpen(14)}
   ]);
 }
@@ -17136,6 +17151,37 @@ function chatProviderMenu(){ const o=chatLoad(); const c=chatActive(o); if(!c) r
    هر نقش می‌تواند مدلِ خودش را داشته باشد: مثلاً غدد با قوی‌ترین مدل، سرآشپز با ارزان‌ترین.
    انتخاب روی «نقش» ذخیره می‌شود نه روی گفتگو، تا در همهٔ گفتگوهای همان پزشک اعمال شود. */
 const CHAT_ROLE_MODEL_KEY='chat_role_model_v1';
+/* ══ تنظیماتِ مخصوصِ چت (۲۷.۴) ══ جدا از تنظیماتِ پادکست و پروفایل */
+const CHAT_CFG_KEY='chat_cfg_v1';
+function chatCfg(){ try{ const o=JSON.parse(localStorage.getItem(CHAT_CFG_KEY)||'{}'); return (o&&typeof o==='object')?o:{}; }catch(e){ return {}; } }
+function chatCfgSet(patch){ const o=Object.assign(chatCfg(), patch||{}); try{ localStorage.setItem(CHAT_CFG_KEY, JSON.stringify(o)); }catch(e){} return o; }
+function chatTTSLabel(){ const c=chatCfg();
+  const pv=c.ttsProv||''; let base=pv==='gemini'?'Gemini':pv==='openai'?'ChatGPT':pv==='device'?'صدای گوشی':'خودکار (مثلِ پادکست)';
+  try{ if((pv==='gemini'||pv==='openai') && !hasAnyKey(pv)) base+=' ⚠️ بدونِ کلید'; }catch(e){}
+  const eff=pv==='gemini'?'gemini':pv==='openai'?'openai':'';
+  const v=eff?(c[eff==='gemini'?'gVoice':'oVoice']||''):'';
+  const vf=v?((POD_VOICES[eff]||[]).find(x=>x.id===v)||{}).fa:'';
+  return base+(vf?(' · '+vf.split('—')[0].trim()):''); }
+function chatVoiceMenu(){
+  const c=chatCfg();
+  const opts=[{ic:(c.ttsProv?'⚪':'🟢'), label:'خودکار (همان تنظیمِ پادکست)', sub:'ساده‌ترین حالت', on:!c.ttsProv,
+               act:()=>{ chatCfgSet({ttsProv:''}); uiToast('✓ صدای چت: خودکار'); chatOptsMenu(); }}];
+  [['gemini','Gemini','رایگان/ارزان'],['openai','ChatGPT','کیفیتِ بالاتر']].forEach(([pv,nm,tip])=>{
+    const has=hasAnyKey(pv);
+    opts.push({ic:(!has?'🔒':(c.ttsProv===pv?'🟢':'⚪')), label:'🎙️ '+nm, sub:(has?tip+' · برای انتخابِ صدا بزن':'⚠️ کلید نداری — با صدای گوشی خوانده می‌شود'),
+      on:c.ttsProv===pv, act:()=>{ if(!has){ uiToast('برای «'+nm+'» کلید نداری'); return; } chatCfgSet({ttsProv:pv}); chatVoicePick(pv); }});
+  });
+  opts.push({ic:(c.ttsProv==='device'?'🟢':'⚪'), label:'📱 صدای خودِ گوشی', sub:'رایگان، کیفیتِ پایین‌تر', on:c.ttsProv==='device',
+             act:()=>{ chatCfgSet({ttsProv:'device'}); uiToast('✓ صدای چت: گوشی'); chatOptsMenu(); }});
+  chatSheet('🎙️ صدای مجری در چت', opts);
+}
+function chatVoicePick(pv){
+  const c=chatCfg(); const key=(pv==='gemini')?'gVoice':'oVoice'; const cur=c[key]||'';
+  const opts=[{ic:cur?'⚪':'🟢', label:'همان صدای پادکست', sub:'', on:!cur, act:()=>{ const o={}; o[key]=''; chatCfgSet(o); uiToast('✓ ثبت شد'); chatOptsMenu(); }}];
+  (POD_VOICES[pv]||[]).forEach(v=>opts.push({ic:(cur===v.id?'🟢':'⚪'), label:v.fa, sub:'', on:cur===v.id,
+    act:()=>{ const o={}; o[key]=v.id; chatCfgSet(o); uiToast('✓ صدا انتخاب شد'); chatOptsMenu(); }}));
+  chatSheet('🎙️ صدای '+(pv==='gemini'?'Gemini':'ChatGPT'), opts);
+}
 function chatIsFree(c){ const ids=chatRolesOf(c||chatActive()); return ids.length===1 && ids[0]==='free'; }
 function chatRoleKey(c){ const ids=chatRolesOf(c); if(!ids.length) return '_none'; if(ids.length===1) return ids[0]; return '_conf'; }
 function chatRoleModels(){ try{ const o=JSON.parse(localStorage.getItem(CHAT_ROLE_MODEL_KEY)||'{}'); return (o&&typeof o==='object')?o:{}; }catch(e){ return {}; } }
