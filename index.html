@@ -2342,7 +2342,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۶.۱</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۶.۲</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -15937,7 +15937,7 @@ function buildChatSystemPrompt(){
   "📁 مهم — تو به «پروندهٔ کاملِ» این کاربر دسترسی داری (پایینِ همین پیام): پروفایل و بیماری‌ها، قندها، وعده‌ها و کربوهیدرات، نام و دوزِ انسولین‌ها، داروها، ورزش، خواب، فشار، وزن، حالِ روحی، یادداشت‌های دفترچه، آزمایش‌ها و روندشان، و یک «خطِ زمانیِ روزبه‌روز». قواعد:\n"+
   "۱) هرگز نگو «اطلاعاتی از تو ندارم» یا «پرونده‌ات را ندارم». اگر چیزی واقعاً ثبت نشده، دقیق بگو کدام مورد ثبت نشده و از او بخواه ثبتش کند.\n"+
   "۲) نامِ انسولین/دارو را «حدس نزن». فقط همان نام‌هایی را به کار ببر که در پرونده آمده‌اند. هرگز نپرس «کِی از فلان انسولین به فلان عوض کردی» مگر خودِ پرونده نشان دهد نام عوض شده.\n"+
-  "۳) وقتی می‌پرسد «هفتهٔ اخیرم را بررسی کن» یا «وضعیتم چطور بوده»، از خطِ زمانیِ روزبه‌روز استفاده کن: روزهای مشخص، عددهای واقعی و الگوها را نام ببر (مثلاً «۱۴۰۵/۰۶/۱۵ بعدِ ناهار ۲۴۰ شد»)، نه جملهٔ کلی.\n"+
+  "۳) وقتی می‌پرسد «هفتهٔ اخیرم را بررسی کن» یا «وضعیتم چطور بوده»، از «پروندهٔ زمانی» استفاده کن (خطوطِ «• » روزِ ریزبه‌ریز و «▪ » خلاصهٔ هفتگیِ روزهای قدیمی‌ترند — هر دو دادهٔ واقعی‌اند): روزهای مشخص، عددهای واقعی و الگوها را نام ببر (مثلاً «۱۴۰۵/۰۶/۱۵ بعدِ ناهار ۲۴۰ شد»)، نه جملهٔ کلی.\n"+
   "۴) عددها و تاریخ‌ها را از پرونده نقل کن، نه از حافظه؛ چیزی که در پرونده نیست را از خودت نساز.\n"+
   "📁 روالِ درخواستِ داده (مهم): آنچه پایین آمده فقط «شناسنامه و خلاصه» است؛ ریزِ روزبه‌روز همراهش نیست تا بی‌جهت هزینه نشود.\n"+
   "الف) اگر گفتگو تازه است و کاربر هنوز نگفته چه می‌خواهد، اول کوتاه و صمیمی بپرس «موضوع/شکایتت چیست؟» — مثلِ شروعِ ویزیت.\n"+
@@ -17056,20 +17056,23 @@ function buildDayTimeline(days, parts){
   const kOf=d=>{ try{ return dayKey(d); }catch(e){ return null; } };
   const hm=d=>String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
   const M={};
-  const D=k=>(M[k]=M[k]||{bg:[],cgm:[],meal:[],ins:[],ex:[],med:[],skip:[],misc:[],note:[]});
+  const D=k=>(M[k]=M[k]||{bg:[],cgm:[],meal:[],ins:[],ex:[],med:[],skip:[],misc:[],note:[],
+                          gv:[],carb:0,insU:0,insN:0,basU:0,exN:0});
   const push=(iso,fn)=>{ const d=new Date(iso); if(!inR(d)) return; const k=kOf(d); if(k) fn(D(k),d); };
   // قندِ دستی
   if(on('bg')) try{ loadBG().forEach(x=>{ if(!x||!x.iso||x.glu==null) return;
-    push(x.iso,(o,d)=>o.bg.push(faDigits(hm(d))+' '+faDigits(Math.round(x.glu))+(x.meal?('/'+x.meal):''))); }); }catch(e){}
+    push(x.iso,(o,d)=>{ o.bg.push(faDigits(hm(d))+' '+faDigits(Math.round(x.glu))+(x.meal?('/'+x.meal):'')); o.gv.push(+x.glu); }); }); }catch(e){}
   // CGM (خلاصهٔ روزانه؛ لیستِ خام هزاران خوانش است)
   if(on('bg')) try{ (window._cgmReadings||[]).forEach(r=>{ if(!r||!r.t||!r.t.dateObj||!inR(r.t.dateObj)) return;
-    const k=kOf(r.t.dateObj); if(k) D(k).cgm.push(r.glu); }); }catch(e){}
+    const k=kOf(r.t.dateObj); if(k){ D(k).cgm.push(r.glu); D(k).gv.push(+r.glu); } }); }catch(e){}
   // وعده‌ها و انسولینِ سریع
   try{ for(const k in planData){ if(k[0]==='_'||!Array.isArray(planData[k])) continue;
       const d=_dayFromKey(k); if(!inR(d)) continue;
       planData[k].forEach(e=>{ if(!e||e.planned) return; const o=D(k);
         const food=(e.foods||[]).join('، ');
+        if(on('meal')) o.carb+=(+e.carb||0);
         if((food||e.carb)&&on('meal')) o.meal.push((e.time?faDigits(e.time)+' ':'')+(e.type||'وعده')+(food?(' — '+food):'')+(e.carb?(' ['+faDigits(e.carb)+'گ کرب]'):''));
+        if(e.insDose&&on('ins')){ o.insU+=(+e.insDose||0); o.insN++; }
         if(e.insDose&&on('ins')) o.ins.push((e.time?faDigits(e.time)+' ':'')+(e.insType||'سریع')+' '+faDigits(e.insDose)+'و'+(e.mealType?(' برای '+e.mealType):''));
         if(e.bgBefore&&on('bg')) o.bg.push('قبلِ وعده '+faDigits(e.bgBefore));
         if(e.bgAfter&&on('bg')) o.bg.push('بعدِ وعده '+faDigits(e.bgAfter));
@@ -17077,12 +17080,12 @@ function buildDayTimeline(days, parts){
       }); } }catch(e){}
   // انسولینِ پایه
   if(on('ins')) try{ const bz=(planData||{})._basal||{}; for(const k in bz){ const d=_dayFromKey(k); if(!inR(d)) continue;
-      const b=bz[k]; if(b&&b.dose) D(k).ins.push((b.time?faDigits(b.time)+' ':'')+(b.type||'پایه')+' '+faDigits(b.dose)+'و [پایه]'); } }catch(e){}
+      const b=bz[k]; if(b&&b.dose){ D(k).basU+=(+b.dose||0); D(k).ins.push((b.time?faDigits(b.time)+' ':'')+(b.type||'پایه')+' '+faDigits(b.dose)+'و [پایه]'); } } }catch(e){}
   // ورزش
   if(on('ex')) try{ (loadExLog().entries||[]).forEach(e=>{ if(!e||!e.ts) return;
-      push(e.ts,(o)=>o.ex.push(((e.items||[]).map(i=>i.name).filter(Boolean).slice(0,4).join('، '))||'تمرین')); }); }catch(e){}
+      push(e.ts,(o)=>{ o.ex.push(((e.items||[]).map(i=>i.name).filter(Boolean).slice(0,4).join('، '))||'تمرین'); o.exN++; }); }); }catch(e){}
   if(on('ex')) try{ loadExercise().forEach(x=>{ const iso=x&&(x.iso||x.start); if(!iso) return;
-      push(iso,(o)=>o.ex.push((x.what||'ورزش')+(x.dur?(' '+faDigits(x.dur)+'دق'):''))); }); }catch(e){}
+      push(iso,(o)=>{ o.ex.push((x.what||'ورزش')+(x.dur?(' '+faDigits(x.dur)+'دق'):'')); o.exN++; }); }); }catch(e){}
   // دارو / نزده‌ها
   if(on('med')) try{ jl('med_log_v1').forEach(x=>{ if(!x||!x.iso) return; push(x.iso,(o)=>o.med.push(String(x.name||'دارو'))); }); }catch(e){}
   if(on('med')||on('ins')) try{ jl('skip_log_v1').forEach(x=>{ if(!x||!x.iso) return;
@@ -17101,11 +17104,26 @@ function buildDayTimeline(days, parts){
         (x.tags||[]).slice(0,4).forEach(t=>o.misc.push('#'+t));
         if(x.note) o.note.push(String(x.note).slice(0,110));
         if(x.doctor) o.note.push('📌 برای پزشک: '+String(x.doctor).slice(0,90)); }); }); }catch(e){}
-  // خروجی: جدیدترین روز اول
+  // ⚠️ درسِ ۲۶.۲: قبلاً همهٔ روزها ریزبه‌ریز نوشته می‌شدند و سقفِ نویسه روزهای قدیمی را
+  // «حذف» می‌کرد — کاربری که ۵ روز CGM و ماه‌ها قندِ دستی داشت، دکترش فقط ۵ روز می‌دید.
+  // حالا روزهای تازه ریزبه‌ریز می‌مانند و قدیمی‌ترها به «خلاصهٔ هفتگی» فشرده می‌شوند.
+  const DETAIL=Math.min(days,14);
+  const cut=new Date(t0); cut.setDate(cut.getDate()-(DETAIL-1));
   const keys=Object.keys(M).sort().reverse();
-  _tlStat={n:0, first:'', last:''};
+  _tlStat={n:0, first:'', last:'', detail:0, weeks:0};
   const lines=[];
+  const wk={};                       // خلاصهٔ هفتگی برای روزهای قدیمی‌تر
   keys.forEach(k=>{
+    const dd=_dayFromKey(k);
+    if(dd && dd<cut){                // بیرون از پنجرهٔ ریز ⇒ برو در سطلِ هفتگی
+      const o=M[k];
+      const idx=Math.floor((t0-dd)/86400000/7);
+      const w=wk[idx]||(wk[idx]={n:0,gv:[],carb:0,insU:0,insN:0,basU:0,exN:0,med:0,skip:0,first:dd,last:dd});
+      w.n++; w.gv=w.gv.concat(o.gv); w.carb+=o.carb; w.insU+=o.insU; w.insN+=o.insN; w.basU+=o.basU;
+      w.exN+=o.exN; w.med+=o.med.length; w.skip+=o.skip.length;
+      if(dd<w.first) w.first=dd; if(dd>w.last) w.last=dd;
+      return;
+    }
     const o=M[k], seg=[];
     if(o.cgm.length){ const v=o.cgm, avg=Math.round(v.reduce((a,b)=>a+b,0)/v.length);
       const tir=Math.round(v.filter(g=>g>=70&&g<=180).length/v.length*100);
@@ -17123,12 +17141,29 @@ function buildDayTimeline(days, parts){
     try{ const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); lbl=faDigits(jDateStr(j[0],j[1],j[2]))+' '+WD[d.getDay()]; }catch(e){}
     const today=(k===dayKey(new Date()));
     lines.push('• '+lbl+(today?' (امروز)':'')+' — '+seg.join(' ؛ '));
-    _tlStat.n++; if(!_tlStat.last) _tlStat.last=lbl; _tlStat.first=lbl;   // جدید→قدیم
+    _tlStat.n++; _tlStat.detail++; if(!_tlStat.last) _tlStat.last=lbl; _tlStat.first=lbl;   // جدید→قدیم
+  });
+  // خلاصهٔ هفتگیِ روزهای قدیمی‌تر (از تازه به قدیم)
+  const faD=d=>{ try{ const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); return faDigits(jDateStr(j[0],j[1],j[2])); }catch(e){ return ''; } };
+  Object.keys(wk).map(Number).sort((a,b)=>a-b).forEach(i=>{
+    const w=wk[i]; const seg=[];
+    if(w.gv.length){ const v=w.gv, avg=Math.round(v.reduce((a,b)=>a+b,0)/v.length);
+      const tir=Math.round(v.filter(g=>g>=70&&g<=180).length/v.length*100);
+      seg.push('قند: '+faDigits(v.length)+' اندازه‌گیری، میانگین '+faDigits(avg)+'، کمترین '+faDigits(Math.round(Math.min.apply(0,v)))+'، بیشترین '+faDigits(Math.round(Math.max.apply(0,v)))+'، TIR '+faDigits(tir)+'٪'); }
+    if(w.carb) seg.push('کربوهیدرات مجموع ~'+faDigits(Math.round(w.carb))+'گ');
+    if(w.insN||w.basU) seg.push('انسولین: '+faDigits(w.insN)+' تزریقِ وعده (~'+faDigits(Math.round(w.insU))+'و)'+(w.basU?('، پایه ~'+faDigits(Math.round(w.basU))+'و'):''));
+    if(w.exN) seg.push('ورزش '+faDigits(w.exN)+' جلسه');
+    if(w.med) seg.push('داروی ثبت‌شده '+faDigits(w.med)+' بار');
+    if(w.skip) seg.push('⚠️ '+faDigits(w.skip)+' مورد نزده');
+    if(!seg.length) return;
+    lines.push('▪ هفتهٔ '+faD(w.first)+' تا '+faD(w.last)+' ('+faDigits(w.n)+' روزِ دارای ثبت — خلاصه) — '+seg.join(' ؛ '));
+    _tlStat.n+=w.n; _tlStat.weeks++; _tlStat.first=faD(w.first);
   });
   if(!lines.length) return '';
   let out=lines.join('\n');
-  if(out.length>6000){ out=out.slice(0,6000); out=out.slice(0,out.lastIndexOf('\n'))+'\n(روزهای قدیمی‌تر برای کوتاهیِ متن حذف شدند)'; }
-  return '🗓 خطِ زمانیِ روزبه‌روزِ کاربر ('+faDigits(days)+' روزِ اخیر — پروندهٔ واقعیِ او؛ برای بررسیِ «هفتهٔ اخیر» دقیقاً از همین استفاده کن):\n'+out;
+  if(out.length>9000){ out=out.slice(0,9000); out=out.slice(0,out.lastIndexOf('\n'))+'\n(⚠️ چند هفتهٔ خیلی قدیمی برای کوتاهیِ متن حذف شد — نه اینکه داده‌ای نباشد)'; }
+  const kind=(_tlStat.weeks? ('«• » = روزِ ریزبه‌ریز ('+faDigits(_tlStat.detail)+' روزِ اخیر)، «▪ » = خلاصهٔ هفتگیِ روزهای قدیمی‌تر') : 'روزبه‌روز');
+  return '🗓 پروندهٔ زمانیِ کاربر ('+faDigits(days)+' روزِ اخیر — '+kind+'):\n'+out;
 }
 let _tlStat={n:0,first:'',last:''};   // آمارِ آخرین خطِ زمانیِ ساخته‌شده
 // قدیمی‌ترین و تازه‌ترین روزی که کاربر «اصلاً» چیزی ثبت کرده (فارغ از بازهٔ درخواستی)
@@ -17173,7 +17208,8 @@ function buildDataPacket(days, parts){
   try{ const sp=dataSpanAll();
     const have=(_tlStat&&_tlStat.n)?_tlStat.n:0;
     cov='📊 پوششِ واقعی: بازهٔ درخواستی '+chatDataLabel(days)+'؛ در این بازه '+faDigits(have)+' روز ثبت وجود دارد'
-      +((have&&_tlStat.first)?(' (از '+_tlStat.first.split(' ')[0]+' تا '+_tlStat.last.split(' ')[0]+')'):'')+'. ';
+      +((have&&_tlStat.first)?(' (از '+String(_tlStat.first).split(' ')[0]+' تا '+String(_tlStat.last).split(' ')[0]+')'):'')
+      +((_tlStat&&_tlStat.weeks)?('، که '+faDigits(_tlStat.detail)+' روزِ اخیرش ریزبه‌ریز آمده و بقیه به‌صورتِ خلاصهٔ هفتگی'):'')+'. ';
     cov+= sp ? ('کلِ ثبت‌های کاربر در برنامه از '+sp.first+' تا '+sp.last+' است؛ قدیمی‌تر از این «هیچ داده‌ای وجود ندارد».')
              : 'کاربر هنوز تقریباً هیچ ثبتی ندارد.';
     cov+=' پس اگر بازهٔ خواسته‌شده خالی بود، دوباره همان را نخواه — با همین مقدار تحلیل کن و بگو برای دقتِ بیشتر چه چیزی باید ثبت شود.';
