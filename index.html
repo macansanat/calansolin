@@ -1262,6 +1262,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <div class="qbg-box">
     <button class="qbg-x" onclick="closeQEntry('qinsModal')" title="بستن">✕</button>
     <div class="qbg-head"><span class="qbg-badge" style="background:rgba(63,185,163,.18)">💉</span><div><div class="qbg-title">ثبت انسولین</div><div class="qbg-sub">نوع، اسم، دوز و زمان انسولین را ثبت کن.</div></div></div>
+    <div style="text-align:left;margin-bottom:10px"><button type="button" onclick="insHistOpen()" style="background:var(--field);border:1px solid var(--line);color:var(--teal);border-radius:20px;padding:6px 12px;font-size:12.5px;font-weight:700;cursor:pointer">🗂 تاریخچهٔ انسولین</button></div>
     <label class="qbg-lbl">نوع انسولین</label>
     <div class="qseg" id="qinsType">
       <button type="button" data-v="rapid" class="on" onclick="qinsPickType(this)">⚡ سریع‌اثر</button>
@@ -2341,7 +2342,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۵.۶</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۵.۷</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -8467,6 +8468,121 @@ function medHistEdit(iso){ let arr=[]; try{ arr=JSON.parse(localStorage.getItem(
 }
 function medHistDel(iso){ if(!confirm('این ثبتِ دارو حذف شود؟')) return; try{ let arr=JSON.parse(localStorage.getItem('med_log_v1')||'[]')||[]; arr=arr.filter(x=>x&&x.iso!==iso); localStorage.setItem('med_log_v1',JSON.stringify(arr)); }catch(e){}
   medHistOpen(); afterQuickLog(); }
+// ══ تاریخچهٔ انسولین + ویرایش/حذف (هم‌شکلِ تاریخچهٔ دارو و یادداشت) ══
+// ⚠️ برخلافِ دارو/یادداشت، انسولین در localStorage نیست؛ در `planData` است و سه شکل دارد:
+//   rapid → یک ردیف در planData[YYYY-MM-DD] با insType/insDose (گاهی همراهِ وعده)
+//   basal → planData['_basal'][YYYY-MM-DD] = {type,dose,time}  (روزی یکی، جایگزین می‌شود)
+//   skip  → «نزدم» در skip_log_v1 با kind==='insulin'
+// پس جمع‌آوری با پیمایشِ planData انجام می‌شود، نه خواندنِ یک آرایه.
+let _editIns=null;                       // {k:'rapid'|'basal', key, id}
+function _insDateLabel(key,time){
+  try{ const a=String(key).split('-').map(Number); const j=g2j(a[0],a[1],a[2]);
+    return faDigits(jDateStr(j[0],j[1],j[2]))+(time?(' · '+faDigits(String(time))):''); }
+  catch(e){ return faDigits(String(key||'')); }
+}
+function insHistCollect(){
+  const out=[];
+  try{
+    Object.keys(planData||{}).forEach(key=>{
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(key)) return;
+      const arr=planData[key]; if(!Array.isArray(arr)) return;
+      arr.forEach(e=>{ if(!e) return;
+        const d=String(e.insDose==null?'':e.insDose).trim(); if(!d) return;
+        out.push({k:'rapid', key, id:String(e.id||''), name:String(e.insType||'انسولین سریع'),
+                  dose:d, time:String(e.time||''), carb:String(e.carb||''), meal:String(e.mealType||''),
+                  withMeal:!!(Array.isArray(e.foods)&&e.foods.length),
+                  ts:new Date(key+'T'+(String(e.time||'00:00').length===5?e.time:'00:00')+':00').getTime()});
+      });
+    });
+    const bs=(planData||{})['_basal']||{};
+    Object.keys(bs).forEach(key=>{ const b=bs[key]; if(!b) return;
+      const d=String(b.dose==null?'':b.dose).trim(); if(!d) return;
+      out.push({k:'basal', key, id:'', name:String(b.type||'انسولین پایه'), dose:d, time:String(b.time||''),
+                carb:'', meal:'', ts:new Date(key+'T'+(String(b.time||'00:00').length===5?b.time:'00:00')+':00').getTime()});
+    });
+  }catch(e){}
+  try{ jlogGet('skip_log_v1').forEach(x=>{ if(!x||x.kind!=='insulin'||!x.iso) return;
+    out.push({k:'skip', key:x.iso, id:'', name:String(x.name||'انسولین'), dose:'', time:String(x.time||''),
+              carb:'', meal:'', sub:String(x.sub||''), ts:new Date(x.iso).getTime()}); }); }catch(e){}
+  return out.filter(r=>isFinite(r.ts)).sort((a,b)=>b.ts-a.ts);
+}
+function insHistOpen(){
+  try{ ensureChatCss&&ensureChatCss(); }catch(e){}
+  const old=document.getElementById('insHistBg'); if(old) old.remove();
+  const arr=insHistCollect();
+  let body='';
+  if(!arr.length){ body='<div style="color:var(--muted);font-size:12.5px;text-align:center;padding:24px 8px;line-height:1.9">هنوز انسولینی ثبت نشده.<br>از همین پنجره دوز و زمانش را ثبت کن.</div>'; }
+  else{
+    body='<div style="border:1px solid var(--line);border-radius:12px;overflow:hidden">'+arr.map(x=>{
+      const ico=x.k==='skip'?'🚫':(x.k==='basal'?'🛡️':'⚡');
+      const kind=x.k==='skip'?(x.sub||'انسولین'):(x.k==='basal'?'پایه':'سریع‌اثر');
+      const bits=[kind];
+      if(x.dose) bits.push(faDigits(x.dose)+' واحد');
+      if(x.meal) bits.push(x.meal);
+      if(x.carb) bits.push('کرب '+faDigits(x.carb)+'گ');
+      if(x.withMeal) bits.push('همراهِ وعده');
+      // همهٔ ردیف‌ها یک قالبِ تاریخ داشته باشند (رکوردِ «نزدم» ISO است، بقیه کلیدِ روز)
+      const lbl=(x.k==='skip')? _insDateLabel(String(x.key).slice(0,10), x.time) : _insDateLabel(x.key,x.time);
+      const ref=`'${x.k}','${String(x.key).replace(/'/g,"")}','${String(x.id).replace(/'/g,"")}'`;
+      return `<div style="display:flex;align-items:center;gap:9px;padding:9px 8px;border-bottom:1px solid var(--line)">
+        <span style="font-size:15px">${ico}</span>
+        <div style="flex:1;min-width:0"><div style="font-weight:800;font-size:13.5px${x.k==='skip'?';color:var(--amber)':''}">${escVision(x.name)}</div>
+          <div style="font-size:11.5px;color:var(--ink);line-height:1.6;margin-top:1px">${escVision(bits.join(' · '))}</div>
+          <div style="font-size:11px;color:var(--muted)">${lbl}</div></div>
+        ${x.k==='skip'?'':`<button onclick="insHistEdit(${ref})" title="ویرایش" style="background:transparent;border:none;color:var(--teal);font-size:15px;cursor:pointer">✏️</button>`}
+        <button onclick="insHistDel(${ref})" title="حذف" style="background:transparent;border:none;color:var(--muted);font-size:15px;cursor:pointer">🗑</button>
+      </div>`; }).join('')+'</div>';
+  }
+  const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='insHistBg'; bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
+  bg.innerHTML=`<div class="chat-rename" role="dialog" aria-modal="true" style="max-width:430px">
+    <h4>🗂 تاریخچهٔ انسولین</h4>
+    <div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:8px">همهٔ انسولین‌های ثبت‌شده (⚡ سریع، 🛡️ پایه، 🚫 نزده). با ✏️ ویرایش و با 🗑 حذف می‌شوند. حذف روی تخمینِ I:C هم اثر می‌گذارد.</div>
+    <div style="max-height:56vh;overflow:auto">${body}</div>
+    <div class="chat-rename-btns" style="margin-top:12px"><button type="button" class="crn-btn crn-cancel" onclick="document.getElementById('insHistBg').remove()">بستن</button>
+      <button type="button" class="crn-btn crn-ok" onclick="document.getElementById('insHistBg').remove(); quickAdd('insulin')">➕ ثبتِ انسولینِ تازه</button></div></div>`;
+  document.body.appendChild(bg);
+}
+// حذفِ یک رکورد. اگر ردیفِ سریع «وعده/قند» هم داشته باشد، فقط انسولینش پاک می‌شود تا وعده از بین نرود.
+function insHistRemove(k,key,id){
+  try{
+    if(k==='basal'){ if(planData['_basal']) delete planData['_basal'][key]; savePlan(); return true; }
+    if(k==='skip'){ jlogSet('skip_log_v1', jlogGet('skip_log_v1').filter(x=>!(x&&x.kind==='insulin'&&x.iso===key))); return true; }
+    const arr=planData[key]; if(!Array.isArray(arr)) return false;
+    const i=arr.findIndex(e=>e&&String(e.id||'')===String(id)); if(i<0) return false;
+    const e=arr[i];
+    const other=(Array.isArray(e.foods)&&e.foods.length)||String(e.bgBefore||'').trim()||String(e.bgAfter||'').trim()||String(e.note||'').trim()||String(e.carb||'').trim();
+    if(other){ e.insType=''; e.insDose=''; if(e.type==='انسولین + وعده') e.type='وعده'; }
+    else arr.splice(i,1);
+    savePlan(); return true;
+  }catch(err){ return false; }
+}
+function insHistDel(k,key,id){
+  if(!confirm(k==='skip'?'این ثبتِ «نزدم» حذف شود؟':'این ثبتِ انسولین حذف شود؟')) return;
+  insHistRemove(k,key,id);
+  insHistOpen(); afterQuickLog();
+  try{ if(typeof updateCalibration==='function') updateCalibration(); }catch(e){}
+  try{ const pp=document.getElementById('page-plan'); if(pp&&pp.classList.contains('active')&&typeof renderWeek==='function') renderWeek(); }catch(e){}
+  try{ const dl=document.getElementById('page-daily'); if(dl&&dl.classList.contains('active')&&typeof renderDailyReport==='function') renderDailyReport(); }catch(e){}
+}
+function insHistEdit(k,key,id){
+  const rec=insHistCollect().find(r=>r.k===k&&String(r.key)===String(key)&&String(r.id)===String(id));
+  if(!rec) return;
+  const bg=document.getElementById('insHistBg'); if(bg) bg.remove();
+  openQuickInsulin();
+  _editIns={k, key, id};
+  try{
+    const tb=document.querySelector('#qinsType button[data-v="'+(k==='basal'?'basal':'rapid')+'"]'); if(tb) qinsPickType(tb);
+    const sel=document.getElementById('qinsName');
+    if(sel && rec.name){ if(![...sel.options].some(o=>o.value===rec.name)) sel.insertAdjacentHTML('afterbegin','<option>'+rec.name+'</option>'); sel.value=rec.name; }
+    document.getElementById('qinsDose').value=rec.dose||'';
+    const cb=document.getElementById('qinsCarb'); if(cb) cb.value=rec.carb||'';
+    const ml=document.getElementById('qinsMeal'); if(ml) ml.value=rec.meal||'';
+    const a=String(key).split('-').map(Number); const j=g2j(a[0],a[1],a[2]);
+    const di=document.getElementById('qinsDate'); if(di) di.value=jDateStr(j[0],j[1],j[2]);
+    const ti=document.getElementById('qinsTime'); if(ti&&rec.time) ti.value=rec.time;
+    const t=document.querySelector('#qinsModal .qbg-title'); if(t) t.textContent='ویرایشِ انسولین';
+  }catch(e){}
+}
 function saveQuickSleep(){
   const hRaw=faToEnDigits((document.getElementById('qsleepHours').value||'').trim());
   const hours=parseFloat(hRaw);
@@ -8906,6 +9022,8 @@ function qinsFillNames(){ const sel=document.getElementById('qinsName'); if(!sel
 function qinsPickType(btn){ document.querySelectorAll('#qinsType button').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); _qinsType=btn.getAttribute('data-v'); qinsFillNames(); const cw=document.getElementById('qinsCarbWrap'); if(cw) cw.style.display=_qinsType==='rapid'?'block':'none'; }
 function openQuickInsulin(){
   const m=document.getElementById('qinsModal'); if(!m) return;
+  _editIns=null;                                   // فرمِ تازه، نه ویرایش
+  try{ const t=m.querySelector('.qbg-title'); if(t) t.textContent='ثبت انسولین'; }catch(e){}
   _qinsType='rapid';
   document.querySelectorAll('#qinsType button').forEach(b=>b.classList.toggle('on', b.getAttribute('data-v')==='rapid'));
   qinsFillNames();
@@ -8918,6 +9036,7 @@ function openQuickInsulin(){
   setTimeout(()=>document.getElementById('qinsDose').focus(),50);
 }
 function saveQuickInsulin(){
+  const wasEdit=!!_editIns;
   const name=(document.getElementById('qinsName').value||'').trim();
   const dose=parseFloat(faToEnDigits((document.getElementById('qinsDose').value||'').trim()));
   if(isNaN(dose)||dose<=0){ alert('دوز انسولین را وارد کن (واحد).'); return; }
@@ -8926,6 +9045,7 @@ function saveQuickInsulin(){
   const tstr=(document.getElementById('qinsTime')||{}).value||'00:00';
   const p=n=>String(n).padStart(2,'0');
   const key=`${g[0]}-${p(g[1])}-${p(g[2])}`;
+  if(_editIns){ insHistRemove(_editIns.k,_editIns.key,_editIns.id); _editIns=null; }   // ویرایش = حذفِ قبلی + ثبتِ تازه
   if(_qinsType==='basal'){
     if(!planData['_basal']) planData['_basal']={};
     planData['_basal'][key]={type:name, dose:String(dose), time:tstr};
@@ -8938,7 +9058,8 @@ function saveQuickInsulin(){
   }
   savePlan();
   closeQEntry('qinsModal');
-  uiToast(`✓ انسولین ${faDigits(String(dose))} واحد ثبت شد`);
+  uiToast(wasEdit?'✓ انسولین ویرایش شد':`✓ انسولین ${faDigits(String(dose))} واحد ثبت شد`);
+  if(wasEdit){ try{ insHistOpen(); }catch(e){} }
   if(typeof renderDashboard==='function') renderDashboard();
   const dl=document.getElementById('page-daily'); if(dl&&dl.classList.contains('active')) renderDailyReport();
   try{ if(typeof updateCalibration==='function') updateCalibration(); }catch(e){}
