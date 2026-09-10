@@ -2352,7 +2352,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۷.۵</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۷.۶</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4347,12 +4347,43 @@ function podSpeakNext(){
   _pod.utter=u; try{ speechSynthesis.speak(u); }catch(e){ podcastEnded(); }
 }
 /* ---- صدای ابری (OpenAI TTS) ---- */
-async function podTTSFetch(text){
-  if(_pod.ttsProv==='gemini') return await podGeminiTTS(text);
-  return await podOpenAITTS(text);
+/* ۲۷.۶: تا اینجا اگر صدای ابری نمی‌آمد، مستقیم به «صدای گوشی» می‌افتاد.
+   حالا مثلِ متن، دو سطح فالبک دارد: کلیدهای همان سرویس ← سرویسِ دیگر ← صدای گوشی. */
+async function _podTTSOne(pv, text){
+  const keys=getVisionKeys(pv); if(!keys.length) throw new Error(PROVIDER_NAMES[pv]+' (401): کلیدی ثبت نشده');
+  let lastErr;
+  for(let i=0;i<keys.length;i++){
+    try{ return (pv==='gemini') ? await podGeminiTTS(text, null, keys[i]) : await podOpenAITTS(text, null, keys[i]); }
+    catch(e){ lastErr=e; const m=String((e&&e.message)||e);
+      const quota=/\(429\)|\(402\)|quota|exceed|rate limit|insufficient|billing/i.test(m);
+      if(quota && i<keys.length-1) continue;   // کلیدِ پشتیبانِ همان سرویس
+      throw e; }
+  }
+  throw lastErr;
 }
-async function podOpenAITTS(text,voice){
-  const key=getVisionKey('openai'); if(!key) throw new Error('no key'); voice=voice||_podVoiceFor('openai');
+async function podTTSFetch(text){
+  const okp=p=>hasAnyKey(p)&&!aiFrozen(p);
+  const cur=_pod.ttsProv||'';
+  const order=[]; if(cur&&okp(cur)) order.push(cur);
+  ['gemini','openai'].forEach(p=>{ if(p!==cur && okp(p)) order.push(p); });
+  if(!order.length) throw new Error('no tts provider');
+  let lastErr;
+  for(const pv of order){
+    try{
+      const out=await _podTTSOne(pv, text);
+      if(pv!==_pod.ttsProv){ _pod.ttsProv=pv; _pod._ttsSwitched=true;
+        try{ uiToast&&uiToast('صدای «'+(PROVIDER_NAMES[pv]||pv)+'» جایگزین شد'); }catch(e){} }
+      return out;
+    }catch(e){ lastErr=e; const m=String((e&&e.message)||e);
+      // فقط خطای «این سرویس نمی‌تواند» باعثِ سوییچ شود؛ خطای موقت را podFetchBuffer دوباره تلاش می‌کند
+      const hard=/\(4\d\d\)|quota|exceed|rate limit|insufficient|billing|invalid|unauthor|location|not supported|کلیدی ثبت نشده/i.test(m);
+      if(!hard) throw e;
+    }
+  }
+  throw lastErr;
+}
+async function podOpenAITTS(text,voice,keyOv){
+  const key=keyOv||getVisionKey('openai'); if(!key) throw new Error('no key'); voice=voice||_podVoiceFor('openai');
   const mk=body=>fetch('https://api.openai.com/v1/audio/speech',{method:'POST',headers:{'authorization':'Bearer '+key,'content-type':'application/json'},body:JSON.stringify(body)});
   const tone=(podCfg().content&&podCfg().content.tone)||'casual';
   const instr=(tone==='formal')
@@ -4363,8 +4394,8 @@ async function podOpenAITTS(text,voice){
   podCostAdd((Math.max(1,(text||'').length)/900)*POD_COST.ttsPerMin);   // تخمینِ دقیقهٔ صدا از طولِ متن (~۹۰۰ نویسه در دقیقه)
   return { buf:await res.arrayBuffer(), type:'audio/mpeg' };
 }
-async function podGeminiTTS(text,voice){
-  const key=getVisionKey('gemini'); if(!key) throw new Error('no key'); voice=voice||_podVoiceFor('gemini');
+async function podGeminiTTS(text,voice,keyOv){
+  const key=keyOv||getVisionKey('gemini'); if(!key) throw new Error('no key'); voice=voice||_podVoiceFor('gemini');
   const url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key='+encodeURIComponent(key);
   const body={ contents:[{parts:[{text:'با لحنی گرم، آرام و دلنشین بخوان: '+text}]}],
     generationConfig:{ responseModalities:['AUDIO'], speechConfig:{ voiceConfig:{ prebuiltVoiceConfig:{ voiceName:voice } } } } };
@@ -4446,7 +4477,7 @@ async function podCloudSpeak(full){
   const ctx=wkEnsureAudio(); if(!ctx) throw new Error('no audio ctx');
   podVoiceOut(ctx);
   podEngineReset();
-  const key=podAudioKey(full);
+  let key=podAudioKey(full);
   // ۱) کش: اگر همین متن با همین صدا قبلاً ساخته شده (هر روزی)، بدونِ هیچ درخواستی پخش کن (رایگان و فوری)
   try{ const hit=await podCacheGet(key);
     if(hit && hit.chunks && hit.chunks.length){ try{ podAudioTouch(key); }catch(e){}
@@ -4465,6 +4496,7 @@ async function podCloudSpeak(full){
   // ۲) ساختِ تازه (با ریتم و تلاشِ مجدد) و جمع‌آوریِ خام برای کش
   const chunks=podChunksForTTS(full); const raw=[]; let rawType='audio/mpeg';
   const first=await podFetchBuffer(chunks[0], 3);
+  key=podAudioKey(full);   // اگر فالبکِ سرویس رخ داد، کش با سرویسِ واقعی ذخیره شود
   if(!first) throw new Error('first chunk failed');
   if(_pod.mode==='idle') return;
   raw.push(first.raw); rawType=first.type||rawType; podPushBuffer(first.audio);
@@ -4538,7 +4570,7 @@ async function podCloudSpeakEl(full){
   const ctx=wkEnsureAudio();   // فقط برای اندازه‌گیریِ مدتِ هر قطعه (دیکود؛ پخش از المان است)
   podEngineReset(); podElReset(); _pod.elMode=true; _pod.analyser=null;   // بدونِ analyser ⇒ لب‌سینکِ زمان‌محور
   try{ _pod.visSegTexts=podChunksForTTS(full); _pod._visSig=''; }catch(e){ _pod.visSegTexts=null; }   // متنِ هر قطعه برای سینکِ دقیقِ لب
-  const key=podAudioKey(full);
+  let key=podAudioKey(full);
   // ۱) کش
   try{ const hit=await podCacheGet(key);
     if(hit && hit.chunks && hit.chunks.length){ try{ podAudioTouch(key); }catch(e){}
@@ -4559,6 +4591,7 @@ async function podCloudSpeakEl(full){
   const chunks=podChunksForTTS(full); const raw=[]; let rawType='audio/mpeg';
   const first=await podFetchBuffer(chunks[0],3); if(!first) throw new Error('first chunk failed');
   if(_pod.mode==='idle') return;
+  key=podAudioKey(full);   // اگر وسطِ راه سرویس عوض شد، کش با سرویسِ واقعی ذخیره شود
   raw.push(first.raw); rawType=first.type||rawType;
   podElPush(first.raw, rawType, (first.audio&&first.audio.duration)||0, first.audio);
   _pod.prep=false; podMusicStart(); podMusicGain(podMusicPlayGain()); podElLoadPlay(0,0); podMediaSessionSet(); renderPodcastCard();
