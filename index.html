@@ -2333,7 +2333,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۵.۳</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۵.۴</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -6098,10 +6098,11 @@ function pod3dPropsEnsure(){
     table.add(top);
     const lip=glassPart(new T.BoxGeometry(topW*0.99, U*0.05, U*0.022));            // لبهٔ نگه‌دارندهٔ برگه
     lip.position.set(0, -U*0.005, topD*0.47); lip.rotation.x=-0.20; table.add(lip);
-    const blade=glassPart(new T.BoxGeometry(topW*0.30, U*2.30, U*0.05));           // تیغهٔ باریکِ عمودی
-    blade.position.y=-U*1.18; table.add(blade);
+    const BLADE_H=U*2.30;
+    const blade=glassPart(new T.BoxGeometry(topW*0.30, BLADE_H, U*0.05));          // تیغهٔ باریکِ عمودی
+    blade.position.y=-BLADE_H/2; table.add(blade);
     const base=glassPart(new T.CylinderGeometry(U*0.42,U*0.46,U*0.05,32));
-    base.position.y=-U*2.35; table.add(base);
+    base.position.y=-BLADE_H; table.add(base);
     // ── آی‌پد ──
     const pw=U*0.44, ph=U*0.60, pt=U*0.020;
     const scr=tex(_podTexIpadScreen()); scr.wrapS=scr.wrapT=T.RepeatWrapping;
@@ -6122,8 +6123,8 @@ function pod3dPropsEnsure(){
     stand.rotation.x=-0.50; stand.position.y=-U*0.02;             // کفِ استند صاف روی شیشهٔ شیب‌دار می‌نشیند
     pad.position.y=ph*0.5+U*0.03;
     _pod3d.root.add(badge); _pod3d.root.add(table); _pod3d.root.add(holder);
-    _pod3d.props={badge:badge, table:table, papers:holder, pad:pad, scr:scr,
-                  U:U, pw:pw, ph:ph, pt:pt, topD:topD, anchor:null, scroll:0};
+    _pod3d.props={badge:badge, table:table, blade:blade, base:base, bladeH:BLADE_H, papers:holder, pad:pad, scr:scr,
+                  U:U, pw:pw, ph:ph, pt:pt, topD:topD, anchor:null, floorY:null, scroll:0};
   }catch(e){ _pod3d.props=null; }
   return _pod3d.props;
 }
@@ -6154,6 +6155,14 @@ function pod3dPropsUpdate(t, reading){
   const cz=A.z+U*1.05;                                     // ⚠️ کاملاً **جلوی** بدن؛ نه دورِ بدن (میزِ گردِ قبلی تنه را قطع می‌کرد)
   P.table.position.set(A.x, topY, cz);
   P.table.rotation.set(0,0,0);
+  // ⭐ پایه باید روی **همان کفی** بنشیند که مجری ایستاده؛ وگرنه تریبون معلق به‌نظر می‌رسد.
+  // سطحِ کف یک‌بار از پایین‌ترین نقطهٔ خودِ مدل (کفِ کفش) گرفته می‌شود.
+  if(P.floorY==null){ let fy=0; try{ const bb=new T.Box3().setFromObject(_pod3d.modelRoot); if(isFinite(bb.min.y)) fy=bb.min.y; }catch(e){} P.floorY=fy; }
+  if(P.blade&&P.base&&P.bladeH){
+    const h=Math.max(U*0.6, topY-P.floorY);
+    P.blade.scale.y=h/P.bladeH; P.blade.position.y=-h/2;
+    P.base.position.y=-h+U*0.025;
+  }
   // آی‌پد روی صفحه: عقب‌ترِ لبهٔ نگه‌دارنده، با شیبِ کمِ استند (پشت رو‌به‌دوربین، صفحه رو‌به‌مجری)
   const tilt=0.30;
   P.papers.position.set(A.x, topY+U*0.055, cz-P.topD*0.12);
