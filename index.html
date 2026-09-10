@@ -2352,7 +2352,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۷.۰</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۷.۱</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -9510,6 +9510,11 @@ function promptRegistry(){
       d:(r._doc?'ساخته‌شده از قاعده‌های مشترکِ بالا؛ اگر اینجا ویرایش کنی، همان متنِ ویرایش‌شده جایگزینِ کلِ نقش می‌شود.':(r.desc||'')),
       def:()=>roleSysDefault(r) })) });
   });
+  G.push({g:'💬 چتِ آزاد', items:[
+    {id:'role.free', t:'💬 چتِ آزاد (اختیاری — پیش‌فرض خالی)',
+     d:'به‌صورت پیش‌فرض هیچ متنی فرستاده نمی‌شود (ارزان‌ترین حالت). اگر اینجا چیزی بنویسی، «فقط همین یک متن» به‌عنوان دستور می‌رود — باز هم بدونِ پرونده و بدونِ قاعده‌های پزشکی. خالی بگذار تا هیچ هزینه‌ای بابتِ پرامپت ندهی.',
+     def:()=>''}
+  ]});
   G.push({g:'🎧 پادکست', items:[
     {id:'pod.script', t:'متنِ پادکست', d:'{APP} نامِ اپ، {MINS} دقیقه، {WORDS}/{WLOW}/{WHIGH} تعدادِ کلمه.', def:()=>POD_SCRIPT_SYS},
     {id:'pod.rules', t:'قواعدِ نگارشِ پادکست', d:'ممنوعیتِ مارک‌داون، شکلک و جمله‌های سلبِ مسئولیت.', def:()=>POD_RULES_SYS},
@@ -9542,11 +9547,12 @@ function renderPromptManager(){
     g.items.forEach(it=>{
       const cus=pIsCustom(it.id); const op=!!_pmOpen[it.id];
       const cur=pTxt(it.id, promptDefOf(it.id));
+      const isEmptyDef=!promptDefOf(it.id).trim();
       h+=`<div style="border:1px solid ${cus?'var(--amber)':'var(--line)'};border-radius:11px;margin-bottom:7px;overflow:hidden">
         <div onclick="promptToggle('${it.id}')" style="display:flex;align-items:center;gap:8px;padding:9px 10px;cursor:pointer;background:var(--field)">
           <span style="font-size:13px">${cus?'✏️':'📄'}</span>
           <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:12.5px">${escVision(it.t)}</div>
-            <div style="font-size:10.5px;color:var(--muted);margin-top:1px">${faDigits(String(cur.length))} نویسه${cus?' · ویرایش‌شده':''}</div></div>
+            <div style="font-size:10.5px;color:var(--muted);margin-top:1px">${cur.length?(faDigits(String(cur.length))+' نویسه'):'خالی — هیچ پرامپتی فرستاده نمی‌شود'}${cus?' · ویرایش‌شده':''}</div></div>
           <span style="color:var(--muted);font-size:12px">${op?'▲':'▼'}</span>
         </div>`;
       if(op){
@@ -16095,7 +16101,9 @@ function buildChatSystemPrompt(){
   // دکتر با @@NEEDDATA@@ می‌خواهد و کاربر با یک کلیک می‌فرستد.
   // ۲۶.۳: «برنامه‌ریزِ مسیرِ درمان» فقط مسیر می‌چیند و به پرونده نیازی ندارد ⇒ متنِ حداقلی.
   // ۲۶.۹: «چتِ آزاد» ⇒ هیچ سیستم‌پرامپتی نمی‌رود (نه شخصیت، نه پرونده، نه قاعده)
-  try{ const ids0=chatRolesOf(chatActive()); if(ids0.length===1 && ids0[0]==='free') return ''; }catch(e){}
+  // چتِ آزاد: پیش‌فرض هیچ‌چیز نمی‌رود؛ ولی اگر کاربر در «پروفایل ← پرامپت‌ها» متنی
+  // گذاشته باشد، فقط همان یک متن می‌رود (باز هم بدونِ پرونده و قاعده‌های دیگر).
+  try{ const ids0=chatRolesOf(chatActive()); if(ids0.length===1 && ids0[0]==='free') return pTxt('role.free',''); }catch(e){}
   let _planOnly=false; try{ const ids=chatRolesOf(chatActive()); _planOnly=(ids.length===1&&ids[0]==='planner'); }catch(e){}
   let snap; try{ snap=_planOnly?{label:'',text:''}:buildHealthSnapshot('chat'); }catch(e){ snap={text:''}; }
   if(_planOnly){
