@@ -2333,7 +2333,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۴.۱۲</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۴.۱۳</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5774,8 +5774,11 @@ function pod3dGesture(open){
     const La=G['LeftArm'],Lf=G['LeftForeArm'],Lh=G['LeftHand'],Ra=G['RightArm'],Rf=G['RightForeArm'],Rh=G['RightHand'];
     const aimP=(A,B,dir)=>{ if(!A||!B) return; const tl=pod3dAimTargetLocal(A.b,B.b,dir,A.q); if(tl) A.b.quaternion.slerp(tl,k); };
     aimP(La,Lf,pose.LA); aimP(Lf,Lh,pose.LF); aimP(Ra,Rf,pose.RA); aimP(Rf,Rh,pose.RF);
-    if(Lh){ const q=new T.Quaternion().setFromEuler(new T.Euler(pose.LH[0],pose.LH[1],pose.LH[2],'XYZ')); Lh.b.quaternion.copy(Lh.q).multiply(q); }
-    if(Rh){ const q=new T.Quaternion().setFromEuler(new T.Euler(pose.RH[0],pose.RH[1],pose.RH[2],'XYZ')); Rh.b.quaternion.copy(Rh.q).multiply(q); }
+    // ⭐ مچِ دستِ نگه‌دارنده با **صفحهٔ برگه** هم‌راستا می‌شود (کفِ دست زیرِ کاغذ)؛
+    // با اویلرِ ثابت، کفِ دست هیچ‌وقت نمی‌چرخید و انگشت‌ها از تویِ برگه رد می‌شدند.
+    const palmR=pod3dPalmAlign('R', k), palmL=pose.fL==='flat'? pod3dPalmAlign('L', k) : false;
+    if(Lh&&!palmL){ const q=new T.Quaternion().setFromEuler(new T.Euler(pose.LH[0],pose.LH[1],pose.LH[2],'XYZ')); Lh.b.quaternion.copy(Lh.q).multiply(q); }
+    if(Rh&&!palmR){ const q=new T.Quaternion().setFromEuler(new T.Euler(pose.RH[0],pose.RH[1],pose.RH[2],'XYZ')); Rh.b.quaternion.copy(Rh.q).multiply(q); }
     try{ const sh=pod3dPoseFingers(pose); pod3dApplyFingers(sh[0], sh[1], k); }catch(e){}
     // چرخهٔ نگاه: چند ثانیه روی برگه (خواندن) و بعد به دوربین (توضیح‌دادن)
     const R=_pod3d.rd||(_pod3d.rd={ph:0, until:t+2.2, p:0});
@@ -6064,6 +6067,43 @@ function pod3dPropsEnsure(){
   }catch(e){ _pod3d.props=null; }
   return _pod3d.props;
 }
+// ⭐⭐ کفِ دست را زیرِ برگه می‌چرخاند (۲۴.۱۳) — کاملاً مستقل از محورِ استخوانِ مدل.
+// روش: دستگاهِ مختصاتِ «کفِ دست» از **موقعیتِ خودِ استخوان‌های انگشت** ساخته می‌شود
+//   f = مچ→انگشتِ وسط، s = انگشتِ کوچک→اشاره، و کفِ دست = s×f (برای دستِ راست؛ چپ قرینه).
+// سپس دستگاهِ هدف از صفحهٔ برگه ساخته می‌شود (کفِ دست هم‌جهتِ نرمالِ برگه، انگشتان روی
+// سطحِ برگه در امتدادِ ساعد تا مچ پیچ نخورد) و چرخشِ لازم به فضای محلیِ استخوان برمی‌گردد.
+// بدونِ این، پوز فقط جهتِ ساعد را می‌داد و کفِ دست هیچ‌وقت زیرِ کاغذ نمی‌رفت.
+function pod3dPalmAlign(side, k){
+  const T=THREE, G=_pod3d.gbones, P=_pod3d.props; if(!G||!P||!T) return false;
+  const H=G[side==='R'?'RightHand':'LeftHand'], FA=G[side==='R'?'RightForeArm':'LeftForeArm'];
+  if(!H||!H.b.parent) return false;
+  const fg=pod3dFingerGroups(); const hs=fg&&fg[side]; if(!hs) return false;
+  const mid=(hs.middle&&hs.middle[0])||(hs.index&&hs.index[0]), idx=hs.index&&hs.index[0], pky=hs.pinky&&hs.pinky[0];
+  if(!mid||!idx||!pky) return false;
+  try{
+    // دستگاهِ محلیِ دست (از هندسهٔ خودِ اسکلت)
+    const f=mid.b.position.clone(); if(f.lengthSq()<1e-9) return false; f.normalize();
+    const sv=idx.b.position.clone().sub(pky.b.position); if(sv.lengthSq()<1e-9) return false; sv.normalize();
+    const palm=new T.Vector3().crossVectors(sv,f).normalize().multiplyScalar(side==='R'?1:-1);
+    if(!isFinite(palm.x)||palm.lengthSq()<0.5) return false;
+    const sA=new T.Vector3().crossVectors(palm,f).normalize();
+    const fA=new T.Vector3().crossVectors(sA,palm).normalize();
+    // دستگاهِ هدف از صفحهٔ برگه
+    const pq=P.papers.quaternion;
+    const pN=new T.Vector3(0,0,1).applyQuaternion(pq);
+    let Ft=null;
+    if(FA){ const ep=new T.Vector3(), hp=new T.Vector3(); FA.b.getWorldPosition(ep); H.b.getWorldPosition(hp);
+      const fd=hp.sub(ep); if(fd.lengthSq()>1e-8){ fd.normalize(); Ft=fd.sub(pN.clone().multiplyScalar(fd.dot(pN))); if(Ft.lengthSq()<1e-6) Ft=null; else Ft.normalize(); } }
+    if(!Ft){ Ft=new T.Vector3(1,0,0).applyQuaternion(pq).multiplyScalar(side==='R'?1:-1); }
+    const St=new T.Vector3().crossVectors(pN,Ft).normalize();
+    const Ft2=new T.Vector3().crossVectors(St,pN).normalize();
+    const mA=new T.Matrix4().makeBasis(sA,palm,fA), mB=new T.Matrix4().makeBasis(St,pN,Ft2);
+    const qW=new T.Quaternion().setFromRotationMatrix(mB.multiply(mA.transpose()));
+    const pw=new T.Quaternion(); H.b.parent.getWorldQuaternion(pw);
+    H.b.quaternion.slerp(pw.invert().multiply(qW), k);
+    return true;
+  }catch(e){ return false; }
+}
 // عمقِ سطحِ کت جلوی سینه را یک‌بار با پرتابِ پرتو (ray) اندازه می‌گیرد و کش می‌کند.
 // چرا: استخوانِ Spine2 در آواتارهای مختلف در عمق‌های متفاوتی از بدن است؛ افستِ ثابت
 // باعث شد کارت در اسکرین‌شاتِ کاربر نصفه داخلِ کت فرو برود.
@@ -6124,7 +6164,7 @@ function pod3dPropsUpdate(t, reading){
     } }catch(e){}
     const q=mq.clone().multiply(new T.Quaternion().setFromEuler(new T.Euler(-tilt,0,0,'XYZ')));
     const sUp=new T.Vector3(0,1,0).applyQuaternion(q), sN=new T.Vector3(0,0,1).applyQuaternion(q);
-    hp.addScaledVector(sUp, P.ph*0.30).addScaledVector(sN, U*0.12);   // دست روی یک‌پنجمِ پایینِ برگه و **پشتِ** صفحه
+    hp.addScaledVector(sUp, P.ph*0.30).addScaledVector(sN, U*0.05);   // دست روی یک‌پنجمِ پایینِ برگه و **پشتِ** صفحه
     if(!P.pos) P.pos=hp.clone(); else P.pos.lerp(hp,0.3);
     P.papers.position.copy(P.pos); P.papers.quaternion.copy(q); }
   // ⭐ ورق‌زدن (۲۴.۱۱): ورقِ بالایی از لبهٔ پایین **بلند می‌شود، کمی کج و برمی‌گردد** —
