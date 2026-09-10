@@ -2352,7 +2352,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۷.۷</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۷.۸</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4383,7 +4383,8 @@ async function podTTSFetch(text){
       return out;
     }catch(e){ lastErr=e; const m=String((e&&e.message)||e);
       // فقط خطای «این سرویس نمی‌تواند» باعثِ سوییچ شود؛ خطای موقت را podFetchBuffer دوباره تلاش می‌کند
-      const hard=/\b4\d\d\b|quota|exceed|rate limit|resource_exhausted|insufficient|billing|invalid|unauthor|location|not supported|کلیدی ثبت نشده/i.test(m);
+      const hard=/\b4\d\d\b|quota|exceed|rate limit|resource_exhausted|insufficient|billing|invalid|unauthor|location|not supported|کلیدی ثبت نشده/i.test(m)
+        || /failed to fetch|load failed|networkerror|network request failed|connection|err_/i.test(m);   // به این سرویس نرسیدیم ⇒ سرویسِ بعدی
       if(!hard) throw e;
     }
   }
@@ -13130,6 +13131,7 @@ async function aiFallbackChain(primary, makeCall, opts){
   const order=[primary, ...VISION_PROVIDERS.filter(p=>p!==primary)];
   const tried={}; let lastErr, first=true; const fails=[]; let nTried=0;
   const reasonFa=m=>{ const cm=m.match(/\((\d{3})\)/); const code=cm?+cm[1]:0;
+    if(/failed to fetch|load failed|networkerror|network request failed|connection|err_/i.test(m)) return 'دسترسی نشد (شبکه/فیلتر)';
     if(/location|not supported|unsupported|region|country/i.test(m)) return 'منطقه‌ی جغرافیایی';
     if(code===402||/insufficient balance|no credit/i.test(m)) return 'اعتبار تمام';
     if(code===429||/quota|exceeded|rate limit/i.test(m)) return 'سهمیه پر';
@@ -13147,7 +13149,10 @@ async function aiFallbackChain(primary, makeCall, opts){
       const quota = code===429||code===402||/insufficient balance|quota|exceeded|rate limit|billing/i.test(m);
       const geo   = /location|not supported|unsupported|region|country/i.test(m);
       const auth  = code===401||code===403||/invalid.*key|api[_ ]?key|unauthor/i.test(m);
-      if(quota||geo||auth) continue;   // این سرویس نشد → سرویس بعدیِ دارای کلید را امتحان کن
+      // خطای شبکه = «به این سرویس نرسیدیم»، نه «اینترنت نیست»؛ با VPN ممکن است سرویسِ
+      // دیگر باز باشد. پس آن هم باید سراغِ سرویسِ بعدی برود.
+      const net   = !code && /failed to fetch|load failed|networkerror|network request failed|connection|err_|timeout|aborted/i.test(m);
+      if(quota||geo||auth||net) continue;   // این سرویس نشد → سرویس بعدیِ دارای کلید را امتحان کن
       throw e;
     }
   }
@@ -13260,7 +13265,10 @@ async function aiRetry(fn, onRetry){
       const cm=msg.match(/\((\d{3})\)/); const code=cm?+cm[1]:0;
       const transient = code>=500 || /high demand|overload|unavailable|temporarily|try again/i.test(msg)
         || /failed to fetch|networkerror|load failed/i.test(msg);
-      if(transient && attempt<2){
+      // خطای شبکه احتمالاً «این سرویس بسته است»؛ تکرارِ زیاد فقط تأخیر می‌دهد و
+      // رفتنِ سریع‌تر به سرویسِ بعدی مفیدتر است.
+      const netErr = /failed to fetch|networkerror|load failed|network request failed/i.test(msg);
+      if(transient && attempt < (netErr?1:2)){
         if(onRetry){ try{ onRetry(attempt+1); }catch(_){} }
         await new Promise(r=>setTimeout(r, 1200*(attempt+1)));
         continue;
