@@ -2084,6 +2084,12 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       مثل کلود، بعد از هر پاسخ چند سوالِ بعدیِ محتمل پیشنهاد شود تا با یک لمس بپرسی. پیش‌فرض روشن.
     </div>
     <div id="chatSuggestSetting"></div>
+    <div style="font-weight:800;font-size:13px;color:var(--teal);margin:18px 0 7px">خواندنِ پاسخ‌ها با مجریِ سه‌بعدی</div>
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:10px">
+      زیرِ هر پاسخِ چت دکمه‌ی <b style="color:var(--teal)">🔊</b> هست: همان مجریِ پادکست به‌صورتِ <b style="color:var(--teal)">مینی‌پلیرِ شناور</b> می‌آید و پاسخ را می‌خواند (روی هر تبی که باشی می‌ماند و با انگشت جابه‌جا می‌شود).
+      اگر این کلید را روشن کنی، <b style="color:var(--teal)">هر پاسخ خودکار</b> خوانده می‌شود — ولی چون صدای ابری بر اساسِ تعدادِ نویسه هزینه دارد، در حالتِ خودکار فقط <b style="color:var(--teal)">۱۲۰۰ نویسه‌ی اول</b> خوانده می‌شود (با دکمه‌ی 🔊 کلِ پاسخ خوانده می‌شود). پیش‌فرض خاموش.
+    </div>
+    <div id="chatReadSetting"></div>
   </div>
 </div>
 <div class="card" id="c-profile-zoom">
@@ -2333,7 +2339,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۵.۴</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۵.۵</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3675,7 +3681,7 @@ function podCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(POD_CFG_KEY)
     mDxM:(typeof o.mDxM==='number'?o.mDxM:0), mDyM:(typeof o.mDyM==='number'?o.mDyM:0), mScaleM:(typeof o.mScaleM==='number'?o.mScaleM:1),
     eDx:(typeof o.eDx==='number'?o.eDx:0), eDy:(typeof o.eDy==='number'?o.eDy:0), eScale:(typeof o.eScale==='number'?o.eScale:1),
     imgQuality:(['low','medium','high'].indexOf(o.imgQuality)>=0?o.imgQuality:'medium'),
-    bgPlay:(o.bgPlay!==false), handMode:(['back','present','paper'].indexOf(o.handMode)>=0?o.handMode:'normal'),
+    bgPlay:(o.bgPlay!==false), chatRead:(o.chatRead===true), handMode:(['back','present','paper'].indexOf(o.handMode)>=0?o.handMode:'normal'),
     avBg:(o.avBg!==false), avBgMode:(o.avBgMode==='manual'?'manual':'auto'),
     avBgScene:((typeof POD_BG_SCENES!=='undefined'&&POD_BG_SCENES[o.avBgScene])?o.avBgScene:'ocean'),
     voiceVol:(typeof o.voiceVol==='number'?Math.max(0,Math.min(1.5,o.voiceVol)):1.0),
@@ -4056,7 +4062,7 @@ function podTick(){
   const sl=document.getElementById('podSlider'); if(sl&&!_pod.seeking){ sl.max=Math.max(1,Math.round(total)); sl.value=Math.min(sl.max, Math.round(el)); }
   const cur=document.getElementById('podCur'); if(cur) cur.textContent=podFmtTime(el);
   const tot=document.getElementById('podTot'); if(tot) tot.textContent=(cloud&&!_pod.allFetched?'~':'')+podFmtTime(total);
-  const st=document.getElementById('podState'); if(st) st.textContent=_pod.prep?'در حالِ آماده‌سازیِ صدا…':(_pod.mode==='playing'?'در حالِ پخش':(_pod.mode==='paused'?'مکث':''));
+  const st=document.getElementById('podState'); if(st) st.textContent=_pod.prep?'در حالِ آماده‌سازیِ صدا…':(_pod.mode==='playing'?(_pod.spk?'خواندنِ پاسخِ هوش مصنوعی':'در حالِ پخش'):(_pod.mode==='paused'?'مکث':''));
   if(_pod.elMode) podMediaPos();
 }
 // گِینِ خروجیِ پادکست را برای کانتکستِ فعلی می‌سازد/بازمی‌سازد (بعد از بازسازیِ کانتکست حیاتی است)
@@ -4121,6 +4127,7 @@ function podTTSProvider(){
   return '';
 }
 function podcastStart(rec){
+  _pod.spk=false;                       // پادکستِ واقعی (نه خواندنِ متنِ چت)
   _pod.ttsProv=podTTSProvider();
   _pod.cloud = !!_pod.ttsProv;
   _pod.estDur = Math.max(60, Math.round(podWordCount(rec.script)/2.4));
@@ -4172,8 +4179,50 @@ function podcastResume(){
   }catch(e){}
   podProgressStart(); podMediaPos(); renderPodcastCard();
 }
-function podcastEnded(){ podProgressStop(); podStopSrc(); podElStop(); podMusicStop(); _pod.mode='idle'; _pod.prep=false; try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} try{ if('mediaSession' in navigator) navigator.mediaSession.playbackState='none'; }catch(e){} const sl=document.getElementById('podSlider'); if(sl) sl.value=sl.max; renderPodcastCard(); }
-function podcastStopAll(){ podProgressStop(); podStopSrc(); podElReset(); podMusicStop(); try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} try{ if(_wkAudioCtx&&_wkAudioCtx.state==='suspended'&&_wkAudioCtx.resume) _wkAudioCtx.resume(); }catch(e){} try{ if('mediaSession' in navigator) navigator.mediaSession.playbackState='none'; }catch(e){} _pod.mode='idle'; _pod.prep=false; }
+function podcastEnded(){ _pod.spk=false; podProgressStop(); podStopSrc(); podElStop(); podMusicStop(); _pod.mode='idle'; _pod.prep=false; try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} try{ if('mediaSession' in navigator) navigator.mediaSession.playbackState='none'; }catch(e){} const sl=document.getElementById('podSlider'); if(sl) sl.value=sl.max; renderPodcastCard(); }
+function podcastStopAll(){ _pod.spk=false; podProgressStop(); podStopSrc(); podElReset(); podMusicStop(); try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} try{ if(_wkAudioCtx&&_wkAudioCtx.state==='suspended'&&_wkAudioCtx.resume) _wkAudioCtx.resume(); }catch(e){} try{ if('mediaSession' in navigator) navigator.mediaSession.playbackState='none'; }catch(e){} _pod.mode='idle'; _pod.prep=false; }
+// ══ خواندنِ یک «متنِ دلخواه» (پاسخِ چتِ پزشک/مربی/سرآشپز) با همان مجری و موتورِ صدا ══
+// چرا از همان موتور؟ چون پخشِ پس‌زمینه‌ای، کشِ صدا، MediaSession، لب‌خوانی و مجریِ سه‌بعدی
+// همگی روی `_pod` سوارند؛ ساختِ موتورِ دوم یعنی دوباره‌کاری و دو حالتِ ناسازگار.
+const POD_CHAT_CAP=1200;   // سقفِ نویسه فقط در «خواندنِ خودکار» — TTS بر اساسِ نویسه هزینه دارد
+// متنِ AI را برای «خوانده‌شدن» تمیز می‌کند: مارک‌داون، جدول، لینک، ایموجی و خط‌های فرمانِ داخلی حذف
+function podPlainText(text, cap){
+  let t=String(text||'');
+  t=t.replace(/@@(SUGGEST|MEAL|WORKOUT|PLAN|INSULIN)@@[\s\S]*?(\n|$)/g,'\n');      // خط‌های فرمانِ داخلی
+  t=t.replace(/```[\s\S]*?```/g,' ').replace(/`([^`]*)`/g,'$1');                   // بلاک/تکه‌کد
+  t=t.replace(/!\[[^\]]*\]\([^)]*\)/g,' ').replace(/\[([^\]]*)\]\([^)]*\)/g,'$1'); // تصویر و لینک
+  t=t.replace(/^\s*\|[\s:|-]+\|\s*$/gm,'');                                        // خطِ جداکنندهٔ جدول
+  t=t.replace(/^\s*\|(.*)\|\s*$/gm,(m,g)=>g.split('|').map(x=>x.trim()).filter(Boolean).join('، ')+'.');
+  t=t.replace(/^\s{0,3}#{1,6}\s*/gm,'').replace(/^\s{0,3}[-*•]\s+/gm,'');           // تیتر و بولت
+  t=t.replace(/\*\*([^*]+)\*\*/g,'$1').replace(/[*_~]/g,'');                        // تأکید
+  t=t.replace(/^\s*[-–—]{3,}\s*$/gm,' ');                                          // خطِ جداکننده
+  t=t.replace(/[\u{1F000}-\u{1FAFF}\u{2190}-\u{27BF}\u{FE0F}\u{2B00}-\u{2BFF}]/gu,' '); // ایموجی/نماد
+  t=t.replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+  if(cap && t.length>cap){                                                          // برشِ هوشمند سرِ جمله
+    const cut=t.slice(0,cap);
+    const p=Math.max(cut.lastIndexOf('.'),cut.lastIndexOf('؟'),cut.lastIndexOf('!'),cut.lastIndexOf('\n'));
+    t=(p>cap*0.5?cut.slice(0,p+1):cut)+' … بقیه‌اش را در متن بخوان.';
+  }
+  return t;
+}
+function podSpeaking(){ return !!(_pod.spk && (_pod.mode==='playing'||_pod.mode==='paused')); }
+function podSpeakStop(){ try{ podcastStopAll(); renderPodcastCard(); }catch(e){} }
+// true اگر خواندن شروع شد. پادکستِ در حالِ پخش را «هرگز» قطع نمی‌کند.
+function podSpeakText(text, opts){
+  opts=opts||{};
+  const t=podPlainText(text, opts.cap||0);
+  if(!t){ if(!opts.silent) uiToast&&uiToast('متنی برای خواندن نیست'); return false; }
+  if(_pod.mode==='loading'){ if(!opts.silent) uiToast&&uiToast('صبر کن؛ پادکست در حالِ ساخت است'); return false; }
+  if((_pod.mode==='playing'||_pod.mode==='paused') && !_pod.spk){
+    if(!opts.silent) uiToast&&uiToast('پادکست در حالِ پخش است؛ اول متوقفش کن'); return false; }
+  try{ podcastStopAll(); }catch(e){}
+  _pod._viewRec=null; _pod._full=false;
+  try{ podcastStart({script:t}); }catch(e){ return false; }
+  _pod.spk=true;                                   // بعد از podcastStart (خودش پاکش می‌کند)
+  try{ if(podCfg().avatar) _pod._float=true; }catch(e){}
+  try{ renderPodcastCard(); podAvShowControls(); }catch(e){}
+  return true;
+}
 async function podcastRegen(){ _pod._viewRec=null; podcastStopAll(); _pod.mode='loading'; renderPodcastCard(); try{ await podcastGenerate(true); uiToast&&uiToast('✓ پادکستِ تازه ساخته شد'); }catch(e){} _pod.mode='idle'; renderPodcastCard(); }
 // ── آرشیوِ پادکست‌ها (پوشه بر اساسِ تاریخ؛ چند پادکست در روز؛ ستاره + متادیتا) ──
 function _podChip(txt,col){ return `<span style="display:inline-block;font-size:10px;background:${col||'var(--field)'};border:1px solid var(--line);border-radius:20px;padding:1px 8px;margin:2px 2px 0 0">${txt}</span>`; }
@@ -6581,7 +6630,7 @@ function renderPodcastCard(){
   const total = cloud?podTotalKnown():_pod.estDur;
   const active = playing||paused;
   const el = active?(cloud?podElapsed():((Date.now()-_pod.t0)/1000)):0;
-  const stateTxt = loading?'در حالِ ساختِ متنِ امروز…' : _pod.prep?'در حالِ آماده‌سازیِ صدا…' : playing?'در حالِ پخش' : paused?'مکث' : (fresh?('آماده · حدود '+faDigits(c.minutes)+' دقیقه'):'اپیزودِ امروز ساخته نشده');
+  const stateTxt = loading?'در حالِ ساختِ متنِ امروز…' : _pod.prep?'در حالِ آماده‌سازیِ صدا…' : playing?(_pod.spk?'خواندنِ پاسخِ هوش مصنوعی':'در حالِ پخش') : paused?'مکث' : (fresh?('آماده · حدود '+faDigits(c.minutes)+' دقیقه'):'اپیزودِ امروز ساخته نشده');
   const sliderOn = cloud&&active;   // اسکراب فقط با صدای ابری
   const avOn=c.avatar; _pod.avMode=c.avMode;
   const av3d = c.avMode==='3d';
@@ -9243,6 +9292,23 @@ function renderChatSuggestSetting(){
   </div>`;
 }
 
+/* ====== خواندنِ پاسخ‌های چت با مجریِ سه‌بعدی ====== */
+const CHAT_READ_KEY='chat_autoread_v1';
+function chatAutoReadOn(){ try{ return localStorage.getItem(CHAT_READ_KEY)==='1'; }catch(e){ return false; } }
+function setChatAutoRead(on){ try{ localStorage.setItem(CHAT_READ_KEY, on?'1':'0'); }catch(e){}
+  try{ podCfgSet({chatRead:!!on}); }catch(e){}
+  renderChatReadSetting();
+  if(!on){ try{ if(podSpeaking()) podSpeakStop(); }catch(e){} uiToast('خواندنِ خودکار خاموش شد'); return; }
+  uiToast(podTTSProvider()? 'خواندنِ خودکارِ پاسخ‌ها روشن شد' : 'روشن شد — کلیدِ صدای ابری نداری، پس با صدای خودِ گوشی خوانده می‌شود');
+}
+function renderChatReadSetting(){ const box=document.getElementById('chatReadSetting'); if(!box) return;
+  const on=chatAutoReadOn();
+  box.innerHTML=`<div class="navmode-seg">
+    <button class="${on?'on':''}" onclick="setChatAutoRead(true)">🔊 روشن</button>
+    <button class="${!on?'on':''}" onclick="setChatAutoRead(false)">⛔ خاموش</button>
+  </div>`;
+}
+
 // ===== بزرگ‌نمایی دستی فقط برای محتوای وسط (هدر/نوارها ثابت) =====
 const ZOOM_KEY='zoom_enabled_v1';
 let _zScale=1, _pinchDist=0, _pinchStartScale=1, _lastTap=0;
@@ -9472,6 +9538,7 @@ async function renderProfileTab(){
   renderThemeSetting();
   renderChatLayoutSetting();
   renderChatSuggestSetting();
+  renderChatReadSetting();
   renderZoomSetting();
   renderVisionSetting();
   try{ renderAICost(); }catch(e){}
@@ -16527,6 +16594,8 @@ async function chatSend(){
   if(mb){ mb.insertAdjacentHTML('beforeend',`<div class="chat-row ai" id="${rowId}"><div class="chat-b"><span class="chat-cur"></span></div></div>`); mb.scrollTop=mb.scrollHeight; }
   const bubble=()=>{ const r=document.getElementById(rowId); return r?r.querySelector('.chat-b'):null; };
   chatSetBusy(true);
+  // اگر خواندنِ خودکار روشن است، صدا را همین‌جا (داخلِ جسچرِ کاربر) آزاد کن؛ وگرنه iOS پخشِ بعدی را بلاک می‌کند
+  try{ if(chatAutoReadOn()){ wkEnsureAudio(); if(podBgEnabled()) podElUnlock(); } }catch(e){}
   // ── نمایش تدریجی «کلمه‌کلمه» (تایپ‌رایتر): حتی اگر پاسخ یکجا برسد، روان آشکار می‌شود ──
   let acc='';                       // متن هدف (هرچه تا کنون رسیده)
   let _shown=0, _streamDone=false, _revealResolve=null;
@@ -16570,6 +16639,7 @@ async function chatSend(){
     chatSave(o); renderChatMessages(c);
     chatRenderSuggestions(parsed.suggestions);
     if(_chatLiveOn) chatSpeak(clean);
+    else if(chatAutoReadOn()){ try{ podSpeakText(clean,{cap:POD_CHAT_CAP, silent:true}); }catch(e){} }
     // اگر پیشنهادها نیامد ولی روشن است، جداگانه و سبک بگیر (تا کاربر بی‌پیشنهاد نماند)
     if(chatSuggestOn() && (!parsed.suggestions||!parsed.suggestions.length) && navigator.onLine){
       chatFetchSuggestions(prov, umsg.content, clean).then(list=>{
@@ -16607,8 +16677,13 @@ function chatEditMsg(i){ const o=chatLoad(); const c=chatActive(o); const m=c&&c
   chatSave(o); renderChatMessages(c);
 }
 function chatReadMsg(i,btn){ const c=chatActive(); const m=c&&c.messages[i]; if(!m) return;
+  if(podSpeaking()){ podSpeakStop(); return; }                       // در حالِ خواندن → توقف
   if(window.speechSynthesis&&speechSynthesis.speaking){ speechSynthesis.cancel(); return; }
-  chatSpeak(String(m.content||''));
+  try{ wkEnsureAudio(); if(podBgEnabled()) podElUnlock(); }catch(e){}  // آزادسازیِ صدا در همین لمس (iOS)
+  const txt=String(m.content||'');
+  // با کلیدِ صدای ابری: مجریِ سه‌بعدی به‌صورتِ مینی‌پلیرِ شناور می‌آید و کلِ پاسخ را می‌خواند
+  if(podTTSProvider() && podSpeakText(txt)) return;
+  chatSpeak(txt);                                                     // بی‌کلید: صدای خودِ گوشی
 }
 function chatSpeak(text){ try{ if(!window.speechSynthesis) return; speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(String(text||'').replace(/[#*_`>-]/g,'').slice(0,600));
