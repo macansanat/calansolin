@@ -2333,7 +2333,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۴.۱۰</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۴.۱۱</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5519,7 +5519,7 @@ function pod3dSetupModel(modelScene, gender, url){
          pod3dPoseArmsDown(modelScene, 'RightArm','RightForeArm', new T.Vector3(-0.25,-1,0.08));
          modelScene.updateMatrixWorld&&modelScene.updateMatrixWorld(true); _pod3d.posed=true;
          // استخوان‌ها را برای «حرکتِ زندهٔ بدن/دست/سر هنگام صحبت» ذخیره کن (کواترنیونِ پایهٔ همین ژست)
-         _pod3d.gbones={}; _pod3d._ge=0; _pod3d.gc=null; _pod3d.gp=null; _pod3d.gmodel=modelScene; _pod3d.fb=undefined; _pod3d.fgs=undefined; _pod3d.htip=undefined; _pod3d.pp=null; _pod3d.rd=null; _pod3d.props=null; ['Hips','Spine','Spine1','Spine2','Neck','Head','LeftArm','RightArm','LeftForeArm','RightForeArm','LeftHand','RightHand'].forEach(n=>{ const b=pod3dBone(modelScene,n); if(b) _pod3d.gbones[n]={b:b, q:b.quaternion.clone()}; });
+         _pod3d.gbones={}; _pod3d._ge=0; _pod3d.gc=null; _pod3d.gp=null; _pod3d.gmodel=modelScene; _pod3d.fb=undefined; _pod3d.fgs=undefined; _pod3d.htip=undefined; _pod3d.chestD=undefined; _pod3d.pp=null; _pod3d.rd=null; _pod3d.props=null; ['Hips','Spine','Spine1','Spine2','Neck','Head','LeftArm','RightArm','LeftForeArm','RightForeArm','LeftHand','RightHand'].forEach(n=>{ const b=pod3dBone(modelScene,n); if(b) _pod3d.gbones[n]={b:b, q:b.quaternion.clone()}; });
     }catch(e){}
   } else {
     try{ if(_pod3d.idleClip && T.AnimationMixer){
@@ -6053,13 +6053,33 @@ function pod3dPropsEnsure(){
     const papers=new T.Group();
     const s1=mk(_podTexPaper(2), pw, ph);
     const s2=mk(_podTexPaper(1), pw*0.985, ph*0.985); s2.position.set(U*0.010, U*0.006, ph*0.006);
-    const piv=new T.Group(); piv.position.set(-pw/2, 0, ph*0.013);      // لولا روی لبهٔ کناری
-    const s3=mk(_podTexPaper(3), pw*0.97, ph*0.97); s3.position.set(pw/2, 0, 0);
+    const piv=new T.Group(); piv.position.set(0, -ph/2, ph*0.013);      // لولا روی لبهٔ پایینِ ورق (بلندشدن، نه بازشدنِ کتابی)
+    const s3=mk(_podTexPaper(3), pw*0.97, ph*0.97); s3.position.set(0, ph/2, 0);
     piv.add(s3); papers.add(s1); papers.add(s2); papers.add(piv);
     _pod3d.root.add(badge); _pod3d.root.add(papers);
     _pod3d.props={badge:badge, papers:papers, piv:piv, U:U, pw:pw, ph:ph, fa:0, fs:0, ft:0, f0:null, pos:null};
   }catch(e){ _pod3d.props=null; }
   return _pod3d.props;
+}
+// عمقِ سطحِ کت جلوی سینه را یک‌بار با پرتابِ پرتو (ray) اندازه می‌گیرد و کش می‌کند.
+// چرا: استخوانِ Spine2 در آواتارهای مختلف در عمق‌های متفاوتی از بدن است؛ افستِ ثابت
+// باعث شد کارت در اسکرین‌شاتِ کاربر نصفه داخلِ کت فرو برود.
+function pod3dChestDepth(){
+  if(_pod3d.chestD!==undefined) return _pod3d.chestD;
+  _pod3d.chestD=null;
+  try{ const T=THREE, G=_pod3d.gbones, ch=G&&(G['Spine2']||G['Spine1']||G['Spine']);
+    if(!ch||!_pod3d.modelRoot||!T.Raycaster) return null;
+    const U=pod3dPropUnit(); if(!U) return null;
+    const cp=new T.Vector3(); ch.b.getWorldPosition(cp);
+    const mq=new T.Quaternion(); _pod3d.modelRoot.getWorldQuaternion(mq);
+    const fwd=new T.Vector3(0,0,1).applyQuaternion(mq), lft=new T.Vector3(1,0,0).applyQuaternion(mq), up=new T.Vector3(0,1,0).applyQuaternion(mq);
+    // پرتو از لبهٔ *داخلیِ* کارت (نزدیک‌ترین نقطه به مرکزِ سینه = عمیق‌ترین جا) تا کلِ کارت جلوی سطح بماند
+    const org=cp.clone().addScaledVector(lft,U*0.30*POD_PROP_SIDE).addScaledVector(up,-U*0.06).addScaledVector(fwd,U*3);
+    const rc=new T.Raycaster(org, fwd.clone().negate(), 0, U*6);
+    const hit=rc.intersectObject(_pod3d.modelRoot, true);
+    if(hit&&hit.length){ const d=U*3-hit[0].distance; if(d>-U && d<U*1.5) _pod3d.chestD=d; }
+  }catch(e){ _pod3d.chestD=null; }
+  return _pod3d.chestD;
 }
 function pod3dPropsShow(on){ const P=_pod3d.props; if(!P) return; P.badge.visible=!!on; P.papers.visible=!!on; }
 function pod3dPropsFlip(t){ const P=_pod3d.props; if(!P||P.f0!=null) return; P.f0=t; }
@@ -6071,23 +6091,30 @@ function pod3dPropsUpdate(t, reading){
   const U=P.U;
   const chest=G['Spine2']||G['Spine1']||G['Spine'];
   if(chest){ const cp=new T.Vector3(); chest.b.getWorldPosition(cp);
-    cp.addScaledVector(fwd,U*0.40).addScaledVector(lft,U*0.36*POD_PROP_SIDE).addScaledVector(up,-U*0.06);
-    P.badge.position.copy(cp); P.badge.quaternion.copy(mq); P.badge.rotateX(-0.14); }
+    cp.addScaledVector(lft,U*0.30*POD_PROP_SIDE).addScaledVector(up,-U*0.06);
+    const d=pod3dChestDepth();                      // فاصلهٔ سطحِ واقعیِ کت از استخوانِ سینه (یک‌بار با ray)
+    cp.addScaledVector(fwd, (d!=null? d : U*0.42) + U*0.045);  // کمی جلوترِ سطحِ اندازه‌گیری‌شده ⇒ هرگز داخلِ کت نمی‌رود
+    P.badge.position.copy(cp); P.badge.quaternion.copy(mq);
+    P.badge.rotateY(0.28*POD_PROP_SIDE);            // هم‌راستا با انحنایِ سینه (لبهٔ بیرونی کمی عقب)
+    P.badge.rotateX(-0.12); }
   const lh=G['RightHand'], fa=G['RightForeArm'];
   if(lh){ const hp=new T.Vector3(); lh.b.getWorldPosition(hp);
     // نقطهٔ گرفتن را از مچ به وسطِ کفِ دست ببر (امتدادِ ساعد) وگرنه برگه کنارِ دست معلق به‌نظر می‌رسد
     if(fa){ const ep=new T.Vector3(); fa.b.getWorldPosition(ep); const ax=hp.clone().sub(ep); if(ax.lengthSq()>1e-8) hp.addScaledVector(ax.normalize(), U*0.17); }
-    hp.addScaledVector(up,P.ph*0.28).addScaledVector(fwd,-U*0.02);
+    hp.addScaledVector(up,P.ph*0.24).addScaledVector(fwd,-U*0.02);
     if(!P.pos) P.pos=hp.clone(); else P.pos.lerp(hp,0.3);
     P.papers.position.copy(P.pos); P.papers.quaternion.copy(mq);
-    P.papers.rotateX(-0.72-(reading?0.14:0)); P.papers.rotateY(-0.10); }
-  // ورقِ بالایی بلند می‌شود، می‌چرخد و دوباره روی دسته می‌خوابد (هرگز در حالتِ «بازِ دوبرگی» نمی‌ماند)
-  if(P.f0!=null){ const e=t-P.f0, A=2.85, sm=k=>k*k*(3-2*k);
-    if(e<0.75) P.fa=-A*sm(e/0.75);
-    else if(e<0.92) P.fa=-A;
-    else if(e<1.5) P.fa=-A*(1-sm((e-0.92)/0.58));
+    P.papers.rotateX(-1.00-(reading?0.15:0)); P.papers.rotateY(-0.12); }
+  // ⭐ ورق‌زدن (۲۴.۱۱): ورقِ بالایی از لبهٔ پایین **بلند می‌شود، کمی کج و برمی‌گردد** —
+  // نه چرخشِ کتابیِ ۱۸۰درجه به بیرونِ بدن (که در اسکرین‌شاتِ کاربر از کادر می‌زد بیرون).
+  if(P.f0!=null){ const e=t-P.f0, A=0.95, sm=k=>k*k*(3-2*k);
+    if(e<0.55) P.fa=A*sm(e/0.55);
+    else if(e<0.72) P.fa=A;
+    else if(e<1.25) P.fa=A*(1-sm((e-0.72)/0.53));
     else { P.fa=0; P.f0=null; } }
-  P.piv.rotation.y=P.fa||0;
+  const fk=(P.fa||0)/0.95;
+  P.piv.rotation.set(P.fa||0, 0, -0.16*fk);   // بلندشدن + کجیِ کوچکِ طبیعی
+  P.piv.position.x=P.pw*0.05*fk;
 }
 // ── نگاه به برگه/دوربین: استخوان B را (که فرزندش C است) به‌اندازهٔ pitch حولِ محورِ Xِ مدل خم می‌کند ──
 // همان ریاضیِ pod3dAimTargetLocal با مبنایِ «پوزِ استراحت» ⇒ بدونِ انباشتِ چرخش (درسِ ۲۴.۱).
