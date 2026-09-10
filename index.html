@@ -2333,7 +2333,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۴.۱۳</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۴.۱۴</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5776,7 +5776,7 @@ function pod3dGesture(open){
     aimP(La,Lf,pose.LA); aimP(Lf,Lh,pose.LF); aimP(Ra,Rf,pose.RA); aimP(Rf,Rh,pose.RF);
     // ⭐ مچِ دستِ نگه‌دارنده با **صفحهٔ برگه** هم‌راستا می‌شود (کفِ دست زیرِ کاغذ)؛
     // با اویلرِ ثابت، کفِ دست هیچ‌وقت نمی‌چرخید و انگشت‌ها از تویِ برگه رد می‌شدند.
-    const palmR=pod3dPalmAlign('R', k), palmL=pose.fL==='flat'? pod3dPalmAlign('L', k) : false;
+    const palmR=pod3dPalmAlign('R', k), palmL=(pose.fL==='pinch')? pod3dPalmAlign('L', k) : false;
     if(Lh&&!palmL){ const q=new T.Quaternion().setFromEuler(new T.Euler(pose.LH[0],pose.LH[1],pose.LH[2],'XYZ')); Lh.b.quaternion.copy(Lh.q).multiply(q); }
     if(Rh&&!palmR){ const q=new T.Quaternion().setFromEuler(new T.Euler(pose.RH[0],pose.RH[1],pose.RH[2],'XYZ')); Rh.b.quaternion.copy(Rh.q).multiply(q); }
     try{ const sh=pod3dPoseFingers(pose); pod3dApplyFingers(sh[0], sh[1], k); }catch(e){}
@@ -5840,7 +5840,8 @@ const POD_FING={ relax:[0.25,0.28,0.32,0.36,0.4], open:[0.05,0.03,0.03,0.03,0.06
   point:[0.45,0.0,0.95,1.0,1.0], fist:[0.7,0.95,0.95,0.95,0.95], steeple:[0.12,0.06,0.06,0.06,0.1],
   ok:[0.6,0.6,0.1,0.08,0.12],   // شست و اشاره جمع (حلقه)، بقیه باز
   grip:[0.5,0.68,0.72,0.74,0.76],   // گرفتنِ برگه/دسته‌کاغذ (نیمه‌جمع، نه مشت)
-  flat:[0.32,0.16,0.16,0.18,0.22] };   // کفِ تقریباً صاف زیرِ برگه — نوکِ انگشت از صفحهٔ برگه بیرون نمی‌زند
+  flat:[0.32,0.16,0.16,0.18,0.22],   // کفِ تقریباً صاف زیرِ برگه
+  pinch:[0.85,0.14,0.14,0.17,0.20] };   // ⭐ گرفتنِ واقعیِ کاغذ: شست جمع (رویِ کاغذ) و بقیه صاف (زیرِ کاغذ)
 function pod3dApplyFingers(shL, shR, k){ const G=pod3dFingerGroups(); if(!G||!THREE) return; const T=THREE;
   const fns=['thumb','index','middle','ring','pinky'];
   const ax=(a)=>POD_FING_AXIS==='y'?new T.Euler(0,POD_FING_SIGN*a,0,'XYZ'):POD_FING_AXIS==='z'?new T.Euler(0,0,POD_FING_SIGN*a,'XYZ'):new T.Euler(POD_FING_SIGN*a,0,0,'XYZ');
@@ -5950,17 +5951,17 @@ const POD_PAPER_POSES=(function(){
   const pick=['rest','indexR','beatR','palmUpR','pointFwdR','stopR','okR','chinR','palmSideR','indexHiR','oneOutR','raiseHiR','chopR'];
   const out=pick.map(n=>{ const p=POD_GEST_POSES.filter(x=>x.n===n)[0]||POD_GEST_POSES[0];
     return {n:'p_'+p.n, RA:POD_HOLD_R.RA, RF:POD_HOLD_R.RF, RH:POD_HOLD_R.RH,
-            LA:mx(p.RA,0.14), LF:mx(p.RF,0.30), LH:p.RH, fR:'flat', fL:pod3dPoseFingers(p)[1]}; });
+            LA:mx(p.RA,0.14), LF:mx(p.RF,0.30), LH:p.RH, fR:'pinch', fL:pod3dPoseFingers(p)[1]}; });
   // هر دو دست روی برگه‌ها (خواندنِ دقیق) — قرینهٔ پوزِ نگه‌دارنده
   out.push({n:'p_both', rd:1, RA:POD_HOLD_R.RA, RF:POD_HOLD_R.RF, RH:POD_HOLD_R.RH,
-            LA:mx(POD_HOLD_R.RA,0.02), LF:mx(POD_HOLD_R.RF,0.06), LH:POD_HOLD_R.RH, fL:'flat', fR:'flat'});
-  out.push({n:'p_bothLow', rd:1, RA:[-0.13,-1.0,0.10], RF:[0.36,-0.12,0.92], RH:[0.30,0,0],
-            LA:[0.13,-1.0,0.10], LF:[-0.36,-0.12,0.92], LH:[0.30,0,0], fL:'flat', fR:'flat'});
+            LA:mx(POD_HOLD_R.RA,0.02), LF:mx(POD_HOLD_R.RF,0.06), LH:POD_HOLD_R.RH, fL:'pinch', fR:'pinch'});
+  out.push({n:'p_bothLow', rd:1, RA:[-0.15,-0.99,0.28], RF:[0.48,-0.06,0.87], RH:[0.30,0,0],
+            LA:[0.15,-0.99,0.28], LF:[-0.48,-0.06,0.87], LH:[0.30,0,0], fL:'pinch', fR:'pinch'});
   out.push({n:'p_bothHigh', rd:1, RA:[-0.17,-0.97,0.18], RF:[0.40,0.20,0.89], RH:[0.36,0,0],
-            LA:[0.17,-0.97,0.18], LF:[-0.40,0.20,0.89], LH:[0.36,0,0], fL:'flat', fR:'flat'});
+            LA:[0.17,-0.97,0.18], LF:[-0.40,0.20,0.89], LH:[0.36,0,0], fL:'pinch', fR:'pinch'});
   // ورق‌زدن: دستِ چپ به لبهٔ بالاییِ برگه می‌رود (انیمیشنِ ورق هم‌زمان اجرا می‌شود)
   out.push({n:'p_flip', flip:1, rd:1, RA:POD_HOLD_R.RA, RF:POD_HOLD_R.RF, RH:POD_HOLD_R.RH,
-            LA:[0.15,-0.94,0.28], LF:[-0.34,0.10,0.93], LH:[0.28,0,0], fR:'flat', fL:'point'});
+            LA:[0.15,-0.94,0.28], LF:[-0.34,0.10,0.93], LH:[0.28,0,0], fR:'pinch', fL:'point'});
   return out;
 })();
 
@@ -6164,7 +6165,19 @@ function pod3dPropsUpdate(t, reading){
     } }catch(e){}
     const q=mq.clone().multiply(new T.Quaternion().setFromEuler(new T.Euler(-tilt,0,0,'XYZ')));
     const sUp=new T.Vector3(0,1,0).applyQuaternion(q), sN=new T.Vector3(0,0,1).applyQuaternion(q);
-    hp.addScaledVector(sUp, P.ph*0.30).addScaledVector(sN, U*0.05);   // دست روی یک‌پنجمِ پایینِ برگه و **پشتِ** صفحه
+    const sX=new T.Vector3(1,0,0).applyQuaternion(q);
+    // ⭐ ارتفاعِ صفحهٔ برگه = وسطِ «گیرهٔ» شست و انگشتان (از هندسهٔ واقعیِ دست، هر فریم)
+    //   ⇒ شست روی کاغذ و بقیهٔ انگشت‌ها زیرِ کاغذ ⇒ حسِ واقعیِ «گرفتن» (نه سینیِ باز).
+    let gh=U*0.05;
+    try{ const fg=pod3dFingerGroups(), H=fg&&fg.R; if(H){
+      const wpos=new T.Vector3(); lh.b.getWorldPosition(wpos);
+      const tipH=(arr)=>{ if(!arr||!arr.length) return null; const v=new T.Vector3(); arr[arr.length-1].b.getWorldPosition(v); return v.sub(wpos).dot(sN); };
+      const dTh=tipH(H.thumb), dIx=tipH(H.index), dMd=tipH(H.middle);
+      const dFg=Math.max(dIx==null?-9:dIx, dMd==null?-9:dMd);
+      if(dTh!=null && dFg>-8) gh=Math.max(dFg+U*0.018, Math.min(U*0.16, (dTh+dFg)/2));
+    } }catch(e){}
+    // برگه از دستِ نگه‌دارنده به‌سمتِ مرکزِ بدن کشیده می‌شود (نه وسطِ دست) تا لبه‌اش تویِ آستین/بازو نرود
+    hp.addScaledVector(sUp, P.ph*0.26).addScaledVector(sX, P.pw*0.34).addScaledVector(sN, gh);
     if(!P.pos) P.pos=hp.clone(); else P.pos.lerp(hp,0.3);
     P.papers.position.copy(P.pos); P.papers.quaternion.copy(q); }
   // ⭐ ورق‌زدن (۲۴.۱۱): ورقِ بالایی از لبهٔ پایین **بلند می‌شود، کمی کج و برمی‌گردد** —
