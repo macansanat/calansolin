@@ -2333,7 +2333,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۵.۲</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۵.۳</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -6070,7 +6070,7 @@ function _podTexIpadScreen(){
     y+=52; }
   return cv;
 }
-// پروپ‌ها را یک‌بار می‌سازد: کارتِ سینه + میزِ شیشه‌ای + استند + آی‌پد
+// پروپ‌ها را یک‌بار می‌سازد: کارتِ سینه + تریبونِ شیشه‌ایِ کوچک + استند + آی‌پد
 function pod3dPropsEnsure(){
   if(_pod3d.props) return _pod3d.props;
   if(!THREE||!_pod3d.root||!_pod3d.gbones) return null;
@@ -6078,40 +6078,52 @@ function pod3dPropsEnsure(){
   try{
     const U=pod3dPropUnit(); if(!U) return null;
     const Mat=(T.MeshLambertMaterial||T.MeshBasicMaterial);
+    const Shiny=(T.MeshPhongMaterial||Mat);
     const tex=(cv)=>{ const tx=new T.CanvasTexture(cv); try{ if(T.sRGBEncoding) tx.encoding=T.sRGBEncoding; }catch(e){} tx.anisotropy=4; return tx; };
     // ── کارتِ شناسایی ──
     const bw=U*0.30;
     const badge=new T.Mesh(new T.PlaneGeometry(bw, bw*(420/512)), new Mat({map:tex(_podTexBadge()), side:T.DoubleSide, alphaTest:0.5}));
     badge.frustumCulled=false; badge.renderOrder=2;
-    // ── میزِ گردِ تمام‌شیشه‌ای + پایهٔ باریک ──
-    const R=U*1.15, tt=U*0.035;                                  // شعاع و ضخامتِ شیشه
-    const glass=new Mat({color:0xcfe6f5, transparent:true, opacity:0.13, side:T.DoubleSide, depthWrite:false});
-    const chrome=new Mat({color:0xb9c0c8});
+    // ── تریبونِ شیشه‌ایِ مینیمال: صفحهٔ کوچکِ شیب‌دار + تیغهٔ باریک + پایهٔ نازک ──
+    // ⚠️ شیشه با MeshPhong + شفافیتِ کم + **خطوطِ لبه** ساخته می‌شود؛ بدونِ خطِ لبه
+    // شیشه «سفیدِ بی‌جان» دیده می‌شود (بازخوردِ کاربر).
+    const glass=new Shiny({color:0xdff1fd, transparent:true, opacity:0.15, side:T.DoubleSide, depthWrite:false});
+    if(glass.shininess!==undefined){ glass.shininess=130; glass.specular=new T.Color(0xffffff); }
+    const edgeMat=new T.LineBasicMaterial({color:0xffffff, transparent:true, opacity:0.55});
+    const glassPart=(geo)=>{ const g=new T.Group(); const m=new T.Mesh(geo,glass); m.renderOrder=1; g.add(m);
+      try{ g.add(new T.LineSegments(new T.EdgesGeometry(geo), edgeMat)); }catch(e){} return g; };
+    const topW=U*1.20, topD=U*0.60, topT=U*0.035;
     const table=new T.Group();
-    const top=new T.Mesh(new T.CylinderGeometry(R,R,tt,40), glass); top.renderOrder=1; table.add(top);
-    const rim=new T.Mesh(new T.CylinderGeometry(R*1.012,R*1.012,tt*0.30,40), new Mat({color:0xeaf2f8, transparent:true, opacity:0.75})); table.add(rim);
-    const col=new T.Mesh(new T.CylinderGeometry(U*0.075,U*0.075,U*2.9,16), chrome); col.position.y=-U*1.47; table.add(col);
-    const foot=new T.Mesh(new T.CylinderGeometry(U*0.5,U*0.5,U*0.05,28), chrome); foot.position.y=-U*2.92; table.add(foot);
-    // ── آی‌پد: +Z پشتِ آلومینیومی (رو‌به‌دوربین)، -Z صفحهٔ نمایش (رو‌به‌مجری) ──
-    const pw=U*0.46, ph=U*0.62, pt=U*0.020;
+    const top=glassPart(new T.BoxGeometry(topW,topT,topD)); top.rotation.x=-0.20;   // لبهٔ سمتِ دوربین کمی بالاتر (شیبِ جای برگه)
+    table.add(top);
+    const lip=glassPart(new T.BoxGeometry(topW*0.99, U*0.05, U*0.022));            // لبهٔ نگه‌دارندهٔ برگه
+    lip.position.set(0, -U*0.005, topD*0.47); lip.rotation.x=-0.20; table.add(lip);
+    const blade=glassPart(new T.BoxGeometry(topW*0.30, U*2.30, U*0.05));           // تیغهٔ باریکِ عمودی
+    blade.position.y=-U*1.18; table.add(blade);
+    const base=glassPart(new T.CylinderGeometry(U*0.42,U*0.46,U*0.05,32));
+    base.position.y=-U*2.35; table.add(base);
+    // ── آی‌پد ──
+    const pw=U*0.44, ph=U*0.60, pt=U*0.020;
     const scr=tex(_podTexIpadScreen()); scr.wrapS=scr.wrapT=T.RepeatWrapping;
-    const alum=new Mat({color:0xcfd4da});
-    const mats=[alum,alum,alum,alum, new Mat({map:tex(_podTexIpadBack())}), new Mat({map:scr})];
+    const edge=new Shiny({color:0x2f3338});                                        // لبهٔ تیرهٔ دستگاه (تفکیک از شیشهٔ سفید)
+    if(edge.shininess!==undefined){ edge.shininess=70; }
+    const backM=new Shiny({map:tex(_podTexIpadBack())}); if(backM.shininess!==undefined){ backM.shininess=35; backM.specular=new T.Color(0x555555); }
+    const mats=[edge,edge,edge,edge, backM, new Mat({map:scr})];
     const pad=new T.Mesh(new T.BoxGeometry(pw,ph,pt), mats); pad.frustumCulled=false;
-    // ── استندِ باریک (پایهٔ کوچکِ نقره‌ای پشت و زیرِ آی‌پد) ──
+    // ── استندِ تیرهٔ کوچک (کاملاً قابلِ تشخیص روی شیشه) ──
+    const stMat=new Shiny({color:0x3b4046}); if(stMat.shininess!==undefined) stMat.shininess=60;
     const stand=new T.Group();
-    const base=new T.Mesh(new T.BoxGeometry(pw*0.62, U*0.035, U*0.20), chrome); stand.add(base);
-    const leg=new T.Mesh(new T.BoxGeometry(pw*0.16, ph*0.46, U*0.022), chrome);
-    leg.position.set(0, ph*0.20, -U*0.075); leg.rotation.x=0.38; stand.add(leg);
-    const refl=new T.Mesh(new T.PlaneGeometry(pw*0.96, ph*0.55),
-      new Mat({map:tex(_podTexIpadBack()), transparent:true, opacity:0.16, depthWrite:false}));
-    refl.rotation.x=-Math.PI/2; refl.rotation.z=Math.PI;          // خوابیده روی شیشه و وارونه
-    refl.position.set(0, U*0.012, ph*0.30);
-    const holder=new T.Group(); holder.add(stand); holder.add(pad); holder.add(refl);
-    pad.position.y=ph*0.5+U*0.02;                                 // آی‌پد روی استند می‌ایستد
+    const sBase=new T.Mesh(new T.BoxGeometry(pw*0.70, U*0.045, U*0.26), stMat); stand.add(sBase);
+    const sLeg=new T.Mesh(new T.BoxGeometry(pw*0.22, ph*0.42, U*0.030), stMat);
+    sLeg.position.set(0, ph*0.19, -U*0.085); sLeg.rotation.x=0.34; stand.add(sLeg);
+    const sLip=new T.Mesh(new T.BoxGeometry(pw*0.78, U*0.075, U*0.035), stMat);
+    sLip.position.set(0, U*0.055, U*0.135); stand.add(sLip);      // لبهٔ جلوییِ تیره ⇒ استند از دوربین دیده می‌شود
+    const holder=new T.Group(); holder.add(stand); holder.add(pad);
+    stand.rotation.x=-0.50; stand.position.y=-U*0.02;             // کفِ استند صاف روی شیشهٔ شیب‌دار می‌نشیند
+    pad.position.y=ph*0.5+U*0.03;
     _pod3d.root.add(badge); _pod3d.root.add(table); _pod3d.root.add(holder);
     _pod3d.props={badge:badge, table:table, papers:holder, pad:pad, scr:scr,
-                  U:U, pw:pw, ph:ph, pt:pt, R:R, anchor:null, scroll:0};
+                  U:U, pw:pw, ph:ph, pt:pt, topD:topD, anchor:null, scroll:0};
   }catch(e){ _pod3d.props=null; }
   return _pod3d.props;
 }
@@ -6138,13 +6150,13 @@ function pod3dPropsUpdate(t, reading){
     if(G['Hips']) G['Hips'].b.getWorldPosition(hp); else return;
     P.anchor={x:hp.x, y:hp.y, z:hp.z}; }
   const A=P.anchor;
-  const topY=A.y-U*0.13;                                   // بلندیِ شیشه ≈ کمی زیرِ لگن
-  const cz=A.z+U*1.02;                                     // مرکزِ میز جلوی بدن
+  const topY=A.y-U*0.10;                                   // بلندیِ صفحه ≈ کمی زیرِ لگن
+  const cz=A.z+U*1.05;                                     // ⚠️ کاملاً **جلوی** بدن؛ نه دورِ بدن (میزِ گردِ قبلی تنه را قطع می‌کرد)
   P.table.position.set(A.x, topY, cz);
   P.table.rotation.set(0,0,0);
-  // آی‌پد روی میز، کمی جلوترِ مرکز و با شیبِ کمِ استند (پشت رو‌به‌دوربین، صفحه رو‌به‌مجری)
-  const tilt=0.26;                                         // ~۱۵ درجه عقب‌رفتنِ لبهٔ بالا
-  P.papers.position.set(A.x, topY+U*0.02, cz-U*0.16);
+  // آی‌پد روی صفحه: عقب‌ترِ لبهٔ نگه‌دارنده، با شیبِ کمِ استند (پشت رو‌به‌دوربین، صفحه رو‌به‌مجری)
+  const tilt=0.30;
+  P.papers.position.set(A.x, topY+U*0.055, cz-P.topD*0.12);
   P.papers.rotation.set(tilt,0,0);
   P.q=P.papers.quaternion.clone();
   P.c=new T.Vector3(); P.pad.getWorldPosition(P.c);
@@ -6319,7 +6331,7 @@ function pod3dPadTouch(pose, t, k, P){
     // ⭐ فاصلهٔ مچ از نقطهٔ لمس = **طولِ واقعیِ انگشتِ اشارهٔ همین مدل** (اندازه‌گیری‌شده)
     const fl=pod3dFingerLen('R')||P.U*0.32;
     const appr=P.sUp.clone().multiplyScalar(0.62).addScaledVector(P.sN,-0.78).normalize();   // از بالا و سمتِ خودِ مجری
-    const wrist=tp.clone().addScaledVector(appr, fl*(1.10-0.09*press));
+    const wrist=tp.clone().addScaledVector(appr, fl*(1.26-0.09*press));   // ⚠️ مشِ انگشت ضخامت دارد ⇒ استخوانِ نوک باید ~۱٫۵ سانت بالای صفحه بماند وگرنه انگشت از آی‌پد رد می‌شود
     const mq=new T.Quaternion(); if(_pod3d.modelRoot) _pod3d.modelRoot.getWorldQuaternion(mq);
     const pole=new T.Vector3(-0.55,-1,-0.12).applyQuaternion(mq).normalize();
     // ⚠️ کفِ دست باید **پشت به صفحه** باشد (نه رو به آن): انگشتانِ جمع‌شدهٔ دستِ
@@ -6803,7 +6815,7 @@ function renderPodCfg(){
       h+=`<div class="qbg-sub" style="margin-top:4px">با همان صدا/متن لب می‌زند، پلک می‌زند و بدنش حرکتِ طبیعی دارد. بارِ اول به اینترنت نیاز دارد، بعد کش می‌شود.</div>`;
       h+=`<label class="qbg-lbl" style="margin-top:8px">ژستِ دست‌ها</label>`;
       h+=`<div class="pod-seg">`+[['normal','🙌 نرمال'],['present','🎤 ژستِ مجری'],['back','🧍 پشتِ کمر'],['paper','📱 آی‌پد روی میز']].map(o=>`<button class="${(c.handMode||'normal')===o[0]?'on':''}" onclick="podCfgPick('handMode','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
-      h+=`<div class="qbg-sub" style="margin-top:4px">«ژستِ مجری» ۳۴ پوزِ رو‌به‌دوربین با انگشتِ طبیعی را اجرا می‌کند. «📱 آی‌پد روی میز» = میزِ گردِ تمام‌شیشه‌ای با پایهٔ باریک، آی‌پد روی استند رویش (**صفحه رو‌به‌مجری، آرمِ سیب رو‌به‌دوربین**) و کارتِ شناساییِ «ماکان صنعت / دستیارِ دیابت» روی سینه. دست‌ها **آزادند** و همان ۳۴ ژستِ مجری را اجرا می‌کنند؛ گاهی هم سر را روی آی‌پد خم می‌کند، با انگشت روی صفحه می‌زند یا اسکرول می‌کند و دوباره رو‌به‌دوربین توضیح می‌دهد.</div>`;
+      h+=`<div class="qbg-sub" style="margin-top:4px">«ژستِ مجری» ۳۴ پوزِ رو‌به‌دوربین با انگشتِ طبیعی را اجرا می‌کند. «📱 آی‌پد روی میز» = تریبونِ کوچکِ شیشه‌ایِ مینیمال (صفحهٔ شیب‌دار + تیغهٔ باریک)، آی‌پد روی استند رویش (**صفحه رو‌به‌مجری، آرمِ سیب رو‌به‌دوربین**) و کارتِ شناساییِ «ماکان صنعت / دستیارِ دیابت» روی سینه. دست‌ها **آزادند** و همان ۳۴ ژستِ مجری را اجرا می‌کنند؛ گاهی هم سر را روی آی‌پد خم می‌کند، با انگشت روی صفحه می‌زند یا اسکرول می‌کند و دوباره رو‌به‌دوربین توضیح می‌دهد.</div>`;
       // ── پس‌زمینهٔ متحرک ──
       h+=`<label class="qbg-lbl" style="margin-top:12px">🌄 پس‌زمینهٔ متحرک</label>`;
       h+=`<div class="pod-seg">`+[['on','روشن',true],['off','خاموش',false]].map(o=>`<button class="${c.avBg===o[2]?'on':''}" onclick="podCfgPick('avBg',${o[2]})">${o[1]}</button>`).join('')+`</div>`;
