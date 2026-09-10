@@ -2352,7 +2352,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۶.۹</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۷.۰</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -16110,9 +16110,7 @@ function buildChatSystemPrompt(){
     if(cc && cc.journeyId && typeof cc.stepIndex==='number'){
       const jj=jrById(cc.journeyId); const st=jj&&(jj.steps||[])[cc.stepIndex];
       if(st){
-        stepIns='\n🧭 این گفتگو «مرحلهٔ '+faDigits(String(cc.stepIndex+1))+' از '+faDigits(String(jj.steps.length))+'» در مسیرِ درمانِ «'+String(jj.goal||'')+'» است.'
-          +(st.why?(' هدفِ این مرحله: '+st.why+'.'):'')
-          +(st.carry?(' آنچه از مرحلهٔ قبل آورده شده: '+st.carry+'.'):'')
+        stepIns='\n'+jrHandoff(jj, cc.stepIndex)
           +'\nوقتی ویزیتت تمام شد و نتیجهٔ نهایی را دادی، در «آخرین خطِ» همان پیام دقیقاً این نشانه را بگذار (یک خط، بدونِ توضیح):\n'
           +'@@STEPDONE@@ {"outcome":"جمع‌بندی و تجویزِ نهاییِ این مرحله در ۲ تا ۳ خطِ کوتاه","next":"چه چیزی را باید نزدِ پزشکِ بعدی ببرد"}\n'
           +'این نشانه را همان پیامِ اول که ویزیت را کامل کردی بگذار؛ منتظرِ پیامِ بعدیِ کاربر نمان و هیچ‌وقت توضیحش نده.\n';
@@ -16249,6 +16247,31 @@ function jrStepDone(j){ return ((j&&j.steps)||[]).filter(s=>s.done).length; }
 function jrRolesNames(ids){ return (ids||[]).map(id=>{ const r=chatRoleById(id); return r?r.name:''; }).filter(Boolean).join(' + '); }
 function jrRolesIcons(ids){ return (ids||[]).map(id=>{ const r=chatRoleById(id); return r?r.emoji:''; }).filter(Boolean).join(' '); }
 function jrDate(ts){ try{ const d=new Date(ts); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); return jDateStr(j[0],j[1],j[2]); }catch(e){ return ''; } }
+// شکایتِ اولیهٔ کاربر — اولین پیامِ خودش در گفتگوی برنامه‌ریز
+function jrOriginalAsk(j){
+  try{ const c=chatLoad().chats.find(x=>x.id===j.plannerChatId); if(!c) return '';
+    const m=(c.messages||[]).find(x=>x&&x.role==='user'&&!x.packet);
+    return m? String(m.content||'').slice(0,400) : '';
+  }catch(e){ return ''; }
+}
+// برگهٔ ارجاع برای مرحلهٔ i: هدف، شکایتِ اولیه، نتیجهٔ مراحلِ قبل، مأموریتِ این مرحله
+function jrHandoff(j, i){
+  if(!j) return '';
+  const L=[];
+  L.push('🧭 این گفتگو «مرحلهٔ '+faDigits(String(i+1))+' از '+faDigits(String((j.steps||[]).length))+'» در مسیرِ درمانِ «'+String(j.goal||'')+'» است.');
+  const ask=jrOriginalAsk(j);
+  if(ask) L.push('📌 شکایت/خواستهٔ اولیهٔ بیمار (عیناً از خودش): «'+ask+'»');
+  const prev=(j.steps||[]).slice(0,i).filter(s=>s&&s.done&&String(s.outcome||'').trim());
+  if(prev.length){
+    L.push('📋 نتیجهٔ مرحله‌های قبل (بیمار این‌ها را قبلاً گرفته — تکرارشان نکن و بر همین‌ها بساز):');
+    prev.forEach((st,k)=>{ L.push('   '+faDigits(String(k+1))+') '+(jrRolesNames(st.roles)||'پزشک')+': '+String(st.outcome).slice(0,400)); });
+  }
+  const cur=(j.steps||[])[i]||{};
+  if(cur.why) L.push('🎯 مأموریتِ تو در این مرحله: '+cur.why);
+  if(cur.carry) L.push('📎 آنچه پزشکِ قبلی خواسته نزدِ تو بیاید: '+cur.carry);
+  L.push('⚡ خیلی مهم: همهٔ سابقهٔ لازم بالا آمده است. «هیچ‌کدام از این‌ها را دوباره از بیمار نپرس»، خلاصه‌شان را هم تکرار نکن، و همان پیامِ اول ویزیتِ کاملت را بده.');
+  return L.join('\n');
+}
 function jrNormSteps(planSteps){ return (planSteps||[]).map(s=>{ let ids=Array.isArray(s.roles)&&s.roles.length?s.roles:(s.role?[s.role]:[]); ids=ids.filter(id=>chatRoleById(id)); return {roles:ids, why:s.why||'', carry:s.carry||'', chatId:null, outcome:'', done:false, ts:0}; }).filter(s=>s.roles.length); }
 // چارتِ مسیرِ درمان (برنامه‌ریز) — با دکمه‌ی ساخت/گزارشِ روند
 function chatPlanCard(m,idx){
@@ -16356,7 +16379,15 @@ function chatJourneyStartStep(jid,i){ const j=jrById(jid); if(!j) return; const 
     if(ex){ o.activeId=ex.id; chatSave(o); chatJourneyClose(); switchTab('chat'); renderChatTab(); return; } } const nid='c'+Date.now().toString(36); const lead=step.roles.length>1?'کنفرانس':chatRoleById(step.roles[0]).name;
   o.chats.unshift({id:nid,title:(lead+' — '+j.goal).slice(0,50),ts:Date.now(),provider:sectionProvider('chat'),speed:'smart',roles:step.roles.slice(),projectId:j.projectId,journeyId:j.id,stepIndex:i,messages:[]});
   o.activeId=nid; chatSave(o); jrUpdate(jid,jj=>{ if(jj.steps[i]) jj.steps[i].chatId=nid; }); window._roleAsked=nid;
-  chatJourneyClose(); switchTab('chat'); renderChatTab(); uiToast('✓ گفتگو با «'+lead+'» باز شد'); }
+  chatJourneyClose(); switchTab('chat'); renderChatTab(); uiToast('✓ گفتگو با «'+lead+'» باز شد');
+  // ۲۷.۰: برگهٔ ارجاع در سیستم‌پرامپت است، پس فقط یک جملهٔ کوتاه می‌فرستیم تا پزشک
+  // «همان پیامِ اول» ویزیت را شروع کند و کاربر مجبور به توضیحِ دوباره نشود.
+  try{ const prov=sectionProvider('chat');
+    if(navigator.onLine && (hasAnyKey(prov)||VISION_PROVIDERS.some(hasAnyKey))){
+      setTimeout(()=>{ try{ const cc=chatActive(); if(cc&&cc.id===nid&&!(cc.messages||[]).length)
+        chatSend({text:'ارجاع شدم. سابقه و نتیجهٔ مرحله‌های قبل را داری؛ همین حالا ویزیتت را کامل شروع کن.', packet:'ارجاع از مرحلهٔ قبل — سابقه ضمیمه است', packetHead:'🧭 شروعِ خودکارِ ویزیت'}); }catch(e){} }, 450);
+    }
+  }catch(e){} }
 function chatJourneyGoPlanner(jid){ const j=jrById(jid); if(!j) return; const o=chatLoad(); const pc=o.chats.find(x=>x.id===j.plannerChatId);
   if(!pc){ uiToast('چتِ برنامه‌ریز پیدا نشد'); return; } o.activeId=j.plannerChatId; chatSave(o); chatJourneyClose(); switchTab('chat'); renderChatTab(); }
 function chatJourneySaveResult(jid){ const ta=document.getElementById('jrResult'); const v=ta?ta.value.trim():'';
@@ -16867,7 +16898,7 @@ function chatBubble(m,idx){ const me=m.role==='user';
   if(Array.isArray(m.files)) att+=m.files.map(f=>`<span class="cfile">📎 ${escVision(f.name||'فایل')}</span>`).join('');
   let body=me?(escVision(m.content||'').replace(/\n/g,'<br>')):labAiFmt(m.content||'');
   // بستهٔ داده کاملش به مدل می‌رود ولی در گفتگو فقط یک چیپِ کوتاه دیده می‌شود
-  if(me&&m.packet) body=`<div class="cact" style="margin:0"><div class="cact-h">📁 دادهٔ فرستاده‌شده به دکتر</div><div class="cact-m">${escVision(String(m.packet))}</div></div>`;
+  if(me&&m.packet) body=`<div class="cact" style="margin:0"><div class="cact-h">${escVision(String(m.packetHead||'📁 دادهٔ فرستاده‌شده به دکتر'))}</div><div class="cact-m">${escVision(String(m.packet))}</div></div>`;
   const acts=me
     ? `<button class="chat-act" onclick="chatCopyMsg(${idx})" title="کپی">📋</button><button class="chat-act" onclick="chatEditMsg(${idx})" title="ویرایش">✏️</button><button class="chat-act" onclick="chatDeleteMsg(${idx})" title="حذف">🗑</button>`
     : `<button class="chat-act" onclick="chatCopyMsg(${idx})" title="کپی">📋</button><button class="chat-act" onclick="chatReadMsg(${idx},this)" title="خواندن">🔊</button><button class="chat-act" onclick="chatDeleteMsg(${idx})" title="حذف">🗑</button>`;
@@ -17129,6 +17160,7 @@ async function chatSend(opts){
   files.forEach(f=>{ content+=(content?'\n\n':'')+'محتوای فایل «'+f.name+'»:\n'+f.text; });
   const umsg={role:'user',content:content||'(عکس)',ts:Date.now()};
   if(opts.packet) umsg.packet=opts.packet;                                    // حباب فشرده نمایش داده شود
+  if(opts.packetHead) umsg.packetHead=opts.packetHead;
   if(imgs.length) umsg.images=imgs.map(im=>({dataURL:im.dataURL}));
   if(files.length) umsg.files=files.map(f=>({name:f.name}));
   c.messages.push(umsg);
