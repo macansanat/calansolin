@@ -1569,6 +1569,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   </div>
   <div class="quick-actions" style="margin-top:12px">
     <button type="button" class="quick-btn" onclick="toggleFrequentPanelCalc()">⭐ وعده‌های پرمصرف</button>
+    <button type="button" class="quick-btn" onclick="toggleCompPanelCalc()">🍵 همراه‌ها</button>
     <button type="button" class="quick-btn" onclick="togglePastePanelCalc()">📋 پیست خوراکی‌ها</button>
     <button type="button" class="quick-btn" onclick="openCustomFood()">🧾 ثبت خوراکی جدید</button>
     <button type="button" class="quick-btn" style="background:rgba(63,185,163,.14);border-color:var(--teal-dim)" onclick="startPlatePhoto()">📷 تشخیص غذا از عکس بشقاب</button>
@@ -1578,6 +1579,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <div id="frequentPanelCalc" style="display:none;margin-top:10px">
     <div id="frequentMealsBoxCalc" class="frequent-box"></div>
   </div>
+  <div id="compPanelCalc" style="display:none;margin-top:10px"></div>
   <div id="pastePanelCalc" style="display:none;margin-top:10px">
     <div class="paste-box">
       <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">متنی که از «کپی خوراکی‌ها» گرفتی را اینجا پیست کن:</div>
@@ -2339,7 +2341,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۵.۵</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۵.۶</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -10479,6 +10481,7 @@ function calcCarbs(){
   updateMacros(total,totP,totF);
   calcDose();
   saveCalcState();
+  try{ calcRenderComp(); }catch(e){}   // شمارندهٔ چیپ‌های «همراه‌ها» با ردیف‌ها هم‌گام بماند
 }
 function updateMacros(carb,p,fat){
   const kcal=Math.round(carb*4 + p*4 + fat*9);
@@ -11034,6 +11037,44 @@ function toggleFrequentPanelCalc(){
     panel.style.display='block';
     const pp=document.getElementById('pastePanelCalc'); if(pp)pp.style.display='none';
   } else panel.style.display='none';
+}
+// ===== «همراه‌ها» در ماشین‌حسابِ دوز — همان منویِ ثبتِ وعده =====
+// همان `MEAL_COMPANIONS` استفاده می‌شود تا لیست یک‌جا نگهداری شود (چای با پولکی/کیک/قند و…).
+// تفاوت با ثبتِ وعده: اینجا داده در ردیف‌های DOM (`.food-row`) است نه آرایه؛ پس هر لمس
+// یا مقدارِ ردیفِ موجود را یکی زیاد می‌کند یا ردیفِ تازه می‌سازد.
+function toggleCompPanelCalc(){
+  const p=document.getElementById('compPanelCalc'); if(!p) return;
+  const on=(p.style.display==='none'||!p.style.display);
+  const fp=document.getElementById('frequentPanelCalc'); if(fp) fp.style.display='none';
+  const pp=document.getElementById('pastePanelCalc'); if(pp) pp.style.display='none';
+  p.style.display=on?'block':'none'; if(on) calcRenderComp();
+}
+function _calcCompRow(cat,item){
+  return [...document.querySelectorAll('#foodRows .food-row')].find(r=>{
+    const c=r.querySelector('.sel-cat'), i=r.querySelector('.sel-item');
+    return c&&i&&c.value===cat&&i.value===item; })||null;
+}
+function _calcCompCount(cat,item){ let n=0;
+  document.querySelectorAll('#foodRows .food-row').forEach(r=>{
+    const c=r.querySelector('.sel-cat'), i=r.querySelector('.sel-item');
+    if(c&&i&&c.value===cat&&i.value===item) n+=(parseFloat(r.querySelector('.in-amt').value)||0); });
+  return n;
+}
+function calcRenderComp(){
+  const p=document.getElementById('compPanelCalc'); if(!p||p.style.display==='none') return;
+  let h='<div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">با چای/میان‌وعده چه خوردی؟ روی هرکدام بزن تا تعدادش زیاد شود (دوباره بزنی، یکی اضافه می‌شود):</div><div class="qmeal-comp-wrap">';
+  MEAL_COMPANIONS.forEach(([cat,item])=>{ if(!(DB[cat]&&DB[cat][item])) return;
+    const n=_calcCompCount(cat,item);
+    h+=`<button type="button" class="qmeal-comp${n>0?' on':''}" onclick="calcAddComp('${cat.replace(/'/g,"\\'")}','${item.replace(/'/g,"\\'")}')">${itemEmoji(cat,item)} ${item}${n>0?` <b class="qmeal-comp-n">${faDigits(n)}</b>`:''}</button>`;
+  });
+  p.innerHTML=h+'</div>';
+}
+function calcAddComp(cat,item){
+  if(!(DB[cat]&&DB[cat][item])) return;
+  const row=_calcCompRow(cat,item);
+  if(row){ const a=row.querySelector('.in-amt'); a.value=String((parseFloat(a.value)||0)+1); calcCarbs(); }
+  else { addFoodToCalcRows(cat,item,1,Object.keys(DB[cat][item])[0]||''); }
+  calcRenderComp();
 }
 function togglePastePanelCalc(){
   const panel=document.getElementById('pastePanelCalc');
