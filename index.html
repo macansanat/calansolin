@@ -2095,6 +2095,16 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <div id="chatReadSetting"></div>
   </div>
 </div>
+<div class="card coll closed" id="c-profile-prompts">
+  <h2 onclick="toggleCard('c-profile-prompts')"><span>🧠 پرامپت‌های هوش مصنوعی</span></h2>
+  <div class="card-body">
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.9;margin-bottom:8px">
+      همهٔ دستورهایی که برنامه به هوش مصنوعی می‌دهد — چت و پزشکان، پادکست، تحلیل‌ها، تفسیرِ آزمایش و تشخیصِ غذا از عکس — اینجا قابلِ دیدن و ویرایش‌اند.
+      <b style="color:var(--amber)">اگر چیزی خراب شد، دکمهٔ «برگرداندن به پیش‌فرض» همیشه هست.</b>
+    </div>
+    <div id="promptManager"></div>
+  </div>
+</div>
 <div class="card" id="c-profile-zoom">
   <h2><span>🔍 بزرگ‌نمایی (زوم)</span></h2>
   <div class="card-body">
@@ -2342,7 +2352,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۶.۴</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۶.۵</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3512,6 +3522,17 @@ function jcalSetTodayField(inputId){
 
 /* ====== ذخیره‌سازی ====== */
 const PKEY='insulin_profile_v1';
+/* ══ مدیریتِ پرامپت‌ها (۲۶.۵) ══
+   همهٔ متن‌های دستوری که به هوش مصنوعی می‌رود از این لایه رد می‌شود تا کاربر بتواند در
+   «پروفایل ← 🧠 پرامپت‌های هوش مصنوعی» ببیند، ویرایش کند و به پیش‌فرض برگرداند.
+   ⚠️ خواندن باید «هنگامِ استفاده» باشد نه هنگامِ تعریفِ ثابت‌ها، وگرنه ویرایشِ کاربر
+   تا ری‌لودِ بعدی اثر نمی‌کند. */
+const AI_PROMPT_KEY='ai_prompts_v1';
+function promptStore(){ try{ const o=JSON.parse(localStorage.getItem(AI_PROMPT_KEY)||'{}'); return (o&&typeof o==='object')?o:{}; }catch(e){ return {}; } }
+function pTxt(id, def){ const v=promptStore()[id]; return (typeof v==='string' && v.trim()) ? v : def; }
+function pIsCustom(id){ const v=promptStore()[id]; return typeof v==='string' && !!v.trim(); }
+function pSet(id, txt){ const o=promptStore(); if(txt&&String(txt).trim()) o[id]=String(txt); else delete o[id];
+  try{ localStorage.setItem(AI_PROMPT_KEY, JSON.stringify(o)); }catch(e){} }
 const WKEY='weekly_plan_v1';
 async function storageGet(k){
   try{ if(window.storage){ const r=await window.storage.get(k,false); return r?r.value:null; } }catch(e){}
@@ -3861,6 +3882,10 @@ function podGlucoseWindowSnap(days){ const save=_ovRange; _ovRange=days; let t='
 // خلاصهٔ کاملِ یک روزِ مشخص (offset=۰ امروز، ۱- دیروز): تاریخِ روزانه را موقتاً جابه‌جا می‌کند
 function podDaySnap(offset){ const save=_dailyDate; try{ const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()+(offset||0)); _dailyDate=d; }catch(e){}
   let t=''; try{ t=(buildHealthSnapshot('daily')||{}).text||''; }catch(e){} _dailyDate=save; return t; }
+const POD_SCRIPT_SYS="تو گویندهٔ پادکستِ روزانهٔ نرم‌افزارِ «{APP}» (یک اپِ آموزشیِ دیابت) به فارسی هستی. نامِ نرم‌افزار دقیقاً «{APP}» است؛ اگر خواستی خوشامد بگویی همین نام را به کار ببر و هرگز نامِ دیگری برای اپ نساز. یک متنِ گفتاری بنویس که وقتی با صدا خوانده شود حدود {MINS} دقیقه شود.\n"
+ +"طولِ متن مهم است: حدودِ {WORDS} کلمهٔ فارسی — یعنی بینِ {WLOW} تا {WHIGH} کلمه برای {MINS} دقیقه گفتار. نه کوتاه‌تر از {WLOW} و «نه بلندتر از {WHIGH} کلمه». وقتی به این اندازه رسیدی، جمع‌بندی کن و ادامه نده. هر موضوع را با یک «چرا» و یک مثالِ کوتاه باز کن، ولی از این بازهٔ طول عبور نکن و متن را بیش از حد کش نده.\n"
+ +"جوری بنویس که شنونده جذب شود و تا آخر گوش بدهد.";
+const POD_RULES_SYS="قواعدِ مهم: فقط فارسی بنویس. فقط متنِ گفتاری بده — بدونِ تیتر، بدونِ ستاره یا علامتِ مارک‌داون، بدونِ توضیحِ صحنه یا براکت، بدونِ شکلک. جمله‌ها کوتاه و روان تا خوب خوانده شوند. هرگز دوزِ قطعیِ انسولین/دارو یا تشخیصِ قطعی نده. مهم: در متنِ گفتار هیچ جمله‌ی سلبِ مسئولیت نگو (مثلِ «این آموزشی است» یا «جایگزینِ پزشک نیست») — این پیام جای دیگری نشان داده می‌شود؛ فقط گرم و طبیعی صحبت کن.";
 function podPrompt(mins){
   mins=mins||podCfg().minutes||5; const words=mins*145; const wLow=mins*125, wHigh=mins*160;
   const C=podCfg().content||podContentCfg();
@@ -3896,12 +3921,10 @@ function podPrompt(mins){
   if(C.tip) struct+="یک نکتهٔ آموزشیِ مفیدِ امروز دربارهٔ دیابت یا متابولیسم که هر روز متفاوت و کاربردی باشد. ";
   if(C.step) struct+="یک قدمِ کوچکِ عملی برای امروز یا فردا. ";
   struct+="در پایان یک جملهٔ کوتاهِ دلگرم‌کننده و خداحافظی.\n";
-  return "تو گویندهٔ پادکستِ روزانهٔ نرم‌افزارِ «"+APP_NAME+"» (یک اپِ آموزشیِ دیابت) به فارسی هستی. نامِ نرم‌افزار دقیقاً «"+APP_NAME+"» است؛ اگر خواستی خوشامد بگویی همین نام را به کار ببر و هرگز نامِ دیگری برای اپ نساز. یک متنِ گفتاری بنویس که وقتی با صدا خوانده شود حدود "+mins+" دقیقه شود.\n"+
-  "طولِ متن مهم است: حدودِ "+words+" کلمهٔ فارسی — یعنی بینِ "+wLow+" تا "+wHigh+" کلمه برای "+mins+" دقیقه گفتار. نه کوتاه‌تر از "+wLow+" و «نه بلندتر از "+wHigh+" کلمه». وقتی به این اندازه رسیدی، جمع‌بندی کن و ادامه نده. هر موضوع را با یک «چرا» و یک مثالِ کوتاه باز کن، ولی از این بازهٔ طول عبور نکن و متن را بیش از حد کش نده.\n"+
-  "جوری بنویس که شنونده جذب شود و تا آخر گوش بدهد.\n"+
+  return pTxt('pod.script', POD_SCRIPT_SYS).split('{APP}').join(APP_NAME).split('{MINS}').join(mins).split('{WORDS}').join(words).split('{WLOW}').join(wLow).split('{WHIGH}').join(wHigh)+"\n"+
   ((POD_TONES[C.tone]||POD_TONES.casual).prompt+"\n")+
   struct+
-  "قواعدِ مهم: فقط فارسی بنویس. فقط متنِ گفتاری بده — بدونِ تیتر، بدونِ ستاره یا علامتِ مارک‌داون، بدونِ توضیحِ صحنه یا براکت، بدونِ شکلک. جمله‌ها کوتاه و روان تا خوب خوانده شوند. هرگز دوزِ قطعیِ انسولین/دارو یا تشخیصِ قطعی نده. مهم: در متنِ گفتار هیچ جمله‌ی سلبِ مسئولیت نگو (مثلِ «این آموزشی است» یا «جایگزینِ پزشک نیست») — این پیام جای دیگری نشان داده می‌شود؛ فقط گرم و طبیعی صحبت کن.\n\n"+
+  pTxt('pod.rules', POD_RULES_SYS)+"\n\n"+
   "دادهٔ عملکردِ کاربر (برای شخصی‌سازی — عین‌به‌عین نخوان، طبیعی و انتخابی استفاده کن):\n"+(snapF||'دادهٔ کافی نیست؛ عمومی و دلگرم‌کننده صحبت کن.');
 }
 async function podcastGenerate(force){
@@ -4323,8 +4346,8 @@ async function podOpenAITTS(text,voice){
   const mk=body=>fetch('https://api.openai.com/v1/audio/speech',{method:'POST',headers:{'authorization':'Bearer '+key,'content-type':'application/json'},body:JSON.stringify(body)});
   const tone=(podCfg().content&&podCfg().content.tone)||'casual';
   const instr=(tone==='formal')
-    ? 'به فارسی با لحنی گرم، آرام، دلنشین و محترمانه مثلِ گویندهٔ حرفه‌ایِ پادکستِ سلامت صحبت کن؛ شمرده، دلگرم‌کننده و روان.'
-    : 'به فارسی کاملاً خودمونی و محاوره‌ای صحبت کن، انگار با یک دوستِ صمیمی داری گپ می‌زنی — طبیعی، گرم، پرانرژی و بی‌تکلف؛ نه مثلِ خواندنِ متن، بلکه مثلِ حرف‌زدنِ واقعیِ روزمره با مکث‌ها و آهنگِ طبیعیِ گفتار.';
+    ? pTxt('tts.formal','به فارسی با لحنی گرم، آرام، دلنشین و محترمانه مثلِ گویندهٔ حرفه‌ایِ پادکستِ سلامت صحبت کن؛ شمرده، دلگرم‌کننده و روان.')
+    : pTxt('tts.casual','به فارسی کاملاً خودمونی و محاوره‌ای صحبت کن، انگار با یک دوستِ صمیمی داری گپ می‌زنی — طبیعی، گرم، پرانرژی و بی‌تکلف؛ نه مثلِ خواندنِ متن، بلکه مثلِ حرف‌زدنِ واقعیِ روزمره با مکث‌ها و آهنگِ طبیعیِ گفتار.');
   let res=await mk({ model:'gpt-4o-mini-tts', voice, input:text, response_format:'mp3', instructions:instr });
   if(!res.ok){ res=await mk({ model:'tts-1', voice, input:text, response_format:'mp3' }); if(!res.ok) throw new Error('OpenAI TTS '+res.status); }
   podCostAdd((Math.max(1,(text||'').length)/900)*POD_COST.ttsPerMin);   // تخمینِ دقیقهٔ صدا از طولِ متن (~۹۰۰ نویسه در دقیقه)
@@ -9353,7 +9376,7 @@ const LAB_ORDER_HINT="\n\n🧪 نسخهٔ آزمایش: هر وقت آزمایش
 // راهنمای افزوده‌ی پزشک: می‌تواند رژیم/ورزش/یادآوریِ انسولینِ نهایی‌شده را به‌شکلِ نشانه بدهد تا کاربر با یک دکمه در «برنامهٔ هفتگی» ثبت کند
 const DOC_PLAN_HINT="\n\nثبت در برنامهٔ هفتگیِ کاربر: اگر در پایان یک «رژیمِ غذاییِ مشخص»، «برنامهٔ ورزشیِ مشخص»، یا «یادآوریِ برنامهٔ انسولین» تجویز کردی و کاربر تأیید کرد، در «آخرین خطِ» پاسخ دقیقاً یکی از این نشانه‌ها را بگذار (اعدادِ داخلِ JSON انگلیسی، یک خط، بدونِ هیچ توضیحی) تا کاربر بتواند با یک دکمه آن را در «برنامهٔ هفتگی»اش ثبت کند — برای وعده: "+MEAL_MARKER_SCHEMA+" — برای ورزش: "+WORKOUT_MARKER_SCHEMA+" — برای انسولین: "+INSULIN_MARKER_SCHEMA+" — این خط را هیچ‌وقت توضیح نده و تا وقتی کاربر تأیید نکرده نگذار. (نشانهٔ انسولین فقط «یادآوریِ برنامه» برای کاربر است و در محاسبهٔ I:C دخالتی ندارد؛ تصمیمِ نهایی با پزشکِ معالج است.)";
 function docSys(spec, focus){
-  return "تو یک «پزشکِ متخصصِ "+spec+"» در تراز جهانی هستی: سال‌ها تجربه‌ی بالینی و درمانِ هزاران بیمار، تسلطِ کامل بر روندِ بهبودِ بیماران، کاملاً به‌روز با جدیدترین مقالات و راهنماهای معتبرِ جهانی (ADA، WHO، EASD و انجمن‌های تخصصیِ مرتبط)، دقیق، سخت‌گیر و بدونِ خطا در گفتار و توصیه. "+CHAT_MASTERY+" تمرکزِ ویژه‌ی تو: "+focus+" مبتنی بر شواهد و با زبانِ علمیِ دقیق ولی قابل‌فهم پاسخ بده، مکانیسم را کوتاه بگو، و از داده‌های همین بیمار برای شخصی‌سازی استفاده کن. خط قرمزِ ایمنی (بی‌استثنا): این گفتگو آموزشی است؛ دوز قطعیِ شخصی یا زمان‌بندیِ تزریق برای اجرای مستقیم نده و تصمیمِ نهاییِ درمان را به پزشکِ معالجِ بیمار بسپار."+DOC_PLAN_HINT+LAB_ORDER_HINT+DOC_VISIT_RULE;
+  return "تو یک «پزشکِ متخصصِ "+spec+"» در تراز جهانی هستی: سال‌ها تجربه‌ی بالینی و درمانِ هزاران بیمار، تسلطِ کامل بر روندِ بهبودِ بیماران، کاملاً به‌روز با جدیدترین مقالات و راهنماهای معتبرِ جهانی (ADA، WHO، EASD و انجمن‌های تخصصیِ مرتبط)، دقیق، سخت‌گیر و بدونِ خطا در گفتار و توصیه. "+pTxt('shared.mastery',CHAT_MASTERY)+" تمرکزِ ویژه‌ی تو: "+focus+" مبتنی بر شواهد و با زبانِ علمیِ دقیق ولی قابل‌فهم پاسخ بده، مکانیسم را کوتاه بگو، و از داده‌های همین بیمار برای شخصی‌سازی استفاده کن. خط قرمزِ ایمنی (بی‌استثنا): این گفتگو آموزشی است؛ دوز قطعیِ شخصی یا زمان‌بندیِ تزریق برای اجرای مستقیم نده و تصمیمِ نهاییِ درمان را به پزشکِ معالجِ بیمار بسپار."+pTxt('shared.plan',DOC_PLAN_HINT)+pTxt('shared.lab',LAB_ORDER_HINT)+pTxt('shared.visit',DOC_VISIT_RULE);
 }
 const CHEF_SYS="تو یک سرآشپزِ حرفه‌ای و متخصصِ تغذیه‌ی دیابتی هستی. با سلیقه و موادِ در دسترسِ کاربر، برای یک وعده (مثلاً رژیمی یا کم‌کالری) یک دستورِ غذای مناسبِ دیابت می‌سازی تا به هدفش (کم‌کربوهیدرات/کم‌کالری/پرپروتئین…) برسد. کربوهیدرات و کالریِ تخمینیِ هر جزء و کلِ وعده را بگو. تخمینی و آموزشی بمان؛ برای دوزِ انسولین به پزشک ارجاع بده.\n"
   +"وقتی وعده‌ی نهایی آماده و موردِ تأییدِ کاربر شد، در «آخرین خطِ» پاسخ دقیقاً این نشانه را بگذار (اعدادِ داخلِ JSON انگلیسی، بدونِ هیچ توضیحی، در یک خط): @@MEAL@@ {\"name\":\"نام وعده\",\"carb\":<گرم کربوهیدرات عدد>,\"cal\":<کالری عدد>,\"items\":[{\"n\":\"نام خوراکی\",\"q\":\"مقدار مثل ۲ برش\"}]} — این خط را هیچ‌وقت توضیح نده. تا وقتی کاربر وعده را نهایی نکرده، این خط را نگذار."+CHAT_CONVO_RULE;
@@ -9363,20 +9386,20 @@ const COACH_SYS="تو یک مربیِ ورزشیِ حرفه‌ای و قهرما
   +"\n\n⚠️ «pose» فقط یک کدِ فنیِ داخلیِ همان خطِ @@WORKOUT@@ است (برای انیمیشنِ آدمک) و «هرگز» نباید در متنِ خواندنیِ برنامه بیاید. در متنِ برنامه هیچ‌وقت کلمهٔ pose یا «پوست» یا کدهای انگلیسی مثل pushup/plank/squat را ننویس؛ فقط نامِ فارسیِ حرکت (مثلاً «شنا روی دیوار»، «پلانک») را به‌عنوان تیتر بیاور و زیرش ست/تکرار، روشِ انجام و فایده را بنویس."+CHAT_CONVO_RULE;
 const CHAT_ROLES=[
   {id:'planner',name:'برنامه‌ریزِ مسیرِ درمان',      emoji:'🗺️', cat:'flow', desc:'⭐ شروع از اینجا — مسیرِ مراجعه را می‌چیند', sys:''/*با IIFE پایین ست می‌شود*/},
-  {id:'gp',     name:'پزشک عمومی',                   emoji:'🩹', cat:'doc', desc:'اول با او؛ می‌گوید به کدام متخصص بروی', sys:'تو یک «پزشکِ عمومیِ» باتجربه و به‌روز هستی. کارِ تو این است که «پیش از مراجعه به متخصص‌ها» با بیمار صحبت کنی: شرح‌حال، علائم و داده‌هایش را بسنجی، اقدام‌های اولیه و آزمایش‌های لازم را بگویی، و مهم‌تر از همه راهنمایی کنی که برای این مشکل باید به کدام پزشکِ متخصص (یا چند متخصص) مراجعه کند و با چه اولویتی. علائمِ خطر و موارد اورژانسی را صریح مشخص کن. '+CHAT_MASTERY+' آموزشی بمان و تشخیص و تجویزِ نهایی را به پزشکِ معالج بسپار.'+LAB_ORDER_HINT+DOC_VISIT_RULE},
-  {id:'endo',   name:'متخصص غدد و داخلی',            emoji:'🩺', cat:'doc', desc:'دیابت، تیروئید، هورمون، انسولین', sys:docSys('غدد و داخلی','مدیریتِ انسولین و قندِ خون، مقاومت به انسولین، تیروئید و هورمون‌ها، تنظیمِ داروهای دیابت.')},
-  {id:'cardio', name:'متخصص قلب و عروق',              emoji:'🫀', cat:'doc', desc:'فشار، چربی، خطر قلبی', sys:docSys('قلب و عروق','فشارِ خون، چربیِ خون، خطرِ قلبی‌عروقیِ دیابت، داروهای قلبی و تداخل‌ها، پیشگیری از سکته.')},
-  {id:'hepato', name:'متخصص کبد (هپاتولوژی)',        emoji:'🫄', cat:'doc', desc:'کبد چرب، آنزیم کبدی', sys:docSys('کبد (هپاتولوژی)','کبدِ چربِ دیابتی (NAFLD/NASH)، آنزیم‌های کبدی، اثرِ داروها بر کبد.')},
-  {id:'eye',    name:'متخصص چشم‌پزشکی',              emoji:'👁️', cat:'doc', desc:'رتینوپاتی، ماکولا', sys:docSys('چشم‌پزشکی','رتینوپاتیِ دیابتی، ادمِ ماکولا، فشارِ چشم و مراقبت از بینایی.')},
-  {id:'nerve',  name:'متخصص اعصاب',                  emoji:'⚡', cat:'doc', desc:'نوروپاتی، اعصاب محیطی', sys:docSys('اعصاب (اعصابِ محیطی)','نوروپاتیِ محیطیِ دیابتی، درد و بی‌حسیِ اندام‌ها، مراقبت از پا.')},
-  {id:'hemato', name:'متخصص خون (هماتولوژی)',        emoji:'🩸', cat:'doc', desc:'کم‌خونی، انعقاد', sys:docSys('خون (هماتولوژی)','کم‌خونی، شمارشِ خون، اختلالاتِ انعقاد و اثرِ دیابت بر خون.')},
-  {id:'nephro', name:'متخصص کلیه (نفرولوژی)',        emoji:'🫘', cat:'doc', desc:'نفروپاتی، کراتینین', sys:docSys('کلیه (نفرولوژی)','نفروپاتیِ دیابتی، کراتینین/GFR، فشارِ خون، الکترولیت‌ها و داروهای کلیوی.')},
-  {id:'neuro',  name:'متخصص مغز و اعصاب (نورولوژیست)',emoji:'🧠', cat:'doc', desc:'سکته، سیستم عصبی مرکزی', sys:docSys('مغز و اعصاب (نورولوژی)','سکته‌ی مغزی، اختلالاتِ سیستمِ عصبیِ مرکزی، سرگیجه و سردرد.')},
-  {id:'uro',    name:'متخصص مجاری ادراری (اورولوژیست)',emoji:'🚻', cat:'doc', desc:'ادرار، پروستات، مثانه', sys:docSys('مجاری ادراری (اورولوژی)','عفونتِ ادراری، پروستات، مثانه و اختلالِ عملکردِ جنسیِ مرتبط با دیابت.')},
-  {id:'ent',    name:'متخصص گوش و حلق و بینی',        emoji:'👂', cat:'doc', desc:'گوش، حلق، بینی', sys:docSys('گوش و حلق و بینی','عفونت‌های گوش/حلق/بینی، سرگیجه و شنوایی در دیابت.')},
-  {id:'pulmo',  name:'متخصص ریه',                    emoji:'🫁', cat:'doc', desc:'تنفس، آپنه خواب', sys:docSys('ریه','بیماری‌های تنفسی، آپنه‌ی خواب و عفونتِ ریه در دیابت.')},
-  {id:'psych',  name:'روانپزشک',                     emoji:'🧩', cat:'doc', desc:'افسردگی، اضطراب، خواب', sys:docSys('روانپزشکی','افسردگی و اضطرابِ همراهِ دیابت، دیسترسِ دیابت، خواب و انگیزه.')},
-  {id:'neonat', name:'متخصص نوزادان',                emoji:'👶', cat:'doc', desc:'نوزاد و بارداری دیابتی', sys:docSys('نوزادان','اثرِ دیابتِ بارداری بر نوزاد، هیپوگلیسمیِ نوزاد و مراقبت‌های اولیه.')},
+  {id:'gp',     name:'پزشک عمومی',                   emoji:'🩹', cat:'doc', desc:'اول با او؛ می‌گوید به کدام متخصص بروی', sys:'تو یک «پزشکِ عمومیِ» باتجربه و به‌روز هستی. کارِ تو این است که «پیش از مراجعه به متخصص‌ها» با بیمار صحبت کنی: شرح‌حال، علائم و داده‌هایش را بسنجی، اقدام‌های اولیه و آزمایش‌های لازم را بگویی، و مهم‌تر از همه راهنمایی کنی که برای این مشکل باید به کدام پزشکِ متخصص (یا چند متخصص) مراجعه کند و با چه اولویتی. علائمِ خطر و موارد اورژانسی را صریح مشخص کن. '+CHAT_MASTERY+' آموزشی بمان و تشخیص و تجویزِ نهایی را به پزشکِ معالج بسپار.'+pTxt('shared.lab',LAB_ORDER_HINT)+pTxt('shared.visit',DOC_VISIT_RULE)},
+  {id:'endo',   name:'متخصص غدد و داخلی',            emoji:'🩺', cat:'doc', desc:'دیابت، تیروئید، هورمون، انسولین', sys:docSys('غدد و داخلی','مدیریتِ انسولین و قندِ خون، مقاومت به انسولین، تیروئید و هورمون‌ها، تنظیمِ داروهای دیابت.'), _doc:['غدد و داخلی','مدیریتِ انسولین و قندِ خون، مقاومت به انسولین، تیروئید و هورمون‌ها، تنظیمِ داروهای دیابت.']},
+  {id:'cardio', name:'متخصص قلب و عروق',              emoji:'🫀', cat:'doc', desc:'فشار، چربی، خطر قلبی', sys:docSys('قلب و عروق','فشارِ خون، چربیِ خون، خطرِ قلبی‌عروقیِ دیابت، داروهای قلبی و تداخل‌ها، پیشگیری از سکته.'), _doc:['قلب و عروق','فشارِ خون، چربیِ خون، خطرِ قلبی‌عروقیِ دیابت، داروهای قلبی و تداخل‌ها، پیشگیری از سکته.']},
+  {id:'hepato', name:'متخصص کبد (هپاتولوژی)',        emoji:'🫄', cat:'doc', desc:'کبد چرب، آنزیم کبدی', sys:docSys('کبد (هپاتولوژی)','کبدِ چربِ دیابتی (NAFLD/NASH)، آنزیم‌های کبدی، اثرِ داروها بر کبد.'), _doc:['کبد (هپاتولوژی)','کبدِ چربِ دیابتی (NAFLD/NASH)، آنزیم‌های کبدی، اثرِ داروها بر کبد.']},
+  {id:'eye',    name:'متخصص چشم‌پزشکی',              emoji:'👁️', cat:'doc', desc:'رتینوپاتی، ماکولا', sys:docSys('چشم‌پزشکی','رتینوپاتیِ دیابتی، ادمِ ماکولا، فشارِ چشم و مراقبت از بینایی.'), _doc:['چشم‌پزشکی','رتینوپاتیِ دیابتی، ادمِ ماکولا، فشارِ چشم و مراقبت از بینایی.']},
+  {id:'nerve',  name:'متخصص اعصاب',                  emoji:'⚡', cat:'doc', desc:'نوروپاتی، اعصاب محیطی', sys:docSys('اعصاب (اعصابِ محیطی)','نوروپاتیِ محیطیِ دیابتی، درد و بی‌حسیِ اندام‌ها، مراقبت از پا.'), _doc:['اعصاب (اعصابِ محیطی)','نوروپاتیِ محیطیِ دیابتی، درد و بی‌حسیِ اندام‌ها، مراقبت از پا.']},
+  {id:'hemato', name:'متخصص خون (هماتولوژی)',        emoji:'🩸', cat:'doc', desc:'کم‌خونی، انعقاد', sys:docSys('خون (هماتولوژی)','کم‌خونی، شمارشِ خون، اختلالاتِ انعقاد و اثرِ دیابت بر خون.'), _doc:['خون (هماتولوژی)','کم‌خونی، شمارشِ خون، اختلالاتِ انعقاد و اثرِ دیابت بر خون.']},
+  {id:'nephro', name:'متخصص کلیه (نفرولوژی)',        emoji:'🫘', cat:'doc', desc:'نفروپاتی، کراتینین', sys:docSys('کلیه (نفرولوژی)','نفروپاتیِ دیابتی، کراتینین/GFR، فشارِ خون، الکترولیت‌ها و داروهای کلیوی.'), _doc:['کلیه (نفرولوژی)','نفروپاتیِ دیابتی، کراتینین/GFR، فشارِ خون، الکترولیت‌ها و داروهای کلیوی.']},
+  {id:'neuro',  name:'متخصص مغز و اعصاب (نورولوژیست)',emoji:'🧠', cat:'doc', desc:'سکته، سیستم عصبی مرکزی', sys:docSys('مغز و اعصاب (نورولوژی)','سکته‌ی مغزی، اختلالاتِ سیستمِ عصبیِ مرکزی، سرگیجه و سردرد.'), _doc:['مغز و اعصاب (نورولوژی)','سکته‌ی مغزی، اختلالاتِ سیستمِ عصبیِ مرکزی، سرگیجه و سردرد.']},
+  {id:'uro',    name:'متخصص مجاری ادراری (اورولوژیست)',emoji:'🚻', cat:'doc', desc:'ادرار، پروستات، مثانه', sys:docSys('مجاری ادراری (اورولوژی)','عفونتِ ادراری، پروستات، مثانه و اختلالِ عملکردِ جنسیِ مرتبط با دیابت.'), _doc:['مجاری ادراری (اورولوژی)','عفونتِ ادراری، پروستات، مثانه و اختلالِ عملکردِ جنسیِ مرتبط با دیابت.']},
+  {id:'ent',    name:'متخصص گوش و حلق و بینی',        emoji:'👂', cat:'doc', desc:'گوش، حلق، بینی', sys:docSys('گوش و حلق و بینی','عفونت‌های گوش/حلق/بینی، سرگیجه و شنوایی در دیابت.'), _doc:['گوش و حلق و بینی','عفونت‌های گوش/حلق/بینی، سرگیجه و شنوایی در دیابت.']},
+  {id:'pulmo',  name:'متخصص ریه',                    emoji:'🫁', cat:'doc', desc:'تنفس، آپنه خواب', sys:docSys('ریه','بیماری‌های تنفسی، آپنه‌ی خواب و عفونتِ ریه در دیابت.'), _doc:['ریه','بیماری‌های تنفسی، آپنه‌ی خواب و عفونتِ ریه در دیابت.']},
+  {id:'psych',  name:'روانپزشک',                     emoji:'🧩', cat:'doc', desc:'افسردگی، اضطراب، خواب', sys:docSys('روانپزشکی','افسردگی و اضطرابِ همراهِ دیابت، دیسترسِ دیابت، خواب و انگیزه.'), _doc:['روانپزشکی','افسردگی و اضطرابِ همراهِ دیابت، دیسترسِ دیابت، خواب و انگیزه.']},
+  {id:'neonat', name:'متخصص نوزادان',                emoji:'👶', cat:'doc', desc:'نوزاد و بارداری دیابتی', sys:docSys('نوزادان','اثرِ دیابتِ بارداری بر نوزاد، هیپوگلیسمیِ نوزاد و مراقبت‌های اولیه.'), _doc:['نوزادان','اثرِ دیابتِ بارداری بر نوزاد، هیپوگلیسمیِ نوزاد و مراقبت‌های اولیه.']},
   {id:'allspec',name:'پزشک متخصص کل',                emoji:'🧬', cat:'doc', desc:'دانشِ همه‌ی تخصص‌ها یک‌جا', sys:'تو یک «پزشکِ فوقِ حرفه‌ایِ چندتخصصی» در تراز جهانی هستی که دانشِ همه‌ی تخصص‌ها را یک‌جا داری: غدد و داخلی، قلب و عروق، کلیه، کبد، چشم، اعصاب و مغز و اعصاب، خون، ریه، روان، اورولوژی، گوش‌وحلق‌وبینی و نوزادان. هر سوالِ پزشکیِ مرتبط با دیابت و عوارضش را از همه‌ی زاویه‌ها و به‌صورت یکپارچه پاسخ می‌دهی، تداخل‌ها و اثرِ متقابلِ سیستم‌ها را در نظر می‌گیری، به‌روز با ADA/WHO/EASD، دقیق، سخت‌گیر و بی‌خطا. '+CHAT_MASTERY+' اگر موضوعی نیاز به معاینه یا اقدامِ حضوریِ یک تخصصِ خاص دارد، آن را هم بگو. آموزشی بمان؛ دوزِ قطعیِ شخصی نده و تصمیمِ نهایی را به پزشکِ معالج بسپار.'},
   {id:'chef',   name:'سرآشپز حرفه‌ای',               emoji:'👨‍🍳', cat:'life', desc:'وعده‌ی رژیمی/کم‌کالری بساز', sys:CHEF_SYS},
   {id:'coach',  name:'مربی ورزش حرفه‌ای',            emoji:'🏅', cat:'life', desc:'برنامه‌ی ورزشی و پیگیریِ سخت‌گیرانه', sys:COACH_SYS},
@@ -9403,14 +9426,18 @@ function chatRolesOf(c){ c=c||chatActive(); const ids=(c&&Array.isArray(c.roles)
 // خلاصه‌ی نمایشیِ نقش(ها)ی یک گفتگو
 function chatRolesLabel(c){ const ids=chatRolesOf(c); if(!ids.length) return '🧭 مشاور دیابت'; if(ids.length===1){ const r=chatRoleById(ids[0]); return r.emoji+' '+r.name; } return '👥 کنفرانس ('+faDigits(String(ids.length))+' متخصص)'; }
 // سیستم‌پرامپتِ نقش‌ها (یک نقش یا کنفرانسِ چندتایی)
+// متنِ زندهٔ نقش: بازنویسیِ کاربر ← وگرنه (برای پزشکان) بازسازی با قاعده‌های مشترکِ فعلی ← وگرنه متنِ پایه
+function roleSysDefault(r){ if(!r) return ''; if(r._doc){ try{ return docSys(r._doc[0], r._doc[1]); }catch(e){} } return r.sys||''; }
+function roleSys(r){ if(!r) return ''; const ov=promptStore()['role.'+r.id];
+  return (typeof ov==='string'&&ov.trim())? ov : roleSysDefault(r); }
 function chatRolesSys(c){
   const ids=chatRolesOf(c);
-  if(!ids.length) return chatRoleById('consultant').sys;
-  if(ids.length===1) return 'نقشِ تو در این گفتگو: '+chatRoleById(ids[0]).sys;
+  if(!ids.length) return roleSys(chatRoleById('consultant'));
+  if(ids.length===1) return 'نقشِ تو در این گفتگو: '+roleSys(chatRoleById(ids[0]));
   const names=ids.map(id=>{ const r=chatRoleById(id); return r.emoji+' '+r.name; });
   return "این یک «کنفرانسِ چندتخصصی» درباره‌ی همین بیمار است. متخصصانِ حاضر: "+names.join('، ')+".\n"
     +"هر پاسخ را مثلِ گفت‌وگوی واقعیِ این متخصصان بنویس: هرکدام با برچسبِ خودش (مثلاً «"+chatRoleById(ids[0]).emoji+" "+chatRoleById(ids[0]).name+":») نظرِ کوتاه و تخصصیِ خودش را بگوید، در صورتِ اختلاف با احترام به هم پاسخ دهند، و در پایان یک «جمع‌بندیِ مشترک» و یک «راهکارِ واحدِ عملی» بدهند.\n"
-    +"مشخصاتِ هر متخصص:\n"+ids.map(id=>{ const r=chatRoleById(id); return '— '+r.emoji+' '+r.name+': '+r.sys; }).join('\n')+"\n"
+    +"مشخصاتِ هر متخصص:\n"+ids.map(id=>{ const r=chatRoleById(id); return '— '+r.emoji+' '+r.name+': '+roleSys(r); }).join('\n')+"\n"
     +"خط قرمزِ ایمنی برای همه: آموزشی بمانید، دوزِ قطعیِ شخصی ندهید و تصمیمِ نهایی را به پزشکِ معالج بسپارید.";
 }
 function chatSetRoles(ids){ const o=chatLoad(); const c=chatActive(o); if(c){ c.roles=Array.isArray(ids)?ids.filter(id=>chatRoleById(id)):[]; chatSave(o); } renderChatTab(); }
@@ -9457,6 +9484,95 @@ function renderChatSuggestSetting(){
     <button class="${!on?'on':''}" onclick="setChatSuggest(false)">⛔ خاموش</button>
   </div>`;
 }
+
+/* ══ فهرست و صفحهٔ «پرامپت‌های هوش مصنوعی» (۲۶.۵) ══
+   هر ورودی: {id, t:عنوان, d:توضیح, def:()=>متنِ پیش‌فرض}. نقش‌ها به‌صورتِ پویا از
+   CHAT_ROLES ساخته می‌شوند تا با افزودنِ نقشِ تازه، خودکار در این صفحه بیایند. */
+function promptRegistry(){
+  const G=[];
+  G.push({g:'🗨️ پایهٔ چت و پزشکان', items:[
+    {id:'chat.base', t:'پرامپتِ پایهٔ چت', d:'شخصیتِ «دیابوت» و قواعدِ استفاده از پرونده و درخواستِ داده — بالای هر گفتگو می‌رود.', def:()=>CHAT_BASE_SYS},
+    {id:'shared.visit', t:'روالِ ویزیت (مشترکِ همهٔ پزشکان)', d:'ساختارِ پاسخ، سقفِ طول و عبارت‌های ممنوع. تغییرش روی همهٔ پزشک‌ها اثر می‌گذارد.', def:()=>DOC_VISIT_RULE},
+    {id:'shared.mastery', t:'تسلطِ بالینی (مشترک)', d:'فهرستِ حوزه‌هایی که پزشک باید بر آن‌ها مسلط باشد.', def:()=>CHAT_MASTERY},
+    {id:'shared.plan', t:'ثبت در برنامهٔ هفتگی (مشترک)', d:'راهنمای نشانه‌های @@MEAL@@ / @@WORKOUT@@ / @@INSULIN@@.', def:()=>DOC_PLAN_HINT},
+    {id:'shared.lab', t:'نسخهٔ آزمایش (مشترک)', d:'راهنمای نشانهٔ @@LAB@@ و فهرستِ شناسه‌های مجاز.', def:()=>LAB_ORDER_HINT},
+    {id:'chat.suggest', t:'پیشنهادِ سؤالِ بعدی', d:'{Q} = پرسشِ کاربر، {A} = پاسخِ دستیار.', def:()=>CHAT_SUGGEST_SYS}
+  ]});
+  const byCat={};
+  (CHAT_ROLES||[]).forEach(r=>{ (byCat[r.cat]=byCat[r.cat]||[]).push(r); });
+  const catFa={flow:'🧭 مسیر و مشاوره', doc:'🩺 پزشکانِ متخصص', life:'🥗 سبکِ زندگی'};
+  Object.keys(byCat).forEach(cat=>{
+    G.push({g:(catFa[cat]||cat), items:byCat[cat].map(r=>({
+      id:'role.'+r.id, t:r.emoji+' '+r.name,
+      d:(r._doc?'ساخته‌شده از قاعده‌های مشترکِ بالا؛ اگر اینجا ویرایش کنی، همان متنِ ویرایش‌شده جایگزینِ کلِ نقش می‌شود.':(r.desc||'')),
+      def:()=>roleSysDefault(r) })) });
+  });
+  G.push({g:'🎧 پادکست', items:[
+    {id:'pod.script', t:'متنِ پادکست', d:'{APP} نامِ اپ، {MINS} دقیقه، {WORDS}/{WLOW}/{WHIGH} تعدادِ کلمه.', def:()=>POD_SCRIPT_SYS},
+    {id:'pod.rules', t:'قواعدِ نگارشِ پادکست', d:'ممنوعیتِ مارک‌داون، شکلک و جمله‌های سلبِ مسئولیت.', def:()=>POD_RULES_SYS},
+    {id:'tts.casual', t:'لحنِ صدا — خودمانی', d:'دستورِ لحن به سرویسِ تبدیلِ متن به گفتار.', def:()=>'به فارسی کاملاً خودمونی و محاوره‌ای صحبت کن، انگار با یک دوستِ صمیمی داری گپ می‌زنی — طبیعی، گرم، پرانرژی و بی‌تکلف؛ نه مثلِ خواندنِ متن، بلکه مثلِ حرف‌زدنِ واقعیِ روزمره با مکث‌ها و آهنگِ طبیعیِ گفتار.'},
+    {id:'tts.formal', t:'لحنِ صدا — رسمی', d:'دستورِ لحن به سرویسِ تبدیلِ متن به گفتار.', def:()=>'به فارسی با لحنی گرم، آرام، دلنشین و محترمانه مثلِ گویندهٔ حرفه‌ایِ پادکستِ سلامت صحبت کن؛ شمرده، دلگرم‌کننده و روان.'}
+  ]});
+  G.push({g:'📊 تحلیل‌ها و آزمایش', items:[
+    {id:'health.body', t:'پایهٔ تحلیلِ سلامت', d:'شخصیتِ تحلیل‌گر. ⚠️ اسکیمای JSON عمداً قابلِ ویرایش نیست تا خروجی نشکند.', def:()=>HEALTH_BODY_SYS},
+    {id:'health.daily', t:'تحلیلِ روزانه', d:'جهت‌دهیِ تحلیلِ یک روزِ مشخص.', def:()=>"این گزارشِ یک روزِ مشخص است؛ الگوی همان روز را تحلیل کن (قند در برابر وعده/انسولین/ورزش) و بگو دفعه‌ی بعد چه چیز کوچکی بهتر شود."},
+    {id:'health.overview', t:'تحلیلِ کلی (روند)', d:'جهت‌دهیِ تحلیلِ بلندمدت.', def:()=>"این گزارشِ بلندمدت (روند چند روز/هفته) است؛ روندها و الگوهای تکرارشونده را پیدا کن و یک راهبرد عملی بده."},
+    {id:'health.home', t:'تحلیلِ تبِ خانه', d:'جهت‌دهیِ تحلیلِ نمای اخیر.', def:()=>"این نمای کلیِ اخیر است؛ تحلیل و توصیه‌ی عملی برای همین روزها بده."},
+    {id:'lab.cards', t:'تفسیرِ آزمایش (کارتی)', d:'پایهٔ تفسیرِ کارت‌بندی‌شدهٔ برگهٔ آزمایش.', def:()=>LAB_JSON_SYS},
+    {id:'lab.analysis', t:'تفسیرِ آزمایش (متنی)', d:'پایهٔ تفسیرِ متنیِ برگهٔ آزمایش.', def:()=>LAB_TEXT_SYS},
+    {id:'vision.plate', t:'تشخیصِ غذا از عکسِ بشقاب', d:'⚠️ خروجی باید JSON بماند وگرنه تشخیصِ غذا کار نمی‌کند.', def:()=>VISION_PROMPT}
+  ]});
+  return G;
+}
+function promptDefOf(id){ let d=''; promptRegistry().forEach(g=>g.items.forEach(it=>{ if(it.id===id){ try{ d=it.def()||''; }catch(e){ d=''; } } })); return String(d); }
+function promptCount(){ let n=0,c=0; promptRegistry().forEach(g=>g.items.forEach(it=>{ n++; if(pIsCustom(it.id)) c++; })); return {n,c}; }
+let _pmOpen={};
+function renderPromptManager(){
+  const box=document.getElementById('promptManager'); if(!box) return;
+  const st=promptCount();
+  let h=`<div style="font-size:12px;color:var(--muted);line-height:1.9;margin-bottom:10px">
+    ${faDigits(st.n)} پرامپت در برنامه هست${st.c?` · <b style="color:var(--amber)">${faDigits(st.c)} مورد ویرایش‌شده</b>`:' · همه پیش‌فرض'}.
+    روی هرکدام بزن تا متنش را ببینی و ویرایش کنی. تغییر بلافاصله اعمال می‌شود و در همین دستگاه ذخیره می‌ماند.</div>`;
+  if(st.c) h+=`<button type="button" class="quick-btn" style="width:100%;margin-bottom:10px" onclick="promptResetAll()">↩︎ برگرداندنِ همه به پیش‌فرض</button>`;
+  promptRegistry().forEach(g=>{
+    h+=`<div style="font-weight:800;font-size:12.5px;color:var(--teal);margin:14px 0 6px">${escVision(g.g)}</div>`;
+    g.items.forEach(it=>{
+      const cus=pIsCustom(it.id); const op=!!_pmOpen[it.id];
+      const cur=pTxt(it.id, promptDefOf(it.id));
+      h+=`<div style="border:1px solid ${cus?'var(--amber)':'var(--line)'};border-radius:11px;margin-bottom:7px;overflow:hidden">
+        <div onclick="promptToggle('${it.id}')" style="display:flex;align-items:center;gap:8px;padding:9px 10px;cursor:pointer;background:var(--field)">
+          <span style="font-size:13px">${cus?'✏️':'📄'}</span>
+          <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:12.5px">${escVision(it.t)}</div>
+            <div style="font-size:10.5px;color:var(--muted);margin-top:1px">${faDigits(String(cur.length))} نویسه${cus?' · ویرایش‌شده':''}</div></div>
+          <span style="color:var(--muted);font-size:12px">${op?'▲':'▼'}</span>
+        </div>`;
+      if(op){
+        h+=`<div style="padding:10px">
+          ${it.d?`<div style="font-size:11px;color:var(--muted);line-height:1.8;margin-bottom:7px">${escVision(it.d)}</div>`:''}
+          <textarea id="pm_${it.id.replace(/\./g,'_')}" rows="10" style="width:100%;box-sizing:border-box;background:var(--panel-2);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:9px;font-family:inherit;font-size:11.5px;line-height:1.9;direction:rtl;resize:vertical">${escVision(cur)}</textarea>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+            <button type="button" class="mini-btn" onclick="promptSave('${it.id}')">💾 ذخیره</button>
+            <button type="button" class="mini-btn" onclick="promptReset('${it.id}')">↩︎ پیش‌فرض</button>
+            <button type="button" class="mini-btn" onclick="promptCopy('${it.id}')">📋 کپی</button>
+          </div></div>`;
+      }
+      h+=`</div>`;
+    });
+  });
+  box.innerHTML=h;
+}
+function promptToggle(id){ _pmOpen[id]=!_pmOpen[id]; renderPromptManager(); }
+function _pmEl(id){ return document.getElementById('pm_'+id.replace(/\./g,'_')); }
+function promptSave(id){ const el=_pmEl(id); if(!el) return; const v=(el.value||'').trim();
+  const def=promptDefOf(id);
+  pSet(id, (v && v!==def.trim())? v : '');
+  renderPromptManager(); uiToast(v&&v!==def.trim()?'✓ پرامپت ذخیره شد':'به پیش‌فرض برگشت'); }
+function promptReset(id){ pSet(id,''); const el=_pmEl(id); if(el) el.value=promptDefOf(id); renderPromptManager(); uiToast('به پیش‌فرض برگشت'); }
+function promptCopy(id){ const el=_pmEl(id); if(!el) return; const t=el.value||'';
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(()=>uiToast('کپی شد'),()=>uiToast('کپی نشد'));
+  else { el.select(); try{ document.execCommand('copy'); uiToast('کپی شد'); }catch(e){} } }
+function promptResetAll(){ if(!confirm('همهٔ پرامپت‌های ویرایش‌شده به پیش‌فرضِ برنامه برگردند؟')) return;
+  try{ localStorage.removeItem(AI_PROMPT_KEY); }catch(e){} renderPromptManager(); uiToast('همه به پیش‌فرض برگشتند'); }
 
 /* ====== خواندنِ پاسخ‌های چت با مجریِ سه‌بعدی ====== */
 const CHAT_READ_KEY='chat_autoread_v1';
@@ -9695,7 +9811,7 @@ async function loadProfile(){
 // کلیدهای localStorage که در بکاپ گنجانده می‌شوند (نقشه‌ی داده‌ی کاربر).
 // از مقادیر رشته‌ای مستقیم استفاده می‌شود چون بعضی از این const‌ها (CGMKEY, BGKEY, ...)
 // پایین‌تر در فایل تعریف شده‌اند و ارجاع به خودِ متغیر اینجا TDZ می‌دهد.
-const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','skip_log_v1','sleep_log_v1','mood_log_v1','vitals_v1','journal_v1','weight_log_v1','custom_foods_v1','custom_meds_v1','custom_exercises_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','ai_model_frozen_v1','ai_section_model_v1','journeys_v1','pod_cfg_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1'];
+const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','skip_log_v1','sleep_log_v1','mood_log_v1','vitals_v1','journal_v1','weight_log_v1','custom_foods_v1','custom_meds_v1','custom_exercises_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','ai_model_frozen_v1','ai_section_model_v1','journeys_v1','pod_cfg_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1','ai_prompts_v1','chat_role_model_v1','chat_autoread_v1'];
 
 async function renderProfileTab(){
   // فرم پروفایل (c-profile) حالا خودش داخل این تب است و وضعیت ذخیره‌شده را نشان می‌دهد.
@@ -9705,6 +9821,7 @@ async function renderProfileTab(){
   renderChatLayoutSetting();
   renderChatSuggestSetting();
   renderChatReadSetting();
+  try{ renderPromptManager(); }catch(e){}
   renderZoomSetting();
   renderVisionSetting();
   try{ renderAICost(); }catch(e){}
@@ -13194,7 +13311,7 @@ const VISION_PROMPT=
 
 // تماس بینایی (با عکس). promptText اختیاری؛ maxTok/thinkBudget برای مدیریت توکن.
 async function callVision(prov, key, img, promptText, maxTok, thinkBudget, modelOverride){
-  const prompt=promptText||VISION_PROMPT; const mt=maxTok||1500;
+  const prompt=promptText||pTxt('vision.plate',VISION_PROMPT); const mt=maxTok||1500;
   if(prov==='gemini'){
     return await _geminiGenerate(key, [ {text:prompt}, {inline_data:{mime_type:img.mediaType, data:img.b64}} ], mt, thinkBudget);
   }
@@ -15629,7 +15746,11 @@ function buildLabAIContext(){
   if(!lines.length) return null;
   return { date:last.date, lines };
 }
+const LAB_TEXT_SYS="You are a careful, knowledgeable health educator helping a person with diabetes understand their OWN lab results. Write a genuinely useful, structured interpretation IN PERSIAN (Farsi) — not a one-liner, and not just «go see your doctor».";
 function LAB_AI_ANALYSIS_PROMPT(ctx){
+  return pTxt('lab.analysis', LAB_TEXT_SYS)+"\n"+_LAB_TEXT_REST(ctx);
+}
+function _LAB_TEXT_REST(ctx){
   return "You are a careful, knowledgeable health educator helping a person with diabetes understand their OWN lab results. Write a genuinely useful, structured interpretation IN PERSIAN (Farsi) — not a one-liner, and not just «go see your doctor».\n"+
   "Write these four sections, each with its heading exactly as below and short bullet lines starting with «•»:\n"+
   "🔎 خلاصه‌ی کلی\n"+
@@ -15948,21 +16069,8 @@ function chatPrompt(title, initial, onOk){ chatCloseRename();
 }
 function chatSetProvider(sel){ const o=chatLoad(); const c=chatActive(o); if(c){ c.provider=sel.value; chatSave(o); } }
 function chatSetSpeed(sel){ const o=chatLoad(); const c=chatActive(o); if(c){ c.speed=sel.value; chatSave(o); } }
-function buildChatSystemPrompt(){
-  // ⚠️ چت باید «پرونده» ببیند نه خلاصهٔ آماری: بازهٔ مستقل ۳۰ روزه + خطِ زمانیِ ۱۴ روزِ روزبه‌روز
-  // ۲۶.۰: به‌صورت پیش‌فرض فقط «شناسنامه + خلاصهٔ سبک» می‌رود (ارزان). ریزِ روزبه‌روز را
-  // دکتر با @@NEEDDATA@@ می‌خواهد و کاربر با یک کلیک می‌فرستد.
-  // ۲۶.۳: «برنامه‌ریزِ مسیرِ درمان» فقط مسیر می‌چیند و به پرونده نیازی ندارد ⇒ متنِ حداقلی.
-  let _planOnly=false; try{ const ids=chatRolesOf(chatActive()); _planOnly=(ids.length===1&&ids[0]==='planner'); }catch(e){}
-  let snap; try{ snap=_planOnly?{label:'',text:''}:buildHealthSnapshot('chat'); }catch(e){ snap={text:''}; }
-  if(_planOnly){
-    let who=''; try{ const p=profGet(); who=[p.diabetesType?('دیابت '+(DTYPE_FA[p.diabetesType]||p.diabetesType)):'', p.age?('سن '+p.age):'', p.gender==='male'?'مرد':(p.gender==='female'?'زن':'')].filter(Boolean).join('، '); }catch(e){}
-    return chatRolesSys(chatActive())+(who?('\nمشخصاتِ بیمار: '+who+'.'):'');
-  }
-  let extra=''; try{ const p=profGet(); if(p.gender) extra='جنسیت: '+(p.gender==='male'?'مرد':p.gender==='female'?'زن':p.gender)+'\n'; }catch(e){}
-  let persona=''; try{ persona=chatRolesSys(chatActive())+'\n'; }catch(e){}
-  let suggest=''; try{ if(chatSuggestOn()) suggest='\nدر پایانِ هر پاسخ، دقیقاً یک خطِ جدا با این قالب بگذار (برای پیشنهادِ سوال بعدی به کاربر): «@@SUGGEST@@ سوال۱ || سوال۲ || سوال۳» — دو یا سه سوالِ کوتاهِ فارسی (هرکدام کمتر از ۷ کلمه) که کاربر احتمالاً بعد از این می‌پرسد، از زبانِ خودِ کاربر (اول‌شخص). این خط را هیچ‌وقت توضیح نده.\n'; }catch(e){}
-  return "تو «دیابوت» هستی؛ یک دستیار هوشمند، همدل و عملگرای دیابت که همه‌ی اطلاعات متابولیک این کاربر را می‌داند. همیشه فارسی، کوتاه، دقیق و کاربردی جواب بده و از داده‌های کاربر برای شخصی‌سازی استفاده کن.\n"+
+const CHAT_BASE_SYS=
+"تو «دیابوت» هستی؛ یک دستیار هوشمند، همدل و عملگرای دیابت که همه‌ی اطلاعات متابولیک این کاربر را می‌داند. همیشه فارسی، کوتاه، دقیق و کاربردی جواب بده و از داده‌های کاربر برای شخصی‌سازی استفاده کن.\n"+
   "📁 مهم — تو به «پروندهٔ کاملِ» این کاربر دسترسی داری (پایینِ همین پیام): پروفایل و بیماری‌ها، قندها، وعده‌ها و کربوهیدرات، نام و دوزِ انسولین‌ها، داروها، ورزش، خواب، فشار، وزن، حالِ روحی، یادداشت‌های دفترچه، آزمایش‌ها و روندشان، و یک «خطِ زمانیِ روزبه‌روز». قواعد:\n"+
   "۱) هرگز نگو «اطلاعاتی از تو ندارم» یا «پرونده‌ات را ندارم». اگر چیزی واقعاً ثبت نشده، دقیق بگو کدام مورد ثبت نشده و از او بخواه ثبتش کند.\n"+
   "۲) نامِ انسولین/دارو را «حدس نزن». فقط همان نام‌هایی را به کار ببر که در پرونده آمده‌اند. هرگز نپرس «کِی از فلان انسولین به فلان عوض کردی» مگر خودِ پرونده نشان دهد نام عوض شده.\n"+
@@ -15977,7 +16085,22 @@ function buildChatSystemPrompt(){
   "ج) این خط را هیچ‌وقت توضیح نده و در متن تکرارش نکن؛ حداکثر یک بار در هر پیام.\n"+
   "هـ) ⛔ حلقه ممنوع: اگر بسته‌ای رسید که کمتر از خواستهٔ تو داشت (مثلاً فقط چند روز ثبت دارد)، «همان» را دوباره نخواه. با همان مقدار تحلیل کن، محدودیتش را یک جمله بگو، و بگو کاربر از این به بعد چه چیزی را ثبت کند. خطِ «📊 پوششِ واقعی» در هر بسته می‌گوید کلِ داده‌های کاربر از کِی تا کِی است — قدیمی‌تر از آن اصلاً وجود ندارد.\n"+
   "و) حداکثر یک‌بار در کلِ گفتگو درخواستِ داده بده مگر موضوعِ کاملاً تازه‌ای مطرح شود. هرگز دو پیامِ پشتِ‌هم @@NEEDDATA@@ نگذار.\n"+
-  "د) وقتی «📁 بستهٔ دادهٔ درخواستی» رسید، تحلیل را با عددها و تاریخ‌های واقعیِ همان بسته بنویس.\n"+
+  "د) وقتی «📁 بستهٔ دادهٔ درخواستی» رسید، تحلیل را با عددها و تاریخ‌های واقعیِ همان بسته بنویس.\n";
+function buildChatSystemPrompt(){
+  // ⚠️ چت باید «پرونده» ببیند نه خلاصهٔ آماری: بازهٔ مستقل ۳۰ روزه + خطِ زمانیِ ۱۴ روزِ روزبه‌روز
+  // ۲۶.۰: به‌صورت پیش‌فرض فقط «شناسنامه + خلاصهٔ سبک» می‌رود (ارزان). ریزِ روزبه‌روز را
+  // دکتر با @@NEEDDATA@@ می‌خواهد و کاربر با یک کلیک می‌فرستد.
+  // ۲۶.۳: «برنامه‌ریزِ مسیرِ درمان» فقط مسیر می‌چیند و به پرونده نیازی ندارد ⇒ متنِ حداقلی.
+  let _planOnly=false; try{ const ids=chatRolesOf(chatActive()); _planOnly=(ids.length===1&&ids[0]==='planner'); }catch(e){}
+  let snap; try{ snap=_planOnly?{label:'',text:''}:buildHealthSnapshot('chat'); }catch(e){ snap={text:''}; }
+  if(_planOnly){
+    let who=''; try{ const p=profGet(); who=[p.diabetesType?('دیابت '+(DTYPE_FA[p.diabetesType]||p.diabetesType)):'', p.age?('سن '+p.age):'', p.gender==='male'?'مرد':(p.gender==='female'?'زن':'')].filter(Boolean).join('، '); }catch(e){}
+    return chatRolesSys(chatActive())+(who?('\nمشخصاتِ بیمار: '+who+'.'):'');
+  }
+  let extra=''; try{ const p=profGet(); if(p.gender) extra='جنسیت: '+(p.gender==='male'?'مرد':p.gender==='female'?'زن':p.gender)+'\n'; }catch(e){}
+  let persona=''; try{ persona=chatRolesSys(chatActive())+'\n'; }catch(e){}
+  let suggest=''; try{ if(chatSuggestOn()) suggest='\nدر پایانِ هر پاسخ، دقیقاً یک خطِ جدا با این قالب بگذار (برای پیشنهادِ سوال بعدی به کاربر): «@@SUGGEST@@ سوال۱ || سوال۲ || سوال۳» — دو یا سه سوالِ کوتاهِ فارسی (هرکدام کمتر از ۷ کلمه) که کاربر احتمالاً بعد از این می‌پرسد، از زبانِ خودِ کاربر (اول‌شخص). این خط را هیچ‌وقت توضیح نده.\n'; }catch(e){}
+  return pTxt('chat.base', CHAT_BASE_SYS)+
   persona+
   "خط قرمزها: فقط آموزشی؛ هرگز تشخیص قطعی یا دوز دقیق انسولین/دارو برای اجرا نده؛ برای تصمیم درمانی کاربر را به پزشک ارجاع بده.\n"+
   extra+
@@ -16372,10 +16495,11 @@ window.addEventListener('resize', ()=>{ try{ chatSyncInsets(); }catch(e){} try{ 
 // چرخشِ گوشی: بافرِ رندرِ سه‌بعدی باید با نسبتِ تازه هماهنگ شود وگرنه تصویر کشیده می‌شود
 window.addEventListener('orientationchange', ()=>{ try{ if((_pod.avMode||'photo')==='3d' && _pod3d && _pod3d.ren){ podAvResizeSoon(); setTimeout(podAvResizeSoon,350); } }catch(e){} });
 // فالبکِ سبک: اگر مدل خطِ پیشنهاد را نگذاشت، با یک تماسِ کوتاه ۳ سوالِ بعدی بگیر
+const CHAT_SUGGEST_SYS='کاربر پرسید: «{Q}»\nدستیارِ دیابت پاسخ داد: «{A}»\n\nحالا دقیقاً سه سوالِ کوتاهِ بعدی که همین کاربر احتمالاً می‌پرسد را از زبانِ خودِ کاربر (اول‌شخص، فارسی، هرکدام کمتر از ۷ کلمه) بنویس. فقط سه سوال، هرکدام در یک خط جدا، بدون شماره و بدون هیچ توضیح.';
 async function chatFetchSuggestions(prov, question, answer){
   try{
     const key=getVisionKey(prov)||''; if(!key) return [];
-    const prompt='کاربر پرسید: «'+String(question||'').slice(0,300)+'»\nدستیارِ دیابت پاسخ داد: «'+String(answer||'').slice(0,700)+'»\n\nحالا دقیقاً سه سوالِ کوتاهِ بعدی که همین کاربر احتمالاً می‌پرسد را از زبانِ خودِ کاربر (اول‌شخص، فارسی، هرکدام کمتر از ۷ کلمه) بنویس. فقط سه سوال، هرکدام در یک خط جدا، بدون شماره و بدون هیچ توضیح.';
+    const prompt=pTxt('chat.suggest',CHAT_SUGGEST_SYS).replace('{Q}',String(question||'').slice(0,300)).replace('{A}',String(answer||'').slice(0,700));
     const txt=await callAIText(prov,key,prompt,300,0);
     return String(txt||'').split(/\n+/).map(s=>s.replace(/^[\s\-–—•*.\d،)ـ«»"]+/,'').replace(/[«»"]+$/,'').trim()).filter(s=>s.length>1&&s.length<64).slice(0,3);
   }catch(e){ return []; }
@@ -17522,12 +17646,11 @@ function buildHealthSnapshot(scope, opts){
 }
 function HEALTH_AI_PROMPT(scope, snap){
   const intro = scope==='daily'
-    ? "این گزارشِ یک روزِ مشخص است؛ الگوی همان روز را تحلیل کن (قند در برابر وعده/انسولین/ورزش) و بگو دفعه‌ی بعد چه چیز کوچکی بهتر شود."
+    ? pTxt('health.daily',"این گزارشِ یک روزِ مشخص است؛ الگوی همان روز را تحلیل کن (قند در برابر وعده/انسولین/ورزش) و بگو دفعه‌ی بعد چه چیز کوچکی بهتر شود.")
     : scope==='overview'
-    ? "این گزارشِ بلندمدت (روند چند روز/هفته) است؛ روندها و الگوهای تکرارشونده را پیدا کن و یک راهبرد عملی بده."
-    : "این نمای کلیِ اخیر است؛ تحلیل و توصیه‌ی عملی برای همین روزها بده.";
-  return "You are «دیابوت», a powerful, motivating AI health coach for a person with diabetes. Write EVERYTHING IN PERSIAN (Farsi). Use ALL the data below TOGETHER (glucose, meals/carbs, insulin, meds, exercise, sleep, labs, adherence) to give a CONNECTED, punchy, genuinely useful analysis focused on improving metabolic control.\n"+
-  intro+"\n\n"+
+    ? pTxt('health.overview',"این گزارشِ بلندمدت (روند چند روز/هفته) است؛ روندها و الگوهای تکرارشونده را پیدا کن و یک راهبرد عملی بده.")
+    : pTxt('health.home',"این نمای کلیِ اخیر است؛ تحلیل و توصیه‌ی عملی برای همین روزها بده.");
+  return pTxt('health.body', HEALTH_BODY_SYS)+"\n"+intro+"\n\n"+
   "Return ONLY a JSON object (no markdown fences, no text before/after) with EXACTLY this shape:\n"+
   '{"score": <integer 0-100 overall diabetes/metabolic control based on the data>,'+
   '"scoreLabel":"<2-3 word Persian label e.g. عالی/خوب/نیاز به توجه/بحرانی>",'+
@@ -17550,10 +17673,17 @@ function HEALTH_AI_PROMPT(scope, snap){
   "For adherence: use the logged insulin/med facts, but do NOT assume the user's prescribed regimen or that a missing log means a missed injection — phrase gaps gently as «شاید ثبت نشده». Never imply they took a wrong amount.\n"+
   "The \"redline\" card MUST list concrete foods/habits to avoid based on their glucose and labs. Educational only — NEVER give a diagnosis and NEVER give specific insulin/medication doses or timing. Keep every card; if a card has little to say, give 1-2 useful items. Output compact JSON only.\n\n"+
   aiMemoryText()+
+  aiMemoryText()+
   "داده‌ها ("+snap.label+"):\n"+snap.text;
 }
+// متنِ پایهٔ تحلیل (قابلِ ویرایش) و اسکیمای JSON (ثابت — دستکاری‌اش خروجی را می‌شکند)
+const HEALTH_BODY_SYS="You are «دیابوت», a powerful, motivating AI health coach for a person with diabetes. Write EVERYTHING IN PERSIAN (Farsi). Use ALL the data below TOGETHER (glucose, meals/carbs, insulin, meds, exercise, sleep, labs, adherence) to give a CONNECTED, punchy, genuinely useful analysis focused on improving metabolic control.";
 // دستور JSON مشترک برای تحلیل آزمایش (همان کارت‌بندی)
+const LAB_JSON_SYS="You are «دیابوت», an AI health coach. Interpret these OWN lab results of a person with diabetes, IN PERSIAN (Farsi), as a punchy card-based summary.";
 function LAB_JSON_PROMPT(ctx){
+  return pTxt('lab.cards', LAB_JSON_SYS)+"\n"+_LAB_JSON_REST(ctx);
+}
+function _LAB_JSON_REST(ctx){
   return "You are «دیابوت», an AI health coach. Interpret these OWN lab results of a person with diabetes, IN PERSIAN (Farsi), as a punchy card-based summary.\n"+
   "Return ONLY a JSON object (no markdown fences) with this shape:\n"+
   '{"score":<0-100 integer overall lab picture>,"scoreLabel":"<2-3 word Persian>","headline":"<one strong Persian sentence>",'+
