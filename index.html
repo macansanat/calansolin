@@ -2342,7 +2342,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۶.۳</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۶.۴</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -16733,7 +16733,7 @@ function renderChatTab(){
           <div class="chat-pills">
             <button type="button" class="chat-pill role" onclick="chatRolePicker()" title="انتخاب متخصص/نقش"><b>${escVision(chatRolesLabel(c))}</b></button>
             <button type="button" class="chat-pill" onclick="chatDataPickerOpen(14)" title="فرستادنِ دادهٔ پرونده به دکتر"><b>📁 پرونده</b></button>
-            <button type="button" class="chat-pill" onclick="chatProviderMenu()" title="سرویس"><b>${escVision(PROVIDER_NAMES[prov]||prov)}</b></button>
+            <button type="button" class="chat-pill" onclick="chatModelMenu()" title="مدلِ این پزشک"><b>🧠 ${escVision(chatModelLabel(c))}</b></button>
             <button type="button" class="chat-pill spd ${spd==='fast'?'fast':''}" onclick="chatToggleSpeed()" title="حالت"><span class="dot"></span><b>${spd==='fast'?'سریع':'دقیق'}</b></button>
           </div>
           <button type="button" class="chat-tool" id="chatMicBtn" onclick="chatVoiceInput()" title="گفتار به متن">🎙️</button>
@@ -16830,6 +16830,41 @@ function chatProviderMenu(){ const o=chatLoad(); const c=chatActive(o); if(!c) r
     act:()=>{ c.provider=p; chatSave(o); renderChatTab(); }
   })));
 }
+/* ══ مدلِ اختصاصیِ هر پزشک (۲۶.۴) ══
+   هر نقش می‌تواند مدلِ خودش را داشته باشد: مثلاً غدد با قوی‌ترین مدل، سرآشپز با ارزان‌ترین.
+   انتخاب روی «نقش» ذخیره می‌شود نه روی گفتگو، تا در همهٔ گفتگوهای همان پزشک اعمال شود. */
+const CHAT_ROLE_MODEL_KEY='chat_role_model_v1';
+function chatRoleKey(c){ const ids=chatRolesOf(c); if(!ids.length) return '_none'; if(ids.length===1) return ids[0]; return '_conf'; }
+function chatRoleModels(){ try{ const o=JSON.parse(localStorage.getItem(CHAT_ROLE_MODEL_KEY)||'{}'); return (o&&typeof o==='object')?o:{}; }catch(e){ return {}; } }
+function chatRoleModelId(c){ return chatRoleModels()[chatRoleKey(c||chatActive())]||''; }
+// فقط اگر واقعاً قابلِ استفاده باشد (کلید دارد و فریز نیست) برمی‌گرداند
+function chatRoleModelObj(c){ const id=chatRoleModelId(c); if(!id) return null;
+  const m=modelById(id); if(!m) return null;
+  try{ if(aiModelFrozen(id)||aiFrozen(m.prov)||!hasAnyKey(m.prov)) return null; }catch(e){ return null; }
+  return m; }
+function setChatRoleModel(id){ const c=chatActive(); if(!c) return;
+  const o=chatRoleModels(); const k=chatRoleKey(c);
+  if(id) o[k]=id; else delete o[k];
+  try{ localStorage.setItem(CHAT_ROLE_MODEL_KEY,JSON.stringify(o)); }catch(e){}
+  renderChatTab();
+  uiToast(id?('✓ مدلِ «'+chatRolesLabel(c)+'» شد '+((modelById(id)||{}).label||id)):'مدل به حالتِ خودکار برگشت');
+}
+function chatModelLabel(c){ const m=chatRoleModelObj(c); if(m) return m.label;
+  const id=chatRoleModelId(c); if(id) return ((modelById(id)||{}).label||id)+' ⚠️';
+  const prov=(c&&c.provider)||sectionProvider('chat'); return 'خودکار · '+(PROVIDER_NAMES[prov]||prov); }
+function chatModelMenu(){ const c=chatActive(); if(!c) return;
+  const cur=chatRoleModelId(c);
+  const opts=[{ ic:cur?'⚪':'🟢', label:'خودکار (پیش‌فرضِ بخشِ چت)', sub:'همان سرویسی که در تنظیمات انتخاب کرده‌ای', on:!cur, act:()=>setChatRoleModel('') }];
+  VISION_PROVIDERS.forEach(pv=>{ const has=hasAnyKey(pv); const froz=aiFrozen(pv);
+    providerModels(pv).forEach(m=>{ if(aiModelFrozen(m.id)) return;
+      opts.push({ ic:(m.id===cur?'🟢':(has&&!froz?'⚪':'🔒')),
+        label:m.label+' — '+PROVIDER_NAMES[pv],
+        sub:(m.tier||'')+(froz?' · فریز':(has?'':' · بدونِ کلید')),
+        on:m.id===cur,
+        act:()=>{ if(!has){ uiToast('برای «'+PROVIDER_NAMES[pv]+'» کلید نداری'); return; } setChatRoleModel(m.id); } }); }); });
+  opts.push({ ic:'🔀', label:'تغییرِ سرویس (بدونِ سنجاقِ مدل)', sub:'فقط برای همین گفتگو', on:false, act:()=>chatProviderMenu() });
+  chatSheet('🧠 مدلِ «'+chatRolesLabel(c)+'»', opts);
+}
 function chatToggleSpeed(){ const o=chatLoad(); const c=chatActive(o); if(!c) return; c.speed=(c.speed==='fast')?'smart':'fast'; chatSave(o); renderChatTab(); }
 // ── شیت پایین‌صفحه‌ی عمومی ─────────────────────────────
 let _chatSheetActs=[];
@@ -16852,7 +16887,8 @@ async function chatSend(opts){
   const txt=(opts.text!=null?String(opts.text):(inp.value||'')).trim();
   if(!txt && !_chatAttach.length) return;
   const o=chatLoad(); const c=chatActive(o); if(!c) return;
-  const prov=c.provider||sectionProvider('chat');
+  const _roleM=chatRoleModelObj(c);                       // مدلِ سنجاق‌شده به همین پزشک (اگر قابلِ استفاده باشد)
+  const prov=_roleM? _roleM.prov : (c.provider||sectionProvider('chat'));
   if(!hasAnyKey(prov)){ uiToast('برای این سرویس کلید نداری'); return; }
   if(aiFrozen(prov)){ uiToast('«'+(PROVIDER_NAMES[prov]||prov)+'» فریز است؛ از تنظیمات فعالش کن یا سرویس دیگری انتخاب کن'); return; }
   if(!navigator.onLine){ uiToast('آفلاین هستی'); return; }
@@ -16902,7 +16938,9 @@ async function chatSend(opts){
     const hist=c.messages.slice(-14).map(m=>{ const mm={role:m.role,content:m.content}; if(m===umsg && imgs.length) mm.images=imgs; return mm; });
     const onDelta=chunk=>{ if(_chatAbort) return; acc+=chunk; };   // فقط بافر؛ نمایش با تیکر
     // مدل/قفلِ بخشِ چت: سرویسِ چت همان چیزی که در پیل انتخاب شده می‌ماند؛ فقط مدل و قفل اعمال می‌شود
-    const _rc=aiResolve('chat',{}); const _cm=(_rc.prov===prov?_rc.model:provModelReal(prov)); const _clock=!!secCfg('chat').lock;
+    const _rc=aiResolve('chat',{});
+    const _cm=_roleM? (_roleM.real||_roleM.id) : (_rc.prov===prov?_rc.model:provModelReal(prov));
+    const _clock=!!secCfg('chat').lock;
     const _mdl=p=>p==='deepseek'?undefined:(p===prov?_cm:provModelReal(p));   // دیپ‌سیک منطقِ خودش (reasoner) را نگه دارد
     const _streamCall=(p,k)=>callAIChatStream(p,k,sys,hist,{speed:c.speed,maxTok:4096,model:_mdl(p)},onDelta);
     const reply = _clock
