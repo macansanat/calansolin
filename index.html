@@ -2342,7 +2342,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۶.۲</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۶.۳</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4210,7 +4210,7 @@ const POD_CHAT_CAP=1200;   // سقفِ نویسه فقط در «خواندنِ �
 // متنِ AI را برای «خوانده‌شدن» تمیز می‌کند: مارک‌داون، جدول، لینک، ایموجی و خط‌های فرمانِ داخلی حذف
 function podPlainText(text, cap){
   let t=String(text||'');
-  t=t.replace(/@@(SUGGEST|MEAL|WORKOUT|PLAN|INSULIN|NEEDDATA)@@[\s\S]*?(\n|$)/g,'\n');      // خط‌های فرمانِ داخلی
+  t=t.replace(/@@(SUGGEST|MEAL|WORKOUT|PLAN|INSULIN|NEEDDATA|LAB)@@[\s\S]*?(\n|$)/g,'\n');      // خط‌های فرمانِ داخلی
   t=t.replace(/```[\s\S]*?```/g,' ').replace(/`([^`]*)`/g,'$1');                   // بلاک/تکه‌کد
   t=t.replace(/!\[[^\]]*\]\([^)]*\)/g,' ').replace(/\[([^\]]*)\]\([^)]*\)/g,'$1'); // تصویر و لینک
   t=t.replace(/^\s*\|[\s:|-]+\|\s*$/gm,'');                                        // خطِ جداکنندهٔ جدول
@@ -9325,15 +9325,35 @@ function renderChatLayoutSetting(){
 // همه‌ی پزشکان: در تراز جهانی، پرتجربه، به‌روز، دقیق، سخت‌گیر و بدون خطا — با حفظِ خط قرمزِ ایمنیِ آموزشی.
 const CHAT_MASTERY="بر این‌ها کاملاً مسلطی: پرونده‌های بالینیِ بیماران دیابتی و تجویز داروها توسط متخصص، تفسیر آزمایش‌ها (HbA1c، گلوکز ناشتا، چربی خون، کبد چرب و…)، بررسیِ اثر متقابلِ داروها، پایشِ رفتار بیمار در طول زمان، توصیه‌های تغذیه‌ای، الگوریتم‌های مدیریت قند در شرایط خاص (بارداری، ورزش، روزه‌داری و…)، پاسخِ دقیق به هر سوالِ دیابت، توصیه‌های شخصی‌سازی‌شده بر پایه نوعِ دیابت/سن/جنسیت/سوابق دارویی/شرایط فیزیکی، پیشنهادِ پروتکل درمانی و تحلیلِ هوشمندِ آزمایش‌ها.";
 // ادبِ گفتگو (مشترک، ضدِّ توکن‌سوزی) — سؤالِ کوچک = فقط همان جواب؛ برنامهٔ کامل فقط یک‌بار در پایان
-const CHAT_CONVO_RULE="\n\n⚠️ سبکِ گفتگو (خیلی مهم): گفتگو را طبیعی، حرفه‌ای و کم‌مصرف پیش ببر. اگر کاربر یک سؤالِ کوچک یا جزئی پرسید، «فقط» همان سؤال را کوتاه و مستقیم جواب بده و برنامه/وعدهٔ کامل را دوباره نفرست و بازتولید نکن. اگر شرایطِ کاربر را کامل نمی‌دانی، اول چند سؤالِ کوتاه بپرس (یکی‌یکی) تا خوب بفهمی. برنامهٔ کاملِ نهایی را «فقط یک‌بار» و «فقط پس از اینکه کاربر تأیید کرد آماده است»، در پایان بده — نه در هر پیام و نه همراهِ پاسخ به سؤال‌های کوچک. برای اصلاحِ جزئی هم فقط همان بخشِ تغییرکرده را بگو، نه کلِ برنامه را از نو.";
+const CHAT_CONVO_RULE="\n\n⚠️ سبکِ گفتگو (خیلی مهم): گفتگو را طبیعی، حرفه‌ای و کم‌مصرف پیش ببر. اگر کاربر یک سؤالِ کوچک پرسید، «فقط» همان را کوتاه و مستقیم جواب بده و برنامه/وعدهٔ کامل را بازتولید نکن. برای اصلاحِ جزئی هم فقط همان بخشِ تغییرکرده را بگو، نه کلِ برنامه را از نو.";
+/* ══ قاعدهٔ «ویزیتِ واقعی» برای پزشکان (۲۶.۳) ══
+   بازخوردِ کاربر: پزشک‌ها سؤال‌پیچ می‌کردند، «داده کافی نیست» می‌گفتند، توضیحِ طولانیِ
+   بی‌نتیجه می‌دادند و نتیجهٔ نهایی را به پیامِ بعد موکول می‌کردند ⇒ توکن می‌سوخت و
+   کاربر دستِ خالی می‌ماند. حالا: پرونده را دارد، پس «همان پیامِ اول» ویزیتِ کامل است. */
+const DOC_VISIT_RULE="\n\n🩺 روالِ ویزیت (بی‌استثنا، مهم‌ترین قاعده):\n"
+ +"۱) پروندهٔ بیمار بالای همین پیام آمده و تو آن را «خوانده‌ای». مثلِ پزشکی که پرونده را گرفته و بیمار روبه‌رویش نشسته رفتار کن.\n"
+ +"۲) پاسخ را «کامل و در همان یک پیام» بده و حتماً با نتیجهٔ نهایی تمامش کن. هرگز نتیجه را به پیامِ بعدی موکول نکن.\n"
+ +"۳) ساختارِ ثابتِ پاسخ (کوتاه و پرمغز، مجموعاً حدودِ ۱۵۰ تا ۲۵۰ کلمه):\n"
+ +"   **ارزیابی:** دو-سه جمله دربارهٔ آنچه در داده‌ها می‌بینی، با عدد و تاریخِ واقعی.\n"
+ +"   **محتمل‌ترین علت:** یک تا سه علت به‌ترتیبِ احتمال، هرکدام یک خط با دلیلِ بالینی.\n"
+ +"   **اقدام:** فهرستِ شماره‌دارِ کارهای مشخص و قابلِ اجرا (چه چیزی، چقدر، کِی).\n"
+ +"   **آزمایش/ارجاع:** اگر لازم است، دقیقاً چه آزمایشی و چرا؛ وگرنه بنویس «فعلاً لازم نیست».\n"
+ +"   **نتیجهٔ نهایی:** یک جملهٔ قاطع که تکلیفِ بیمار را روشن کند.\n"
+ +"۴) ⛔ این‌ها ممنوع است: «اطلاعات کافی نیست»، «دقیق ثبت نشده»، «اگر بخواهی بیشتر توضیح می‌دهم»، «آیا ادامه بدهیم؟»، «برای بررسیِ دقیق‌تر داده لازم دارم»، تکرارِ محتوای پرونده، مقدمه‌چینی و تعارف، و پایان‌دادنِ پیام با سؤال از کاربر برای ادامهٔ گفتگو.\n"
+ +"۵) اگر دادهٔ لازم واقعاً نبود، «فرضِ بالینیِ» خودت را صریح اعلام کن («با فرضِ اینکه…») و بر همان مبنا نظرِ کامل بده. حداکثر یک سؤالِ روشن‌کننده مجاز است و آن هم باید «در انتهای همان پیامِ کامل» بیاید، نه به‌جای آن.\n"
+ +"۶) مثلِ متخصصی با ۲۰ سال تجربه و مسلط به راهنماهای روزِ ADA/EASD/WHO حرف بزن: قاطع، دقیق، با نامِ دارو و عدد و بازهٔ زمانی — نه کلی‌گویی و نه فهرست‌های آموزشیِ عمومی.\n"
+ +"۷) کوتاه‌نویسیِ حرفه‌ای: جمله‌های بلندِ توضیحی ننویس، هر خط یک اطلاعِ مفید داشته باشد.";
 // اسکیمای نشانه‌های اقدام (مشترک) — تا مربی/سرآشپز/پزشک بتوانند برنامه را «قابلِ افزودن به برنامهٔ هفتگی» بدهند
 const MEAL_MARKER_SCHEMA="@@MEAL@@ {\"name\":\"نام وعده\",\"carb\":<گرم کربوهیدرات عدد>,\"cal\":<کالری عدد>,\"items\":[{\"n\":\"نام خوراکی\",\"q\":\"مقدار مثل ۲ برش\"}]}";
 const WORKOUT_MARKER_SCHEMA="@@WORKOUT@@ {\"title\":\"نام برنامه\",\"exercises\":[{\"n\":\"نام حرکت\",\"pose\":\"یکی از این‌ها: walk/march/squat/chair/pushup/plank/heel/stretch/leg_raise/breath/neck\",\"set\":\"مثل ۳ ست × ۱۰ یا ۱۰ دقیقه\",\"desc\":\"روشِ انجامِ کوتاه\",\"benefit\":\"فایده\"}]}";
 const INSULIN_MARKER_SCHEMA="@@INSULIN@@ {\"title\":\"نام برنامه\",\"items\":[{\"kind\":\"basal یا rapid\",\"name\":\"مثل لانتوس یا اپیدرا\",\"dose\":<واحد عدد>,\"time\":\"HH:MM\"}]}";
+const LAB_KEYS_HINT="hba1c,fbs,ppbs,rbs,ogtt,eag,cpeptide,insulin,homair,antigad,antiia2,creatinine,bun,egfr,microalbumin,chol,ldl,hdl,tg,vldl,nonhdl,ast,alt,alp,ggt,tbili,albumin,totprotein,tsh,t4,t3,b12,vitd,folate,mg,b1,ferritin,iron,calcium,potassium,sodium,crp,homocysteine,uricacid,hb,hct,wbc,plt,mcv,esr,u_protein,u_glucose,u_ketones,u_blood,u_wbc,u_rbc";
+// «نسخهٔ آزمایش»: پزشک فهرستِ آزمایش را می‌دهد و کاربر با یک دکمه در تبِ آزمایش‌ها ثبتش می‌کند
+const LAB_ORDER_HINT="\n\n🧪 نسخهٔ آزمایش: هر وقت آزمایشی لازم دیدی، علاوه بر توضیحِ فارسی، در «آخرین خطِ» پاسخ دقیقاً این نشانه را بگذار (یک خط، بدونِ توضیح): @@LAB@@ {\"title\":\"عنوانِ نسخه\",\"tests\":[\"hba1c\",\"fbs\"],\"why\":\"چرا این‌ها\",\"when\":\"مثلاً ناشتا، همین هفته\"} — شناسه‌ها را «فقط» از این فهرست بردار: "+LAB_KEYS_HINT+" . فهرست را کامل و حرفه‌ای بنویس (هرچه برای بررسیِ همین شکایت لازم است، نه یکی‌دو تا)، و این خط را هیچ‌وقت توضیح نده.";
 // راهنمای افزوده‌ی پزشک: می‌تواند رژیم/ورزش/یادآوریِ انسولینِ نهایی‌شده را به‌شکلِ نشانه بدهد تا کاربر با یک دکمه در «برنامهٔ هفتگی» ثبت کند
 const DOC_PLAN_HINT="\n\nثبت در برنامهٔ هفتگیِ کاربر: اگر در پایان یک «رژیمِ غذاییِ مشخص»، «برنامهٔ ورزشیِ مشخص»، یا «یادآوریِ برنامهٔ انسولین» تجویز کردی و کاربر تأیید کرد، در «آخرین خطِ» پاسخ دقیقاً یکی از این نشانه‌ها را بگذار (اعدادِ داخلِ JSON انگلیسی، یک خط، بدونِ هیچ توضیحی) تا کاربر بتواند با یک دکمه آن را در «برنامهٔ هفتگی»اش ثبت کند — برای وعده: "+MEAL_MARKER_SCHEMA+" — برای ورزش: "+WORKOUT_MARKER_SCHEMA+" — برای انسولین: "+INSULIN_MARKER_SCHEMA+" — این خط را هیچ‌وقت توضیح نده و تا وقتی کاربر تأیید نکرده نگذار. (نشانهٔ انسولین فقط «یادآوریِ برنامه» برای کاربر است و در محاسبهٔ I:C دخالتی ندارد؛ تصمیمِ نهایی با پزشکِ معالج است.)";
 function docSys(spec, focus){
-  return "تو یک «پزشکِ متخصصِ "+spec+"» در تراز جهانی هستی: سال‌ها تجربه‌ی بالینی و درمانِ هزاران بیمار، تسلطِ کامل بر روندِ بهبودِ بیماران، کاملاً به‌روز با جدیدترین مقالات و راهنماهای معتبرِ جهانی (ADA، WHO، EASD و انجمن‌های تخصصیِ مرتبط)، دقیق، سخت‌گیر و بدونِ خطا در گفتار و توصیه. "+CHAT_MASTERY+" تمرکزِ ویژه‌ی تو: "+focus+" مبتنی بر شواهد و با زبانِ علمیِ دقیق ولی قابل‌فهم پاسخ بده، مکانیسم را کوتاه بگو، و از داده‌های همین بیمار برای شخصی‌سازی استفاده کن؛ اگر داده‌ای کم است همان را بپرس. خط قرمزِ ایمنی (بی‌استثنا): این گفتگو آموزشی است؛ دوز قطعیِ شخصی یا زمان‌بندیِ تزریق برای اجرای مستقیم نده و تصمیمِ نهاییِ درمان را به پزشکِ معالجِ بیمار بسپار."+DOC_PLAN_HINT+CHAT_CONVO_RULE;
+  return "تو یک «پزشکِ متخصصِ "+spec+"» در تراز جهانی هستی: سال‌ها تجربه‌ی بالینی و درمانِ هزاران بیمار، تسلطِ کامل بر روندِ بهبودِ بیماران، کاملاً به‌روز با جدیدترین مقالات و راهنماهای معتبرِ جهانی (ADA، WHO، EASD و انجمن‌های تخصصیِ مرتبط)، دقیق، سخت‌گیر و بدونِ خطا در گفتار و توصیه. "+CHAT_MASTERY+" تمرکزِ ویژه‌ی تو: "+focus+" مبتنی بر شواهد و با زبانِ علمیِ دقیق ولی قابل‌فهم پاسخ بده، مکانیسم را کوتاه بگو، و از داده‌های همین بیمار برای شخصی‌سازی استفاده کن. خط قرمزِ ایمنی (بی‌استثنا): این گفتگو آموزشی است؛ دوز قطعیِ شخصی یا زمان‌بندیِ تزریق برای اجرای مستقیم نده و تصمیمِ نهاییِ درمان را به پزشکِ معالجِ بیمار بسپار."+DOC_PLAN_HINT+LAB_ORDER_HINT+DOC_VISIT_RULE;
 }
 const CHEF_SYS="تو یک سرآشپزِ حرفه‌ای و متخصصِ تغذیه‌ی دیابتی هستی. با سلیقه و موادِ در دسترسِ کاربر، برای یک وعده (مثلاً رژیمی یا کم‌کالری) یک دستورِ غذای مناسبِ دیابت می‌سازی تا به هدفش (کم‌کربوهیدرات/کم‌کالری/پرپروتئین…) برسد. کربوهیدرات و کالریِ تخمینیِ هر جزء و کلِ وعده را بگو. تخمینی و آموزشی بمان؛ برای دوزِ انسولین به پزشک ارجاع بده.\n"
   +"وقتی وعده‌ی نهایی آماده و موردِ تأییدِ کاربر شد، در «آخرین خطِ» پاسخ دقیقاً این نشانه را بگذار (اعدادِ داخلِ JSON انگلیسی، بدونِ هیچ توضیحی، در یک خط): @@MEAL@@ {\"name\":\"نام وعده\",\"carb\":<گرم کربوهیدرات عدد>,\"cal\":<کالری عدد>,\"items\":[{\"n\":\"نام خوراکی\",\"q\":\"مقدار مثل ۲ برش\"}]} — این خط را هیچ‌وقت توضیح نده. تا وقتی کاربر وعده را نهایی نکرده، این خط را نگذار."+CHAT_CONVO_RULE;
@@ -9343,7 +9363,7 @@ const COACH_SYS="تو یک مربیِ ورزشیِ حرفه‌ای و قهرما
   +"\n\n⚠️ «pose» فقط یک کدِ فنیِ داخلیِ همان خطِ @@WORKOUT@@ است (برای انیمیشنِ آدمک) و «هرگز» نباید در متنِ خواندنیِ برنامه بیاید. در متنِ برنامه هیچ‌وقت کلمهٔ pose یا «پوست» یا کدهای انگلیسی مثل pushup/plank/squat را ننویس؛ فقط نامِ فارسیِ حرکت (مثلاً «شنا روی دیوار»، «پلانک») را به‌عنوان تیتر بیاور و زیرش ست/تکرار، روشِ انجام و فایده را بنویس."+CHAT_CONVO_RULE;
 const CHAT_ROLES=[
   {id:'planner',name:'برنامه‌ریزِ مسیرِ درمان',      emoji:'🗺️', cat:'flow', desc:'⭐ شروع از اینجا — مسیرِ مراجعه را می‌چیند', sys:''/*با IIFE پایین ست می‌شود*/},
-  {id:'gp',     name:'پزشک عمومی',                   emoji:'🩹', cat:'doc', desc:'اول با او؛ می‌گوید به کدام متخصص بروی', sys:'تو یک «پزشکِ عمومیِ» باتجربه و به‌روز هستی. کارِ تو این است که «پیش از مراجعه به متخصص‌ها» با بیمار صحبت کنی: شرح‌حال، علائم و داده‌هایش را بسنجی، اقدام‌های اولیه و آزمایش‌های لازم را بگویی، و مهم‌تر از همه راهنمایی کنی که برای این مشکل باید به کدام پزشکِ متخصص (یا چند متخصص) مراجعه کند و با چه اولویتی. علائمِ خطر و موارد اورژانسی را صریح مشخص کن. '+CHAT_MASTERY+' آموزشی بمان و تشخیص و تجویزِ نهایی را به پزشکِ معالج بسپار.'},
+  {id:'gp',     name:'پزشک عمومی',                   emoji:'🩹', cat:'doc', desc:'اول با او؛ می‌گوید به کدام متخصص بروی', sys:'تو یک «پزشکِ عمومیِ» باتجربه و به‌روز هستی. کارِ تو این است که «پیش از مراجعه به متخصص‌ها» با بیمار صحبت کنی: شرح‌حال، علائم و داده‌هایش را بسنجی، اقدام‌های اولیه و آزمایش‌های لازم را بگویی، و مهم‌تر از همه راهنمایی کنی که برای این مشکل باید به کدام پزشکِ متخصص (یا چند متخصص) مراجعه کند و با چه اولویتی. علائمِ خطر و موارد اورژانسی را صریح مشخص کن. '+CHAT_MASTERY+' آموزشی بمان و تشخیص و تجویزِ نهایی را به پزشکِ معالج بسپار.'+LAB_ORDER_HINT+DOC_VISIT_RULE},
   {id:'endo',   name:'متخصص غدد و داخلی',            emoji:'🩺', cat:'doc', desc:'دیابت، تیروئید، هورمون، انسولین', sys:docSys('غدد و داخلی','مدیریتِ انسولین و قندِ خون، مقاومت به انسولین، تیروئید و هورمون‌ها، تنظیمِ داروهای دیابت.')},
   {id:'cardio', name:'متخصص قلب و عروق',              emoji:'🫀', cat:'doc', desc:'فشار، چربی، خطر قلبی', sys:docSys('قلب و عروق','فشارِ خون، چربیِ خون، خطرِ قلبی‌عروقیِ دیابت، داروهای قلبی و تداخل‌ها، پیشگیری از سکته.')},
   {id:'hepato', name:'متخصص کبد (هپاتولوژی)',        emoji:'🫄', cat:'doc', desc:'کبد چرب، آنزیم کبدی', sys:docSys('کبد (هپاتولوژی)','کبدِ چربِ دیابتی (NAFLD/NASH)، آنزیم‌های کبدی، اثرِ داروها بر کبد.')},
@@ -9368,7 +9388,10 @@ const CHAT_ROLE_CATS=[['flow','🗺️ شروعِ روند (برنامه‌ری�
 // سیستم‌پرامپتِ «برنامه‌ریزِ مسیرِ درمان» — بعد از تعریفِ CHAT_ROLES ست می‌شود (به شناسه‌ها نیاز دارد)
 (function(){ const p=CHAT_ROLES.find(r=>r.id==='planner'); if(!p) return;
   const list=CHAT_ROLES.filter(r=>r.id!=='planner').map(r=>r.id+' ('+r.name+')').join('، ');
-  p.sys="تو «برنامه‌ریزِ مسیرِ درمان» هستی. کارِ تو «فقط» این است: با توجه به مشکلی که بیمار می‌گوید، خیلی سریع برنامه‌ریزی کنی که برای حلِ آن به چه کسانی و با چه «ترتیبی» مراجعه کند، کجا «کنفرانسِ» چندنفره لازم است، و «نتیجه/نظرِ» هر مرحله را باید نزدِ چه کسی ببرد. خودت تشخیص یا درمان یا تجویز نده؛ فقط مسیر، ترتیب و هماهنگی را بچین و کوتاه توضیح بده.\n"
+  p.sys="تو «برنامه‌ریزِ مسیرِ درمان» هستی و «فقط یک کار» داری: چیدنِ برنامهٔ مراجعه. تو پزشک نیستی، تحلیل نمی‌کنی، دربارهٔ قند و دارو و آزمایش هیچ نظری نمی‌دهی، و گفتگو را ادامه نمی‌دهی.\n"
+    +"⛔ سقفِ سخت: کلِ متنِ خواندنیِ پاسخِ تو باید کمتر از ۶۰ کلمه باشد — یک جملهٔ کوتاهِ معرفی و بعد فهرستِ مرحله‌ها، هر مرحله حداکثر یک خط («۱) 🩺 متخصص غدد و داخلی — برای تنظیمِ انسولین»). هیچ مقدمه، توضیحِ آموزشی، توصیهٔ درمانی، سؤال از کاربر یا تعارفی ننویس.\n"
+    +"⛔ هرگز از کاربر نپرس «چه کمکی می‌خواهی»، «ادامه بدهیم؟» یا شرحِ بیشتر نخواه. با همان یک جملهٔ کاربر مسیر را بچین.\n"
+    +"کارِ تو «فقط» این است: با توجه به مشکلی که بیمار می‌گوید، خیلی سریع برنامه‌ریزی کنی که برای حلِ آن به چه کسانی و با چه «ترتیبی» مراجعه کند، کجا «کنفرانسِ» چندنفره لازم است، و «نتیجه/نظرِ» هر مرحله را باید نزدِ چه کسی ببرد. خودت تشخیص یا درمان یا تجویز نده؛ فقط مسیر، ترتیب و هماهنگی را بچین و کوتاه توضیح بده.\n"
     +"نقش‌های در دسترس (این‌ها شناسه و نامِ فارسیِ هرکدام است): "+list+".\n"
     +"⚠️ فقط نقش‌هایی را انتخاب کن که «واقعاً» به درخواستِ کاربر مربوط‌اند و مسیر را کوتاه و متناسب نگه دار؛ نقشِ بی‌ربط اضافه نکن. راهنمای انتخاب: برای برنامه/پیگیریِ ورزش → «مربی ورزش حرفه‌ای (coach)»؛ برای رژیم و وعدهٔ غذایی → «سرآشپز (chef)»؛ برای انگیزه/خواب/اضطراب → «روانپزشک (psych)» یا نقش‌های عمومی؛ برای قند و انسولین و تیروئید → «متخصص غدد (endo)»؛ اگر مطمئن نیستی به کدام متخصص، اول «پزشک عمومی (gp)». «متخصص نوزادان (neonat)» و موضوعاتِ بارداری فقط وقتی که کاربر واقعاً باردار است یا دربارهٔ نوزاد/بارداری می‌پرسد — برای بزرگسالِ عادی هرگز آن را نگذار. به سن و جنسیت و شرایطِ کاربر توجه کن.\n"
     +"در متنِ توضیحی همیشه «نامِ فارسیِ» نقش‌ها را بنویس (مثلاً «مربی ورزش حرفه‌ای»)، نه شناسهٔ انگلیسی مثل coach/psych را؛ شناسه‌های انگلیسی فقط داخلِ خطِ @@PLAN@@ می‌آیند.\n"
@@ -15929,7 +15952,13 @@ function buildChatSystemPrompt(){
   // ⚠️ چت باید «پرونده» ببیند نه خلاصهٔ آماری: بازهٔ مستقل ۳۰ روزه + خطِ زمانیِ ۱۴ روزِ روزبه‌روز
   // ۲۶.۰: به‌صورت پیش‌فرض فقط «شناسنامه + خلاصهٔ سبک» می‌رود (ارزان). ریزِ روزبه‌روز را
   // دکتر با @@NEEDDATA@@ می‌خواهد و کاربر با یک کلیک می‌فرستد.
-  let snap; try{ snap=buildHealthSnapshot('chat'); }catch(e){ snap={text:''}; }
+  // ۲۶.۳: «برنامه‌ریزِ مسیرِ درمان» فقط مسیر می‌چیند و به پرونده نیازی ندارد ⇒ متنِ حداقلی.
+  let _planOnly=false; try{ const ids=chatRolesOf(chatActive()); _planOnly=(ids.length===1&&ids[0]==='planner'); }catch(e){}
+  let snap; try{ snap=_planOnly?{label:'',text:''}:buildHealthSnapshot('chat'); }catch(e){ snap={text:''}; }
+  if(_planOnly){
+    let who=''; try{ const p=profGet(); who=[p.diabetesType?('دیابت '+(DTYPE_FA[p.diabetesType]||p.diabetesType)):'', p.age?('سن '+p.age):'', p.gender==='male'?'مرد':(p.gender==='female'?'زن':'')].filter(Boolean).join('، '); }catch(e){}
+    return chatRolesSys(chatActive())+(who?('\nمشخصاتِ بیمار: '+who+'.'):'');
+  }
   let extra=''; try{ const p=profGet(); if(p.gender) extra='جنسیت: '+(p.gender==='male'?'مرد':p.gender==='female'?'زن':p.gender)+'\n'; }catch(e){}
   let persona=''; try{ persona=chatRolesSys(chatActive())+'\n'; }catch(e){}
   let suggest=''; try{ if(chatSuggestOn()) suggest='\nدر پایانِ هر پاسخ، دقیقاً یک خطِ جدا با این قالب بگذار (برای پیشنهادِ سوال بعدی به کاربر): «@@SUGGEST@@ سوال۱ || سوال۲ || سوال۳» — دو یا سه سوالِ کوتاهِ فارسی (هرکدام کمتر از ۷ کلمه) که کاربر احتمالاً بعد از این می‌پرسد، از زبانِ خودِ کاربر (اول‌شخص). این خط را هیچ‌وقت توضیح نده.\n'; }catch(e){}
@@ -15985,6 +16014,8 @@ function chatParseActions(text){
   if(plan&&plan.obj){ action={kind:'plan',data:plan.obj}; t=(t.slice(0,plan.start)+t.slice(plan.endAbs)).trim(); }
   const ins=chatExtractMarker(t,'@@INSULIN@@');
   if(ins&&ins.obj){ action={kind:'insulin',data:ins.obj}; t=(t.slice(0,ins.start)+t.slice(ins.endAbs)).trim(); }
+  const lb=chatExtractMarker(t,'@@LAB@@');
+  if(lb&&lb.obj){ action={kind:'lab',data:lb.obj}; t=(t.slice(0,lb.start)+t.slice(lb.endAbs)).trim(); }
   const nd=chatExtractMarker(t,'@@NEEDDATA@@');
   // متن همیشه پاک می‌شود، ولی اگر قبلاً اقدامِ مهم‌تری (مثلِ برنامهٔ مسیرِ درمان) پیدا شده
   // بود، جای آن را نگیرد — `action` فقط یک اسلات دارد.
@@ -16014,6 +16045,14 @@ function chatActionCard(m,idx){
     return `<div class="cact"><div class="cact-h">💉 ${escVision(d.title||'برنامهٔ انسولین')} <span style="color:var(--muted);font-weight:600">(یادآوری)</span></div>${lst?`<div class="cact-items">${lst}</div>`:''}
       <div class="cact-btns"><button type="button" class="cact-b" onclick="chatInsulinToPlan(${idx})">🗓 افزودن به برنامهٔ هفتگی</button></div></div>`;
   }
+  if(a.kind==='lab'){
+    const ks=(Array.isArray(d.tests)?d.tests:[]).filter(k=>findLabTest(k));
+    const lst=ks.map(k=>{ const t=findLabTest(k); return `<span class="cact-chip">${escVision(t.fa||k)}</span>`; }).join('');
+    return `<div class="cact"><div class="cact-h">🧪 ${escVision(d.title||'نسخهٔ آزمایش')} <span style="color:var(--muted);font-weight:600">(${faDigits(String(ks.length))} آزمایش)</span></div>`
+      +([d.why,d.when].filter(Boolean).length?`<div class="cact-m">${escVision([d.why,d.when].filter(Boolean).join(' · ').slice(0,150))}</div>`:'')
+      +`${lst?`<div class="cact-items">${lst}</div>`:''}
+      <div class="cact-btns"><button type="button" class="cact-b" onclick="chatLabAdd(${idx})">🧪 ثبت در بخشِ آزمایش‌ها</button></div></div>`;
+  }
   if(a.kind==='needdata'){
     let parts=(Array.isArray(d.parts)?d.parts:[]).filter(x=>CHAT_DATA_PARTS.some(p=>p[0]===x));
     if(!parts.length) parts=CHAT_DATA_PARTS.map(x=>x[0]);
@@ -16027,6 +16066,19 @@ function chatActionCard(m,idx){
   }
   if(a.kind==='plan'){ return chatPlanCard(m,idx); }
   return '';
+}
+// نسخهٔ آزمایشِ پزشک را در تبِ «آزمایش‌ها» ثبت می‌کند (فرمِ ثبتِ نتیجه با همان اقلام آماده می‌شود)
+function chatLabAdd(idx){
+  const c=chatActive(); const m=c&&c.messages[idx]; const a=m&&m.action; if(!a||a.kind!=='lab') return;
+  const ks=(Array.isArray(a.data.tests)?a.data.tests:[]).filter(k=>findLabTest(k));
+  if(!ks.length){ uiToast('آزمایشی برای ثبت پیدا نشد'); return; }
+  const d=loadLabs(); d.selected=d.selected||[];
+  let n=0; ks.forEach(k=>{ if(!d.selected.includes(k)){ d.selected.push(k); n++; } });
+  saveLabs(d);
+  uiToast('✓ '+faDigits(String(ks.length))+' آزمایش در تبِ آزمایش‌ها ثبت شد'+(n<ks.length?' (بعضی از قبل بودند)':''));
+  switchTab('labs');
+  try{ const box=document.getElementById('c-labs-entry'); if(box) box.classList.remove('closed');
+    setTimeout(()=>{ const e=document.getElementById('labEntry'); if(e&&e.scrollIntoView) e.scrollIntoView({behavior:'smooth',block:'start'}); },250); }catch(e){}
 }
 // ====== روندِ درمان (Journey) ======
 const JOURNEY_KEY='journeys_v1';
@@ -16345,6 +16397,9 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .cxa-home:hover{background:linear-gradient(145deg,var(--teal),var(--teal-dim));filter:brightness(1.06)}
   .cxa-home svg{stroke-width:2.1}
   .cxa-center{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;overflow:hidden;padding:0 4px}
+  .cxa-av{font-size:19px;line-height:1;flex:0 0 auto}
+  .cxa-tt{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+  .cxa-role{font-size:10px;font-weight:800;color:var(--teal);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .cxa-logo{flex:0 0 auto;width:26px;height:26px;border-radius:8px;background:linear-gradient(145deg,var(--teal),var(--teal-dim));display:flex;align-items:center;justify-content:center;box-shadow:0 3px 9px rgba(63,185,163,.3)}
   .cxa-logo svg{width:16px;height:16px;display:block}
   .cxa-ttl{min-width:0;font-size:13.5px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -16577,7 +16632,7 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   /* ===== چیدمان «مثل کلود»: پاسخ تمام‌عرض و ساده با برچسب، پیام کاربر در حباب نرم ===== */
   .chatx.lay-claude .chat-msgs{gap:22px;max-width:760px}
   .chatx.lay-claude .chat-row.ai{align-self:stretch;max-width:100%;align-items:stretch}
-  .chatx.lay-claude .chat-row.ai::before{content:'✦ دیابوت';display:block;font-size:10.5px;font-weight:800;color:var(--teal);margin-bottom:7px;letter-spacing:.3px}
+  .chatx.lay-claude .chat-row.ai::before{content:var(--ai-label,'✦ دیابوت');display:block;font-size:10.5px;font-weight:800;color:var(--teal);margin-bottom:7px;letter-spacing:.3px}
   .chatx.lay-claude .chat-row.ai .chat-b{background:none;border:none;box-shadow:none;padding:0;border-radius:0;line-height:2.1;font-size:14px}
   .chatx.lay-claude .chat-row.me{max-width:86%}
   .chatx.lay-claude .chat-row.me .chat-b{background:var(--field);color:var(--ink);border:1px solid var(--line);border-radius:18px;border-bottom-right-radius:6px;box-shadow:none}
@@ -16589,7 +16644,7 @@ function ensureChatCss(){ if(_chatCssDone)return; _chatCssDone=true; const s=doc
   .chatx.lay-gpt .chat-row.me{background:transparent}
   .chatx.lay-gpt .chat-row::before{display:block;font-size:11px;font-weight:800;margin-bottom:7px;letter-spacing:.2px}
   .chatx.lay-gpt .chat-row.me::before{content:'🧑 تو';color:var(--muted)}
-  .chatx.lay-gpt .chat-row.ai::before{content:'🤖 دیابوت';color:var(--teal)}
+  .chatx.lay-gpt .chat-row.ai::before{content:var(--ai-label,'🤖 دیابوت');color:var(--teal)}
   .chatx.lay-gpt .chat-b{background:none!important;border:none!important;box-shadow:none!important;padding:0!important;color:var(--ink)!important;border-radius:0!important;max-width:100%}
   .chatx.lay-gpt .chat-b .cimg{margin-top:6px}
   .chatx.lay-gpt .chat-acts{margin-top:8px}
@@ -16649,12 +16704,16 @@ function renderChatTab(){
   const provOpts=(withKeys.length?withKeys:VISION_PROVIDERS).map(p=>`<option value="${p}" ${p===prov?'selected':''}>${PROVIDER_NAMES[p]}</option>`).join('');
   const spd=c.speed==='fast'?'fast':'smart';
   const lay=getChatLayout();
-  let h=`<div class="chatx lay-${lay}">
+  // هویتِ پزشکِ همین گفتگو، هم در نوارِ بالا و هم به‌عنوانِ برچسبِ پاسخ‌ها (رفعِ حسِ گیجی)
+  const _cRoleIds=chatRolesOf(c);
+  const _aiLabel=chatRolesLabel(c);
+  let h=`<div class="chatx lay-${lay}" style="--ai-label:'${String(_aiLabel).replace(/['\\]/g,'')}'">
     <div class="chatx-appbar">
       <button type="button" class="cxa-btn" onclick="openChatDrawer()" title="گفتگوها" aria-label="گفتگوها"><svg viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/></svg></button>
       <div class="cxa-center" id="chatTitleWrap" onclick="chatEditTitle()">
-        <span class="cxa-logo"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 2.4S4.8 9.7 4.8 14.8a7.2 7.2 0 1 0 14.4 0C19.2 9.7 12 2.4 12 2.4Z" fill="#fff"/></svg></span>
-        <span class="cxa-ttl">${escVision(c.title||'گفتگوی جدید')}</span><span class="cxa-pen">✏️</span>
+        <span class="cxa-av">${_cRoleIds.length===1?escVision((chatRoleById(_cRoleIds[0])||{}).emoji||'🩺'):(_cRoleIds.length?'👥':'🧭')}</span>
+        <span class="cxa-tt"><span class="cxa-role">${escVision(chatRolesLabel(c).replace(/^\S+\s/,''))}</span>
+        <span class="cxa-ttl">${escVision(c.title||'گفتگوی جدید')}</span></span><span class="cxa-pen">✏️</span>
       </div>
       <button type="button" class="cxa-btn" onclick="chatNew()" title="گفتگوی جدید" aria-label="گفتگوی جدید"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
       <button type="button" class="cxa-btn cxa-home" onclick="chatGoBack()" title="بازگشت به برنامه" aria-label="بازگشت به برنامه"><svg viewBox="0 0 24 24"><path d="M3 11.4 12 4l9 7.4"/><path d="M5.5 10v9.5h13V10"/></svg></button>
@@ -16823,7 +16882,7 @@ async function chatSend(opts){
   let _shown=0, _streamDone=false, _revealResolve=null;
   const _revealDone=new Promise(res=>{ _revealResolve=res; });
   // خطِ «@@SUGGEST@@» را از نمایش حذف کن (حتی وقتی نیمه‌کاره استریم می‌شود)
-  const stripSug=s=>String(s).replace(/@@(SUGGEST|MEAL|WORKOUT|PLAN|INSULIN|NEEDDATA)@@[\s\S]*$/,'').replace(/\n*@[@A-Z]*$/,'');
+  const stripSug=s=>String(s).replace(/@@(SUGGEST|MEAL|WORKOUT|PLAN|INSULIN|NEEDDATA|LAB)@@[\s\S]*$/,'').replace(/\n*@[@A-Z]*$/,'');
   const paintReveal=()=>{ const b=bubble(); if(!b) return;
     const cur=(_shown<acc.length || !_streamDone)?'<span class="chat-cur"></span>':'';
     b.innerHTML=labAiFmt(stripSug(acc.slice(0,_shown)))+cur; if(mb) mb.scrollTop=mb.scrollHeight; };
