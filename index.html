@@ -428,15 +428,21 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .bgc-segs{display:flex;gap:4px;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:3px}
 .bgc-seg{background:transparent;border:none;color:var(--muted);font-family:inherit;font-size:11px;font-weight:800;padding:4px 9px;border-radius:7px;cursor:pointer;transition:.13s}
 .bgc-seg.on{background:var(--teal);color:#04120e}
-.bgc-wrap{position:relative;width:100%;touch-action:pan-y;-webkit-user-select:none;user-select:none;cursor:crosshair}
-.bgc-svg{width:100%;height:150px;display:block;overflow:visible}
-.bgc-cross{position:absolute;top:0;bottom:0;width:0;border-left:1px dashed rgba(255,255,255,.45);pointer-events:none;opacity:0;transition:opacity .1s}
+/* ردیفِ ایکونِ رویدادها — هم‌ترازِ محورِ زمانِ نمودار */
+.bgc-evs{position:relative;direction:ltr;margin:0 0 2px 38px;height:0}
+.bgc-ev{position:absolute;transform:translateX(-50%);width:19px;height:19px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10.5px;border:1px solid var(--line);background:var(--field);cursor:default}
+.bgc-wrap{position:relative;width:100%;direction:ltr;padding-left:38px;box-sizing:border-box;touch-action:none;-webkit-user-select:none;user-select:none;cursor:crosshair}
+.bgc-yax{position:absolute;left:0;top:0;bottom:0;width:34px;pointer-events:none}
+.bgc-yax span{position:absolute;right:0;transform:translateY(-50%);font-size:9px;color:var(--muted);direction:ltr}
+.bgc-plot{position:relative;width:100%}
+.bgc-svg{width:100%;height:158px;display:block}
+.bgc-cross{position:absolute;top:0;bottom:0;width:0;border-left:1px dashed rgba(255,255,255,.5);pointer-events:none;opacity:0;transition:opacity .1s}
 .bgc-dot{position:absolute;width:9px;height:9px;border-radius:50%;background:#5fd3bd;border:2px solid var(--panel);transform:translate(-50%,-50%);pointer-events:none;opacity:0;box-shadow:0 0 0 3px rgba(95,211,189,.25)}
-.bgc-tip{position:absolute;top:4px;background:#0d1520;border:1px solid var(--line);border-radius:9px;padding:5px 9px;pointer-events:none;opacity:0;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.5);z-index:3}
+.bgc-tip{position:absolute;top:2px;background:#0d1520;border:1px solid var(--line);border-radius:9px;padding:5px 9px;pointer-events:none;opacity:0;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.5);z-index:3;direction:rtl}
 .bgc-tip b{font-size:15px;color:var(--ink);direction:ltr;display:inline-block}
 .bgc-tip small{font-size:9.5px;color:var(--muted);display:block;margin-top:1px}
 .bgc.on .bgc-cross,.bgc.on .bgc-dot,.bgc.on .bgc-tip{opacity:1}
-.bgc-ax{display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);direction:ltr;margin-top:4px}
+.bgc-ax{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);direction:ltr;margin:4px 0 0 38px}
 .bgc-empty{font-size:12px;color:var(--muted);text-align:center;padding:26px 8px;line-height:1.9}
 .dspark{width:100%;height:78px;display:block}
 .dspark-hours{display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);direction:ltr;margin-top:5px;padding:0 1px}
@@ -2371,7 +2377,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۷.۹</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۸.۰</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -7687,12 +7693,44 @@ function bgcTimeFa(ms){ const d=new Date(ms); const p=n=>String(n).padStart(2,'0
   let day=''; try{ const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); day=faDigits(jDateStr(j[0],j[1],j[2])); }catch(e){}
   return day+' · '+faDigits(p(d.getHours())+':'+p(d.getMinutes())); }
 // HTML کارت (داده در _bgc ذخیره می‌شود تا بایند بعد از رندر انجام شود)
+// رویدادهای روی نوارِ بالای نمودار (قند، وعده، انسولین، دارو، ورزش، یادداشت، وزن، فشار، حال)
+function bgcEvents(t0,t1){
+  const out=[]; const jl=k=>{ try{ const a=JSON.parse(localStorage.getItem(k)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } };
+  const inR=t=>t>=+t0&&t<=+t1;
+  const add=(t,ic,lbl,col)=>{ if(inR(+t)) out.push({t:+t,ic,lbl,col}); };
+  try{ jl('bg_manual_v1').forEach(x=>{ if(x&&x.iso&&x.glu!=null) add(new Date(x.iso),'🩸','قند '+faDigits(Math.round(x.glu)),'rgba(224,104,95,.22)'); }); }catch(e){}
+  try{ for(const k in planData){ if(k[0]==='_'||!Array.isArray(planData[k])) continue;
+      const d=_dayFromKey(k); if(!d) continue;
+      planData[k].forEach(e=>{ if(!e||e.planned) return;
+        const hm=String(e.time||'').split(':'); const dt=new Date(d); dt.setHours(+hm[0]||0,+hm[1]||0,0,0);
+        if((e.foods&&e.foods.length)||e.carb) add(dt,'🍽️',(e.type||'وعده')+(e.carb?(' '+faDigits(e.carb)+'گ'):''),'rgba(224,163,85,.22)');
+        if(e.insDose) add(dt,'💉',(e.insType||'انسولین')+' '+faDigits(e.insDose)+'و','rgba(63,185,163,.22)');
+      }); }
+    const bz=(planData||{})._basal||{};
+    for(const k in bz){ const d=_dayFromKey(k); const b=bz[k]; if(!d||!b||!b.dose) continue;
+      const hm=String(b.time||'22:00').split(':'); const dt=new Date(d); dt.setHours(+hm[0]||0,+hm[1]||0,0,0);
+      add(dt,'🛡️',(b.type||'پایه')+' '+faDigits(b.dose)+'و','rgba(63,185,163,.18)'); }
+  }catch(e){}
+  try{ jl('med_log_v1').forEach(x=>{ if(x&&x.iso) add(new Date(x.iso),'💊',String(x.name||'دارو'),'rgba(154,134,224,.22)'); }); }catch(e){}
+  try{ (loadExLog().entries||[]).forEach(e=>{ if(e&&e.ts) add(new Date(e.ts),'🏃','ورزش','rgba(91,143,214,.22)'); }); }catch(e){}
+  try{ loadExercise().forEach(x=>{ const iso=x&&(x.iso||x.start); if(iso) add(new Date(iso),'🏃',(x.what||'ورزش'),'rgba(91,143,214,.22)'); }); }catch(e){}
+  try{ jl('journal_v1').forEach(x=>{ if(x&&x.iso) add(new Date(x.iso),'📓','یادداشت','rgba(224,163,85,.18)'); }); }catch(e){}
+  try{ jl('weight_log_v1').forEach(x=>{ if(x&&x.iso&&x.kg) add(new Date(x.iso),'⚖️','وزن '+faDigits(x.kg),'rgba(63,185,163,.18)'); }); }catch(e){}
+  try{ jl('vitals_v1').forEach(x=>{ if(x&&x.iso) add(new Date(x.iso),'❤️','فشار/ضربان','rgba(224,104,95,.18)'); }); }catch(e){}
+  try{ jl('mood_log_v1').forEach(x=>{ if(x&&x.iso) add(new Date(x.iso),'🙂',String(x.mood||'حال'),'rgba(224,163,85,.16)'); }); }catch(e){}
+  try{ jl('skip_log_v1').forEach(x=>{ if(x&&x.iso) add(new Date(x.iso),'🚫','نزده: '+String(x.name||''),'rgba(224,104,95,.24)'); }); }catch(e){}
+  return out.sort((a,b)=>a.t-b.t);
+}
 function bgcCard(id, pts, t0, t1, opt){
   opt=opt||{};
-  const W=340,H=150,PT=10,PB=16;
+  const W=340,H=158;
   const gs=pts.map(p=>p.g);
-  const gMax=Math.max(200, Math.ceil((gs.length?Math.max.apply(null,gs):180)/20)*20+20), gMin=40;
-  _bgc[id]={pts,t0:+t0,t1:+t1,W,H,PT,PB,gMin,gMax,ranged:!!opt.ranged};
+  const peak=gs.length?Math.max.apply(null,gs):180;
+  // مقیاسِ Y از صفر شروع می‌شود و با قلهٔ واقعی بالا می‌رود (۲۵۰ ← ۳۰۰ ← ۴۰۰ …)
+  const gMax=Math.max(250, Math.ceil((peak+25)/50)*50), gMin=0;
+  const hrs0=Math.max(1,Math.round(((+t1)-(+t0))/3600000));
+  const mode=(opt.mode)||(hrs0<=6?'dots':'line');
+  _bgc[id]={pts,t0:+t0,t1:+t1,W,H,PT:0,PB:0,gMin,gMax,ranged:!!opt.ranged,title:opt.title||''};
   const segs=opt.ranged?('<div class="bgc-segs">'+BG_RANGES.map(r=>`<button type="button" class="bgc-seg ${bgcRange()===r[0]?'on':''}" onclick="bgcSetRange('${id}',${r[0]})">${r[1]}</button>`).join('')+'</div>'):'';
   const last=pts.length?pts[pts.length-1]:null;
   const col=g=>g<70?'#9fc0f0':(g>180?'#f0a29b':'#6fd39a');
@@ -7702,32 +7740,62 @@ function bgcCard(id, pts, t0, t1, opt){
   if(pts.length<2) return `<div class="bgc" id="${id}">${head}<div class="bgc-empty">برای این بازه دادهٔ قند کافی نیست.<br>از ＋ قندت را ثبت کن یا فایلِ CGM را وارد کن.</div></div>`;
   const span=Math.max(1,(+t1)-(+t0));
   const X=t=>(((+t)-(+t0))/span)*W;
-  const Y=g=>{ const c=Math.max(gMin,Math.min(gMax,g)); return PT+(1-(c-gMin)/(gMax-gMin))*(H-PT-PB); };
+  const Y=g=>(1-(Math.max(gMin,Math.min(gMax,g))-gMin)/(gMax-gMin))*H;
   const yLo=Y(70), yHi=Y(180);
-  const poly=pts.map(p=>X(p.t).toFixed(1)+','+Y(p.g).toFixed(1)).join(' ');
   let sv=`<svg class="bgc-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">`;
   sv+=`<rect x="0" y="${yHi.toFixed(1)}" width="${W}" height="${(yLo-yHi).toFixed(1)}" fill="rgba(111,211,154,.12)"/>`;
-  sv+=`<line x1="0" y1="${yHi.toFixed(1)}" x2="${W}" y2="${yHi.toFixed(1)}" stroke="rgba(224,163,85,.55)" stroke-width="1" stroke-dasharray="5 4"/>`;
-  sv+=`<line x1="0" y1="${yLo.toFixed(1)}" x2="${W}" y2="${yLo.toFixed(1)}" stroke="rgba(224,104,95,.55)" stroke-width="1" stroke-dasharray="5 4"/>`;
-  const hrs=Math.round(span/3600000); const step=hrs<=3?1:hrs<=6?2:hrs<=12?3:6;
+  // خطوطِ افقیِ مقیاس (هر ۵۰)
+  for(let v=50; v<=gMax; v+=50){ const gy=Y(v).toFixed(1);
+    sv+=`<line x1="0" y1="${gy}" x2="${W}" y2="${gy}" stroke="rgba(255,255,255,.05)" stroke-width="1" stroke-dasharray="4 5"/>`; }
+  sv+=`<line x1="0" y1="${yHi.toFixed(1)}" x2="${W}" y2="${yHi.toFixed(1)}" stroke="rgba(224,163,85,.6)" stroke-width="1"/>`;
+  sv+=`<line x1="0" y1="${yLo.toFixed(1)}" x2="${W}" y2="${yLo.toFixed(1)}" stroke="rgba(224,104,95,.6)" stroke-width="1"/>`;
+  const step=hrs0<=3?1:hrs0<=6?1:hrs0<=12?2:3;
   const ticks=[];
   for(let d=new Date(+t0); d<=t1; d.setMinutes(0,0,0), d.setHours(d.getHours()+1)){
     if(d<t0) continue; if(d.getHours()%step) continue;
     ticks.push(+d); const gx=X(d).toFixed(1);
-    sv+=`<line x1="${gx}" y1="0" x2="${gx}" y2="${H-PB}" stroke="rgba(255,255,255,.06)" stroke-width="1"/>`;
+    sv+=`<line x1="${gx}" y1="0" x2="${gx}" y2="${H}" stroke="rgba(255,255,255,.05)" stroke-width="1"/>`;
   }
-  sv+=`<polyline points="${poly}" fill="none" stroke="#5fd3bd" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>`;
-  pts.filter(p=>p.src==='bg').forEach(p=>{ sv+=`<circle cx="${X(p.t).toFixed(1)}" cy="${Y(p.g).toFixed(1)}" r="2.6" fill="#e0a355"/>`; });
+  if(mode==='dots'){
+    pts.forEach(p=>{ sv+=`<circle cx="${X(p.t).toFixed(2)}" cy="${Y(p.g).toFixed(2)}" r="1.9" fill="${p.src==='bg'?'#e0a355':'#5fd3bd'}"/>`; });
+  } else {
+    const poly=pts.map(p=>X(p.t).toFixed(1)+','+Y(p.g).toFixed(1)).join(' ');
+    sv+=`<polyline points="${poly}" fill="none" stroke="#5fd3bd" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`;
+    pts.filter(p=>p.src==='bg').forEach(p=>{ sv+=`<circle cx="${X(p.t).toFixed(1)}" cy="${Y(p.g).toFixed(1)}" r="2.4" fill="#e0a355"/>`; });
+  }
   sv+=`</svg>`;
+  // برچسب‌های محورِ عمودی (HTML، چون SVG با preserveAspectRatio=none متن را کش می‌دهد)
+  let yax='<div class="bgc-yax">';
+  for(let v=0; v<=gMax; v+=50){ const topPct=(1-(v-gMin)/(gMax-gMin))*100;
+    yax+=`<span style="top:${topPct.toFixed(2)}%">${faDigits(v)}</span>`; }
+  yax+='</div>';
+  // ردیفِ رویدادها (دو ردیف تا روی هم نیفتند)
+  let evs='';
+  if(opt.events!==false){
+    const list=bgcEvents(t0,t1);
+    if(list.length){
+      const rows=[-1,-1]; const H1=21; let maxRow=0; const items=[];
+      list.forEach(e=>{ const L=((e.t-(+t0))/span)*100; if(L<0||L>100) return;
+        let r=0; if(rows[0]>=0 && L-rows[0]<5.5) r=(rows[1]<0||L-rows[1]>=5.5)?1:0;
+        rows[r]=L; if(r>maxRow) maxRow=r;
+        items.push(`<span class="bgc-ev" style="left:${L.toFixed(2)}%;top:${r*H1}px;background:${e.col}" title="${escVision(e.lbl)}">${e.ic}</span>`); });
+      evs=`<div class="bgc-evs" style="height:${(maxRow+1)*H1+2}px">${items.join('')}</div>`;
+    }
+  }
   const p2=n=>String(n).padStart(2,'0');
-  const ax=ticks.filter((_,i)=>i%Math.max(1,Math.ceil(ticks.length/5))===0).map(t=>`<span>${faDigits(p2(new Date(t).getHours())+':۰۰'.replace('۰۰','00'))}</span>`).join('');
-  return `<div class="bgc" id="${id}">${head}
-    <div class="bgc-wrap" data-bgc="${id}">${sv}
-      <div class="bgc-cross"></div><div class="bgc-dot"></div>
-      <div class="bgc-tip"><b></b><small></small></div>
+  const axN=Math.min(6,Math.max(3,ticks.length));
+  const stepT=Math.max(1,Math.ceil(ticks.length/axN));
+  const ax=ticks.filter((_,k)=>k%stepT===0).map(t=>`<span>${faDigits(p2(new Date(t).getHours())+':00')}</span>`).join('');
+  return `<div class="bgc" id="${id}">${head}${evs}
+    <div class="bgc-wrap" data-bgc="${id}">${yax}
+      <div class="bgc-plot">${sv}
+        <div class="bgc-cross"></div><div class="bgc-dot"></div>
+        <div class="bgc-tip"><b></b><small></small></div>
+      </div>
     </div>
     <div class="bgc-ax">${ax}</div></div>`;
 }
+
 function bgcRerender(id){
   const el=document.getElementById(id); if(!el) return;
   const st=_bgc[id]; const hrs=bgcRange();
@@ -7743,17 +7811,18 @@ function bgcBindAll(){
     if(w._bgcBound) return; w._bgcBound=true;
     const id=w.getAttribute('data-bgc');
     const card=w.closest('.bgc');
+    const plot=w.querySelector('.bgc-plot')||w;
     const cross=w.querySelector('.bgc-cross'), dot=w.querySelector('.bgc-dot'), tip=w.querySelector('.bgc-tip');
     const show=e=>{
       const st=_bgc[id]; if(!st||!st.pts||st.pts.length<2) return;
-      const r=w.getBoundingClientRect(); if(!r.width) return;
+      const r=plot.getBoundingClientRect(); if(!r.width) return;
       const fx=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
       const tt=st.t0+fx*(st.t1-st.t0);
       let best=st.pts[0], bd=Infinity;
       for(const p of st.pts){ const d=Math.abs(p.t-tt); if(d<bd){ bd=d; best=p; } }
       const px=((best.t-st.t0)/Math.max(1,st.t1-st.t0))*r.width;
       const gy=Math.max(st.gMin,Math.min(st.gMax,best.g));
-      const py=(st.PT+(1-(gy-st.gMin)/(st.gMax-st.gMin))*(st.H-st.PT-st.PB))/st.H*r.height;
+      const py=(1-(gy-st.gMin)/(st.gMax-st.gMin))*r.height;
       card.classList.add('on');
       cross.style.left=px+'px'; dot.style.left=px+'px'; dot.style.top=py+'px';
       tip.querySelector('b').textContent=faDigits(Math.round(best.g))+' mg/dL';
@@ -7768,7 +7837,9 @@ function bgcBindAll(){
     w.addEventListener('pointermove', e=>{ e.stopPropagation();
       const active=(e.buttons&&e.buttons>0)||(w.hasPointerCapture&&w.hasPointerCapture(e.pointerId));
       if(active) show(e); }, {passive:false});
-    w.addEventListener('pointerup', hide); w.addEventListener('pointercancel', hide); w.addEventListener('pointerleave', hide);
+    w.addEventListener('pointerup', hide);
+    w.addEventListener('pointercancel', hide);
+    w.addEventListener('lostpointercapture', hide);
   });
 }
 // نمودار کوچک قند شبانه‌روز
