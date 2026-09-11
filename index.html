@@ -419,6 +419,25 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .daily-chip .dc-l{color:var(--muted)}
 .daily-chip .dc-v{color:var(--teal);font-weight:800;direction:rtl}
 .dspark-card{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:14px 14px 11px}
+/* ── نمودارِ قندِ تعاملی (کشیدنِ انگشت روی نمودار) ── */
+.bgc{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:12px 12px 10px}
+.bgc-top{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+.bgc-now{font-size:22px;font-weight:800;line-height:1;direction:ltr}
+.bgc-unit{font-size:10px;color:var(--muted);font-weight:700}
+.bgc-sub{font-size:10.5px;color:var(--muted);flex:1;min-width:60px}
+.bgc-segs{display:flex;gap:4px;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:3px}
+.bgc-seg{background:transparent;border:none;color:var(--muted);font-family:inherit;font-size:11px;font-weight:800;padding:4px 9px;border-radius:7px;cursor:pointer;transition:.13s}
+.bgc-seg.on{background:var(--teal);color:#04120e}
+.bgc-wrap{position:relative;width:100%;touch-action:pan-y;-webkit-user-select:none;user-select:none;cursor:crosshair}
+.bgc-svg{width:100%;height:150px;display:block;overflow:visible}
+.bgc-cross{position:absolute;top:0;bottom:0;width:0;border-left:1px dashed rgba(255,255,255,.45);pointer-events:none;opacity:0;transition:opacity .1s}
+.bgc-dot{position:absolute;width:9px;height:9px;border-radius:50%;background:#5fd3bd;border:2px solid var(--panel);transform:translate(-50%,-50%);pointer-events:none;opacity:0;box-shadow:0 0 0 3px rgba(95,211,189,.25)}
+.bgc-tip{position:absolute;top:4px;background:#0d1520;border:1px solid var(--line);border-radius:9px;padding:5px 9px;pointer-events:none;opacity:0;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.5);z-index:3}
+.bgc-tip b{font-size:15px;color:var(--ink);direction:ltr;display:inline-block}
+.bgc-tip small{font-size:9.5px;color:var(--muted);display:block;margin-top:1px}
+.bgc.on .bgc-cross,.bgc.on .bgc-dot,.bgc.on .bgc-tip{opacity:1}
+.bgc-ax{display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);direction:ltr;margin-top:4px}
+.bgc-empty{font-size:12px;color:var(--muted);text-align:center;padding:26px 8px;line-height:1.9}
 .dspark{width:100%;height:78px;display:block}
 .dspark-hours{display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);direction:ltr;margin-top:5px;padding:0 1px}
 .dspark-lgnd{font-size:10px;color:var(--muted);margin-top:8px;display:flex;align-items:center;gap:6px}
@@ -2352,7 +2371,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۷.۸</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۷.۹</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -7233,6 +7252,7 @@ function renderDashboard(){
   h+= homeSectionsOrdered().map(s=>secHtml[s.key]||'').join('');
   h+=`<div class="dash-note">⚕️ این داشبورد فقط آینه‌ی گذشته است تا آگاه‌تر باشی و بهتر با پزشکت صحبت کنی — تشخیص و هر تصمیم درمانی فقط با پزشک است.</div>`;
   box.innerHTML=h;
+  try{ bgcBindAll(); }catch(e){}
   try{ dashSliderInit(); }catch(e){}
   renderHealthAiPanel('home');
   try{ renderPodcastCard(); }catch(e){}
@@ -7261,6 +7281,7 @@ function dashSliderInit(){
 function _slideMeta(html){ html=String(html||'');
   if(/dash-hero/.test(html)) return {key:'glucose', title:'آخرین قند خون', icon:'🩸'};
   if(/dash-slide-sum/.test(html)) return {key:'summary', title:'خلاصهٔ قند', icon:'📊'};
+  if(/id="dashBgChart"/.test(html)) return {key:'bgchart', title:'نمودارِ قند', icon:'📈'};
   const ic=((html.match(/gcard-ic">([^<]*)</)||[])[1]||'▫️').trim();
   let t=((html.match(/gcard-t">([^<]*?)(?:<small|<\/div)/)||[])[1]||'—').trim();
   return {key:t, title:t, icon:ic};
@@ -7353,6 +7374,12 @@ function _aiVisitCard(icon,title,pred){
 // همهٔ اسلایدهای بعد از «قند» و «خلاصه»
 function dashExtraSlides(){
   const out=[]; const jl=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'[]')||[]; }catch(e){ return []; } };
+  // نمودارِ قندِ زندهٔ امروز با بازهٔ قابلِ انتخاب (۳/۶/۱۲/۲۴ ساعت)
+  try{ const hrs=bgcRange(); const t1=new Date(); const t0=new Date(+t1-hrs*3600000);
+    const pts=bgcPoints(t0,t1);
+    _bgc['dashBgChart']={ranged:true,title:'روندِ قند'};
+    out.push(bgcCard('dashBgChart', pts, t0, t1, {ranged:true, title:'روندِ قند'}));
+  }catch(e){}
   const key=dayKey(new Date());
   const today=arr=>Array.isArray(arr)?arr.filter(x=>x&&x.iso&&dayKey(new Date(x.iso))===key):[];
   // فشار و ضربان (آخرین ثبت)
@@ -7590,7 +7617,11 @@ function renderDailyReport(){
   } else if(cgmDay){
     h+=`<div class="dash-sec-t">📈 قند این روز</div>`;
     if(sparkPts.length>=2){
-      h+=`<div class="dspark-card">${daySparkSVG(sparkPts)}<div class="dspark-hours"><span>۰</span><span>۶</span><span>۱۲</span><span>۱۸</span><span>۲۴</span></div><div class="dspark-lgnd"><span><i style="background:rgba(111,211,154,.5)"></i>محدوده‌ی هدف ۷۰–۱۸۰</span></div></div>`;
+      // نمودارِ تعاملی: با کشیدنِ انگشت، مقدار و زمانِ هر نقطه نشان داده می‌شود
+      const _dq=String(key).split('-').map(Number);
+      const _d0=new Date(_dq[0],_dq[1]-1,_dq[2],0,0,0,0), _d1=new Date(_dq[0],_dq[1]-1,_dq[2],23,59,59,999);
+      h+=bgcCard('dailyBgChart', bgcPoints(_d0,_d1), _d0, _d1, {title:'قندِ این روز'})
+        +`<div class="dspark-lgnd" style="margin-top:8px"><span><i style="background:rgba(111,211,154,.5)"></i>محدوده‌ی هدف ۷۰–۱۸۰</span></div>`;
     }
     // نوار محدوده‌ی این روز
     const dseg=[[cgmDay.vlo,'#7d2d2d'],[cgmDay.lo,'#e0685f'],[cgmDay.inr,'#6fd39a'],[cgmDay.hi,'#e0a355'],[cgmDay.vhi,'#b5622a']];
@@ -7632,7 +7663,113 @@ function renderDailyReport(){
   }
   h+=`<div id="dailyAiPanel"></div>`;
   box.innerHTML=h;
+  try{ bgcBindAll(); }catch(e){}
   renderHealthAiPanel('daily');
+}
+/* ══ نمودارِ قندِ تعاملی (۲۷.۹) ══
+   یک کامپوننتِ مشترک برای «اسلایدِ خانه» و «گزارشِ روزانه».
+   نقاط: [{t:Date|ms, g:number}]. کشیدنِ انگشت ⇒ خط‌چینِ عمودی + نقطه + بادکنکِ مقدار و زمان.
+   ⚠️ SVG با preserveAspectRatio="none" کشیده می‌شود تا نگاشتِ مختصاتِ اشاره‌گر
+   دقیقاً نسبتی و ساده بماند. */
+const BG_RANGES=[[3,'۳س'],[6,'۶س'],[12,'۱۲س'],[24,'۲۴س']];
+const BGC_RANGE_KEY='bg_chart_range_v1';
+let _bgc={};   // id → {pts,t0,t1,W,H,gMin,gMax}
+function bgcRange(){ let v=0; try{ v=parseInt(localStorage.getItem(BGC_RANGE_KEY),10); }catch(e){} return BG_RANGES.some(r=>r[0]===v)?v:24; }
+function bgcSetRange(id,h){ try{ localStorage.setItem(BGC_RANGE_KEY,String(h)); }catch(e){} bgcRerender(id); }
+// همهٔ خوانش‌های قند (CGM + دستی) در یک بازه
+function bgcPoints(t0,t1){
+  const out=[];
+  try{ (window._cgmReadings||[]).forEach(r=>{ const d=r&&r.t&&r.t.dateObj; if(d&&d>=t0&&d<=t1) out.push({t:+d,g:+r.glu,src:'cgm'}); }); }catch(e){}
+  try{ (typeof loadBG==='function'?loadBG():[]).forEach(x=>{ if(!x||!x.iso||x.glu==null) return; const d=new Date(x.iso); if(d>=t0&&d<=t1) out.push({t:+d,g:+x.glu,src:'bg'}); }); }catch(e){}
+  return out.filter(p=>isFinite(p.g)&&p.g>0).sort((a,b)=>a.t-b.t);
+}
+function bgcTimeFa(ms){ const d=new Date(ms); const p=n=>String(n).padStart(2,'0');
+  let day=''; try{ const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); day=faDigits(jDateStr(j[0],j[1],j[2])); }catch(e){}
+  return day+' · '+faDigits(p(d.getHours())+':'+p(d.getMinutes())); }
+// HTML کارت (داده در _bgc ذخیره می‌شود تا بایند بعد از رندر انجام شود)
+function bgcCard(id, pts, t0, t1, opt){
+  opt=opt||{};
+  const W=340,H=150,PT=10,PB=16;
+  const gs=pts.map(p=>p.g);
+  const gMax=Math.max(200, Math.ceil((gs.length?Math.max.apply(null,gs):180)/20)*20+20), gMin=40;
+  _bgc[id]={pts,t0:+t0,t1:+t1,W,H,PT,PB,gMin,gMax,ranged:!!opt.ranged};
+  const segs=opt.ranged?('<div class="bgc-segs">'+BG_RANGES.map(r=>`<button type="button" class="bgc-seg ${bgcRange()===r[0]?'on':''}" onclick="bgcSetRange('${id}',${r[0]})">${r[1]}</button>`).join('')+'</div>'):'';
+  const last=pts.length?pts[pts.length-1]:null;
+  const col=g=>g<70?'#9fc0f0':(g>180?'#f0a29b':'#6fd39a');
+  let head=`<div class="bgc-top">`;
+  if(last) head+=`<span class="bgc-now" style="color:${col(last.g)}">${faDigits(Math.round(last.g))}</span><span class="bgc-unit">mg/dL</span>`;
+  head+=`<span class="bgc-sub">${escVision(opt.title||'قندِ امروز')}${last?(' · '+bgcTimeFa(last.t).split('·')[1].trim()):''}</span>${segs}</div>`;
+  if(pts.length<2) return `<div class="bgc" id="${id}">${head}<div class="bgc-empty">برای این بازه دادهٔ قند کافی نیست.<br>از ＋ قندت را ثبت کن یا فایلِ CGM را وارد کن.</div></div>`;
+  const span=Math.max(1,(+t1)-(+t0));
+  const X=t=>(((+t)-(+t0))/span)*W;
+  const Y=g=>{ const c=Math.max(gMin,Math.min(gMax,g)); return PT+(1-(c-gMin)/(gMax-gMin))*(H-PT-PB); };
+  const yLo=Y(70), yHi=Y(180);
+  const poly=pts.map(p=>X(p.t).toFixed(1)+','+Y(p.g).toFixed(1)).join(' ');
+  let sv=`<svg class="bgc-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">`;
+  sv+=`<rect x="0" y="${yHi.toFixed(1)}" width="${W}" height="${(yLo-yHi).toFixed(1)}" fill="rgba(111,211,154,.12)"/>`;
+  sv+=`<line x1="0" y1="${yHi.toFixed(1)}" x2="${W}" y2="${yHi.toFixed(1)}" stroke="rgba(224,163,85,.55)" stroke-width="1" stroke-dasharray="5 4"/>`;
+  sv+=`<line x1="0" y1="${yLo.toFixed(1)}" x2="${W}" y2="${yLo.toFixed(1)}" stroke="rgba(224,104,95,.55)" stroke-width="1" stroke-dasharray="5 4"/>`;
+  const hrs=Math.round(span/3600000); const step=hrs<=3?1:hrs<=6?2:hrs<=12?3:6;
+  const ticks=[];
+  for(let d=new Date(+t0); d<=t1; d.setMinutes(0,0,0), d.setHours(d.getHours()+1)){
+    if(d<t0) continue; if(d.getHours()%step) continue;
+    ticks.push(+d); const gx=X(d).toFixed(1);
+    sv+=`<line x1="${gx}" y1="0" x2="${gx}" y2="${H-PB}" stroke="rgba(255,255,255,.06)" stroke-width="1"/>`;
+  }
+  sv+=`<polyline points="${poly}" fill="none" stroke="#5fd3bd" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>`;
+  pts.filter(p=>p.src==='bg').forEach(p=>{ sv+=`<circle cx="${X(p.t).toFixed(1)}" cy="${Y(p.g).toFixed(1)}" r="2.6" fill="#e0a355"/>`; });
+  sv+=`</svg>`;
+  const p2=n=>String(n).padStart(2,'0');
+  const ax=ticks.filter((_,i)=>i%Math.max(1,Math.ceil(ticks.length/5))===0).map(t=>`<span>${faDigits(p2(new Date(t).getHours())+':۰۰'.replace('۰۰','00'))}</span>`).join('');
+  return `<div class="bgc" id="${id}">${head}
+    <div class="bgc-wrap" data-bgc="${id}">${sv}
+      <div class="bgc-cross"></div><div class="bgc-dot"></div>
+      <div class="bgc-tip"><b></b><small></small></div>
+    </div>
+    <div class="bgc-ax">${ax}</div></div>`;
+}
+function bgcRerender(id){
+  const el=document.getElementById(id); if(!el) return;
+  const st=_bgc[id]; const hrs=bgcRange();
+  const t1=(st&&st.ranged)?new Date():new Date(st?st.t1:Date.now());
+  const t0=(st&&st.ranged)?new Date(+t1-hrs*3600000):new Date(st.t0);
+  const pts=(st&&st.ranged)?bgcPoints(t0,t1):st.pts;
+  el.outerHTML=bgcCard(id, pts, t0, t1, {ranged:st&&st.ranged, title:st&&st.title});
+  bgcBindAll();
+}
+// بایندِ کشیدنِ انگشت/ماوس (بعد از هر رندر صدا زده می‌شود)
+function bgcBindAll(){
+  document.querySelectorAll('.bgc-wrap[data-bgc]').forEach(w=>{
+    if(w._bgcBound) return; w._bgcBound=true;
+    const id=w.getAttribute('data-bgc');
+    const card=w.closest('.bgc');
+    const cross=w.querySelector('.bgc-cross'), dot=w.querySelector('.bgc-dot'), tip=w.querySelector('.bgc-tip');
+    const show=e=>{
+      const st=_bgc[id]; if(!st||!st.pts||st.pts.length<2) return;
+      const r=w.getBoundingClientRect(); if(!r.width) return;
+      const fx=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+      const tt=st.t0+fx*(st.t1-st.t0);
+      let best=st.pts[0], bd=Infinity;
+      for(const p of st.pts){ const d=Math.abs(p.t-tt); if(d<bd){ bd=d; best=p; } }
+      const px=((best.t-st.t0)/Math.max(1,st.t1-st.t0))*r.width;
+      const gy=Math.max(st.gMin,Math.min(st.gMax,best.g));
+      const py=(st.PT+(1-(gy-st.gMin)/(st.gMax-st.gMin))*(st.H-st.PT-st.PB))/st.H*r.height;
+      card.classList.add('on');
+      cross.style.left=px+'px'; dot.style.left=px+'px'; dot.style.top=py+'px';
+      tip.querySelector('b').textContent=faDigits(Math.round(best.g))+' mg/dL';
+      tip.querySelector('small').textContent=bgcTimeFa(best.t);
+      const tw=tip.offsetWidth||120;
+      tip.style.left=Math.max(2,Math.min(r.width-tw-2,px-tw/2))+'px';
+      if(e.cancelable) e.preventDefault();
+    };
+    const hide=()=>{ card.classList.remove('on'); };
+    // ⚠️ اسلایدرِ خانه خودش درگِ افقی دارد؛ روی نمودار نباید اسلاید عوض شود
+    w.addEventListener('pointerdown', e=>{ e.stopPropagation(); try{ w.setPointerCapture(e.pointerId); }catch(_){} show(e); }, {passive:false});
+    w.addEventListener('pointermove', e=>{ e.stopPropagation();
+      const active=(e.buttons&&e.buttons>0)||(w.hasPointerCapture&&w.hasPointerCapture(e.pointerId));
+      if(active) show(e); }, {passive:false});
+    w.addEventListener('pointerup', hide); w.addEventListener('pointercancel', hide); w.addEventListener('pointerleave', hide);
+  });
 }
 // نمودار کوچک قند شبانه‌روز
 function daySparkSVG(pts){
