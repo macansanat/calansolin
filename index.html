@@ -357,6 +357,17 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .ds-qdel{flex:0 0 auto;background:transparent;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit;padding:0 2px}
 .ds-qadd{display:flex;gap:7px;margin-top:11px}
 .ds-qadd input{flex:1;min-width:0}
+.ds-sum{margin-top:8px;background:linear-gradient(135deg,var(--teal),var(--teal-dim));color:#04120e}
+.ds-covers{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.ds-cov{padding:0;background:var(--field);border:2px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;font-family:inherit;text-align:right}
+.ds-cov.on{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,185,163,.18)}
+.dsc-box{height:96px;overflow:hidden;position:relative;background:#0d1620}
+.dsc-scale{position:absolute;inset:0;transform:scale(.29);transform-origin:top right;width:345%;height:345%}
+.dsc-inner{width:620px}
+.dsc-empty{display:flex;align-items:center;justify-content:center;height:100%;font-size:10px;color:var(--muted)}
+.dsc-cap{display:flex;align-items:center;gap:6px;padding:7px 9px;font-size:11.5px;font-weight:800;color:var(--ink)}
+.dsc-cap i{margin-right:auto;font-style:normal;font-size:9px;color:var(--muted);font-weight:600}
+.dsc-dot{width:11px;height:11px;border-radius:4px;flex:0 0 auto}
 .ds-studio-btn{width:100%;margin-top:8px;background:var(--field);border:1px solid var(--teal-dim);color:var(--teal);font-family:inherit;font-size:12.5px;font-weight:800;padding:11px;border-radius:12px;cursor:pointer}
 .ds-preview{margin:8px 0 14px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;overflow:hidden}
 .ds-preview-t{font-size:10.5px;color:#888;margin-bottom:8px;text-align:center}
@@ -2461,7 +2472,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۸.۸</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۸.۹</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4019,38 +4030,48 @@ function dsCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(DS_CFG_KEY)||
              weightLine:o.charts?o.charts.weightLine!==false:true,
              tirBar:o.charts?o.charts.tirBar!==false:true },
     gauges:(Array.isArray(o.gauges)?o.gauges.filter(g=>DS_GAUGE_DEFS[g]):['tir','gmi','avg','cv']),
+    layout:(['hero','grid','strip'].indexOf(o.layout)>=0?o.layout:'grid'),
+    gstyle:(['ring','ticks','speedo'].indexOf(o.gstyle)>=0?o.gstyle:'ring'),
+    theme:(o.theme==='dark'?'dark':'light'),
     tmpl:(typeof o.tmpl==='string'?o.tmpl:'') }; }
 function dsCfgSet(patch){ const c=Object.assign(dsCfg(),patch||{}); try{ localStorage.setItem(DS_CFG_KEY,JSON.stringify(c)); }catch(e){} return c; }
 function dsCfgToggleGauge(g){ const c=dsCfg(); const i=c.gauges.indexOf(g); if(i<0) c.gauges.push(g); else c.gauges.splice(i,1); dsCfgSet({gauges:c.gauges,tmpl:''}); renderDossierStudio(); }
 function dsCfgToggleChart(k){ const c=dsCfg(); c.charts[k]=!c.charts[k]; dsCfgSet({charts:c.charts,tmpl:''}); renderDossierStudio(); }
 
-// ۲۰ تمپلیتِ آماده = ترکیبِ تم رنگی × تراکم × فونت × مجموعهٔ نمودار/گیج
+// ۲۰ طرحِ داشبورد — هرکدام ترکیبِ تم × چیدمان × سبکِ گیج × رنگ × نمودار
 const DS_TEMPLATES=[
-  {id:'clinic',   n:'کلینیکی',        accent:'#2a7d70',font:'m', density:'normal', gauges:['tir','gmi','avg','cv'], charts:{glucoseLine:1,weightLine:1,tirBar:1}},
-  {id:'minimal',  n:'ساده و کم‌جوهر',  accent:'#0f172a',font:'m', density:'compact',gauges:[],                     charts:{glucoseLine:0,weightLine:0,tirBar:1}},
-  {id:'dash',     n:'داشبوردِ کامل',   accent:'#3f7bd6',font:'m', density:'normal', gauges:['tir','gmi','avg','cv','tbr','tar'], charts:{glucoseLine:1,weightLine:1,tirBar:1}},
-  {id:'gauges',   n:'گیج‌محور',        accent:'#c0562f',font:'m', density:'normal', gauges:['tir','gmi','avg','cv','tbr','tar'], charts:{glucoseLine:0,weightLine:0,tirBar:0}},
-  {id:'a1c',      n:'تمرکز بر A1c',    accent:'#7d5bd0',font:'m', density:'normal', gauges:['gmi','avg'],          charts:{glucoseLine:1,weightLine:0,tirBar:1}},
-  {id:'tir',      n:'تمرکز بر TIR',    accent:'#2f8f57',font:'m', density:'normal', gauges:['tir','tbr','tar'],    charts:{glucoseLine:1,weightLine:0,tirBar:1}},
-  {id:'trend',    n:'روندها (خطی)',    accent:'#3f7bd6',font:'m', density:'normal', gauges:[],                     charts:{glucoseLine:1,weightLine:1,tirBar:0}},
-  {id:'weight',   n:'وزن و متابولیک',  accent:'#2f8f57',font:'m', density:'normal', gauges:['gmi','avg'],          charts:{glucoseLine:0,weightLine:1,tirBar:0}},
-  {id:'bigfont',  n:'فونتِ بزرگ',      accent:'#2a7d70',font:'l', density:'roomy',  gauges:['tir','avg'],          charts:{glucoseLine:1,weightLine:0,tirBar:1}},
-  {id:'xlfont',   n:'فونتِ خیلی بزرگ', accent:'#2a7d70',font:'xl',density:'roomy',  gauges:['tir'],                charts:{glucoseLine:0,weightLine:0,tirBar:1}},
-  {id:'dense',    n:'فشرده (یک‌صفحه)', accent:'#0f172a',font:'s', density:'compact',gauges:['tir','gmi','avg','cv'],charts:{glucoseLine:1,weightLine:0,tirBar:1}},
-  {id:'roomy',    n:'باز و راحت',      accent:'#2a7d70',font:'l', density:'roomy',  gauges:['tir','gmi','avg','cv'],charts:{glucoseLine:1,weightLine:1,tirBar:1}},
-  {id:'blue',     n:'آبیِ رسمی',       accent:'#3f7bd6',font:'m', density:'normal', gauges:['tir','gmi'],          charts:{glucoseLine:1,weightLine:1,tirBar:1}},
-  {id:'purple',   n:'بنفشِ مدرن',      accent:'#7d5bd0',font:'m', density:'normal', gauges:['tir','avg'],          charts:{glucoseLine:1,weightLine:0,tirBar:1}},
-  {id:'warm',     n:'گرم (نارنجی)',    accent:'#c0562f',font:'m', density:'normal', gauges:['tir','cv'],           charts:{glucoseLine:1,weightLine:0,tirBar:1}},
-  {id:'rose',     n:'صورتیِ ملایم',    accent:'#b5306b',font:'m', density:'normal', gauges:['tir','gmi'],          charts:{glucoseLine:1,weightLine:1,tirBar:1}},
-  {id:'mono',     n:'تک‌رنگِ چاپ',     accent:'#0f172a',font:'m', density:'normal', gauges:['tir','gmi','avg'],    charts:{glucoseLine:1,weightLine:1,tirBar:1}},
-  {id:'speedo',   n:'کیلومترشمار',     accent:'#c0562f',font:'m', density:'normal', gauges:['tir','gmi','avg','cv'],charts:{glucoseLine:0,weightLine:0,tirBar:0}},
-  {id:'labs',     n:'آزمایش‌محور',     accent:'#7d5bd0',font:'m', density:'normal', gauges:['gmi'],                charts:{glucoseLine:0,weightLine:0,tirBar:0}},
-  {id:'full',     n:'همه‌چیز',         accent:'#2a7d70',font:'m', density:'roomy',  gauges:['tir','gmi','avg','cv','tbr','tar'], charts:{glucoseLine:1,weightLine:1,tirBar:1}}
+  {id:'clinic', n:'کلینیکی',       theme:'light',accent:'#2a7d70',layout:'grid', gstyle:'ring',  font:'m',density:'normal',gauges:['tir','gmi','avg','cv'],charts:{glucoseLine:1,weightLine:1,tirBar:1}},
+  {id:'nest',   n:'نِست (تیره)',    theme:'dark', accent:'#e0783c',layout:'hero', gstyle:'ticks', font:'m',density:'normal',gauges:['tir','avg','gmi','cv'],charts:{glucoseLine:1,weightLine:0,tirBar:1}},
+  {id:'lovelace',n:'لاوِلِیس',      theme:'dark', accent:'#4c8dff',layout:'hero', gstyle:'ticks', font:'m',density:'normal',gauges:['avg','tir','gmi'],   charts:{glucoseLine:1,weightLine:1,tirBar:1}},
+  {id:'aurora', n:'آرورا',         theme:'dark', accent:'#8b6cf0',layout:'grid', gstyle:'ring',  font:'m',density:'normal',gauges:['tir','gmi','avg','cv'],charts:{glucoseLine:1,weightLine:0,tirBar:1}},
+  {id:'mint',   n:'مینت',          theme:'light',accent:'#2f9e6b',layout:'grid', gstyle:'ring',  font:'m',density:'normal',gauges:['tir','tbr','tar'],    charts:{glucoseLine:1,weightLine:0,tirBar:1}},
+  {id:'slate',  n:'اسلیت',         theme:'light',accent:'#44566b',layout:'strip',gstyle:'speedo',font:'m',density:'normal',gauges:['tir','gmi','avg','cv'],charts:{glucoseLine:1,weightLine:1,tirBar:1}},
+  {id:'sunset', n:'غروب',          theme:'dark', accent:'#ef7d4e',layout:'grid', gstyle:'ring',  font:'m',density:'normal',gauges:['tir','avg','cv'],     charts:{glucoseLine:1,weightLine:1,tirBar:1}},
+  {id:'ocean',  n:'اقیانوس',       theme:'light',accent:'#2f7fd6',layout:'hero', gstyle:'ring',  font:'m',density:'normal',gauges:['tir','avg','gmi'],    charts:{glucoseLine:1,weightLine:1,tirBar:1}},
+  {id:'rose',   n:'رُز',           theme:'light',accent:'#c94a7c',layout:'grid', gstyle:'ring',  font:'m',density:'normal',gauges:['tir','gmi'],          charts:{glucoseLine:1,weightLine:1,tirBar:1}},
+  {id:'carbon', n:'کربن',          theme:'dark', accent:'#9aa7b4',layout:'strip',gstyle:'ticks', font:'m',density:'compact',gauges:['tir','gmi','avg','cv'],charts:{glucoseLine:1,weightLine:0,tirBar:1}},
+  {id:'minimal',n:'مینیمال',       theme:'light',accent:'#1f2937',layout:'strip',gstyle:'speedo',font:'m',density:'compact',gauges:[],                  charts:{glucoseLine:0,weightLine:0,tirBar:1}},
+  {id:'speedo', n:'کیلومترشمار',   theme:'light',accent:'#c0562f',layout:'grid', gstyle:'speedo',font:'m',density:'normal',gauges:['tir','gmi','avg','cv','tbr','tar'],charts:{glucoseLine:0,weightLine:0,tirBar:1}},
+  {id:'a1c',    n:'تمرکز بر A1c',  theme:'light',accent:'#7d5bd0',layout:'hero', gstyle:'ring',  font:'m',density:'normal',gauges:['gmi','avg','tir'],    charts:{glucoseLine:1,weightLine:0,tirBar:1}},
+  {id:'tirfoc', n:'تمرکز بر TIR',  theme:'light',accent:'#2f8f57',layout:'hero', gstyle:'ticks', font:'m',density:'normal',gauges:['tir','tbr','tar'],    charts:{glucoseLine:1,weightLine:0,tirBar:1}},
+  {id:'trend',  n:'روندها',        theme:'light',accent:'#3f7bd6',layout:'strip',gstyle:'ring',  font:'m',density:'normal',gauges:[],                    charts:{glucoseLine:1,weightLine:1,tirBar:0}},
+  {id:'big',    n:'فونتِ بزرگ',    theme:'light',accent:'#2a7d70',layout:'grid', gstyle:'ring',  font:'l',density:'roomy', gauges:['tir','avg'],          charts:{glucoseLine:1,weightLine:0,tirBar:1}},
+  {id:'dense',  n:'فشرده',         theme:'light',accent:'#1f2937',layout:'strip',gstyle:'speedo',font:'s',density:'compact',gauges:['tir','gmi','avg','cv'],charts:{glucoseLine:1,weightLine:0,tirBar:1}},
+  {id:'night',  n:'شب',            theme:'dark', accent:'#3fb9a3',layout:'grid', gstyle:'ticks', font:'m',density:'normal',gauges:['tir','gmi','avg','cv'],charts:{glucoseLine:1,weightLine:1,tirBar:1}},
+  {id:'royal',  n:'رویال',         theme:'dark', accent:'#6f7bf7',layout:'hero', gstyle:'ring',  font:'m',density:'roomy', gauges:['tir','gmi','avg'],    charts:{glucoseLine:1,weightLine:1,tirBar:1}},
+  {id:'full',   n:'همه‌چیز',        theme:'light',accent:'#2a7d70',layout:'grid', gstyle:'ring',  font:'m',density:'roomy', gauges:['tir','gmi','avg','cv','tbr','tar'],charts:{glucoseLine:1,weightLine:1,tirBar:1}}
 ];
 function dsApplyTemplate(id){ const t=DS_TEMPLATES.filter(x=>x.id===id)[0]; if(!t) return;
-  dsCfgSet({accent:t.accent,font:t.font,density:t.density,gauges:t.gauges.slice(),
-    charts:{glucoseLine:!!t.charts.glucoseLine,weightLine:!!t.charts.weightLine,tirBar:!!t.charts.tirBar},tmpl:id});
+  dsCfgSet({theme:t.theme,accent:t.accent,layout:t.layout,gstyle:t.gstyle,font:t.font,density:t.density,
+    gauges:t.gauges.slice(),charts:{glucoseLine:!!t.charts.glucoseLine,weightLine:!!t.charts.weightLine,tirBar:!!t.charts.tirBar},tmpl:id});
   renderDossierStudio(); }
+// کاورِ زندهٔ هر طرح: همان رندرِ واقعی، کوچک‌شده
+function dsTemplateCover(t,t0,t1){
+  const html=dsDashboardHTML(t0,t1,{theme:t.theme,accent:t.accent,layout:t.layout,gstyle:t.gstyle,
+    gauges:t.gauges.slice(0,t.layout==='hero'?4:4),charts:{glucoseLine:t.charts.glucoseLine,weightLine:0,tirBar:t.charts.tirBar}});
+  if(!html) return `<div class="dsc-empty">پیش‌نمایش پس از ثبتِ قند</div>`;
+  return `<div class="dsc-scale"><div class="dsc-inner" style="width:620px">${html}</div></div>`;
+}
 
 // آمارِ قندِ بازه برای گیج‌ها و نمودار (مستقل از بخشِ متن)
 function dsGlu(t0,t1){ const A=+t0,B=+t1; const inR=t=>t>=A&&t<=B;
@@ -4102,19 +4123,131 @@ function dsLineSVG(title,pts,opt){ opt=opt||{}; if(!pts||pts.length<2) return ''
   const poly=pts.map(p=>X(p.t).toFixed(1)+','+Y(p.g).toFixed(1)).join(' ');
   const dots=(opt.dots?pts:[]).map(p=>`<circle cx="${X(p.t).toFixed(1)}" cy="${Y(p.g).toFixed(1)}" r="2.6" fill="${opt.color||'#2a7d70'}"/>`).join('');
   const lbl=`<text x="${pl}" y="${(H-4)}" font-size="9" fill="#999">${faDigits(_dsNum(gMin,0))}</text><text x="${pl}" y="${pt+8}" font-size="9" fill="#999">${faDigits(_dsNum(gMax,0))}</text>`;
-  return `<div class="chart"><div class="chart-t">${title}</div><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:150px">${grid}${lbl}<polyline points="${poly}" fill="none" stroke="${opt.color||'#2a7d70'}" stroke-width="1.8" stroke-linejoin="round"/>${dots}</svg></div>`; }
+  const svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${opt.bare?130:150}px">${grid}${lbl}<polyline points="${poly}" fill="none" stroke="${opt.color||'#2a7d70'}" stroke-width="1.8" stroke-linejoin="round"/>${dots}</svg>`;
+  return opt.bare?svg:`<div class="chart"><div class="chart-t">${title}</div>${svg}</div>`; }
 function dsWeightPts(t0,t1){ const A=+t0,B=+t1;
   return _dsJl('weight_log_v1').filter(x=>x&&x.iso&&x.kg&&(+new Date(x.iso))>=A&&(+new Date(x.iso))<=B)
     .map(x=>({t:+new Date(x.iso),g:parseFloat(x.kg)})).filter(x=>isFinite(x.g)).sort((a,b)=>a.t-b.t); }
-// بلوکِ داشبوردِ بالای PDF (گیج‌ها + نوار + نمودارها)
-function dsDashboardHTML(t0,t1){ const c=dsCfg(); const m=dsGlu(t0,t1);
-  let gz=''; if(m && c.gauges.length) gz=`<div class="gauges">`+c.gauges.map(k=>dsGaugeSVG(k,m)).join('')+`</div>`;
-  let ch='';
-  if(m && c.charts.tirBar) ch+=dsTIRBarSVG(m);
-  if(m && c.charts.glucoseLine && m.pts.length>=2) ch+=dsLineSVG('روندِ قند',m.pts,{band:[70,180],color:c.accent,gMin:0});
-  if(c.charts.weightLine){ const wp=dsWeightPts(t0,t1); if(wp.length>=2) ch+=dsLineSVG('روندِ وزن',wp,{dots:true,color:c.accent}); }
-  if(!gz&&!ch) return '';
-  return `<div class="dashblock">${gz}${ch}</div>`; }
+/* ── سبک‌های گیج: حلقه‌ای، خط‌چینِ شعاعی، و نیم‌دایره ── */
+function _dsPt(cx,cy,r,a){ const t=(a-90)*Math.PI/180; return [cx+r*Math.cos(t), cy+r*Math.sin(t)]; }
+function _dsArcD(cx,cy,r,a0,a1){ const s=_dsPt(cx,cy,r,a0), e=_dsPt(cx,cy,r,a1);
+  const la=((a1-a0)%360+360)%360>180?1:0;
+  return `M ${s[0].toFixed(2)} ${s[1].toFixed(2)} A ${r} ${r} 0 ${la} 1 ${e[0].toFixed(2)} ${e[1].toFixed(2)}`; }
+function _dsGV(key,m){ const D=DS_GAUGE_DEFS[key]; if(!D||!m) return null;
+  const v=m[key]; if(v==null||!isFinite(v)) return null;
+  const f=Math.max(0,Math.min(1,(v-D.min)/(D.max-D.min)));
+  let col=D.zones[D.zones.length-1][1]; for(const z of D.zones){ if(v<=z[0]){ col=z[1]; break; } }
+  const disp=(key==='avg')?String(Math.round(v)):(key==='gmi'?(Math.round(v*10)/10).toFixed(1):String(Math.round(v)));
+  return {D,v,f,col,disp}; }
+// حلقهٔ ۲۷۰ درجه با سرِ گرد — شبیهٔ کارت‌های ترموستات
+function dsGaugeRing(key,m,big){
+  const g=_dsGV(key,m); if(!g) return '';
+  const S=big?190:150, cx=S/2, cy=S/2, r=S/2-(big?17:14), sw=big?15:12;
+  const A0=-135, SPAN=270;
+  let zs=''; let prev=g.D.min;
+  g.D.zones.forEach(z=>{ const f0=(prev-g.D.min)/(g.D.max-g.D.min), f1=(z[0]-g.D.min)/(g.D.max-g.D.min);
+    if(f1>f0) zs+=`<path d="${_dsArcD(cx,cy,r,A0+SPAN*f0,A0+SPAN*Math.min(1,f1))}" fill="none" stroke="${z[1]}" stroke-width="${sw*0.32}" opacity=".38" stroke-linecap="butt"/>`;
+    prev=z[0]; });
+  const pa=A0+SPAN*g.f;
+  const knob=_dsPt(cx,cy,r,pa);
+  return `<div class="dg"><svg viewBox="0 0 ${S} ${S}">
+    <path d="${_dsArcD(cx,cy,r,A0,A0+SPAN)}" fill="none" stroke="var(--dtrack)" stroke-width="${sw}" stroke-linecap="round"/>
+    ${zs}
+    <path d="${_dsArcD(cx,cy,r,A0,pa)}" fill="none" stroke="${g.col}" stroke-width="${sw}" stroke-linecap="round"/>
+    <circle cx="${knob[0].toFixed(2)}" cy="${knob[1].toFixed(2)}" r="${sw*0.42}" fill="${g.col}" stroke="var(--dpanel)" stroke-width="2.5"/>
+    <text x="${cx}" y="${cy+(big?4:3)}" text-anchor="middle" font-size="${big?42:34}" font-weight="800" fill="var(--dink)">${faDigits(g.disp)}</text>
+    <text x="${cx}" y="${cy+(big?26:21)}" text-anchor="middle" font-size="${big?13:11}" fill="var(--dmuted)">${g.D.unit||'mg/dL'}</text>
+  </svg><div class="dg-l">${g.D.label}</div></div>`;
+}
+// خط‌چینِ شعاعی — شبیهٔ ترموستاتِ Lovelace
+function dsGaugeTicks(key,m,big){
+  const g=_dsGV(key,m); if(!g) return '';
+  const S=big?190:150, cx=S/2, cy=S/2, R=S/2-(big?10:8), A0=-135, SPAN=270;
+  const N=big?56:44; let tk='';
+  for(let i=0;i<=N;i++){ const f=i/N, a=A0+SPAN*f;
+    const on=f<=g.f; const L=on?(big?15:12):(big?10:8);
+    const p1=_dsPt(cx,cy,R,a), p2=_dsPt(cx,cy,R-L,a);
+    tk+=`<line x1="${p1[0].toFixed(1)}" y1="${p1[1].toFixed(1)}" x2="${p2[0].toFixed(1)}" y2="${p2[1].toFixed(1)}" stroke="${on?g.col:'var(--dtrack)'}" stroke-width="${big?2.6:2.1}" stroke-linecap="round" opacity="${on?1:.55}"/>`; }
+  return `<div class="dg"><svg viewBox="0 0 ${S} ${S}">
+    <circle cx="${cx}" cy="${cy}" r="${R-(big?22:18)}" fill="var(--ddisc)"/>
+    ${tk}
+    <text x="${cx}" y="${cy+(big?5:4)}" text-anchor="middle" font-size="${big?44:35}" font-weight="800" fill="var(--dink)">${faDigits(g.disp)}</text>
+    <text x="${cx}" y="${cy+(big?27:22)}" text-anchor="middle" font-size="${big?13:11}" fill="var(--dmuted)">${g.D.unit||'mg/dL'}</text>
+  </svg><div class="dg-l">${g.D.label}</div></div>`;
+}
+function dsGaugeAny(key,m,style,big){
+  if(style==='ticks') return dsGaugeTicks(key,m,big);
+  if(style==='speedo') return dsGaugeSVG(key,m);
+  return dsGaugeRing(key,m,big);
+}
+// کارتِ آماری کوچک
+function dsStatCard(ic,label,val,sub,col){
+  return `<div class="dcard"><div class="dc-ic" style="background:${col}1f;color:${col}">${ic}</div>
+    <div class="dc-b"><div class="dc-l">${label}</div><div class="dc-v">${val}</div>${sub?`<div class="dc-s">${sub}</div>`:''}</div></div>`;
+}
+/* ── CSSِ داشبورد (هم در سندِ چاپ، هم در پیش‌نمایش/کاورِ داخلِ برنامه) ── */
+function dsDashCSS(c){
+  const dark=c.theme==='dark';
+  const P={ bg:dark?'#101a26':'#f6f8fa', panel:dark?'#18242f':'#ffffff', ink:dark?'#eaf1f8':'#18232e',
+    muted:dark?'#8fa3b8':'#6d7a89', line:dark?'#26374a':'#e6ebf1', track:dark?'#243545':'#e9eef3',
+    disc:dark?'#131e29':'#f2f6f9' };
+  return `.dsdash{--dpanel:${P.panel};--dink:${P.ink};--dmuted:${P.muted};--dline:${P.line};--dtrack:${P.track};--ddisc:${P.disc};
+  background:${P.bg};color:${P.ink};border-radius:18px;padding:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.dsdash *{box-sizing:border-box}
+.dsdash .dsec{display:grid;gap:10px}
+.dsdash .dhero{display:grid;grid-template-columns:1.15fr 1fr;gap:10px;align-items:stretch}
+.dsdash .dg-wrap{background:${P.panel};border:1px solid ${P.line};border-radius:16px;padding:12px;display:flex;align-items:center;justify-content:center}
+.dsdash .dg-side{display:grid;gap:8px;align-content:center}
+.dsdash .dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px}
+.dsdash .dstrip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.dsdash .dg{background:${P.panel};border:1px solid ${P.line};border-radius:16px;padding:10px 8px 8px;text-align:center}
+.dsdash .dg svg{width:100%;height:auto;display:block}
+.dsdash .dg-l{font-size:11px;color:${P.muted};margin-top:4px;font-weight:600}
+.dsdash .dcard{background:${P.panel};border:1px solid ${P.line};border-radius:14px;padding:10px 11px;display:flex;align-items:center;gap:9px}
+.dsdash .dc-ic{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto}
+.dsdash .dc-b{min-width:0;flex:1}
+.dsdash .dc-l{font-size:10px;color:${P.muted}}
+.dsdash .dc-v{font-size:17px;font-weight:800;color:${P.ink};line-height:1.25}
+.dsdash .dc-s{font-size:9.5px;color:${P.muted}}
+.dsdash .dpanel{background:${P.panel};border:1px solid ${P.line};border-radius:16px;padding:12px}
+.dsdash .dpt{font-size:11.5px;font-weight:700;color:${P.ink};margin-bottom:7px;display:flex;justify-content:space-between;align-items:center}
+.dsdash .dpt span{font-size:10px;color:${P.muted};font-weight:600}
+.dsdash .dbar{display:flex;height:26px;border-radius:8px;overflow:hidden}
+.dsdash .dbar i{display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:#fff;font-style:normal}
+.dsdash .dleg{display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:${P.muted};margin-top:7px}
+.dsdash .dleg b{display:inline-block;width:10px;height:8px;border-radius:2px;margin-left:4px}
+.dsdash .dchart svg{width:100%;height:auto;display:block}`;
+}
+/* ── مولدِ داشبورد ── */
+function dsDashboardHTML(t0,t1,over){
+  const c=Object.assign(dsCfg(),over||{}); const m=dsGlu(t0,t1);
+  const gs=c.gauges||[], st=c.gstyle||'ring', lay=c.layout||'grid';
+  let out='';
+  if(m && gs.length){
+    if(lay==='hero'){
+      const side=gs.slice(1,4).map(k=>{ const g=_dsGV(k,m); return g?dsStatCard('◉',g.D.label,faDigits(g.disp)+(g.D.unit||''),'',g.col):''; }).join('');
+      out+=`<div class="dhero"><div class="dg-wrap">${dsGaugeAny(gs[0],m,st,true)}</div><div class="dg-side">${side}</div></div>`;
+    } else if(lay==='strip'){
+      out+=`<div class="dstrip">`+gs.map(k=>dsGaugeAny(k,m,st,false)).join('')+`</div>`;
+    } else {
+      out+=`<div class="dgrid">`+gs.map(k=>dsGaugeAny(k,m,st,false)).join('')+`</div>`;
+    }
+  }
+  const ch=[];
+  if(m && c.charts.tirBar){
+    const segs=[[m.tbr,'#e0685f','زیر ۷۰'],[m.tir,'#3fa06f','در محدوده'],[m.tar,'#e0a355','بالای ۱۸۰']];
+    ch.push(`<div class="dpanel"><div class="dpt">زمان در محدوده‌ها <span>${faDigits(m.n)} اندازه‌گیری</span></div>
+      <div class="dbar">`+segs.map(s=>s[0]>0.5?`<i style="width:${s[0].toFixed(1)}%;background:${s[1]}">${s[0]>9?faDigits(Math.round(s[0]))+'٪':''}</i>`:'').join('')+`</div>
+      <div class="dleg">`+segs.map(s=>`<span><b style="background:${s[1]}"></b>${s[2]} ${faDigits(Math.round(s[0]))}٪</span>`).join('')+`</div></div>`);
+  }
+  if(m && c.charts.glucoseLine && m.pts.length>=2)
+    ch.push(`<div class="dpanel dchart"><div class="dpt">روندِ قند <span>${_dsJ(t0)} تا ${_dsJ(t1)}</span></div>${dsLineSVG('',m.pts,{band:[70,180],color:c.accent,gMin:0,bare:1})}</div>`);
+  if(c.charts.weightLine){ const wp=dsWeightPts(t0,t1);
+    if(wp.length>=2) ch.push(`<div class="dpanel dchart"><div class="dpt">روندِ وزن <span>${faDigits(_dsNum(wp[0].g,1))} → ${faDigits(_dsNum(wp[wp.length-1].g,1))} کیلو</span></div>${dsLineSVG('',wp,{dots:true,color:c.accent,bare:1})}</div>`); }
+  if(ch.length) out+=`<div class="dsec" style="margin-top:10px">`+ch.join('')+`</div>`;
+  if(!out) return '';
+  return `<div class="dsdash">${out}</div>`;
+}
 
 /* ── لوگوی سربرگ ── */
 const DS_APP_LOGO_SVG='<svg viewBox="0 0 24 24" width="34" height="34" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.4S4.8 9.7 4.8 14.8a7.2 7.2 0 1 0 14.4 0C19.2 9.7 12 2.4 12 2.4Z" fill="__A__"/><path d="M7.4 15.1h2.3l1.1-2.5 1.6 4.1 1.1-1.6h2.1" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -4139,36 +4272,133 @@ function openDossierStudio(){ try{ ensureChatCss&&ensureChatCss(); }catch(e){}
   document.body.appendChild(bg); renderDossierStudio();
 }
 function renderDossierStudio(){ const box=document.getElementById('dsStudioBody'); if(!box){ try{ renderDossierTab(); }catch(e){} return; }
-  const c=dsCfg();
+  const c=dsCfg(); const [t0,t1]=dsBounds();
+  try{ let st=document.getElementById('dsDashStyle'); if(!st){ st=document.createElement('style'); st.id='dsDashStyle'; document.head.appendChild(st); }
+       st.textContent=DS_TEMPLATES.map(t=>dsDashCSS({theme:t.theme}).replace(/\.dsdash/g,'.dsc-'+t.id+' .dsdash')).join('\n')+'\n'+dsDashCSS(c); }catch(e){}
   const fontOpts=[['s','کوچک'],['m','متوسط'],['l','بزرگ'],['xl','خیلی بزرگ']];
   const densOpts=[['compact','فشرده'],['normal','معمولی'],['roomy','باز']];
+  const layOpts=[['hero','قهرمان (یک بزرگ)'],['grid','شبکه‌ای'],['strip','نواری']];
+  const gstOpts=[['ring','حلقه‌ای'],['ticks','خط‌چینِ شعاعی'],['speedo','نیم‌دایره']];
   let h='';
-  // تمپلیت‌ها
-  h+=`<div class="ds-slab">قالب‌های آماده</div><div class="ds-tmpls">`+
-    DS_TEMPLATES.map(t=>`<button type="button" class="ds-tmpl${c.tmpl===t.id?' on':''}" onclick="dsApplyTemplate('${t.id}')">
-      <span class="ds-tmpl-sw" style="background:${t.accent}"></span>${escVision(t.n)}</button>`).join('')+`</div>`;
-  // فونت
-  h+=`<div class="ds-slab">اندازهٔ فونت</div><div class="ds-chips">`+
-    fontOpts.map(o=>`<button type="button" class="ds-chip${c.font===o[0]?' on':''}" onclick="dsCfgSet({font:'${o[0]}',tmpl:''});renderDossierStudio()">${o[1]}</button>`).join('')+`</div>`;
-  // تراکم
-  h+=`<div class="ds-slab">تراکمِ چیدمان</div><div class="ds-chips">`+
-    densOpts.map(o=>`<button type="button" class="ds-chip${c.density===o[0]?' on':''}" onclick="dsCfgSet({density:'${o[0]}',tmpl:''});renderDossierStudio()">${o[1]}</button>`).join('')+`</div>`;
-  // رنگ
+  h+=`<div class="ds-slab">طرحِ داشبورد — یکی را انتخاب کن</div><div class="ds-covers">`+
+    DS_TEMPLATES.map(t=>`<button type="button" class="ds-cov${c.tmpl===t.id?' on':''} dsc-${t.id}" onclick="dsApplyTemplate('${t.id}')">
+      <div class="dsc-box">${dsTemplateCover(t,t0,t1)}</div>
+      <div class="dsc-cap"><span class="dsc-dot" style="background:${t.accent}"></span>${escVision(t.n)}
+        <i>${t.theme==='dark'?'تیره':'روشن'}</i></div></button>`).join('')+`</div>`;
+  h+=`<div class="ds-slab">چیدمان</div><div class="ds-chips">`+
+    layOpts.map(o=>`<button type="button" class="ds-chip${c.layout===o[0]?' on':''}" onclick="dsCfgSet({layout:'${o[0]}',tmpl:''});renderDossierStudio()">${o[1]}</button>`).join('')+`</div>`;
+  h+=`<div class="ds-slab">سبکِ گیج</div><div class="ds-chips">`+
+    gstOpts.map(o=>`<button type="button" class="ds-chip${c.gstyle===o[0]?' on':''}" onclick="dsCfgSet({gstyle:'${o[0]}',tmpl:''});renderDossierStudio()">${o[1]}</button>`).join('')+`</div>`;
+  h+=`<div class="ds-slab">تم</div><div class="ds-chips">`+
+    [['light','روشن'],['dark','تیره']].map(o=>`<button type="button" class="ds-chip${c.theme===o[0]?' on':''}" onclick="dsCfgSet({theme:'${o[0]}',tmpl:''});renderDossierStudio()">${o[1]}</button>`).join('')+`</div>`;
+  h+=`<div class="ds-slab">شاخص‌های گیج</div><div class="ds-chips">`+
+    DS_GAUGE_ALL.map(g=>`<button type="button" class="ds-chip${c.gauges.indexOf(g)>=0?' on':''}" onclick="dsCfgToggleGauge('${g}')">${DS_GAUGE_DEFS[g].label}</button>`).join('')+`</div>`;
+  h+=`<div class="ds-slab">نمودارها</div><div class="ds-chips">`+
+    [['glucoseLine','خطِ قند'],['weightLine','خطِ وزن'],['tirBar','نوارِ TIR']].map(o=>`<button type="button" class="ds-chip${c.charts[o[0]]?' on':''}" onclick="dsCfgToggleChart('${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
   h+=`<div class="ds-slab">رنگِ اصلی</div><div class="ds-chips">`+
     DS_ACCENTS.map(a=>`<button type="button" class="ds-sw${c.accent===a?' on':''}" style="background:${a}" onclick="dsCfgSet({accent:'${a}',tmpl:''});renderDossierStudio()"></button>`).join('')+`</div>`;
-  // لوگو
+  h+=`<div class="ds-slab">اندازهٔ فونت</div><div class="ds-chips">`+
+    fontOpts.map(o=>`<button type="button" class="ds-chip${c.font===o[0]?' on':''}" onclick="dsCfgSet({font:'${o[0]}',tmpl:''});renderDossierStudio()">${o[1]}</button>`).join('')+`</div>`;
+  h+=`<div class="ds-slab">تراکمِ چیدمان</div><div class="ds-chips">`+
+    densOpts.map(o=>`<button type="button" class="ds-chip${c.density===o[0]?' on':''}" onclick="dsCfgSet({density:'${o[0]}',tmpl:''});renderDossierStudio()">${o[1]}</button>`).join('')+`</div>`;
   h+=`<div class="ds-slab">لوگوی سربرگ</div><div class="ds-chips">`+
     [['app','لوگوی برنامه'],['custom','عکسِ من'],['none','بدونِ لوگو']].map(o=>`<button type="button" class="ds-chip${c.logo===o[0]?' on':''}" onclick="dsCfgSet({logo:'${o[0]}',tmpl:''});renderDossierStudio()">${o[1]}</button>`).join('')+`</div>`;
   h+=`<label class="ds-upl">🖼 انتخابِ عکسِ لوگو<input type="file" accept="image/*" onchange="dsLogoUpload(this)" hidden></label>`;
   if(c.logo==='custom'&&c.logoData) h+=`<div class="ds-logopv"><img src="${c.logoData}" alt=""></div>`;
-  // گیج‌ها
-  h+=`<div class="ds-slab">گیج‌های کیلومترشمار</div><div class="ds-chips">`+
-    DS_GAUGE_ALL.map(g=>`<button type="button" class="ds-chip${c.gauges.indexOf(g)>=0?' on':''}" onclick="dsCfgToggleGauge('${g}')">${DS_GAUGE_DEFS[g].label}</button>`).join('')+`</div>`;
-  // نمودارها
-  h+=`<div class="ds-slab">نمودارها</div><div class="ds-chips">`+
-    [['glucoseLine','خطِ قند'],['weightLine','خطِ وزن'],['tirBar','نوارِ TIR']].map(o=>`<button type="button" class="ds-chip${c.charts[o[0]]?' on':''}" onclick="dsCfgToggleChart('${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
   box.innerHTML=h;
-  try{ renderDossierTab(); }catch(e){}   // پیش‌نمایشِ تب هم به‌روز شود
+  try{ renderDossierTab(); }catch(e){}
+}
+
+/* ── یافته‌های کلیدی برای خلاصهٔ پزشک ── */
+function dsFindings(t0,t1){
+  const F=[]; const m=dsGlu(t0,t1);
+  if(m){
+    if(m.tir>=70) F.push(['good','زمان در محدوده مطلوب است ('+faDigits(Math.round(m.tir))+'٪ ≥ ۷۰٪).']);
+    else F.push(['warn','زمان در محدوده کمتر از هدف است ('+faDigits(Math.round(m.tir))+'٪ در برابر هدفِ ۷۰٪).']);
+    if(m.tbr>4) F.push(['bad','زمانِ افتِ قند بالاتر از حدِ مجاز است ('+faDigits(Math.round(m.tbr))+'٪ زیرِ ۷۰؛ هدف < ۴٪).']);
+    if(m.tar>25) F.push(['warn','زمانِ قندِ بالا زیاد است ('+faDigits(Math.round(m.tar))+'٪ بالای ۱۸۰).']);
+    if(m.cv>36) F.push(['warn','نوسانِ قند بالاست (CV '+faDigits(Math.round(m.cv))+'٪؛ هدف < ۳۶٪).']);
+    else F.push(['good','نوسانِ قند پایدار است (CV '+faDigits(Math.round(m.cv))+'٪).']);
+    F.push(['info','HbA1c تخمینی (GMI): '+faDigits((Math.round(m.gmi*10)/10).toFixed(1))+'٪ · میانگین '+faDigits(Math.round(m.avg))+' mg/dL.']);
+  } else F.push(['info','در این بازه دادهٔ قندی ثبت نشده است.']);
+  try{ const wp=dsWeightPts(new Date(0),t1);
+    if(wp.length>=2){ const d=wp[wp.length-1].g-wp[0].g;
+      F.push([d<0?'good':'info','تغییرِ وزن از ابتدای ثبت: '+(d>0?'+':'')+faDigits(_dsNum(d,1))+' کیلو (فعلی '+faDigits(_dsNum(wp[wp.length-1].g,1))+').']); } }catch(e){}
+  try{ const ins=dsBuild('insulin',t0,t1); const tdd=ins.stats.filter(x=>/TDD/.test(x[0]))[0];
+    if(tdd) F.push(['info','میانگینِ انسولینِ روزانه: '+tdd[1]+'.']); }catch(e){}
+  try{ const wd=dsBuild('watchdog',t0,t1); const av=wd.stats.filter(x=>/میانگینِ امتیاز/.test(x[0]))[0];
+    if(av) F.push(['info','میانگینِ امتیازِ پایبندیِ روزانه: '+av[1]+'.']); }catch(e){}
+  return F;
+}
+
+/* ── خلاصهٔ یک‌صفحه‌ایِ پرونده برای پزشک ── */
+function dsPrintSummary(){
+  const [t0,t1]=dsBounds(); const c=dsCfg(); const dark=c.theme==='dark';
+  const win=window.open('','_blank');
+  if(!win){ alert('برای دریافت PDF، اجازه‌ی باز شدن پنجره را بده (popup).'); return; }
+  let name=''; try{ const pr=profGet()||{}; name=String(pr.firstName||'').trim(); }catch(e){}
+  let age='',sex=''; try{ const pr=profGet()||{}; age=String(pr.age||''); sex=String(pr.gender||pr.sex||''); }catch(e){}
+  const FS={s:11,m:13,l:15,xl:17}[c.font]||13; const AC=c.accent||'#2a7d70';
+  const P={ bg:dark?'#0c141d':'#ffffff', panel:dark?'#18242f':'#ffffff', ink:dark?'#eaf1f8':'#18232e',
+    muted:dark?'#8fa3b8':'#6d7a89', line:dark?'#26374a':'#e6ebf1' };
+  const F=dsFindings(t0,t1);
+  const fcol={good:'#2f9e6b',warn:'#d8912f',bad:'#d85a50',info:AC};
+  const fico={good:'✓',warn:'!',bad:'▲',info:'•'};
+  const dash=dsDashboardHTML(t0,t1);
+  // جدولِ فشردهٔ اعداد کلیدی
+  const rows=[];
+  ['glucose','insulin','nutrition','exercise','meds','body'].forEach(k=>{
+    const S=DS_SECTIONS.filter(x=>x.k===k)[0]; if(!S) return;
+    let R; try{ R=dsBuild(k,t0,t1); }catch(e){ return; }
+    if(!R||!R.stats.length) return;
+    rows.push(`<tr><td class="kk">${S.ic} ${S.t}</td><td class="vv">`+
+      R.stats.slice(0,5).map(x=>`<span class="kv"><i>${x[0]}</i>${x[1]}</span>`).join('')+`</td></tr>`);
+  });
+  const qs=dsQs();
+  win.document.write(`<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="UTF-8">
+  <title>خلاصهٔ پرونده — برای پزشک</title>
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+    *{font-family:Vazirmatn,sans-serif;box-sizing:border-box}
+    body{margin:0;padding:18px;background:${P.bg};color:${P.ink};font-size:${FS}px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .rhead{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:2px solid ${AC};padding-bottom:10px;margin-bottom:14px}
+    .hleft{display:flex;align-items:center;gap:12px}
+    h1{font-size:${FS+7}px;color:${AC};margin:0}
+    .sub{font-size:${FS-2}px;color:${P.muted};margin-top:3px}
+    .meta{text-align:left;font-size:${FS-3}px;color:${P.muted};line-height:1.8}
+    ${dsDashCSS(c)}
+    .find{margin:14px 0}
+    .find h2,.blk h2{font-size:${FS}px;margin:0 0 8px;color:${P.ink}}
+    .fl{display:grid;gap:6px}
+    .fi{display:flex;gap:8px;align-items:flex-start;background:${P.panel};border:1px solid ${P.line};border-radius:11px;padding:8px 10px;font-size:${FS-1}px;line-height:1.8}
+    .fi b{flex:0 0 auto;width:19px;height:19px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px}
+    table{width:100%;border-collapse:collapse;margin-top:6px}
+    td{border:1px solid ${P.line};padding:7px 9px;vertical-align:top}
+    td.kk{width:30%;font-weight:700;font-size:${FS-2}px;background:${AC}12}
+    td.vv{font-size:${FS-3}px}
+    .kv{display:inline-block;margin:2px 0 2px 14px;color:${P.ink}}
+    .kv i{color:${P.muted};font-style:normal;margin-left:5px}
+    .qs{margin:6px 0 0;padding:0 18px 0 0;font-size:${FS-1}px;line-height:2.1}
+    .foot{font-size:${FS-3}px;color:${P.muted};margin-top:16px;border-top:1px solid ${P.line};padding-top:10px;line-height:1.9}
+    .btn{background:#2a9d8f;color:#fff;border:none;padding:12px 20px;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit}
+    @media print{ body{padding:6px} .noprint{display:none} .fi,.blk,.dsdash{break-inside:avoid} }
+  </style></head><body>
+  <div class="noprint" style="text-align:center;margin-bottom:14px"><button class="btn" onclick="window.print()">🖨 چاپ / ذخیره به‌صورت PDF</button></div>
+  <div class="rhead">
+    <div class="hleft">${dsLogoHTML()?`<div>${dsLogoHTML()}</div>`:''}
+      <div><h1>خلاصهٔ پرونده${name?(' — '+escVision(name)):''}</h1>
+      <div class="sub">${[age?('سن '+faDigits(age)):'',sex?escVision(sex):''].filter(Boolean).join(' · ')||'گزارشِ فشرده برای ویزیت'}</div></div></div>
+    <div class="meta">بازه: ${_dsJ(t0)} تا ${_dsJ(t1)}<br>${faDigits(dsRange())} روز · تولید ${_dsJ(new Date())}</div>
+  </div>
+  ${dash}
+  <div class="find"><h2>یافته‌های کلیدی</h2><div class="fl">`+
+    F.map(f=>`<div class="fi"><b style="background:${fcol[f[0]]}">${fico[f[0]]}</b><span>${escVision(f[1])}</span></div>`).join('')+
+  `</div></div>
+  <div class="blk"><h2>اعدادِ کلیدی</h2><table>${rows.join('')}</table></div>
+  ${qs.length?`<div class="blk" style="margin-top:14px"><h2>سؤال‌های بیمار</h2><ol class="qs">`+qs.map(q=>`<li>${escVision(q)}</li>`).join('')+`</ol></div>`:''}
+  <div class="foot">این خلاصه از داده‌هایی ساخته شده که بیمار خودش در یک اپِ شخصی ثبت کرده است و آموزشی است — جایگزینِ گزارشِ رسمیِ دستگاه یا نظرِ پزشک نیست.</div>
+  </body></html>`);
+  win.document.close();
 }
 
 /* ── رندرِ تبِ پرونده ─────────────────────────────────────── */
@@ -4184,7 +4414,8 @@ function renderDossierTab(){
     <div class="ds-range"><span class="ds-range-l">بازه:</span>${segs}</div>
     <div class="ds-dates">${_dsJ(t0)} تا ${_dsJ(t1)}</div>
     <button class="add-btn ds-all" onclick="dsPrint(null)">📄 پروندهٔ کامل (${faDigits(pick.length)} بخش) — PDF</button>
-    <button class="ds-studio-btn" onclick="openDossierStudio()">🎨 طراحیِ گزارش (قالب، فونت، لوگو، نمودار و گیج)</button>
+    <button class="add-btn ds-all ds-sum" onclick="dsPrintSummary()">⚡ خلاصهٔ یک‌صفحه‌ای برای پزشک — PDF</button>
+    <button class="ds-studio-btn" onclick="openDossierStudio()">🎨 طراحیِ داشبورد و گزارش (۲۰ طرح با پیش‌نمایش)</button>
     <div class="ds-hint">تیکِ هر بخش تعیین می‌کند در «پروندهٔ کامل» بیاید یا نه. هر بخش هم PDF جداگانه دارد.</div>
   </div>`;
   // پیش‌نمایشِ داشبورد (گیج/نمودار) طبقِ تنظیماتِ استودیو
@@ -4229,6 +4460,9 @@ function dsPrint(only){
   const GAP={compact:12,normal:20,roomy:30}[dc.density]||20;
   const PAD={compact:8,normal:12,roomy:16}[dc.density]||12;
   const AC=dc.accent||'#2a7d70';
+  const _dk=dc.theme==='dark';
+  const PP={ bg:_dk?'#0c141d':'#fff', panel:_dk?'#18242f':'#fff', ink:_dk?'#eaf1f8':'#222',
+             muted:_dk?'#8fa3b8':'#666', line:_dk?'#26374a':'#eee', head:_dk?'#1d2a37':'#f0f4f4' };
   const logo=(only?'':dsLogoHTML());               // لوگو فقط در پروندهٔ کامل
   const dash=only?'':dsDashboardHTML(t0,t1);        // داشبورد فقط در پروندهٔ کامل
   const title = only ? (DS_SECTIONS.filter(s=>s.k===only)[0]||{}).t : 'پروندهٔ کامل';
@@ -4255,14 +4489,15 @@ function dsPrint(only){
   <style>
     @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
     *{font-family:Vazirmatn,sans-serif;box-sizing:border-box}
-    body{margin:0;padding:20px;color:#222;background:#fff;font-size:${FS}px}
+    body{margin:0;padding:20px;color:${PP.ink};background:${PP.bg};font-size:${FS}px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    ${dsDashCSS(dc)}
     .rhead{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid ${AC};padding-bottom:10px;margin-bottom:16px;gap:12px}
     .rhead .hleft{display:flex;align-items:center;gap:12px}
     .rlogo{flex:0 0 auto;display:flex;align-items:center}
     h1{font-size:${FS+6}px;color:${AC};margin:0}
-    .rhead .meta{text-align:left;font-size:11px;color:#666;line-height:1.7}
+    .rhead .meta{text-align:left;font-size:11px;color:${PP.muted};line-height:1.7}
     .sec{margin-bottom:${GAP}px;break-inside:avoid}
-    .sec h2{font-size:${FS+1}px;margin:0 0 10px;color:#333;background:${AC}14;padding:${PAD-2}px 11px;border-radius:5px;border-right:3px solid ${AC}}
+    .sec h2{font-size:${FS+1}px;margin:0 0 10px;color:${PP.ink};background:${AC}22;padding:${PAD-2}px 11px;border-radius:5px;border-right:3px solid ${AC}}
     .st{padding:${PAD-4}px ${PAD-2}px}
     .dashblock{margin-bottom:${GAP}px}
     .gauges{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:14px}
@@ -4275,17 +4510,17 @@ function dsPrint(only){
     .leg .lg{display:flex;align-items:center;gap:4px}
     .leg i{width:12px;height:9px;border-radius:2px;display:inline-block}
     .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
-    .st{border:1px solid #e2e2e2;border-radius:7px;padding:7px 9px;display:flex;flex-direction:column;gap:3px}
-    .st span{font-size:10px;color:#777}
-    .st b{font-size:14px;font-weight:800;color:#222}
-    .tcap{font-size:11.5px;color:#555;font-weight:700;margin:10px 0 4px}
+    .st{border:1px solid ${PP.line};background:${PP.panel};border-radius:7px;padding:7px 9px;display:flex;flex-direction:column;gap:3px}
+    .st span{font-size:10px;color:${PP.muted}}
+    .st b{font-size:14px;font-weight:800;color:${PP.ink}}
+    .tcap{font-size:11.5px;color:${PP.muted};font-weight:700;margin:10px 0 4px}
     .rtbl{width:100%;border-collapse:collapse;font-size:11px}
-    .rtbl th{background:#f0f4f4;padding:6px 5px;text-align:center;font-weight:700;border:1px solid #e0e0e0;color:#444}
-    .rtbl td{padding:5px;text-align:center;border:1px solid #eee;vertical-align:middle}
-    .rtbl tbody tr:nth-child(even){background:#fafafa}
+    .rtbl th{background:${PP.head};padding:6px 5px;text-align:center;font-weight:700;border:1px solid ${PP.line};color:${PP.ink}}
+    .rtbl td{padding:5px;text-align:center;border:1px solid ${PP.line};vertical-align:middle}
+    .rtbl tbody tr:nth-child(even){background:${_dk?'#141f2a':'#fafafa'}}
     .rtbl td.tc-wide{text-align:right;white-space:normal;line-height:1.95;min-width:220px}
-    .none{font-size:11.5px;color:#999;padding:8px 2px}
-    .foot{font-size:10.5px;color:#888;margin-top:18px;line-height:1.8;border-top:1px solid #eee;padding-top:12px}
+    .none{font-size:11.5px;color:${PP.muted};padding:8px 2px}
+    .foot{font-size:10.5px;color:${PP.muted};margin-top:18px;line-height:1.8;border-top:1px solid ${PP.line};padding-top:12px}
     .btn{background:#2a9d8f;color:#fff;border:none;padding:12px 20px;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit}
     @media print{ body{padding:8px} .noprint{display:none} .sec{break-inside:avoid} .rtbl{break-inside:auto} tr{break-inside:avoid} }
   </style></head><body>
