@@ -315,18 +315,18 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .theme-nm{flex:1;font-size:12.5px;font-weight:700;color:var(--ink);text-align:right;line-height:1.4}
 .theme-ck{flex:0 0 auto;color:var(--teal);font-weight:900;font-size:14px}
 /* ===== کارت ناظرِ دیروز ===== */
-.wd-card{margin:18px 0 4px;padding:14px 15px;border-radius:16px;background:linear-gradient(150deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-right:4px solid var(--wc);box-shadow:0 4px 16px rgba(0,0,0,.14)}
-.wd-head{display:flex;align-items:center;gap:11px;margin-bottom:10px}
-.wd-emo{font-size:22px;flex:0 0 auto}
-.wd-ttl{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-.wd-ttl b{font-size:14.5px;font-weight:800;color:var(--ink)}
+.wd-card{position:relative;overflow:hidden;margin:0 0 16px;padding:18px;border-radius:20px;background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line)}
+.wd-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--wc),transparent)}
+.wd-head{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+.wd-emo{flex:0 0 auto;width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:21px;background:var(--wc-soft,rgba(255,255,255,.05));border:1px solid var(--wc-brd,var(--line))}
+.wd-ttl{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.wd-ttl b{font-size:15px;font-weight:800;color:var(--ink);line-height:1.3}
 .wd-sub{font-size:10.5px;color:var(--muted);font-weight:600}
-.wd-score{flex:0 0 auto;font-size:11px;font-weight:800;padding:5px 11px;border-radius:20px;border:1px solid;white-space:nowrap}
+.wd-score{flex:0 0 auto;font-size:11px;font-weight:800;padding:6px 12px;border-radius:20px;border:1px solid;white-space:nowrap}
 .wd-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
-.wd-list li{position:relative;padding-right:18px;font-size:12.8px;line-height:1.85;color:var(--ink)}
-.wd-list li::before{content:'▪';position:absolute;right:2px;top:0;color:var(--wc);font-size:13px}
-.wd-goods{margin-top:10px;padding-top:9px;border-top:1px dashed var(--line);font-size:11.8px;color:var(--muted);line-height:1.8}
-.wd-praise{font-size:13.2px;line-height:1.95;color:var(--ink)}
+.wd-list li{padding:10px 13px 10px 12px;font-size:12.8px;line-height:1.8;color:var(--ink);background:var(--field);border-radius:12px;border:1px solid var(--line);border-right:3px solid var(--wc)}
+.wd-goods{margin-top:12px;padding:11px 13px;border-radius:12px;background:rgba(111,211,154,.09);border:1px solid rgba(111,211,154,.24);font-size:11.8px;color:var(--ink);line-height:1.9}
+.wd-praise{font-size:13.2px;line-height:1.95;color:var(--ink);padding:12px 14px;border-radius:12px;background:rgba(111,211,154,.09);border:1px solid rgba(111,211,154,.24)}
 /* ===== داشبورد خانه ===== */
 .dash-hero{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:22px;margin-bottom:16px;text-align:center;position:relative;overflow:hidden}
 .dash-hero::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--teal),transparent)}
@@ -2379,7 +2379,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۸.۲</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۸.۳</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3684,8 +3684,8 @@ function renderWatchdogCard(){
     if(r.goods.length && r.tone!=='flat') body+=`<div class="wd-goods">✅ نکات مثبت: ${escVision(r.goods.join(' · '))}</div>`;
   }
   const scoreChip = (r.score!=null)?`<span class="wd-score" style="color:${col};border-color:${col}55;background:${col}18">امتیاز دیروز: ${faDigits(r.score)}</span>`:'';
-  return `<div class="wd-card" style="--wc:${col}">
-    <div class="wd-head"><span class="wd-emo">${emo}</span><div class="wd-ttl"><b>${emo==='🚨'?'🕵️ ':''}${escVision(hdr)}</b><span class="wd-sub">مرورِ دیروز · ${r.dayLabel}</span></div>${scoreChip}</div>
+  return `<div class="wd-card" style="--wc:${col};--wc-soft:${col}22;--wc-brd:${col}55;border-color:${col}3a">
+    <div class="wd-head"><span class="wd-emo">${emo}</span><div class="wd-ttl"><b>${escVision(hdr)}</b><span class="wd-sub">مرورِ دیروز · ${r.dayLabel}</span></div>${scoreChip}</div>
     ${body}
   </div>`;
 }
