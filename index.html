@@ -357,6 +357,32 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .ds-qdel{flex:0 0 auto;background:transparent;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit;padding:0 2px}
 .ds-qadd{display:flex;gap:7px;margin-top:11px}
 .ds-qadd input{flex:1;min-width:0}
+.ds-studio-btn{width:100%;margin-top:8px;background:var(--field);border:1px solid var(--teal-dim);color:var(--teal);font-family:inherit;font-size:12.5px;font-weight:800;padding:11px;border-radius:12px;cursor:pointer}
+.ds-preview{margin:8px 0 14px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;overflow:hidden}
+.ds-preview-t{font-size:10.5px;color:#888;margin-bottom:8px;text-align:center}
+.ds-preview .gauges{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.ds-preview .gauge{width:44%;max-width:150px;text-align:center}
+.ds-preview .gauge svg{width:100%;height:auto}
+.ds-preview .gauge-l{font-size:10px;color:#555;margin-top:2px}
+.ds-preview .chart{margin:10px 0}
+.ds-preview .chart-t{font-size:11px;font-weight:700;color:#444;margin-bottom:4px}
+.ds-preview .chart svg{width:100%}
+.ds-preview .leg{display:flex;gap:10px;flex-wrap:wrap;font-size:9.5px;color:#666;margin-top:5px}
+.ds-preview .leg .lg{display:flex;align-items:center;gap:3px}
+.ds-preview .leg i{width:11px;height:8px;border-radius:2px;display:inline-block}
+.ds-slab{font-size:12px;font-weight:800;color:var(--ink);margin:14px 0 8px}
+.ds-chips{display:flex;flex-wrap:wrap;gap:7px}
+.ds-chip{background:var(--field);border:1px solid var(--line);color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;padding:7px 12px;border-radius:10px;cursor:pointer}
+.ds-chip.on{background:var(--teal);border-color:var(--teal);color:#04120e}
+.ds-sw{width:30px;height:30px;border-radius:9px;border:2px solid transparent;cursor:pointer}
+.ds-sw.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--panel) inset}
+.ds-tmpls{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
+.ds-tmpl{display:flex;align-items:center;gap:8px;background:var(--field);border:1px solid var(--line);color:var(--ink);font-family:inherit;font-size:12px;font-weight:700;padding:9px 11px;border-radius:11px;cursor:pointer;text-align:right}
+.ds-tmpl.on{border-color:var(--teal);background:var(--teal-dim)}
+.ds-tmpl-sw{flex:0 0 auto;width:16px;height:16px;border-radius:5px}
+.ds-upl{display:inline-flex;align-items:center;gap:6px;margin-top:9px;background:var(--field);border:1px dashed var(--line);color:var(--muted);font-size:12px;font-weight:700;padding:9px 13px;border-radius:11px;cursor:pointer}
+.ds-logopv{margin-top:9px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:9px;text-align:center}
+.ds-logopv img{max-height:60px;max-width:180px;object-fit:contain}
 .wd-face{position:relative;flex:0 0 auto;width:66px;height:66px;border-radius:19px;display:flex;align-items:center;justify-content:center;background:var(--wc-soft,rgba(255,255,255,.05));border:1px solid var(--wc-brd,var(--line))}
 .wd-face-in{width:100%;height:100%;border-radius:18px;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .wd-face-img{width:100%;height:100%;object-fit:cover;display:block}
@@ -2435,7 +2461,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۸.۷</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۸.۸</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3970,6 +3996,181 @@ function dsBuild(k,t0,t1){
   return R;
 }
 
+/* ═══════════ 🎨 استودیوی طراحیِ گزارش (۲۸.۸) ═══════════
+   تنظیماتِ ظاهر + نمودار/گیج در PDF + تمپلیت‌های آماده. همه‌چیز محلی و بدونِ کتابخانه. */
+const DS_CFG_KEY='dossier_cfg_v1';
+const DS_ACCENTS=['#2a7d70','#3f7bd6','#7d5bd0','#c0562f','#2f8f57','#b5306b','#0f172a'];
+const DS_GAUGE_DEFS={
+  tir:{label:'زمان در محدوده',unit:'٪',min:0,max:100,better:'high',zones:[[50,'#e0685f'],[70,'#e0a355'],[100,'#3fa06f']]},
+  gmi:{label:'HbA1c تخمینی',unit:'٪',min:5,max:12,better:'low',zones:[[6.5,'#3fa06f'],[8,'#e0a355'],[12,'#e0685f']]},
+  avg:{label:'میانگین قند',unit:'',min:70,max:300,better:'low',zones:[[154,'#3fa06f'],[183,'#e0a355'],[300,'#e0685f']]},
+  cv:{label:'نوسان قند (CV)',unit:'٪',min:0,max:60,better:'low',zones:[[36,'#3fa06f'],[45,'#e0a355'],[60,'#e0685f']]},
+  tbr:{label:'زمان زیر ۷۰',unit:'٪',min:0,max:20,better:'low',zones:[[4,'#3fa06f'],[10,'#e0a355'],[20,'#e0685f']]},
+  tar:{label:'زمان بالای ۱۸۰',unit:'٪',min:0,max:100,better:'low',zones:[[25,'#3fa06f'],[50,'#e0a355'],[100,'#e0685f']]}
+};
+const DS_GAUGE_ALL=['tir','gmi','avg','cv','tbr','tar'];
+function dsCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(DS_CFG_KEY)||'{}')||{}; }catch(e){}
+  return { font:(['s','m','l','xl'].indexOf(o.font)>=0?o.font:'m'),
+    accent:(/^#[0-9a-fA-F]{6}$/.test(o.accent||'')?o.accent:'#2a7d70'),
+    density:(['compact','normal','roomy'].indexOf(o.density)>=0?o.density:'normal'),
+    logo:(['app','custom','none'].indexOf(o.logo)>=0?o.logo:'app'),
+    logoData:(typeof o.logoData==='string'?o.logoData:''),
+    charts:{ glucoseLine:o.charts?o.charts.glucoseLine!==false:true,
+             weightLine:o.charts?o.charts.weightLine!==false:true,
+             tirBar:o.charts?o.charts.tirBar!==false:true },
+    gauges:(Array.isArray(o.gauges)?o.gauges.filter(g=>DS_GAUGE_DEFS[g]):['tir','gmi','avg','cv']),
+    tmpl:(typeof o.tmpl==='string'?o.tmpl:'') }; }
+function dsCfgSet(patch){ const c=Object.assign(dsCfg(),patch||{}); try{ localStorage.setItem(DS_CFG_KEY,JSON.stringify(c)); }catch(e){} return c; }
+function dsCfgToggleGauge(g){ const c=dsCfg(); const i=c.gauges.indexOf(g); if(i<0) c.gauges.push(g); else c.gauges.splice(i,1); dsCfgSet({gauges:c.gauges,tmpl:''}); renderDossierStudio(); }
+function dsCfgToggleChart(k){ const c=dsCfg(); c.charts[k]=!c.charts[k]; dsCfgSet({charts:c.charts,tmpl:''}); renderDossierStudio(); }
+
+// ۲۰ تمپلیتِ آماده = ترکیبِ تم رنگی × تراکم × فونت × مجموعهٔ نمودار/گیج
+const DS_TEMPLATES=[
+  {id:'clinic',   n:'کلینیکی',        accent:'#2a7d70',font:'m', density:'normal', gauges:['tir','gmi','avg','cv'], charts:{glucoseLine:1,weightLine:1,tirBar:1}},
+  {id:'minimal',  n:'ساده و کم‌جوهر',  accent:'#0f172a',font:'m', density:'compact',gauges:[],                     charts:{glucoseLine:0,weightLine:0,tirBar:1}},
+  {id:'dash',     n:'داشبوردِ کامل',   accent:'#3f7bd6',font:'m', density:'normal', gauges:['tir','gmi','avg','cv','tbr','tar'], charts:{glucoseLine:1,weightLine:1,tirBar:1}},
+  {id:'gauges',   n:'گیج‌محور',        accent:'#c0562f',font:'m', density:'normal', gauges:['tir','gmi','avg','cv','tbr','tar'], charts:{glucoseLine:0,weightLine:0,tirBar:0}},
+  {id:'a1c',      n:'تمرکز بر A1c',    accent:'#7d5bd0',font:'m', density:'normal', gauges:['gmi','avg'],          charts:{glucoseLine:1,weightLine:0,tirBar:1}},
+  {id:'tir',      n:'تمرکز بر TIR',    accent:'#2f8f57',font:'m', density:'normal', gauges:['tir','tbr','tar'],    charts:{glucoseLine:1,weightLine:0,tirBar:1}},
+  {id:'trend',    n:'روندها (خطی)',    accent:'#3f7bd6',font:'m', density:'normal', gauges:[],                     charts:{glucoseLine:1,weightLine:1,tirBar:0}},
+  {id:'weight',   n:'وزن و متابولیک',  accent:'#2f8f57',font:'m', density:'normal', gauges:['gmi','avg'],          charts:{glucoseLine:0,weightLine:1,tirBar:0}},
+  {id:'bigfont',  n:'فونتِ بزرگ',      accent:'#2a7d70',font:'l', density:'roomy',  gauges:['tir','avg'],          charts:{glucoseLine:1,weightLine:0,tirBar:1}},
+  {id:'xlfont',   n:'فونتِ خیلی بزرگ', accent:'#2a7d70',font:'xl',density:'roomy',  gauges:['tir'],                charts:{glucoseLine:0,weightLine:0,tirBar:1}},
+  {id:'dense',    n:'فشرده (یک‌صفحه)', accent:'#0f172a',font:'s', density:'compact',gauges:['tir','gmi','avg','cv'],charts:{glucoseLine:1,weightLine:0,tirBar:1}},
+  {id:'roomy',    n:'باز و راحت',      accent:'#2a7d70',font:'l', density:'roomy',  gauges:['tir','gmi','avg','cv'],charts:{glucoseLine:1,weightLine:1,tirBar:1}},
+  {id:'blue',     n:'آبیِ رسمی',       accent:'#3f7bd6',font:'m', density:'normal', gauges:['tir','gmi'],          charts:{glucoseLine:1,weightLine:1,tirBar:1}},
+  {id:'purple',   n:'بنفشِ مدرن',      accent:'#7d5bd0',font:'m', density:'normal', gauges:['tir','avg'],          charts:{glucoseLine:1,weightLine:0,tirBar:1}},
+  {id:'warm',     n:'گرم (نارنجی)',    accent:'#c0562f',font:'m', density:'normal', gauges:['tir','cv'],           charts:{glucoseLine:1,weightLine:0,tirBar:1}},
+  {id:'rose',     n:'صورتیِ ملایم',    accent:'#b5306b',font:'m', density:'normal', gauges:['tir','gmi'],          charts:{glucoseLine:1,weightLine:1,tirBar:1}},
+  {id:'mono',     n:'تک‌رنگِ چاپ',     accent:'#0f172a',font:'m', density:'normal', gauges:['tir','gmi','avg'],    charts:{glucoseLine:1,weightLine:1,tirBar:1}},
+  {id:'speedo',   n:'کیلومترشمار',     accent:'#c0562f',font:'m', density:'normal', gauges:['tir','gmi','avg','cv'],charts:{glucoseLine:0,weightLine:0,tirBar:0}},
+  {id:'labs',     n:'آزمایش‌محور',     accent:'#7d5bd0',font:'m', density:'normal', gauges:['gmi'],                charts:{glucoseLine:0,weightLine:0,tirBar:0}},
+  {id:'full',     n:'همه‌چیز',         accent:'#2a7d70',font:'m', density:'roomy',  gauges:['tir','gmi','avg','cv','tbr','tar'], charts:{glucoseLine:1,weightLine:1,tirBar:1}}
+];
+function dsApplyTemplate(id){ const t=DS_TEMPLATES.filter(x=>x.id===id)[0]; if(!t) return;
+  dsCfgSet({accent:t.accent,font:t.font,density:t.density,gauges:t.gauges.slice(),
+    charts:{glucoseLine:!!t.charts.glucoseLine,weightLine:!!t.charts.weightLine,tirBar:!!t.charts.tirBar},tmpl:id});
+  renderDossierStudio(); }
+
+// آمارِ قندِ بازه برای گیج‌ها و نمودار (مستقل از بخشِ متن)
+function dsGlu(t0,t1){ const A=+t0,B=+t1; const inR=t=>t>=A&&t<=B;
+  const cg=(window._cgmReadings||[]).map(r=>(r&&r.t&&r.t.dateObj)?{t:+r.t.dateObj,g:+r.glu}:null).filter(x=>x&&inR(x.t)&&isFinite(x.g)&&x.g>0);
+  const mn=loadBG().filter(x=>x&&x.iso&&x.glu!=null).map(x=>({t:+new Date(x.iso),g:+x.glu})).filter(x=>inR(x.t)&&isFinite(x.g)&&x.g>0);
+  const src=resolveBgSrc(cg.length>=10, mn.length>0); const use=(src==='meter'?mn:cg).slice().sort((a,b)=>a.t-b.t);
+  if(!use.length) return null;
+  const g=use.map(x=>x.g), n=g.length, avg=g.reduce((a,b)=>a+b,0)/n;
+  const pc=f=>g.filter(f).length/n*100; const sd=Math.sqrt(g.reduce((a,b)=>a+(b-avg)*(b-avg),0)/n);
+  return {src,n,avg,pts:use,tir:pc(x=>x>=70&&x<=180),tbr:pc(x=>x<70),tar:pc(x=>x>180),
+    cv:sd/avg*100, gmi:3.31+0.02392*avg, min:Math.min.apply(null,g), max:Math.max.apply(null,g)}; }
+
+// ── SVGهای مستقلِ رنگی برای سندِ چاپ (تمِ روشن) ──
+function _dsArc(cx,cy,r,a0,a1){ const p=(a)=>[cx+r*Math.cos(a),cy-r*Math.sin(a)];
+  const s=p(a0),e=p(a1); const large=(a0-a1)>Math.PI?1:0;
+  return `M ${s[0].toFixed(1)} ${s[1].toFixed(1)} A ${r} ${r} 0 ${large} 1 ${e[0].toFixed(1)} ${e[1].toFixed(1)}`; }
+function dsGaugeSVG(key,m){ const D=DS_GAUGE_DEFS[key]; if(!D||!m) return '';
+  let v=m[key]; if(v==null||!isFinite(v)) return '';
+  const W=150,H=104,cx=75,cy=90,r=62;
+  const frac=x=>Math.max(0,Math.min(1,(x-D.min)/(D.max-D.min)));
+  const ang=x=>Math.PI-frac(x)*Math.PI;   // ۱۸۰°(چپ)→۰°(راست)
+  let seg=''; let prev=D.min;
+  D.zones.forEach(z=>{ seg+=`<path d="${_dsArc(cx,cy,r,ang(prev),ang(z[0]))}" fill="none" stroke="${z[1]}" stroke-width="13" stroke-linecap="butt"/>`; prev=z[0]; });
+  const a=ang(v); const nx=cx+(r-6)*Math.cos(a), ny=cy-(r-6)*Math.sin(a);
+  const col=(function(){ let p=D.min; for(const z of D.zones){ if(v<=z[0]) return z[1]; p=z[0]; } return D.zones[D.zones.length-1][1]; })();
+  const disp=(key==='avg')?String(Math.round(v)):(Math.round(v*10)/10).toFixed(key==='gmi'?1:0);
+  return `<div class="gauge"><svg viewBox="0 0 ${W} ${H}">
+    <path d="${_dsArc(cx,cy,r,Math.PI,0)}" fill="none" stroke="#eee" stroke-width="13"/>
+    ${seg}
+    <line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="#333" stroke-width="2.4" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="4" fill="#333"/>
+    <text x="${cx}" y="${cy-14}" text-anchor="middle" font-size="21" font-weight="800" fill="${col}">${faDigits(disp)}${D.unit}</text>
+  </svg><div class="gauge-l">${D.label}</div></div>`; }
+function dsTIRBarSVG(m){ if(!m) return '';
+  const segs=[[m.tbr,'#e0685f','زیر ۷۰'],[m.tir,'#3fa06f','در محدوده'],[m.tar,'#e0a355','بالای ۱۸۰']];
+  let x=0; const W=560,H=26; let bar='';
+  segs.forEach(s=>{ const w=Math.max(0,s[0]/100*W); if(w>0.5){ bar+=`<rect x="${x.toFixed(1)}" y="0" width="${w.toFixed(1)}" height="${H}" fill="${s[1]}"/>`;
+    if(w>44) bar+=`<text x="${(x+w/2).toFixed(1)}" y="${H/2+4}" text-anchor="middle" font-size="11" fill="#fff" font-weight="700">${faDigits(Math.round(s[0]))}٪</text>`; } x+=w; });
+  const leg=segs.map(s=>`<span class="lg"><i style="background:${s[1]}"></i>${s[2]} ${faDigits(Math.round(s[0]))}٪</span>`).join('');
+  return `<div class="chart"><div class="chart-t">زمان در محدوده‌ها</div><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:26px;border-radius:6px;overflow:hidden">${bar}</svg><div class="leg">${leg}</div></div>`; }
+function dsLineSVG(title,pts,opt){ opt=opt||{}; if(!pts||pts.length<2) return '';
+  const W=560,H=150,pl=6,pr=6,pt=10,pb=18; const xs=pts.map(p=>p.t),ys=pts.map(p=>p.g);
+  const t0=Math.min.apply(null,xs),t1=Math.max.apply(null,xs),span=Math.max(1,t1-t0);
+  let gMin=opt.gMin!=null?opt.gMin:Math.min.apply(null,ys), gMax=opt.gMax!=null?opt.gMax:Math.max.apply(null,ys);
+  if(gMax-gMin<1){ gMax+=1; gMin-=1; } const pad=(gMax-gMin)*0.1; gMin-=pad; gMax+=pad;
+  const X=t=>pl+((t-t0)/span)*(W-pl-pr), Y=g=>pt+(1-(g-gMin)/(gMax-gMin))*(H-pt-pb);
+  let grid=''; if(opt.band){ const y1=Y(Math.min(gMax,opt.band[1])),y0=Y(Math.max(gMin,opt.band[0]));
+    grid+=`<rect x="${pl}" y="${y1.toFixed(1)}" width="${W-pl-pr}" height="${(y0-y1).toFixed(1)}" fill="rgba(63,160,111,.12)"/>`; }
+  const poly=pts.map(p=>X(p.t).toFixed(1)+','+Y(p.g).toFixed(1)).join(' ');
+  const dots=(opt.dots?pts:[]).map(p=>`<circle cx="${X(p.t).toFixed(1)}" cy="${Y(p.g).toFixed(1)}" r="2.6" fill="${opt.color||'#2a7d70'}"/>`).join('');
+  const lbl=`<text x="${pl}" y="${(H-4)}" font-size="9" fill="#999">${faDigits(_dsNum(gMin,0))}</text><text x="${pl}" y="${pt+8}" font-size="9" fill="#999">${faDigits(_dsNum(gMax,0))}</text>`;
+  return `<div class="chart"><div class="chart-t">${title}</div><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:150px">${grid}${lbl}<polyline points="${poly}" fill="none" stroke="${opt.color||'#2a7d70'}" stroke-width="1.8" stroke-linejoin="round"/>${dots}</svg></div>`; }
+function dsWeightPts(t0,t1){ const A=+t0,B=+t1;
+  return _dsJl('weight_log_v1').filter(x=>x&&x.iso&&x.kg&&(+new Date(x.iso))>=A&&(+new Date(x.iso))<=B)
+    .map(x=>({t:+new Date(x.iso),g:parseFloat(x.kg)})).filter(x=>isFinite(x.g)).sort((a,b)=>a.t-b.t); }
+// بلوکِ داشبوردِ بالای PDF (گیج‌ها + نوار + نمودارها)
+function dsDashboardHTML(t0,t1){ const c=dsCfg(); const m=dsGlu(t0,t1);
+  let gz=''; if(m && c.gauges.length) gz=`<div class="gauges">`+c.gauges.map(k=>dsGaugeSVG(k,m)).join('')+`</div>`;
+  let ch='';
+  if(m && c.charts.tirBar) ch+=dsTIRBarSVG(m);
+  if(m && c.charts.glucoseLine && m.pts.length>=2) ch+=dsLineSVG('روندِ قند',m.pts,{band:[70,180],color:c.accent,gMin:0});
+  if(c.charts.weightLine){ const wp=dsWeightPts(t0,t1); if(wp.length>=2) ch+=dsLineSVG('روندِ وزن',wp,{dots:true,color:c.accent}); }
+  if(!gz&&!ch) return '';
+  return `<div class="dashblock">${gz}${ch}</div>`; }
+
+/* ── لوگوی سربرگ ── */
+const DS_APP_LOGO_SVG='<svg viewBox="0 0 24 24" width="34" height="34" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.4S4.8 9.7 4.8 14.8a7.2 7.2 0 1 0 14.4 0C19.2 9.7 12 2.4 12 2.4Z" fill="__A__"/><path d="M7.4 15.1h2.3l1.1-2.5 1.6 4.1 1.1-1.6h2.1" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function dsLogoHTML(){ const c=dsCfg();
+  if(c.logo==='none') return '';
+  if(c.logo==='custom' && c.logoData) return `<img src="${c.logoData}" alt="" style="max-height:46px;max-width:150px;object-fit:contain">`;
+  return DS_APP_LOGO_SVG.replace('__A__',c.accent); }
+function dsLogoUpload(inp){ const f=inp.files&&inp.files[0]; if(!f) return;
+  if(f.size>1500000){ alert('عکسِ لوگو باید کوچک‌تر از ۱.۵ مگابایت باشد.'); inp.value=''; return; }
+  const rd=new FileReader(); rd.onload=()=>{ dsCfgSet({logo:'custom',logoData:String(rd.result||''),tmpl:''}); renderDossierStudio(); };
+  rd.readAsDataURL(f); }
+
+/* ── شیتِ استودیوی طراحی ── */
+function openDossierStudio(){ try{ ensureChatCss&&ensureChatCss(); }catch(e){}
+  const old=document.getElementById('dsStudioBg'); if(old) old.remove();
+  const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='dsStudioBg'; bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
+  bg.innerHTML=`<div class="chat-rename" role="dialog" aria-modal="true" style="max-width:440px;max-height:86vh;overflow:auto">
+    <h4 style="position:sticky;top:0;background:var(--panel);padding-bottom:8px;z-index:2">🎨 طراحیِ گزارش <button type="button" onclick="document.getElementById('dsStudioBg').remove()" style="float:left;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button></h4>
+    <div id="dsStudioBody"></div>
+    <div class="chat-rename-btns" style="margin-top:12px;position:sticky;bottom:0;background:var(--panel);padding-top:8px">
+      <button type="button" class="crn-btn crn-ok" onclick="document.getElementById('dsStudioBg').remove()">✓ پایان</button></div></div>`;
+  document.body.appendChild(bg); renderDossierStudio();
+}
+function renderDossierStudio(){ const box=document.getElementById('dsStudioBody'); if(!box){ try{ renderDossierTab(); }catch(e){} return; }
+  const c=dsCfg();
+  const fontOpts=[['s','کوچک'],['m','متوسط'],['l','بزرگ'],['xl','خیلی بزرگ']];
+  const densOpts=[['compact','فشرده'],['normal','معمولی'],['roomy','باز']];
+  let h='';
+  // تمپلیت‌ها
+  h+=`<div class="ds-slab">قالب‌های آماده</div><div class="ds-tmpls">`+
+    DS_TEMPLATES.map(t=>`<button type="button" class="ds-tmpl${c.tmpl===t.id?' on':''}" onclick="dsApplyTemplate('${t.id}')">
+      <span class="ds-tmpl-sw" style="background:${t.accent}"></span>${escVision(t.n)}</button>`).join('')+`</div>`;
+  // فونت
+  h+=`<div class="ds-slab">اندازهٔ فونت</div><div class="ds-chips">`+
+    fontOpts.map(o=>`<button type="button" class="ds-chip${c.font===o[0]?' on':''}" onclick="dsCfgSet({font:'${o[0]}',tmpl:''});renderDossierStudio()">${o[1]}</button>`).join('')+`</div>`;
+  // تراکم
+  h+=`<div class="ds-slab">تراکمِ چیدمان</div><div class="ds-chips">`+
+    densOpts.map(o=>`<button type="button" class="ds-chip${c.density===o[0]?' on':''}" onclick="dsCfgSet({density:'${o[0]}',tmpl:''});renderDossierStudio()">${o[1]}</button>`).join('')+`</div>`;
+  // رنگ
+  h+=`<div class="ds-slab">رنگِ اصلی</div><div class="ds-chips">`+
+    DS_ACCENTS.map(a=>`<button type="button" class="ds-sw${c.accent===a?' on':''}" style="background:${a}" onclick="dsCfgSet({accent:'${a}',tmpl:''});renderDossierStudio()"></button>`).join('')+`</div>`;
+  // لوگو
+  h+=`<div class="ds-slab">لوگوی سربرگ</div><div class="ds-chips">`+
+    [['app','لوگوی برنامه'],['custom','عکسِ من'],['none','بدونِ لوگو']].map(o=>`<button type="button" class="ds-chip${c.logo===o[0]?' on':''}" onclick="dsCfgSet({logo:'${o[0]}',tmpl:''});renderDossierStudio()">${o[1]}</button>`).join('')+`</div>`;
+  h+=`<label class="ds-upl">🖼 انتخابِ عکسِ لوگو<input type="file" accept="image/*" onchange="dsLogoUpload(this)" hidden></label>`;
+  if(c.logo==='custom'&&c.logoData) h+=`<div class="ds-logopv"><img src="${c.logoData}" alt=""></div>`;
+  // گیج‌ها
+  h+=`<div class="ds-slab">گیج‌های کیلومترشمار</div><div class="ds-chips">`+
+    DS_GAUGE_ALL.map(g=>`<button type="button" class="ds-chip${c.gauges.indexOf(g)>=0?' on':''}" onclick="dsCfgToggleGauge('${g}')">${DS_GAUGE_DEFS[g].label}</button>`).join('')+`</div>`;
+  // نمودارها
+  h+=`<div class="ds-slab">نمودارها</div><div class="ds-chips">`+
+    [['glucoseLine','خطِ قند'],['weightLine','خطِ وزن'],['tirBar','نوارِ TIR']].map(o=>`<button type="button" class="ds-chip${c.charts[o[0]]?' on':''}" onclick="dsCfgToggleChart('${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
+  box.innerHTML=h;
+  try{ renderDossierTab(); }catch(e){}   // پیش‌نمایشِ تب هم به‌روز شود
+}
+
 /* ── رندرِ تبِ پرونده ─────────────────────────────────────── */
 function renderDossierTab(){
   const box=document.getElementById('dossierBody'); if(!box) return;
@@ -3983,8 +4184,11 @@ function renderDossierTab(){
     <div class="ds-range"><span class="ds-range-l">بازه:</span>${segs}</div>
     <div class="ds-dates">${_dsJ(t0)} تا ${_dsJ(t1)}</div>
     <button class="add-btn ds-all" onclick="dsPrint(null)">📄 پروندهٔ کامل (${faDigits(pick.length)} بخش) — PDF</button>
+    <button class="ds-studio-btn" onclick="openDossierStudio()">🎨 طراحیِ گزارش (قالب، فونت، لوگو، نمودار و گیج)</button>
     <div class="ds-hint">تیکِ هر بخش تعیین می‌کند در «پروندهٔ کامل» بیاید یا نه. هر بخش هم PDF جداگانه دارد.</div>
   </div>`;
+  // پیش‌نمایشِ داشبورد (گیج/نمودار) طبقِ تنظیماتِ استودیو
+  try{ const dash=dsDashboardHTML(t0,t1); if(dash) h+=`<div class="ds-preview"><div class="ds-preview-t">پیش‌نمایشِ داشبورد (در بالای PDF می‌آید)</div>${dash}</div>`; }catch(e){}
   DS_SECTIONS.forEach(s=>{
     const R=dsBuild(s.k,t0,t1); const on=pick.indexOf(s.k)>=0;
     h+=`<div class="ds-card${R.empty?' ds-empty':''}" ${s.k==='questions'?'id="dsQCard"':''}>
@@ -4020,6 +4224,13 @@ function dsPrint(only){
   const win=window.open('','_blank');
   if(!win){ alert('برای دریافت PDF، اجازه‌ی باز شدن پنجره را بده (popup).'); return; }
   let name=''; try{ const pr=profGet()||{}; name=String(pr.firstName||'').trim(); }catch(e){}
+  const dc=dsCfg();
+  const FS={s:11,m:13,l:15,xl:17}[dc.font]||13;
+  const GAP={compact:12,normal:20,roomy:30}[dc.density]||20;
+  const PAD={compact:8,normal:12,roomy:16}[dc.density]||12;
+  const AC=dc.accent||'#2a7d70';
+  const logo=(only?'':dsLogoHTML());               // لوگو فقط در پروندهٔ کامل
+  const dash=only?'':dsDashboardHTML(t0,t1);        // داشبورد فقط در پروندهٔ کامل
   const title = only ? (DS_SECTIONS.filter(s=>s.k===only)[0]||{}).t : 'پروندهٔ کامل';
   let body='';
   keys.forEach(k=>{
@@ -4044,12 +4255,25 @@ function dsPrint(only){
   <style>
     @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
     *{font-family:Vazirmatn,sans-serif;box-sizing:border-box}
-    body{margin:0;padding:20px;color:#222;background:#fff;font-size:13px}
-    .rhead{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #2a7d70;padding-bottom:10px;margin-bottom:16px}
-    h1{font-size:19px;color:#2a7d70;margin:0}
+    body{margin:0;padding:20px;color:#222;background:#fff;font-size:${FS}px}
+    .rhead{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid ${AC};padding-bottom:10px;margin-bottom:16px;gap:12px}
+    .rhead .hleft{display:flex;align-items:center;gap:12px}
+    .rlogo{flex:0 0 auto;display:flex;align-items:center}
+    h1{font-size:${FS+6}px;color:${AC};margin:0}
     .rhead .meta{text-align:left;font-size:11px;color:#666;line-height:1.7}
-    .sec{margin-bottom:20px;break-inside:avoid}
-    .sec h2{font-size:14px;margin:0 0 10px;color:#333;background:#eef4f3;padding:7px 11px;border-radius:5px;border-right:3px solid #2a7d70}
+    .sec{margin-bottom:${GAP}px;break-inside:avoid}
+    .sec h2{font-size:${FS+1}px;margin:0 0 10px;color:#333;background:${AC}14;padding:${PAD-2}px 11px;border-radius:5px;border-right:3px solid ${AC}}
+    .st{padding:${PAD-4}px ${PAD-2}px}
+    .dashblock{margin-bottom:${GAP}px}
+    .gauges{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:14px}
+    .gauge{width:150px;text-align:center}
+    .gauge svg{width:150px;height:104px}
+    .gauge-l{font-size:11px;color:#555;margin-top:2px}
+    .chart{margin:12px 0}
+    .chart-t{font-size:12px;font-weight:700;color:#444;margin-bottom:5px}
+    .chart .leg,.leg{display:flex;gap:14px;flex-wrap:wrap;font-size:10.5px;color:#666;margin-top:6px}
+    .leg .lg{display:flex;align-items:center;gap:4px}
+    .leg i{width:12px;height:9px;border-radius:2px;display:inline-block}
     .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
     .st{border:1px solid #e2e2e2;border-radius:7px;padding:7px 9px;display:flex;flex-direction:column;gap:3px}
     .st span{font-size:10px;color:#777}
@@ -4069,9 +4293,10 @@ function dsPrint(only){
     <button class="btn" onclick="window.print()">🖨 چاپ / ذخیره به‌صورت PDF</button>
   </div>
   <div class="rhead">
-    <h1>${escVision(title)}${name?(' — '+escVision(name)):''}</h1>
+    <div class="hleft">${logo?`<div class="rlogo">${logo}</div>`:''}<h1>${escVision(title)}${name?(' — '+escVision(name)):''}</h1></div>
     <div class="meta">بازه: ${_dsJ(t0)} تا ${_dsJ(t1)} (${faDigits(dsRange())} روز)<br>تولید: ${_dsJ(new Date())}</div>
   </div>
+  ${dash}
   ${body}
   <div class="foot">
     این پرونده از داده‌هایی ساخته شده که بیمار خودش در یک اپِ شخصی ثبت کرده است و آموزشی است —
