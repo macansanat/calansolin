@@ -358,6 +358,7 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .ds-qadd{display:flex;gap:7px;margin-top:11px}
 .ds-qadd input{flex:1;min-width:0}
 .ds-sum{margin-top:8px;background:linear-gradient(135deg,var(--teal),var(--teal-dim));color:#04120e}
+.ds-note2{font-size:10.5px;color:var(--muted);line-height:1.85;margin-top:8px;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .ds-covers{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
 .ds-cov{padding:0;background:var(--field);border:2px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;font-family:inherit;text-align:right}
 .ds-cov.on{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,185,163,.18)}
@@ -2472,7 +2473,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۸.۹</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۹.۰</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4025,6 +4026,7 @@ function dsCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(DS_CFG_KEY)||
     accent:(/^#[0-9a-fA-F]{6}$/.test(o.accent||'')?o.accent:'#2a7d70'),
     density:(['compact','normal','roomy'].indexOf(o.density)>=0?o.density:'normal'),
     logo:(['app','custom','none'].indexOf(o.logo)>=0?o.logo:'app'),
+    darkPrint:(o.darkPrint===true),
     logoData:(typeof o.logoData==='string'?o.logoData:''),
     charts:{ glucoseLine:o.charts?o.charts.glucoseLine!==false:true,
              weightLine:o.charts?o.charts.weightLine!==false:true,
@@ -4194,6 +4196,27 @@ function dsDashCSS(c){
   return `.dsdash{--dpanel:${P.panel};--dink:${P.ink};--dmuted:${P.muted};--dline:${P.line};--dtrack:${P.track};--ddisc:${P.disc};
   background:${P.bg};color:${P.ink};border-radius:18px;padding:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .dsdash *{box-sizing:border-box}
+.dsdash .bento{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;align-items:stretch}
+.dsdash .tile{background:${P.panel};border:1px solid ${P.line};border-radius:16px;padding:11px 12px;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.dsdash .t-1{grid-column:span 1}
+.dsdash .t-2{grid-column:span 2}
+.dsdash .t-4{grid-column:span 4}
+.dsdash .t-hero{grid-column:span 2;grid-row:span 2;align-items:center}
+.dsdash .t-hero .dg{border:none;background:transparent;padding:0;width:100%}
+.dsdash .tile .dg{border:none;background:transparent;padding:0}
+.dsdash .kpi{align-items:flex-start;gap:2px}
+.dsdash .kpi-v{font-size:27px;font-weight:800;line-height:1.15;direction:ltr}
+.dsdash .kpi-v em{font-size:12px;font-style:normal;color:${P.muted};margin-right:3px}
+.dsdash .kpi-l{font-size:10.5px;color:${P.muted};font-weight:600}
+.dsdash .minis{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:2px}
+.dsdash .mini{background:${P.track};border-radius:10px;padding:7px 9px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.dsdash .mini span{font-size:9.5px;color:${P.muted}}
+.dsdash .mini b{font-size:13px;font-weight:800;color:${P.ink}}
+.dsdash .dstripbars{display:flex;gap:3px;align-items:flex-end;height:92px;margin-top:4px}
+.dsdash .dsb{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px}
+.dsdash .dsb-b{width:100%;height:76px;display:flex;flex-direction:column;border-radius:4px;overflow:hidden;background:${P.track}}
+.dsdash .dsb-b i{display:block;width:100%}
+.dsdash .dsb span{font-size:7.5px;color:${P.muted};direction:ltr}
 .dsdash .dsec{display:grid;gap:10px}
 .dsdash .dhero{display:grid;grid-template-columns:1.15fr 1fr;gap:10px;align-items:stretch}
 .dsdash .dg-wrap{background:${P.panel};border:1px solid ${P.line};border-radius:16px;padding:12px;display:flex;align-items:center;justify-content:center}
@@ -4218,35 +4241,95 @@ function dsDashCSS(c){
 .dsdash .dleg b{display:inline-block;width:10px;height:8px;border-radius:2px;margin-left:4px}
 .dsdash .dchart svg{width:100%;height:auto;display:block}`;
 }
-/* ── مولدِ داشبورد ── */
+/* ── دادهٔ بازه در قالبِ readings برای AGP ── */
+function dsRangeReadings(t0,t1){ const A=+t0,B=+t1;
+  return (window._cgmReadings||[]).filter(r=>{ const d=r&&r.t&&r.t.dateObj; return d&&+d>=A&&+d<=B&&isFinite(r.glu)&&r.glu>0; }); }
+// نمودارِ AGP (پروفایلِ ۲۴ساعته با صدک‌ها) — همان موتورِ گزارشِ AGP برنامه
+function dsAGPPanel(t0,t1,dark){
+  let pts=null; try{ pts=computeAGP(dsRangeReadings(t0,t1)); }catch(e){}
+  if(!pts||pts.filter(p=>p).length<8) return '';
+  let svg=''; try{ svg=agpSVG(pts,720,270,!dark); }catch(e){ return ''; }
+  if(!svg||svg.indexOf('<svg')<0) return '';
+  const days=Math.max(1,Math.round((+t1-+t0)/86400000));
+  return `<div class="tile t-4 dchart"><div class="dpt">پروفایلِ قندِ ۲۴ساعته (AGP) <span>${faDigits(days)} روز روی هم</span></div>${svg}
+    <div class="dleg"><span><b style="background:${(agpColors().median||'#2a7d70')}"></b>میانه</span>
+      <span><b style="background:${(agpColors().band2575||'#8fd0c0')}"></b>۲۵–۷۵٪</span>
+      <span><b style="background:${(agpColors().band0595||'#cfe8e2')}"></b>۵–۹۵٪</span>
+      <span><b style="background:rgba(63,185,163,.25)"></b>محدودهٔ هدف ۷۰–۱۸۰</span></div></div>`;
+}
+// نوارِ روزبه‌روزِ TIR — هر روز یک میله‌ی انباشته (زیر/در محدوده/بالا)
+function dsDailyStrip(t0,t1){
+  const A=+t0,B=+t1; const by={};
+  (window._cgmReadings||[]).forEach(r=>{ const d=r&&r.t&&r.t.dateObj; if(!d||+d<A||+d>B||!isFinite(r.glu)) return;
+    const k=dayKey(d); (by[k]=by[k]||[]).push(r.glu); });
+  let keys=Object.keys(by).sort(); if(!keys.length) return '';
+  if(keys.length>31) keys=keys.slice(-31);
+  const bars=keys.map(k=>{ const a=by[k]; const n=a.length;
+    const lo=a.filter(g=>g<70).length/n*100, hi=a.filter(g=>g>180).length/n*100, inr=100-lo-hi;
+    const d=_dayFromKey(k); const lbl=d?faDigits(String(d.getDate())):'';
+    return `<div class="dsb"><div class="dsb-b"><i style="height:${hi.toFixed(1)}%;background:#e0a355"></i><i style="height:${inr.toFixed(1)}%;background:#3fa06f"></i><i style="height:${lo.toFixed(1)}%;background:#e0685f"></i></div><span>${lbl}</span></div>`; }).join('');
+  return `<div class="tile t-4"><div class="dpt">زمان در محدوده — روزبه‌روز <span>${faDigits(keys.length)} روز</span></div>
+    <div class="dstripbars">${bars}</div></div>`;
+}
+// کاهشِ نقاط برای نمودارِ خطی (وگرنه ۱۳هزار نقطه = نویز)
+function _dsThin(pts,max){ if(!pts||pts.length<=max) return pts||[];
+  const step=pts.length/max, out=[];
+  for(let i=0;i<max;i++){ const a=Math.floor(i*step), b=Math.floor((i+1)*step);
+    const seg=pts.slice(a,Math.max(a+1,b)); let s=0; seg.forEach(p=>s+=p.g);
+    out.push({t:seg[Math.floor(seg.length/2)].t, g:s/seg.length}); }
+  return out; }
+/* ── مولدِ داشبورد (چیدمانِ بنتو، مثلِ داشبوردهای حرفه‌ای) ── */
 function dsDashboardHTML(t0,t1,over){
   const c=Object.assign(dsCfg(),over||{}); const m=dsGlu(t0,t1);
   const gs=c.gauges||[], st=c.gstyle||'ring', lay=c.layout||'grid';
-  let out='';
+  const dark=c.theme==='dark';
+  const days=Math.max(1,Math.round((+t1-+t0)/86400000));
+  let T='';
+  // ── ردیفِ بالا: گیج/کارت‌ها ──
   if(m && gs.length){
     if(lay==='hero'){
-      const side=gs.slice(1,4).map(k=>{ const g=_dsGV(k,m); return g?dsStatCard('◉',g.D.label,faDigits(g.disp)+(g.D.unit||''),'',g.col):''; }).join('');
-      out+=`<div class="dhero"><div class="dg-wrap">${dsGaugeAny(gs[0],m,st,true)}</div><div class="dg-side">${side}</div></div>`;
+      T+=`<div class="tile t-hero">${dsGaugeAny(gs[0],m,st,true)}</div>`;
+      // کنارِ گیجِ بزرگ همیشه چهار کارت بنشیند وگرنه نیمهٔ شبکه خالی می‌ماند
+      let kp=gs.slice(1);
+      DS_GAUGE_ALL.forEach(k=>{ if(kp.length<4 && k!==gs[0] && kp.indexOf(k)<0 && _dsGV(k,m)) kp.push(k); });
+      kp.slice(0,4).forEach(k=>{ const g=_dsGV(k,m); if(!g) return;
+        T+=`<div class="tile t-1 kpi"><div class="kpi-v" style="color:${g.col}">${faDigits(g.disp)}<em>${g.D.unit||''}</em></div><div class="kpi-l">${g.D.label}</div></div>`; });
     } else if(lay==='strip'){
-      out+=`<div class="dstrip">`+gs.map(k=>dsGaugeAny(k,m,st,false)).join('')+`</div>`;
+      gs.forEach(k=>{ const g=_dsGV(k,m); if(!g) return;
+        T+=`<div class="tile t-1 kpi"><div class="kpi-v" style="color:${g.col}">${faDigits(g.disp)}<em>${g.D.unit||''}</em></div><div class="kpi-l">${g.D.label}</div></div>`; });
     } else {
-      out+=`<div class="dgrid">`+gs.map(k=>dsGaugeAny(k,m,st,false)).join('')+`</div>`;
+      gs.forEach(k=>{ T+=`<div class="tile t-1">${dsGaugeAny(k,m,st,false)}</div>`; });
     }
   }
-  const ch=[];
+  // ── نوارِ TIR ──
   if(m && c.charts.tirBar){
     const segs=[[m.tbr,'#e0685f','زیر ۷۰'],[m.tir,'#3fa06f','در محدوده'],[m.tar,'#e0a355','بالای ۱۸۰']];
-    ch.push(`<div class="dpanel"><div class="dpt">زمان در محدوده‌ها <span>${faDigits(m.n)} اندازه‌گیری</span></div>
+    T+=`<div class="tile t-4"><div class="dpt">زمان در محدوده‌ها <span>${faDigits(m.n)} اندازه‌گیری · ${faDigits(days)} روز</span></div>
       <div class="dbar">`+segs.map(s=>s[0]>0.5?`<i style="width:${s[0].toFixed(1)}%;background:${s[1]}">${s[0]>9?faDigits(Math.round(s[0]))+'٪':''}</i>`:'').join('')+`</div>
-      <div class="dleg">`+segs.map(s=>`<span><b style="background:${s[1]}"></b>${s[2]} ${faDigits(Math.round(s[0]))}٪</span>`).join('')+`</div></div>`);
+      <div class="dleg">`+segs.map(s=>`<span><b style="background:${s[1]}"></b>${s[2]} ${faDigits(Math.round(s[0]))}٪</span>`).join('')+`</div></div>`;
   }
-  if(m && c.charts.glucoseLine && m.pts.length>=2)
-    ch.push(`<div class="dpanel dchart"><div class="dpt">روندِ قند <span>${_dsJ(t0)} تا ${_dsJ(t1)}</span></div>${dsLineSVG('',m.pts,{band:[70,180],color:c.accent,gMin:0,bare:1})}</div>`);
+  // ── قند: بازهٔ بلند ⇒ AGP، بازهٔ کوتاه ⇒ خطِ زمانی (نازک‌شده) ──
+  if(m && c.charts.glucoseLine){
+    const agp=(days>=10)?dsAGPPanel(t0,t1,dark):'';
+    if(agp) T+=agp;
+    else if(m.pts.length>=2)
+      T+=`<div class="tile t-4 dchart"><div class="dpt">روندِ قند <span>${_dsJ(t0)} تا ${_dsJ(t1)}</span></div>${dsLineSVG('',_dsThin(m.pts,420),{band:[70,180],color:c.accent,gMin:0,bare:1})}</div>`;
+  }
+  // ── نوارِ روزبه‌روز ──
+  if(m && c.charts.tirBar && days>=3){ const ds=dsDailyStrip(t0,t1); if(ds) T+=ds; }
+  // ── وزن (نیم‌عرض) ──
   if(c.charts.weightLine){ const wp=dsWeightPts(t0,t1);
-    if(wp.length>=2) ch.push(`<div class="dpanel dchart"><div class="dpt">روندِ وزن <span>${faDigits(_dsNum(wp[0].g,1))} → ${faDigits(_dsNum(wp[wp.length-1].g,1))} کیلو</span></div>${dsLineSVG('',wp,{dots:true,color:c.accent,bare:1})}</div>`); }
-  if(ch.length) out+=`<div class="dsec" style="margin-top:10px">`+ch.join('')+`</div>`;
-  if(!out) return '';
-  return `<div class="dsdash">${out}</div>`;
+    if(wp.length>=2){
+      T+=`<div class="tile t-2 dchart"><div class="dpt">روندِ وزن <span>${faDigits(_dsNum(wp[0].g,1))} → ${faDigits(_dsNum(wp[wp.length-1].g,1))} کیلو</span></div>${dsLineSVG('',wp,{dots:true,color:c.accent,bare:1})}</div>`;
+      // کارتِ همراه تا نیمهٔ دیگرِ ردیف خالی نماند
+      const mini=[]; const pick=(sec,re)=>{ try{ const R=dsBuild(sec,t0,t1); const r=R.stats.filter(x=>re.test(x[0]))[0]; if(r) mini.push(r); }catch(e){} };
+      pick('insulin',/TDD/); pick('nutrition',/میانگینِ روزانه/); pick('exercise',/روزهای فعال/); pick('meds',/مصرف‌شده/);
+      if(mini.length) T+=`<div class="tile t-2"><div class="dpt">میانگین‌های روزانه</div><div class="minis">`+
+        mini.slice(0,4).map(x=>`<div class="mini"><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')+`</div></div>`;
+    }
+  }
+  if(!T) return '';
+  return `<div class="dsdash"><div class="bento">${T}</div></div>`;
 }
 
 /* ── لوگوی سربرگ ── */
@@ -4290,7 +4373,9 @@ function renderDossierStudio(){ const box=document.getElementById('dsStudioBody'
   h+=`<div class="ds-slab">سبکِ گیج</div><div class="ds-chips">`+
     gstOpts.map(o=>`<button type="button" class="ds-chip${c.gstyle===o[0]?' on':''}" onclick="dsCfgSet({gstyle:'${o[0]}',tmpl:''});renderDossierStudio()">${o[1]}</button>`).join('')+`</div>`;
   h+=`<div class="ds-slab">تم</div><div class="ds-chips">`+
-    [['light','روشن'],['dark','تیره']].map(o=>`<button type="button" class="ds-chip${c.theme===o[0]?' on':''}" onclick="dsCfgSet({theme:'${o[0]}',tmpl:''});renderDossierStudio()">${o[1]}</button>`).join('')+`</div>`;
+    [['light','روشن'],['dark','تیره']].map(o=>`<button type="button" class="ds-chip${c.theme===o[0]?' on':''}" onclick="dsCfgSet({theme:'${o[0]}',tmpl:''});renderDossierStudio()">${o[1]}</button>`).join('')+
+    `<button type="button" class="ds-chip${c.darkPrint?' on':''}" onclick="dsCfgSet({darkPrint:${c.darkPrint?'false':'true'}});renderDossierStudio()">چاپِ تیره</button></div>`;
+  if(c.theme==='dark'&&!c.darkPrint) h+=`<div class="ds-note2">تمِ تیره برای دیدن در گوشی است؛ خروجیِ PDF خودکار روشن می‌شود تا جوهر هدر نرود. اگر واقعاً چاپِ تیره می‌خواهی، «چاپِ تیره» را روشن کن.</div>`;
   h+=`<div class="ds-slab">شاخص‌های گیج</div><div class="ds-chips">`+
     DS_GAUGE_ALL.map(g=>`<button type="button" class="ds-chip${c.gauges.indexOf(g)>=0?' on':''}" onclick="dsCfgToggleGauge('${g}')">${DS_GAUGE_DEFS[g].label}</button>`).join('')+`</div>`;
   h+=`<div class="ds-slab">نمودارها</div><div class="ds-chips">`+
@@ -4333,7 +4418,8 @@ function dsFindings(t0,t1){
 
 /* ── خلاصهٔ یک‌صفحه‌ایِ پرونده برای پزشک ── */
 function dsPrintSummary(){
-  const [t0,t1]=dsBounds(); const c=dsCfg(); const dark=c.theme==='dark';
+  const [t0,t1]=dsBounds(); const c=Object.assign(dsCfg(),{}); if(c.theme==='dark'&&!c.darkPrint) c.theme='light';
+  const dark=c.theme==='dark';
   const win=window.open('','_blank');
   if(!win){ alert('برای دریافت PDF، اجازه‌ی باز شدن پنجره را بده (popup).'); return; }
   let name=''; try{ const pr=profGet()||{}; name=String(pr.firstName||'').trim(); }catch(e){}
@@ -4344,7 +4430,7 @@ function dsPrintSummary(){
   const F=dsFindings(t0,t1);
   const fcol={good:'#2f9e6b',warn:'#d8912f',bad:'#d85a50',info:AC};
   const fico={good:'✓',warn:'!',bad:'▲',info:'•'};
-  const dash=dsDashboardHTML(t0,t1);
+  const dash=dsDashboardHTML(t0,t1,{theme:c.theme});
   // جدولِ فشردهٔ اعداد کلیدی
   const rows=[];
   ['glucose','insulin','nutrition','exercise','meds','body'].forEach(k=>{
@@ -4455,7 +4541,7 @@ function dsPrint(only){
   const win=window.open('','_blank');
   if(!win){ alert('برای دریافت PDF، اجازه‌ی باز شدن پنجره را بده (popup).'); return; }
   let name=''; try{ const pr=profGet()||{}; name=String(pr.firstName||'').trim(); }catch(e){}
-  const dc=dsCfg();
+  const dc=Object.assign(dsCfg(),{}); if(dc.theme==='dark'&&!dc.darkPrint) dc.theme='light';   // چاپِ تیره جوهر می‌سوزاند
   const FS={s:11,m:13,l:15,xl:17}[dc.font]||13;
   const GAP={compact:12,normal:20,roomy:30}[dc.density]||20;
   const PAD={compact:8,normal:12,roomy:16}[dc.density]||12;
@@ -4464,7 +4550,7 @@ function dsPrint(only){
   const PP={ bg:_dk?'#0c141d':'#fff', panel:_dk?'#18242f':'#fff', ink:_dk?'#eaf1f8':'#222',
              muted:_dk?'#8fa3b8':'#666', line:_dk?'#26374a':'#eee', head:_dk?'#1d2a37':'#f0f4f4' };
   const logo=(only?'':dsLogoHTML());               // لوگو فقط در پروندهٔ کامل
-  const dash=only?'':dsDashboardHTML(t0,t1);        // داشبورد فقط در پروندهٔ کامل
+  const dash=only?'':dsDashboardHTML(t0,t1,{theme:dc.theme});   // داشبورد فقط در پروندهٔ کامل
   const title = only ? (DS_SECTIONS.filter(s=>s.k===only)[0]||{}).t : 'پروندهٔ کامل';
   let body='';
   keys.forEach(k=>{
