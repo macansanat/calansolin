@@ -318,6 +318,38 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .wd-card{position:relative;overflow:hidden;margin:0 0 16px;padding:18px;border-radius:20px;background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line)}
 .wd-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--wc),transparent)}
 .wd-head{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+.ds-top{margin-bottom:14px}
+.ds-hero{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.ds-hero-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ds-hero-t b{font-size:16px;font-weight:800}
+.ds-hero-t span{font-size:11.5px;color:var(--muted);line-height:1.75}
+.ds-range{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ds-range-l{font-size:12px;color:var(--muted);font-weight:700}
+.ds-segs{display:flex;gap:4px;background:var(--field);border:1px solid var(--line);border-radius:11px;padding:3px}
+.ds-seg{background:transparent;border:none;color:var(--muted);font-family:inherit;font-size:11.5px;font-weight:800;padding:5px 10px;border-radius:8px;cursor:pointer;transition:.13s}
+.ds-seg.on{background:var(--teal);color:#04120e}
+.ds-dates{font-size:11px;color:var(--muted);margin:7px 0 10px}
+.ds-all{width:100%;margin:0}
+.ds-hint{font-size:11px;color:var(--muted);line-height:1.8;margin-top:8px}
+.ds-card{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px}
+.ds-card.ds-empty{opacity:.62}
+.ds-head{display:flex;align-items:center;gap:9px}
+.ds-tick{flex:0 0 auto;width:24px;height:24px;border-radius:8px;border:1px solid var(--line);background:var(--field);color:#04120e;font-size:13px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit}
+.ds-tick.on{background:var(--teal);border-color:var(--teal)}
+.ds-ic{font-size:18px}
+.ds-t{flex:1;min-width:0;font-size:13.5px;font-weight:800}
+.ds-pdf{flex:0 0 auto;background:var(--field);border:1px solid var(--teal-dim);color:var(--teal);font-family:inherit;font-size:11.5px;font-weight:800;padding:6px 11px;border-radius:10px;cursor:pointer}
+.ds-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:11px}
+.ds-stat{background:var(--field);border:1px solid var(--line);border-radius:11px;padding:8px 10px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.ds-stat span{font-size:10px;color:var(--muted)}
+.ds-stat b{font-size:14px;font-weight:800;direction:ltr;text-align:right}
+.ds-note{font-size:11.5px;color:var(--muted);line-height:1.85;margin-top:10px}
+.ds-more{font-size:10.5px;color:var(--muted);margin-top:9px;padding-top:8px;border-top:1px dashed var(--line)}
+.ds-qs{margin:11px 0 0;padding:0 18px 0 0;display:flex;flex-direction:column;gap:7px}
+.ds-qs li{font-size:12.5px;line-height:1.8;color:var(--ink);display:flex;align-items:flex-start;gap:8px}
+.ds-qdel{flex:0 0 auto;background:transparent;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit;padding:0 2px}
+.ds-qadd{display:flex;gap:7px;margin-top:11px}
+.ds-qadd input{flex:1;min-width:0}
 .wd-face{position:relative;flex:0 0 auto;width:66px;height:66px;border-radius:19px;display:flex;align-items:center;justify-content:center;background:var(--wc-soft,rgba(255,255,255,.05));border:1px solid var(--wc-brd,var(--line))}
 .wd-face-in{width:100%;height:100%;border-radius:18px;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .wd-face-img{width:100%;height:100%;object-fit:cover;display:block}
@@ -1188,6 +1220,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <button class="qa-item" onclick="quickAdd('chat')"><span class="qa-ico" style="background:rgba(63,185,163,.18);color:#5fd3bd">💬</span>چت هوشمند</button>
       <button class="qa-item" onclick="quickAdd('aidoctor')"><span class="qa-ico" style="background:rgba(63,185,163,.14);color:#5fd3bd">🩺</span>پزشک AI</button>
       <button class="qa-item" onclick="quickAdd('aihistory')"><span class="qa-ico" style="background:rgba(154,134,224,.18);color:#c3b4f0">🗂️</span>تاریخچه AI</button>
+      <button class="qa-item" onclick="quickAdd('dossier')"><span class="qa-ico" style="background:rgba(63,185,163,.18);color:#5fd3bd">🗂</span>پرونده پزشک</button>
     </div>
     <div class="qa-subt">شروع و رفتن به بخش</div>
     <div class="qa-grid">
@@ -1589,6 +1622,9 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <!-- ============ گزارش روزانه ============ -->
+<div class="page" id="page-dossier">
+<div id="dossierBody"></div>
+</div>
 <div class="page" id="page-daily">
   <div id="dailyReport"></div>
 </div>
@@ -2392,7 +2428,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۸.۵</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۸.۶</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3683,6 +3719,314 @@ function buildYesterdayReview(){
   return {show:true, score, tone, dayLabel:_jLabel(y), warns:warns.slice(0,4), goods:goods.slice(0,3)};
 }
 function _jLabel(d){ try{ const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); return faDigits(jDateStr(j[0],j[1],j[2])); }catch(e){ return ''; } }
+/* ═══════════ 🗂 پروندهٔ پزشک (۲۸.۶) ═══════════
+   یک جای واحد که کلِ روندِ کاربر را قسمت‌قسمت برای پزشک آماده می‌کند.
+   خروجی PDF دقیقاً با همان روشِ گزارشِ AGP است: یک پنجرهٔ سفیدِ مستقل با
+   فونتِ وزیرمتن + دکمهٔ چاپ ⇒ «ذخیره به‌صورت PDF» در خودِ مرورگر. */
+const DS_SECTIONS=[
+  {k:'glucose',  ic:'🩸', t:'قند خون و زمان در محدوده'},
+  {k:'insulin',  ic:'💉', t:'انسولین'},
+  {k:'nutrition',ic:'🍽️', t:'تغذیه و کربوهیدرات'},
+  {k:'exercise', ic:'🏃', t:'ورزش'},
+  {k:'meds',     ic:'💊', t:'داروها'},
+  {k:'labs',     ic:'🧪', t:'آزمایش‌ها'},
+  {k:'body',     ic:'⚖️', t:'وزن، فشار و ضربان'},
+  {k:'notes',    ic:'📓', t:'یادداشت‌ها، خواب و حال'},
+  {k:'questions',ic:'❓', t:'سؤال‌های من از پزشک'}
+];
+const DS_RANGES=[[7,'۷ روز'],[14,'۱۴ روز'],[30,'۳۰ روز'],[90,'۹۰ روز']];
+function dsRange(){ const v=parseInt(localStorage.getItem('dossier_range_v1')||'30',10); return DS_RANGES.some(r=>r[0]===v)?v:30; }
+function dsSetRange(v){ try{ localStorage.setItem('dossier_range_v1',String(v)); }catch(e){} renderDossierTab(); }
+function dsBounds(){ const d=dsRange(); const t1=new Date(); t1.setHours(23,59,59,999);
+  const t0=new Date(t1); t0.setDate(t0.getDate()-(d-1)); t0.setHours(0,0,0,0); return [t0,t1]; }
+function dsPicked(){ try{ const a=JSON.parse(localStorage.getItem('dossier_pick_v1')||'null');
+  return Array.isArray(a)?a:DS_SECTIONS.map(s=>s.k); }catch(e){ return DS_SECTIONS.map(s=>s.k); } }
+function dsTogglePick(k){ const a=dsPicked(); const i=a.indexOf(k); if(i<0) a.push(k); else a.splice(i,1);
+  try{ localStorage.setItem('dossier_pick_v1',JSON.stringify(a)); }catch(e){} renderDossierTab(); }
+function dsQs(){ try{ const a=JSON.parse(localStorage.getItem('dossier_qs_v1')||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function dsQsSave(a){ try{ localStorage.setItem('dossier_qs_v1',JSON.stringify(a)); }catch(e){} }
+function dsQsAdd(){ const el=document.getElementById('dsQIn'); if(!el) return; const v=el.value.trim(); if(!v) return;
+  const a=dsQs(); a.push(v); dsQsSave(a); el.value=''; renderDossierTab();
+  setTimeout(()=>{ const c=document.getElementById('dsQCard'); if(c) c.scrollIntoView({behavior:'smooth',block:'center'}); },60); }
+function dsQsDel(i){ const a=dsQs(); a.splice(i,1); dsQsSave(a); renderDossierTab(); }
+function _dsJ(d){ try{ const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); return faDigits(jDateStr(j[0],j[1],j[2])); }catch(e){ return ''; } }
+function _dsNum(n,dg){ const v=(dg==null?Math.round(n):Math.round(n*Math.pow(10,dg))/Math.pow(10,dg)); return faDigits(String(v)); }
+function _dsJl(k){ try{ const a=JSON.parse(localStorage.getItem(k)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+// روزهای بازه به ترتیبِ جدید→قدیم
+function _dsDays(t0,t1){ const out=[]; const d=new Date(+t1); d.setHours(0,0,0,0);
+  const s=new Date(+t0); s.setHours(0,0,0,0);
+  while(+d>=+s){ out.push(new Date(+d)); d.setDate(d.getDate()-1); } return out; }
+
+/* هر بخش یک ساختارِ یکسان می‌دهد تا هم در برنامه هم در PDF یکجور رندر شود:
+   {stats:[[برچسب,مقدار]...], tables:[{cap,head:[],rows:[[]]}], note:'', empty:bool} */
+function dsBuild(k,t0,t1){
+  const R={stats:[],tables:[],note:'',empty:false};
+  const A=+t0, B=+t1;
+  const inR=t=>t>=A&&t<=B;
+  try{
+  if(k==='glucose'){
+    const cg=(window._cgmReadings||[]).map(r=>(r&&r.t&&r.t.dateObj)?{t:+r.t.dateObj,g:+r.glu}:null)
+      .filter(x=>x&&inR(x.t)&&isFinite(x.g)&&x.g>0);
+    const mn=loadBG().filter(x=>x&&x.iso&&x.glu!=null).map(x=>({t:+new Date(x.iso),g:+x.glu}))
+      .filter(x=>inR(x.t)&&isFinite(x.g)&&x.g>0);
+    const src=resolveBgSrc(cg.length>=10, mn.length>0);
+    const use=(src==='meter')?mn:cg;
+    if(!use.length){ R.empty=true; R.note='در این بازه قندی ثبت نشده.'; return R; }
+    const g=use.map(x=>x.g), n=g.length, avg=g.reduce((a,b)=>a+b,0)/n;
+    const pc=f=>Math.round(g.filter(f).length/n*100);
+    const sd=Math.sqrt(g.reduce((a,b)=>a+(b-avg)*(b-avg),0)/n);
+    R.stats=[['منبع', src==='meter'?'گلوکومترِ دستی':'CGM'],['تعدادِ اندازه‌گیری',faDigits(n)],
+      ['میانگین', _dsNum(avg)+' mg/dL'],['HbA1c تخمینی (GMI)', _dsNum(3.31+0.02392*avg,1)+'٪'],
+      ['در محدوده ۷۰–۱۸۰', faDigits(pc(x=>x>=70&&x<=180))+'٪'],
+      ['زیر ۷۰', faDigits(pc(x=>x<70))+'٪'],['زیر ۵۴ (شدید)', faDigits(pc(x=>x<54))+'٪'],
+      ['بالای ۱۸۰', faDigits(pc(x=>x>180))+'٪'],['بالای ۲۵۰', faDigits(pc(x=>x>250))+'٪'],
+      ['کمترین / بیشترین', _dsNum(Math.min.apply(null,g))+' / '+_dsNum(Math.max.apply(null,g))],
+      ['نوسان (CV)', _dsNum(sd/avg*100)+'٪']];
+    const by={}; use.forEach(x=>{ const kk=dayKey(new Date(x.t)); (by[kk]=by[kk]||[]).push(x.g); });
+    const rows=Object.keys(by).sort().reverse().map(kk=>{ const a=by[kk]; const av=a.reduce((s,v)=>s+v,0)/a.length;
+      const tir=Math.round(a.filter(v=>v>=70&&v<=180).length/a.length*100);
+      return [_dsJ(_dayFromKey(kk)), faDigits(a.length), _dsNum(av), faDigits(tir)+'٪',
+              _dsNum(Math.min.apply(null,a)), _dsNum(Math.max.apply(null,a))]; });
+    R.tables.push({cap:'تفکیکِ روزانه', head:['تاریخ','تعداد','میانگین','در محدوده','کمترین','بیشترین'], rows});
+  }
+  else if(k==='insulin'){
+    const ins=insHistCollect().filter(x=>x&&isFinite(x.ts)&&inR(x.ts));
+    if(!ins.length){ R.empty=true; R.note='در این بازه انسولینی ثبت نشده.'; return R; }
+    const num=v=>{ const f=parseFloat(String(v).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d))); return isFinite(f)?f:0; };
+    const rap=ins.filter(x=>x.k==='rapid'), bas=ins.filter(x=>x.k==='basal'), skp=ins.filter(x=>x.k==='skip');
+    const rapU=rap.reduce((s,x)=>s+num(x.dose),0), basU=bas.reduce((s,x)=>s+num(x.dose),0);
+    const dayset=new Set(ins.map(x=>x.key.slice(0,10)));
+    const nd=Math.max(1,dayset.size);
+    R.stats=[['روزهای دارای ثبت',faDigits(nd)],['کلِ انسولینِ سریع',_dsNum(rapU,1)+' واحد'],
+      ['کلِ انسولینِ پایه',_dsNum(basU,1)+' واحد'],['میانگینِ روزانه (TDD)',_dsNum((rapU+basU)/nd,1)+' واحد'],
+      ['تعدادِ تزریقِ سریع',faDigits(rap.length)],['نزده / فراموش‌شده',faDigits(skp.length)]];
+    const byName={}; ins.forEach(x=>{ if(x.k==='skip') return; const nm=x.name||'—';
+      byName[nm]=byName[nm]||{n:0,u:0,k:x.k}; byName[nm].n++; byName[nm].u+=num(x.dose); });
+    R.tables.push({cap:'به تفکیکِ نوعِ انسولین', head:['نام','نوع','دفعات','مجموع واحد','میانگینِ هر بار'],
+      rows:Object.keys(byName).map(nm=>{ const o=byName[nm];
+        return [nm, o.k==='basal'?'پایه':'سریع', faDigits(o.n), _dsNum(o.u,1), _dsNum(o.u/o.n,1)]; })});
+    const byDay={}; ins.forEach(x=>{ const kk=x.key.slice(0,10); const o=byDay[kk]=byDay[kk]||{b:0,r:0,n:0,s:0};
+      if(x.k==='basal') o.b+=num(x.dose); else if(x.k==='rapid'){ o.r+=num(x.dose); o.n++; } else o.s++; });
+    R.tables.push({cap:'تفکیکِ روزانه', head:['تاریخ','پایه','سریع','تعدادِ تزریق','نزده'],
+      rows:Object.keys(byDay).sort().reverse().map(kk=>{ const o=byDay[kk];
+        return [_dsJ(_dayFromKey(kk)), o.b?_dsNum(o.b,1):'—', o.r?_dsNum(o.r,1):'—', faDigits(o.n), o.s?faDigits(o.s):'—']; })});
+  }
+  else if(k==='nutrition'){
+    const days={}; let meals=0, carbT=0; const foods={};
+    for(const kk in planData){ if(kk[0]==='_'||!Array.isArray(planData[kk])) continue;
+      const d=_dayFromKey(kk); if(!d||!inR(+d)) continue;
+      planData[kk].forEach(e=>{ if(!e||e.planned) return;
+        const c=parseFloat(e.carb)||0; const has=(e.foods&&e.foods.length)||c>0; if(!has) return;
+        meals++; carbT+=c; const o=days[kk]=days[kk]||{m:0,c:0}; o.m++; o.c+=c;
+        (e.foods||[]).forEach(f=>{ const nm=(typeof f==='string')?f:(f&&(f.n||f.name)||''); if(nm) foods[nm]=(foods[nm]||0)+1; }); }); }
+    if(!meals){ R.empty=true; R.note='در این بازه وعده‌ای ثبت نشده.'; return R; }
+    const nd=Math.max(1,Object.keys(days).length);
+    R.stats=[['روزهای دارای ثبت',faDigits(nd)],['تعدادِ وعده',faDigits(meals)],
+      ['کلِ کربوهیدرات',_dsNum(carbT)+' گرم'],['میانگینِ روزانه',_dsNum(carbT/nd)+' گرم'],
+      ['میانگینِ هر وعده',_dsNum(carbT/meals)+' گرم']];
+    R.tables.push({cap:'تفکیکِ روزانه', head:['تاریخ','وعده','کربوهیدرات (گرم)'],
+      rows:Object.keys(days).sort().reverse().map(kk=>[_dsJ(_dayFromKey(kk)), faDigits(days[kk].m), _dsNum(days[kk].c)])});
+    const top=Object.keys(foods).sort((a,b)=>foods[b]-foods[a]).slice(0,15);
+    if(top.length) R.tables.push({cap:'پرتکرارترین خوراکی‌ها', head:['خوراکی','دفعات'], rows:top.map(f=>[f,faDigits(foods[f])])});
+  }
+  else if(k==='exercise'){
+    const rows=[]; const dset=new Set();
+    try{ (loadExLog().entries||[]).forEach(e=>{ if(!e||!inR(+e.ts)) return; const d=new Date(e.ts);
+      dset.add(dayKey(d)); rows.push([_dsJ(d), String(e.time||'—'),
+        (e.items||[]).map(i=>(i&&(i.name||''))+(i&&i.set?(' ('+i.set+')'):'')).join('، ')||'—']); }); }catch(e){}
+    try{ loadExercise().forEach(x=>{ const iso=x&&(x.iso||x.start); if(!iso) return; const t=+new Date(iso); if(!inR(t)) return;
+      const d=new Date(t); dset.add(dayKey(d)); rows.push([_dsJ(d), String(x.time||'—'), String(x.what||'ورزش')]); }); }catch(e){}
+    if(!rows.length){ R.empty=true; R.note='در این بازه ورزشی ثبت نشده.'; return R; }
+    const nd=_dsDays(t0,t1).length;
+    R.stats=[['تعدادِ جلسه',faDigits(rows.length)],['روزهای فعال',faDigits(dset.size)],
+      ['از کلِ روزها',faDigits(nd)],['نسبتِ روزهای فعال',faDigits(Math.round(dset.size/nd*100))+'٪']];
+    R.tables.push({cap:'فهرستِ جلسات', head:['تاریخ','ساعت','تمرین'], rows});
+  }
+  else if(k==='meds'){
+    const md=_dsJl('med_log_v1').filter(x=>x&&x.iso&&inR(+new Date(x.iso)));
+    const sk=_dsJl('skip_log_v1').filter(x=>x&&x.iso&&x.kind!=='insulin'&&inR(+new Date(x.iso)));
+    if(!md.length&&!sk.length){ R.empty=true; R.note='در این بازه دارویی ثبت نشده.'; return R; }
+    const by={}; md.forEach(x=>{ const nm=String(x.name||'—'); by[nm]=(by[nm]||0)+1; });
+    R.stats=[['نوبت‌های مصرف‌شده',faDigits(md.length)],['تعدادِ داروها',faDigits(Object.keys(by).length)],
+      ['نوبت‌های نخورده',faDigits(sk.length)]];
+    R.tables.push({cap:'به تفکیکِ دارو', head:['دارو','دفعات'],
+      rows:Object.keys(by).sort((a,b)=>by[b]-by[a]).map(nm=>[nm,faDigits(by[nm])])});
+    if(sk.length) R.tables.push({cap:'نوبت‌های نخورده', head:['تاریخ','دارو'],
+      rows:sk.sort((a,b)=>new Date(b.iso)-new Date(a.iso)).map(x=>[_dsJ(new Date(x.iso)), String(x.name||'—')])});
+  }
+  else if(k==='labs'){
+    const en=[...(loadLabs().entries||[])].sort((a,b)=>b.ts-a.ts);
+    if(!en.length){ R.empty=true; R.note='هنوز برگهٔ آزمایشی ثبت نشده.'; return R; }
+    const use=en.slice(0,4);                 // ۴ برگهٔ آخر، جدید→قدیم (روند برای پزشک)
+    R.stats=[['تعدادِ برگه',faDigits(en.length)],['آخرین برگه',faDigits(String(en[0].date||'—'))],
+      ['نمایش',faDigits(use.length)+' برگهٔ آخر']];
+    const keys=[]; use.forEach(e=>{ for(const kk in (e.vals||{})) if(keys.indexOf(kk)<0) keys.push(kk); });
+    const head=['آزمایش','واحد','محدودهٔ طبیعی'].concat(use.map(e=>faDigits(String(e.date||''))));
+    const rows=keys.map(kk=>{ const t=findLabTest(kk)||{};
+      const rng=(t.lo!=null&&t.hi!=null)?(faDigits(t.lo)+'–'+faDigits(t.hi)):'—';
+      return [ (t.fa||kk)+(t.en?(' / '+t.en):''), t.unit||'—', rng ]
+        .concat(use.map(e=>{ const v=(e.vals||{})[kk]; return (v==null||v==='')?'—':faDigits(String(v)); })); });
+    R.tables.push({cap:'مقادیر و روند', head, rows});
+  }
+  else if(k==='body'){
+    const w=_dsJl('weight_log_v1').filter(x=>x&&x.iso&&x.kg&&inR(+new Date(x.iso))).sort((a,b)=>new Date(a.iso)-new Date(b.iso));
+    const v=_dsJl('vitals_v1').filter(x=>x&&x.iso&&inR(+new Date(x.iso))).sort((a,b)=>new Date(a.iso)-new Date(b.iso));
+    if(!w.length&&!v.length){ R.empty=true; R.note='در این بازه وزن یا فشاری ثبت نشده.'; return R; }
+    if(w.length){ const a=parseFloat(w[0].kg), b2=parseFloat(w[w.length-1].kg); const dl=b2-a;
+      R.stats.push(['وزنِ ابتدای بازه',_dsNum(a,1)+' کیلو'],['وزنِ فعلی',_dsNum(b2,1)+' کیلو'],
+        ['تغییر',(dl>0?'+':'')+_dsNum(dl,1)+' کیلو']); }
+    const sys=v.filter(x=>x.sys!=null), hr=v.filter(x=>x.hr!=null);
+    if(sys.length) R.stats.push(['میانگینِ فشار',
+      _dsNum(sys.reduce((s,x)=>s+(+x.sys),0)/sys.length)+'/'+_dsNum(sys.reduce((s,x)=>s+(+x.dia||0),0)/sys.length)]);
+    if(hr.length) R.stats.push(['میانگینِ ضربان',_dsNum(hr.reduce((s,x)=>s+(+x.hr),0)/hr.length)+' bpm']);
+    if(w.length) R.tables.push({cap:'روندِ وزن', head:['تاریخ','وزن (کیلو)'],
+      rows:w.slice().reverse().map(x=>[_dsJ(new Date(x.iso)), faDigits(String(x.kg))])});
+    if(v.length) R.tables.push({cap:'فشار و ضربان', head:['تاریخ','فشار','ضربان'],
+      rows:v.slice().reverse().map(x=>[_dsJ(new Date(x.iso)),
+        (x.sys!=null&&x.dia!=null)?(faDigits(x.sys)+'/'+faDigits(x.dia)):'—', x.hr!=null?faDigits(x.hr):'—'])});
+  }
+  else if(k==='notes'){
+    const jr=_dsJl('journal_v1').filter(x=>x&&x.iso&&inR(+new Date(x.iso))).sort((a,b)=>new Date(b.iso)-new Date(a.iso));
+    const mo=_dsJl('mood_log_v1').filter(x=>x&&x.iso&&inR(+new Date(x.iso)));
+    const sl=_dsJl('sleep_log_v1').map(x=>{ try{ const pj=parseJDate(x.date); if(!pj) return null;
+      const g=j2g(pj[0],pj[1],pj[2]); const d=new Date(g[0],g[1]-1,g[2]); return inR(+d)?{d,h:parseFloat(x.hours)}:null; }catch(e){ return null; } }).filter(Boolean);
+    if(!jr.length&&!mo.length&&!sl.length){ R.empty=true; R.note='در این بازه یادداشتی ثبت نشده.'; return R; }
+    R.stats.push(['یادداشت‌ها',faDigits(jr.length)]);
+    if(sl.length){ const hs=sl.filter(x=>isFinite(x.h)); if(hs.length)
+      R.stats.push(['میانگینِ خواب',_dsNum(hs.reduce((s,x)=>s+x.h,0)/hs.length,1)+' ساعت']); }
+    if(mo.length){ const c={}; mo.forEach(x=>{ const m=String(x.mood||'—'); c[m]=(c[m]||0)+1; });
+      R.stats.push(['پرتکرارترین حال', Object.keys(c).sort((a,b)=>c[b]-c[a])[0]||'—']); }
+    const forDoc=jr.filter(x=>x.doctor);
+    if(forDoc.length) R.tables.push({cap:'📌 یادداشت‌هایی که برای پزشک علامت زده‌ای',
+      head:['تاریخ','متن'], rows:forDoc.map(x=>[_dsJ(new Date(x.iso)), String(x.doctor)])});
+    if(jr.length) R.tables.push({cap:'دفترچهٔ روزانه', head:['تاریخ','حال','برچسب‌ها','یادداشت'],
+      rows:jr.slice(0,40).map(x=>[_dsJ(new Date(x.iso)),
+        (typeof JRN_RATING!=='undefined'&&JRN_RATING[x.rating])||x.rating||'—',
+        (x.tags||[]).join('، ')||'—', String(x.note||'—')])});
+    if(sl.length) R.tables.push({cap:'خواب', head:['تاریخ','ساعت'],
+      rows:sl.sort((a,b)=>b.d-a.d).map(x=>[_dsJ(x.d), isFinite(x.h)?faDigits(String(x.h)):'—'])});
+  }
+  else if(k==='questions'){
+    const q=dsQs();
+    if(!q.length){ R.empty=true; R.note='هنوز سؤالی ننوشته‌ای. سؤال‌هایت را اینجا بنویس تا سرِ ویزیت یادت نرود.'; return R; }
+    R.stats=[['تعدادِ سؤال',faDigits(q.length)]];
+    R.tables.push({cap:'سؤال‌های من', head:['#','سؤال','پاسخِ پزشک'],
+      rows:q.map((x,i)=>[faDigits(i+1), String(x), '']) });
+  }
+  }catch(e){ R.empty=true; R.note='خطا در آماده‌سازیِ این بخش.'; }
+  if(!R.stats.length&&!R.tables.length) R.empty=true;
+  return R;
+}
+
+/* ── رندرِ تبِ پرونده ─────────────────────────────────────── */
+function renderDossierTab(){
+  const box=document.getElementById('dossierBody'); if(!box) return;
+  const [t0,t1]=dsBounds(); const pick=dsPicked();
+  const segs='<div class="ds-segs">'+DS_RANGES.map(r=>
+    `<button type="button" class="ds-seg ${dsRange()===r[0]?'on':''}" onclick="dsSetRange(${r[0]})">${r[1]}</button>`).join('')+'</div>';
+  let h=`<div class="ds-top">
+    <div class="ds-hero">${(typeof wdFaceHTML==='function')?wdFaceHTML('flat'):''}
+      <div class="ds-hero-t"><b>پرونده برای پزشک</b>
+        <span>هرچه ثبت کرده‌ای، قسمت‌قسمت و آمادهٔ چاپ — تا سرِ ویزیت چیزی از قلم نیفتد.</span></div></div>
+    <div class="ds-range"><span class="ds-range-l">بازه:</span>${segs}</div>
+    <div class="ds-dates">${_dsJ(t0)} تا ${_dsJ(t1)}</div>
+    <button class="add-btn ds-all" onclick="dsPrint(null)">📄 پروندهٔ کامل (${faDigits(pick.length)} بخش) — PDF</button>
+    <div class="ds-hint">تیکِ هر بخش تعیین می‌کند در «پروندهٔ کامل» بیاید یا نه. هر بخش هم PDF جداگانه دارد.</div>
+  </div>`;
+  DS_SECTIONS.forEach(s=>{
+    const R=dsBuild(s.k,t0,t1); const on=pick.indexOf(s.k)>=0;
+    h+=`<div class="ds-card${R.empty?' ds-empty':''}" ${s.k==='questions'?'id="dsQCard"':''}>
+      <div class="ds-head">
+        <button type="button" class="ds-tick${on?' on':''}" onclick="dsTogglePick('${s.k}')" title="${on?'در پروندهٔ کامل هست':'در پروندهٔ کامل نیست'}">${on?'✓':''}</button>
+        <span class="ds-ic">${s.ic}</span><b class="ds-t">${s.t}</b>
+        <button type="button" class="ds-pdf" onclick="dsPrint('${s.k}')">📄 PDF</button>
+      </div>`;
+    if(R.stats.length) h+=`<div class="ds-stats">`+R.stats.map(x=>
+      `<div class="ds-stat"><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')+`</div>`;
+    if(R.note) h+=`<div class="ds-note">${escVision(R.note)}</div>`;
+    if(s.k==='questions'){
+      const q=dsQs();
+      if(q.length) h+=`<ol class="ds-qs">`+q.map((x,i)=>
+        `<li>${escVision(x)}<button type="button" class="ds-qdel" onclick="dsQsDel(${i})">✕</button></li>`).join('')+`</ol>`;
+      h+=`<div class="ds-qadd"><input id="dsQIn" class="qbg-in" placeholder="سؤالت را بنویس…" onkeydown="if(event.key==='Enter'){event.preventDefault();dsQsAdd();}">
+        <button type="button" class="mini-btn" onclick="dsQsAdd()">＋ افزودن</button></div>`;
+    } else if(R.tables.length){
+      const t=R.tables[0];
+      h+=`<div class="ds-more">${escVision(t.cap)} · ${faDigits(t.rows.length)} ردیف — در PDF کامل می‌آید</div>`;
+    }
+    h+=`</div>`;
+  });
+  h+=`<div class="dash-note">⚕️ این پرونده از داده‌هایی که خودت ثبت کرده‌ای ساخته می‌شود و آموزشی است — جایگزینِ گزارشِ رسمیِ دستگاه یا نظرِ پزشک نیست.</div>`;
+  box.innerHTML=h;
+}
+
+/* ── خروجی PDF: همان روشِ گزارشِ AGP (پنجرهٔ سفید + چاپ) ── */
+function dsPrint(only){
+  const [t0,t1]=dsBounds();
+  const keys = only ? [only] : dsPicked();
+  if(!keys.length){ alert('حداقل یک بخش را تیک بزن.'); return; }
+  const win=window.open('','_blank');
+  if(!win){ alert('برای دریافت PDF، اجازه‌ی باز شدن پنجره را بده (popup).'); return; }
+  let name=''; try{ const pr=profGet()||{}; name=String(pr.firstName||'').trim(); }catch(e){}
+  const title = only ? (DS_SECTIONS.filter(s=>s.k===only)[0]||{}).t : 'پروندهٔ کامل';
+  let body='';
+  keys.forEach(k=>{
+    const S=DS_SECTIONS.filter(s=>s.k===k)[0]; if(!S) return;
+    const R=dsBuild(k,t0,t1);
+    body+=`<div class="sec"><h2>${S.ic} ${S.t}</h2>`;
+    if(R.empty&&!R.stats.length&&!R.tables.length){ body+=`<div class="none">${escVision(R.note||'داده‌ای ثبت نشده.')}</div></div>`; return; }
+    if(R.stats.length) body+=`<div class="stats">`+R.stats.map(x=>
+      `<div class="st"><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')+`</div>`;
+    R.tables.forEach(t=>{
+      body+=`<div class="tcap">${escVision(t.cap)}</div><table class="rtbl"><thead><tr>`+
+        t.head.map(hh=>`<th>${escVision(String(hh))}</th>`).join('')+`</tr></thead><tbody>`+
+        t.rows.map(r=>`<tr>`+r.map(c=>`<td>${escVision(String(c))}</td>`).join('')+`</tr>`).join('')+
+        `</tbody></table>`;
+    });
+    if(R.note) body+=`<div class="none">${escVision(R.note)}</div>`;
+    body+=`</div>`;
+  });
+  win.document.write(`<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="UTF-8">
+  <title>${escVision(title)} — پرونده برای پزشک</title>
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+    *{font-family:Vazirmatn,sans-serif;box-sizing:border-box}
+    body{margin:0;padding:20px;color:#222;background:#fff;font-size:13px}
+    .rhead{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #2a7d70;padding-bottom:10px;margin-bottom:16px}
+    h1{font-size:19px;color:#2a7d70;margin:0}
+    .rhead .meta{text-align:left;font-size:11px;color:#666;line-height:1.7}
+    .sec{margin-bottom:20px;break-inside:avoid}
+    .sec h2{font-size:14px;margin:0 0 10px;color:#333;background:#eef4f3;padding:7px 11px;border-radius:5px;border-right:3px solid #2a7d70}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
+    .st{border:1px solid #e2e2e2;border-radius:7px;padding:7px 9px;display:flex;flex-direction:column;gap:3px}
+    .st span{font-size:10px;color:#777}
+    .st b{font-size:14px;font-weight:800;color:#222}
+    .tcap{font-size:11.5px;color:#555;font-weight:700;margin:10px 0 4px}
+    .rtbl{width:100%;border-collapse:collapse;font-size:11px}
+    .rtbl th{background:#f0f4f4;padding:6px 5px;text-align:center;font-weight:700;border:1px solid #e0e0e0;color:#444}
+    .rtbl td{padding:5px;text-align:center;border:1px solid #eee;vertical-align:middle}
+    .rtbl tbody tr:nth-child(even){background:#fafafa}
+    .none{font-size:11.5px;color:#999;padding:8px 2px}
+    .foot{font-size:10.5px;color:#888;margin-top:18px;line-height:1.8;border-top:1px solid #eee;padding-top:12px}
+    .btn{background:#2a9d8f;color:#fff;border:none;padding:12px 20px;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit}
+    @media print{ body{padding:8px} .noprint{display:none} .sec{break-inside:avoid} .rtbl{break-inside:auto} tr{break-inside:avoid} }
+  </style></head><body>
+  <div class="noprint" style="text-align:center;margin-bottom:16px">
+    <button class="btn" onclick="window.print()">🖨 چاپ / ذخیره به‌صورت PDF</button>
+  </div>
+  <div class="rhead">
+    <h1>${escVision(title)}${name?(' — '+escVision(name)):''}</h1>
+    <div class="meta">بازه: ${_dsJ(t0)} تا ${_dsJ(t1)} (${faDigits(dsRange())} روز)<br>تولید: ${_dsJ(new Date())}</div>
+  </div>
+  ${body}
+  <div class="foot">
+    این پرونده از داده‌هایی ساخته شده که بیمار خودش در یک اپِ شخصی ثبت کرده است و آموزشی است —
+    جایگزینِ گزارشِ رسمیِ دستگاه یا نظرِ پزشک نیست. هر تصمیمِ درمانی فقط با پزشکِ معالج است.
+  </div>
+  </body></html>`);
+  win.document.close();
+}
+
 /* ═══ چهرهٔ ناظر (۲۸.۴) — همان شخصیتِ مجریِ پادکست، با ژست و حالتِ متناسبِ امتیاز ═══
    هزینهٔ تکرارشونده ندارد: از همان صحنهٔ سه‌بعدیِ زنده‌ای که در کارتِ پادکست اجرا
    می‌شود، برای هر حالت **یک‌بار** یک «نیم‌تنه» رندر و در localStorage کش می‌شود.
@@ -8620,6 +8964,7 @@ function switchTab(name,btn){
   if(name==='profile'){ renderProfileTab(); try{ audioDiagRefresh(); }catch(e){} }
   if(name==='chat'){ renderChatTab(); }
   if(name==='aihistory'){ renderAiHistoryTab(); }
+  if(name==='dossier'){ renderDossierTab(); }
 }
 /* ====== ثبت سریع (دکمه‌ی + وسط) ====== */
 function openQuickAdd(){ uiDing&&uiDing(); document.getElementById('qaOverlay').classList.add('show'); }
@@ -8633,6 +8978,7 @@ function quickAdd(type){
       if(c){ c.classList.remove('closed'); c.scrollIntoView({behavior:'smooth',block:'start'}); }
     },80);
   };
+  if(type==='dossier') switchTab('dossier');
   if(type==='meal') openQuickMeal();
   else if(type==='insulin') openQuickInsulin();
   else if(type==='exercise') go('exercise','c-ex-log');
