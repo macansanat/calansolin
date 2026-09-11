@@ -2473,7 +2473,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۹.۱</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۹.۲</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4115,7 +4115,7 @@ function dsTIRBarSVG(m){ if(!m) return '';
   const leg=segs.map(s=>`<span class="lg"><i style="background:${s[1]}"></i>${s[2]} ${faDigits(Math.round(s[0]))}٪</span>`).join('');
   return `<div class="chart"><div class="chart-t">زمان در محدوده‌ها</div><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:26px;border-radius:6px;overflow:hidden">${bar}</svg><div class="leg">${leg}</div></div>`; }
 function dsLineSVG(title,pts,opt){ opt=opt||{}; if(!pts||pts.length<2) return '';
-  const W=560,H=150,pl=6,pr=6,pt=10,pb=18; const xs=pts.map(p=>p.t),ys=pts.map(p=>p.g);
+  const W=560,H=(opt.H||150),pl=6,pr=6,pt=10,pb=18; const xs=pts.map(p=>p.t),ys=pts.map(p=>p.g);
   const t0=Math.min.apply(null,xs),t1=Math.max.apply(null,xs),span=Math.max(1,t1-t0);
   let gMin=opt.gMin!=null?opt.gMin:Math.min.apply(null,ys), gMax=opt.gMax!=null?opt.gMax:Math.max.apply(null,ys);
   if(gMax-gMin<1){ gMax+=1; gMin-=1; } const pad=(gMax-gMin)*0.1; gMin-=pad; gMax+=pad;
@@ -4125,7 +4125,7 @@ function dsLineSVG(title,pts,opt){ opt=opt||{}; if(!pts||pts.length<2) return ''
   const poly=pts.map(p=>X(p.t).toFixed(1)+','+Y(p.g).toFixed(1)).join(' ');
   const dots=(opt.dots?pts:[]).map(p=>`<circle cx="${X(p.t).toFixed(1)}" cy="${Y(p.g).toFixed(1)}" r="2.6" fill="${opt.color||'#2a7d70'}"/>`).join('');
   const lbl=`<text x="${pl}" y="${(H-4)}" font-size="9" fill="#999">${faDigits(_dsNum(gMin,0))}</text><text x="${pl}" y="${pt+8}" font-size="9" fill="#999">${faDigits(_dsNum(gMax,0))}</text>`;
-  const svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${opt.h||(opt.bare?130:150)}px">${grid}${lbl}<polyline points="${poly}" fill="none" stroke="${opt.color||'#2a7d70'}" stroke-width="1.8" stroke-linejoin="round"/>${dots}</svg>`;
+  const svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">${grid}${lbl}<polyline points="${poly}" fill="none" stroke="${opt.color||'#2a7d70'}" stroke-width="1.8" stroke-linejoin="round"/>${dots}</svg>`;
   return opt.bare?svg:`<div class="chart"><div class="chart-t">${title}</div>${svg}</div>`; }
 function dsWeightPts(t0,t1){ const A=+t0,B=+t1;
   return _dsJl('weight_log_v1').filter(x=>x&&x.iso&&x.kg&&(+new Date(x.iso))>=A&&(+new Date(x.iso))<=B)
@@ -4424,6 +4424,45 @@ function dsFindings(t0,t1){
 }
 
 /* ── خلاصهٔ یک‌صفحه‌ایِ پرونده برای پزشک ── */
+/* AGP فشرده با مقیاسِ Yِ پویا — agpSVG مقیاسِ ثابتِ ۰..۳۰۰ دارد و برای
+   دادهٔ معمولی ۴۰٪ بالای کادر سفیدِ بی‌مصرف می‌ماند. */
+function dsAGPCompact(t0,t1,P,AC){
+  let pts=null; try{ pts=computeAGP(dsRangeReadings(t0,t1)); }catch(e){ return ''; }
+  if(!pts) return '';
+  const v=pts.filter(p=>p); if(v.length<8) return '';
+  const W=900,H=176,padL=40,padR=12,padT=10,padB=22;
+  const pw=W-padL-padR, ph=H-padT-padB;
+  const hi=Math.max.apply(null,v.map(p=>p.p95)), lo=Math.min.apply(null,v.map(p=>p.p5));
+  const yMax=Math.max(200,Math.ceil((hi+15)/50)*50), yMin=Math.min(50,Math.floor((lo-10)/10)*10);
+  const X=i=>padL+(i/47)*pw, Y=g=>padT+ph-((Math.max(yMin,Math.min(yMax,g))-yMin)/(yMax-yMin))*ph;
+  const band=(a,b)=>'M'+v.map(p=>`${X(p.x).toFixed(1)},${Y(p[b]).toFixed(1)}`).join(' L')+' L'+
+    v.slice().reverse().map(p=>`${X(p.x).toFixed(1)},${Y(p[a]).toFixed(1)}`).join(' L')+' Z';
+  let g=`<rect x="${padL}" y="${Y(180).toFixed(1)}" width="${pw}" height="${(Y(70)-Y(180)).toFixed(1)}" fill="${AC}14"/>`;
+  const ticks=[]; for(let t=Math.ceil(yMin/50)*50;t<=yMax;t+=50) ticks.push(t);
+  ticks.forEach(t=>{ const y=Y(t);
+    g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="${P.line}" stroke-width=".8" stroke-dasharray="2 4"/>`+
+       `<text x="${padL-7}" y="${(y+3.5).toFixed(1)}" text-anchor="end" font-size="10" fill="${P.mut}">${faDigits(t)}</text>`; });
+  [[70,'#e0685f'],[180,'#e0a355']].forEach(t=>{ const y=Y(t[0]);
+    g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="${t[1]}" stroke-width="1.3"/>`; });
+  g+=`<path d="${band('p5','p95')}" fill="${AC}22"/><path d="${band('p25','p75')}" fill="${AC}4d"/>`;
+  g+=`<path d="M`+v.map(p=>`${X(p.x).toFixed(1)},${Y(p.p50).toFixed(1)}`).join(' L')+`" fill="none" stroke="${AC}" stroke-width="2.4" stroke-linejoin="round"/>`;
+  [0,3,6,9,12,15,18,21,24].forEach(h=>{ g+=`<text x="${X(h*2).toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="10" fill="${P.mut}">${faDigits(String(h).padStart(2,'0'))}</text>`; });
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" direction="ltr">${g}</svg>`;
+}
+/* کارتِ شاخص: حلقهٔ ۶۶px با عددِ داخلش (در اندازهٔ ۴۴ عدد جا نمی‌شد و حلقه بی‌فایده بود) */
+function dsKpiCard(key,m,P,FS){
+  const g=_dsGV(key,m); if(!g) return '';
+  const S=66,cx=S/2,cy=S/2,r=S/2-6,sw=6.5,A0=-135,SPAN=270;
+  return `<div class="k">
+    <svg viewBox="0 0 ${S} ${S}" width="${S}" height="${S}">
+      <path d="${_dsArcD(cx,cy,r,A0,A0+SPAN)}" fill="none" stroke="${P.track}" stroke-width="${sw}" stroke-linecap="round"/>
+      <path d="${_dsArcD(cx,cy,r,A0,A0+SPAN*g.f)}" fill="none" stroke="${g.col}" stroke-width="${sw}" stroke-linecap="round"/>
+      <text x="${cx}" y="${cy+2}" text-anchor="middle" font-size="19" font-weight="800" fill="${g.col}">${faDigits(g.disp)}</text>
+      <text x="${cx}" y="${cy+15}" text-anchor="middle" font-size="8.5" fill="${P.mut}">${g.D.unit||'mg/dL'}</text>
+    </svg>
+    <div class="k-l">${g.D.label}</div></div>`;
+}
+
 function dsPrintSummary(){
   const [t0,t1]=dsBounds();
   const c=Object.assign(dsCfg(),{}); if(c.theme==='dark'&&!c.darkPrint) c.theme='light';
@@ -4440,9 +4479,7 @@ function dsPrintSummary(){
 
   // ── ردیفِ شاخص‌ها (فشرده، هر کارت ۷۶px) ──
   let kpis='';
-  ['tir','gmi','avg','cv','tbr'].forEach(k=>{ const g=_dsGV(k,m); if(!g) return;
-    kpis+=`<div class="k"><div class="k-t"><b style="color:${g.col}">${faDigits(g.disp)}</b><em>${g.D.unit||'mg/dL'}</em></div>
-      <div class="k-l">${g.D.label}</div>${dsMiniRing(g,44)}</div>`; });
+  ['tir','gmi','avg','cv'].forEach(k=>{ kpis+=dsKpiCard(k,m,P,FS); });
 
   // ── نوارِ TIR ──
   let tir='';
@@ -4453,10 +4490,8 @@ function dsPrintSummary(){
 
   // ── AGP (پهن و کوتاه) ──
   let agp='';
-  try{ const pts=computeAGP(dsRangeReadings(t0,t1));
-    if(pts&&pts.filter(x=>x).length>=8){ const sv=agpSVG(pts,900,200,!dark);
-      if(sv.indexOf('<svg')>=0) agp=`<div class="box w12"><div class="bt">پروفایلِ ۲۴ساعتهٔ قند (AGP)<span>${faDigits(days)} روز روی هم</span></div>${sv}</div>`; }
-  }catch(e){}
+  { const sv=dsAGPCompact(t0,t1,P,AC);
+    if(sv) agp=`<div class="box w12"><div class="bt">پروفایلِ ۲۴ساعتهٔ قند (AGP)<span>میانه و نوارِ ۲۵–۷۵٪ و ۵–۹۵٪ · ${faDigits(days)} روز</span></div>${sv}</div>`; }
 
   // ── نوارِ روزبه‌روز (کوتاه) ──
   let strip='';
@@ -4464,15 +4499,17 @@ function dsPrintSummary(){
       const k=dayKey(d); (by[k]=by[k]||[]).push(r.glu); });
     let keys=Object.keys(by).sort(); if(keys.length>31) keys=keys.slice(-31);
     if(keys.length>=3){ strip=`<div class="box w12"><div class="bt">زمان در محدوده — روزبه‌روز<span>${faDigits(keys.length)} روز</span></div><div class="sbars">`+
-      keys.map(k=>{ const a=by[k],n=a.length; const lo=a.filter(g=>g<70).length/n*100, hi=a.filter(g=>g>180).length/n*100;
+      keys.map((k,ix)=>{ const a=by[k],n=a.length; const lo=a.filter(g=>g<70).length/n*100, hi=a.filter(g=>g>180).length/n*100;
         const d=_dayFromKey(k);
-        return `<div class="sb"><div class="sbb"><i style="height:${hi.toFixed(1)}%;background:#e0a355"></i><i style="height:${(100-lo-hi).toFixed(1)}%;background:#3fa06f"></i><i style="height:${lo.toFixed(1)}%;background:#e0685f"></i></div><span>${d?faDigits(String(d.getDate())):''}</span></div>`;
+        const every=keys.length>16?5:2;
+        const lbl=(d && (ix%every===0))?faDigits(String(d.getDate())):'';
+        return `<div class="sb"><div class="sbb"><i style="height:${hi.toFixed(1)}%;background:#e0a355"></i><i style="height:${(100-lo-hi).toFixed(1)}%;background:#3fa06f"></i><i style="height:${lo.toFixed(1)}%;background:#e0685f"></i></div><span>${lbl}</span></div>`;
       }).join('')+`</div></div>`; } }
 
   // ── وزن + میانگین‌های روزانه (نیم‌عرض) ──
   let wt='';
   { const wp=dsWeightPts(t0,t1);
-    if(wp.length>=2) wt=`<div class="box w6"><div class="bt">روندِ وزن<span>${faDigits(_dsNum(wp[0].g,1))} → ${faDigits(_dsNum(wp[wp.length-1].g,1))} کیلو</span></div>${dsLineSVG('',wp,{dots:true,color:AC,bare:1,h:96})}</div>`; }
+    if(wp.length>=2) wt=`<div class="box w6"><div class="bt">روندِ وزن<span>${faDigits(_dsNum(wp[0].g,1))} → ${faDigits(_dsNum(wp[wp.length-1].g,1))} کیلو</span></div>${dsLineSVG('',wp,{dots:true,color:AC,bare:1,H:112})}</div>`; }
   let avgs='';
   { const mini=[]; const pick=(sec,re)=>{ try{ const R=dsBuild(sec,t0,t1); const r=R.stats.filter(x=>re.test(x[0]))[0]; if(r) mini.push(r); }catch(e){} };
     pick('insulin',/TDD/); pick('nutrition',/میانگینِ روزانه/); pick('exercise',/روزهای فعال/); pick('meds',/مصرف‌شده/);
@@ -4518,14 +4555,11 @@ function dsPrintSummary(){
     .bt span{font-size:${FS-3}px;color:${P.mut};font-weight:600}
     .bt.sm{font-size:${FS-1}px;margin-bottom:5px}
     /* شاخص‌ها */
-    .kr{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:8px}
-    .k{background:${P.panel};border:1px solid ${P.line};border-radius:12px;padding:8px 10px;display:grid;
-       grid-template-columns:1fr auto;grid-template-rows:auto auto;align-items:center;column-gap:6px;min-height:66px}
-    .k-t{grid-column:1;grid-row:1;display:flex;align-items:baseline;gap:3px;direction:ltr;justify-content:flex-end}
-    .k-t b{font-size:${FS+9}px;font-weight:800;line-height:1}
-    .k-t em{font-size:${FS-3.5}px;font-style:normal;color:${P.mut}}
-    .k-l{grid-column:1;grid-row:2;font-size:${FS-2.5}px;color:${P.mut};font-weight:600;margin-top:3px}
-    .k .mr{grid-column:2;grid-row:1/3}
+    .kr{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
+    .k{background:${P.panel};border:1px solid ${P.line};border-radius:12px;padding:9px 8px 7px;
+       display:flex;flex-direction:column;align-items:center;gap:3px}
+    .k svg{display:block}
+    .k-l{font-size:${FS-1.5}px;color:${P.mut};font-weight:700;text-align:center;line-height:1.35}
     /* نوار */
     .bar{display:flex;height:22px;border-radius:6px;overflow:hidden}
     .bar i{display:flex;align-items:center;justify-content:center;font-size:${FS-3}px;font-weight:700;color:#fff;font-style:normal}
@@ -4533,11 +4567,11 @@ function dsPrintSummary(){
     .lg b{display:inline-block;width:9px;height:8px;border-radius:2px;margin-left:4px}
     .box svg{display:block;width:100%;height:auto}
     /* نوارِ روزانه */
-    .sbars{display:flex;gap:2px;align-items:flex-end;height:62px}
+    .sbars{display:flex;gap:2.5px;align-items:flex-end;height:64px}
     .sb{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px}
     .sbb{width:100%;height:50px;display:flex;flex-direction:column;border-radius:3px;overflow:hidden;background:${P.track}}
     .sbb i{display:block;width:100%}
-    .sb span{font-size:6.5px;color:${P.mut};direction:ltr}
+    .sb span{font-size:${FS-3.5}px;color:${P.mut};direction:ltr;height:11px}
     /* میانگین‌ها */
     .mg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
     .mi{background:${P.soft};border-radius:9px;padding:6px 9px}
