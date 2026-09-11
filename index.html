@@ -317,7 +317,14 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 /* ===== کارت ناظرِ دیروز ===== */
 .wd-card{position:relative;overflow:hidden;margin:0 0 16px;padding:18px;border-radius:20px;background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line)}
 .wd-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--wc),transparent)}
-.wd-head{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+.wd-gear{position:absolute;top:11px;left:11px;width:30px;height:30px;border-radius:10px;border:1px solid var(--line);background:var(--field);color:var(--muted);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;z-index:2}
+.wd-gear.on{background:var(--wc-soft,var(--field));border-color:var(--wc-brd,var(--line));color:var(--ink)}
+.wd-nav{display:flex;align-items:center;gap:8px;margin:2px 0 12px;flex-wrap:wrap}
+.wd-navb{background:var(--field);border:1px solid var(--line);color:var(--ink);font-family:inherit;font-size:12px;font-weight:700;padding:6px 12px;border-radius:9px;cursor:pointer}
+.wd-navb:disabled{opacity:.4}
+.wd-navd{flex:1;text-align:center;font-size:12.5px;font-weight:800;color:var(--ink);min-width:80px}
+.wd-navnow{background:var(--wc-soft,var(--field));border:1px solid var(--wc-brd,var(--line));color:var(--ink);font-family:inherit;font-size:11.5px;font-weight:700;padding:6px 10px;border-radius:9px;cursor:pointer}
+.wd-head{display:flex;align-items:center;gap:11px;margin-bottom:14px;padding-left:36px}
 .ds-top{margin-bottom:14px}
 .ds-hero{display:flex;align-items:center;gap:12px;margin-bottom:12px}
 .ds-hero-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
@@ -2428,7 +2435,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۸.۶</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۸.۷</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3654,9 +3661,11 @@ function dashGluStatus(v){
 }
 /* ====== ناظرِ دیروز (سختگیر ولی منصف) — قاعده‌محور، آفلاین و بدون توکن ======
    داده‌های «دیروز» را بررسی می‌کند و امروز روی خانه هشدارِ کوتاه یا تشویق نشان می‌دهد. */
-function buildYesterdayReview(){
+function buildYesterdayReview(){ const y=new Date(); y.setDate(y.getDate()-1); y.setHours(0,0,0,0); return buildDayReview(y); }
+// مرورِ یک روزِ دلخواه (قاعده‌محور، آفلاین) — برای کارتِ خانه و پروندهٔ پزشک
+function buildDayReview(y){
   const jl=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'[]'); }catch(e){ return []; } };
-  const y=new Date(); y.setDate(y.getDate()-1); y.setHours(0,0,0,0);
+  y=new Date(+y); y.setHours(0,0,0,0);
   const key=dayKey(y);
   const sameDay=iso=>{ try{ return dayKey(new Date(iso))===key; }catch(e){ return false; } };
   let prof={}; try{ prof=profGet(); }catch(e){}
@@ -3732,6 +3741,8 @@ const DS_SECTIONS=[
   {k:'labs',     ic:'🧪', t:'آزمایش‌ها'},
   {k:'body',     ic:'⚖️', t:'وزن، فشار و ضربان'},
   {k:'notes',    ic:'📓', t:'یادداشت‌ها، خواب و حال'},
+  {k:'watchdog', ic:'🕵️', t:'ناظرِ روزانه (امتیاز و توصیه‌ها)'},
+  {k:'podcast',  ic:'🎧', t:'متنِ پادکست‌های روزانه'},
   {k:'questions',ic:'❓', t:'سؤال‌های من از پزشک'}
 ];
 const DS_RANGES=[[7,'۷ روز'],[14,'۱۴ روز'],[30,'۳۰ روز'],[90,'۹۰ روز']];
@@ -3872,9 +3883,18 @@ function dsBuild(k,t0,t1){
     const w=_dsJl('weight_log_v1').filter(x=>x&&x.iso&&x.kg&&inR(+new Date(x.iso))).sort((a,b)=>new Date(a.iso)-new Date(b.iso));
     const v=_dsJl('vitals_v1').filter(x=>x&&x.iso&&inR(+new Date(x.iso))).sort((a,b)=>new Date(a.iso)-new Date(b.iso));
     if(!w.length&&!v.length){ R.empty=true; R.note='در این بازه وزن یا فشاری ثبت نشده.'; return R; }
-    if(w.length){ const a=parseFloat(w[0].kg), b2=parseFloat(w[w.length-1].kg); const dl=b2-a;
-      R.stats.push(['وزنِ ابتدای بازه',_dsNum(a,1)+' کیلو'],['وزنِ فعلی',_dsNum(b2,1)+' کیلو'],
-        ['تغییر',(dl>0?'+':'')+_dsNum(dl,1)+' کیلو']); }
+    if(w.length){
+      // «تغییرِ کل» از کلِ تاریخچه (نه فقط بازه) تا مثلِ کارتِ تاریخچه معنادار باشد
+      const allW=_dsJl('weight_log_v1').filter(x=>x&&x.iso&&x.kg).sort((a,b)=>new Date(a.iso)-new Date(b.iso));
+      let first=allW.length?parseFloat(allW[0].kg):null;
+      try{ const pr=profGet()||{}; if(pr.weightStart) first=parseFloat(pr.weightStart); }catch(e){}
+      const cur=parseFloat(w[w.length-1].kg);
+      const rs=parseFloat(w[0].kg), rDl=cur-rs;
+      if(first!=null&&isFinite(first)){ const tot=cur-first;
+        R.stats.push(['وزنِ اولیه (کل)',_dsNum(first,1)+' کیلو'],['وزنِ فعلی',_dsNum(cur,1)+' کیلو'],
+          ['تغییرِ کل',(tot>0?'+':'')+_dsNum(tot,1)+' کیلو']); }
+      else R.stats.push(['وزنِ فعلی',_dsNum(cur,1)+' کیلو']);
+      R.stats.push(['در این بازه',(rDl>0?'+':'')+_dsNum(rDl,1)+' کیلو ('+_dsNum(rs,1)+'→'+_dsNum(cur,1)+')']); }
     const sys=v.filter(x=>x.sys!=null), hr=v.filter(x=>x.hr!=null);
     if(sys.length) R.stats.push(['میانگینِ فشار',
       _dsNum(sys.reduce((s,x)=>s+(+x.sys),0)/sys.length)+'/'+_dsNum(sys.reduce((s,x)=>s+(+x.dia||0),0)/sys.length)]);
@@ -3905,6 +3925,38 @@ function dsBuild(k,t0,t1){
         (x.tags||[]).join('، ')||'—', String(x.note||'—')])});
     if(sl.length) R.tables.push({cap:'خواب', head:['تاریخ','ساعت'],
       rows:sl.sort((a,b)=>b.d-a.d).map(x=>[_dsJ(x.d), isFinite(x.h)?faDigits(String(x.h)):'—'])});
+  }
+  else if(k==='watchdog'){
+    const days=_dsDays(t0,t1); const rows=[]; let sum=0, ns=0;
+    days.forEach(d=>{ let r; try{ r=buildDayReview(d); }catch(e){ return; }
+      if(!r||!r.show||r.score==null) return;   // روزهای بدونِ داده (بی‌امتیاز) را نمی‌آوریم
+      const rec=(r.warns||[]).concat((r.goods||[]).map(g=>'✓ '+g));
+      sum+=r.score; ns++;
+      rows.push([_dsJ(d), faDigits(r.score), rec.join(' • ')||'—']); });
+    if(!rows.length){ R.empty=true; R.note='برای این بازه مرورِ روزانه‌ای ساخته نشد (داده‌ای ثبت نشده بود).'; return R; }
+    R.stats.push(['روزهای بررسی‌شده',faDigits(rows.length)]);
+    if(ns) R.stats.push(['میانگینِ امتیاز',faDigits(Math.round(sum/ns))+' از ۱۰۰']);
+    R.tables.push({cap:'مرورِ روزبه‌روزِ ناظر', head:['تاریخ','امتیاز','توصیه‌ها و نکات'], rows});
+  }
+  else if(k==='podcast'){
+    if(typeof podHistDay!=='function'){ R.empty=true; R.note='پادکستی در دسترس نیست.'; return R; }
+    const days=_dsDays(t0,t1); const rows=[]; let cnt=0;
+    const clean=t=>String(t||'').replace(/@@[A-Z]+@@[\s\S]*$/,'').replace(/[#*`>_]/g,'').replace(/\n{2,}/g,'\n').trim();
+    days.forEach(d=>{
+      let arr=[]; try{ arr=podHistDay(dayKey(d)); }catch(e){}
+      if(!arr||!arr.length) return;
+      // انتخابِ نمایندهٔ روز: اول ستاره‌دار، وگرنه طولانی‌ترین متن
+      const star=arr.filter(r=>r&&r.starred);
+      const pick=(star.length?star:arr).slice().sort((a,b)=>((b.script||'').length)-((a.script||'').length))[0];
+      if(!pick||!pick.script) return; cnt++;
+      const cover=(typeof POD_RANGE_FA!=='undefined'&&POD_RANGE_FA[pick.range])||pick.range||'—';
+      const tone=(pick.tone||'').trim();
+      const meta=(pick.starred?'★ ':'')+(cover!=='—'?('دربارهٔ '+cover):'')+(pick.len?(' · '+faDigits(pick.len)+' دقیقه'):'');
+      rows.push([_dsJ(d), meta||'—', clean(pick.script)]);
+    });
+    if(!rows.length){ R.empty=true; R.note='در این بازه پادکستی ساخته نشده.'; return R; }
+    R.stats.push(['روزهای دارای پادکست',faDigits(cnt)]);
+    R.tables.push({cap:'متنِ پادکست (هر روز: ستاره‌دار، وگرنه طولانی‌ترین)', head:['تاریخِ ساخت','دربارهٔ','متن'], rows, wide:2});
   }
   else if(k==='questions'){
     const q=dsQs();
@@ -3978,9 +4030,10 @@ function dsPrint(only){
     if(R.stats.length) body+=`<div class="stats">`+R.stats.map(x=>
       `<div class="st"><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')+`</div>`;
     R.tables.forEach(t=>{
+      const wc=(t.wide==null)?-1:t.wide;   // ستونِ متنِ بلند: راست‌چین و شکستِ خط
       body+=`<div class="tcap">${escVision(t.cap)}</div><table class="rtbl"><thead><tr>`+
         t.head.map(hh=>`<th>${escVision(String(hh))}</th>`).join('')+`</tr></thead><tbody>`+
-        t.rows.map(r=>`<tr>`+r.map(c=>`<td>${escVision(String(c))}</td>`).join('')+`</tr>`).join('')+
+        t.rows.map(r=>`<tr>`+r.map((c,ci)=>`<td${ci===wc?' class="tc-wide"':''}>${escVision(String(c)).replace(/\n/g,'<br>')}</td>`).join('')+`</tr>`).join('')+
         `</tbody></table>`;
     });
     if(R.note) body+=`<div class="none">${escVision(R.note)}</div>`;
@@ -4006,6 +4059,7 @@ function dsPrint(only){
     .rtbl th{background:#f0f4f4;padding:6px 5px;text-align:center;font-weight:700;border:1px solid #e0e0e0;color:#444}
     .rtbl td{padding:5px;text-align:center;border:1px solid #eee;vertical-align:middle}
     .rtbl tbody tr:nth-child(even){background:#fafafa}
+    .rtbl td.tc-wide{text-align:right;white-space:normal;line-height:1.95;min-width:220px}
     .none{font-size:11.5px;color:#999;padding:8px 2px}
     .foot{font-size:10.5px;color:#888;margin-top:18px;line-height:1.8;border-top:1px solid #eee;padding-top:12px}
     .btn{background:#2a9d8f;color:#fff;border:none;padding:12px 20px;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit}
@@ -4111,23 +4165,41 @@ function wdFaceHTML(tone){
   else inner=`<span class="wd-face-emo">${emo}</span>`;
   return `<div class="wd-face ${M.anim}"><div class="wd-face-in">${inner}</div></div>`;
 }
+// روزِ نمایش‌داده‌شده در کارتِ ناظر: 0=دیروز، بزرگ‌تر=عقب‌تر
+function wdViewDate(){ const off=Math.max(0,Math.min(60,window._wdOffset||0));
+  const d=new Date(); d.setDate(d.getDate()-1-off); d.setHours(0,0,0,0); return d; }
+function wdNavDay(delta){ let o=(window._wdOffset||0)+delta; if(o<0)o=0; if(o>60)o=60; window._wdOffset=o; wdRerender(); }
+function wdToggleNav(){ window._wdNavOpen=!window._wdNavOpen; wdRerender(); }
+function wdRerender(){ const host=document.getElementById('wdCardHost'); if(!host) return;
+  host.innerHTML=renderWatchdogCard(); try{ wdBustEnsure&&wdBustEnsure(); }catch(e){} }
 function renderWatchdogCard(){
-  let r; try{ r=buildYesterdayReview(); }catch(e){ return ''; }
-  if(!r||!r.show) return '';
+  const off=Math.max(0,Math.min(60,window._wdOffset||0));
+  const d=wdViewDate();
+  let r; try{ r=buildDayReview(d); }catch(e){ return ''; }
+  if(!r||!r.show){ if(off===0) return ''; r={show:true,score:null,tone:'flat',dayLabel:_jLabel(d),warns:['برای این روز داده‌ای ثبت نشده.'],goods:[]}; }
   const col = r.tone==='good'?'#6fd39a' : r.tone==='bad'?'#e0685f' : r.tone==='warn'?'#e0a355' : '#8fa1b6';
-  const emo = r.tone==='good'?'🎉' : r.tone==='bad'?'🚨' : r.tone==='warn'?'⚠️' : '📝';
-  const hdr = r.tone==='good'?'آفرین! دیروز خوب پیش رفت' : (r.tone==='flat'?'یادآوری' : 'ناظرِ دیروز');
+  const isY=(off===0);
+  const hdr = isY ? (r.tone==='good'?'آفرین! دیروز خوب پیش رفت' : (r.tone==='flat'?'یادآوری' : 'ناظرِ دیروز'))
+                  : ('مرورِ روزِ '+r.dayLabel);
   let body='';
   if(r.tone==='good' && r.goods.length){
-    body=`<div class="wd-praise">دیروز (${r.dayLabel}) خوب مدیریت کردی: ${r.goods.join(' · ')}. همین‌طور ادامه بده! 💪</div>`;
+    body=`<div class="wd-praise">${isY?'دیروز':'این روز'} (${r.dayLabel}) خوب مدیریت کردی: ${r.goods.join(' · ')}. همین‌طور ادامه بده! 💪</div>`;
   } else {
     if(r.warns.length) body+=`<ul class="wd-list">`+r.warns.map(w=>`<li>${escVision(w)}</li>`).join('')+`</ul>`;
     if(r.goods.length && r.tone!=='flat') body+=`<div class="wd-goods">✅ نکات مثبت: ${escVision(r.goods.join(' · '))}</div>`;
   }
-  const scoreChip = (r.score!=null)?`<span class="wd-score" style="color:${col};border-color:${col}55;background:${col}18">امتیاز دیروز: ${faDigits(r.score)}</span>`:'';
+  const scoreChip = (r.score!=null)?`<span class="wd-score" style="color:${col};border-color:${col}55;background:${col}18">امتیاز: ${faDigits(r.score)}</span>`:'';
+  // نوارِ انتخابِ روز (با چرخ‌دنده باز/بسته می‌شود)
+  const nav = window._wdNavOpen ? `<div class="wd-nav">
+      <button type="button" class="wd-navb" onclick="wdNavDay(1)" title="روزِ قبل">‹ قبل</button>
+      <span class="wd-navd">${r.dayLabel}${isY?' · دیروز':''}</span>
+      <button type="button" class="wd-navb" onclick="wdNavDay(-1)" ${off===0?'disabled':''} title="روزِ بعد">بعد ›</button>
+      ${off>0?`<button type="button" class="wd-navnow" onclick="window._wdOffset=0;wdRerender()">↩︎ دیروز</button>`:''}
+    </div>` : '';
   return `<div class="wd-card" style="--wc:${col};--wc-soft:${col}22;--wc-brd:${col}55;border-color:${col}3a">
-    <div class="wd-head">${wdFaceHTML(r.tone)}<div class="wd-ttl"><b>${escVision(hdr)}</b><span class="wd-sub">مرورِ دیروز · ${r.dayLabel}</span></div>${scoreChip}</div>
-    ${body}
+    <button type="button" class="wd-gear${window._wdNavOpen?' on':''}" onclick="wdToggleNav()" title="انتخابِ روز">🗓️</button>
+    <div class="wd-head">${wdFaceHTML(r.tone)}<div class="wd-ttl"><b>${escVision(hdr)}</b><span class="wd-sub">مرورِ روزانه · ${r.dayLabel}</span></div>${scoreChip}</div>
+    ${nav}${body}
   </div>`;
 }
 function chatOpenJourneys(){ try{ const o=chatLoad(); o.drawerTab='journeys'; chatSave(o); }catch(e){} switchTab('chat'); if(typeof renderChatTab==='function') renderChatTab(); setTimeout(()=>{ if(typeof openChatDrawer==='function') openChatDrawer(); },220); }
@@ -7700,7 +7772,7 @@ function renderDashboard(){
     <button class="dash-scard" onclick="switchTab('calc')"><span class="ds-ic" style="background:rgba(63,185,163,.16)">🧮</span>حساب دوز</button>
   </div>`;
   // بخش‌های اصلیِ خانه با ترتیبِ دلخواهِ کاربر
-  const secHtml={ slider:sliderHtml, doctor:dashAiDoctorCard(), podcast:`<div id="homePodcast"></div>`, watchdog:renderWatchdogCard(), today:todayHtml, shortcuts:shortcutsHtml, aipanel:`<div id="homeAiPanel"></div>` };
+  const secHtml={ slider:sliderHtml, doctor:dashAiDoctorCard(), podcast:`<div id="homePodcast"></div>`, watchdog:`<div id="wdCardHost">${renderWatchdogCard()}</div>`, today:todayHtml, shortcuts:shortcutsHtml, aipanel:`<div id="homeAiPanel"></div>` };
   { const _hh=homeGetHidden(); h+= homeSectionsOrdered().filter(s=>_hh.indexOf(s.key)<0).map(s=>secHtml[s.key]||'').join(''); }
   h+=`<div class="dash-note">⚕️ این داشبورد فقط آینه‌ی گذشته است تا آگاه‌تر باشی و بهتر با پزشکت صحبت کنی — تشخیص و هر تصمیم درمانی فقط با پزشک است.</div>`;
   box.innerHTML=h;
