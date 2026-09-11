@@ -430,7 +430,8 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .bgc-seg.on{background:var(--teal);color:#04120e}
 /* ردیفِ ایکونِ رویدادها — هم‌ترازِ محورِ زمانِ نمودار */
 .bgc-evs{position:relative;direction:ltr;margin:0 0 2px 38px;height:0}
-.bgc-ev{position:absolute;transform:translateX(-50%);width:19px;height:19px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10.5px;border:1px solid var(--line);background:var(--field);cursor:default}
+.bgc-ev{position:absolute;transform:translateX(-50%);width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9.5px;border:1px solid var(--line);background:var(--field);cursor:default}
+.bgc-ev i{position:absolute;bottom:-3px;left:-4px;font-style:normal;font-size:7.5px;font-weight:800;line-height:1;padding:1px 3px;border-radius:7px;background:var(--panel-2);border:1px solid var(--line);color:var(--ink)}
 .bgc-wrap{position:relative;width:100%;direction:ltr;padding-left:38px;box-sizing:border-box;touch-action:none;-webkit-user-select:none;user-select:none;cursor:crosshair}
 .bgc-yax{position:absolute;left:0;top:0;bottom:0;width:34px;pointer-events:none}
 .bgc-yax span{position:absolute;right:0;transform:translateY(-50%);font-size:9px;color:var(--muted);direction:ltr}
@@ -442,7 +443,8 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .bgc-tip b{font-size:15px;color:var(--ink);direction:ltr;display:inline-block}
 .bgc-tip small{font-size:9.5px;color:var(--muted);display:block;margin-top:1px}
 .bgc.on .bgc-cross,.bgc.on .bgc-dot,.bgc.on .bgc-tip{opacity:1}
-.bgc-ax{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);direction:ltr;margin:4px 0 0 38px}
+.bgc-ax{position:relative;height:13px;font-size:9px;color:var(--muted);direction:ltr;margin:4px 0 0 38px}
+.bgc-ax span{position:absolute;top:0;white-space:nowrap}
 .bgc-empty{font-size:12px;color:var(--muted);text-align:center;padding:26px 8px;line-height:1.9}
 .dspark{width:100%;height:78px;display:block}
 .dspark-hours{display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);direction:ltr;margin-top:5px;padding:0 1px}
@@ -2377,7 +2379,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۸.۰</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۸.۱</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -7749,13 +7751,16 @@ function bgcCard(id, pts, t0, t1, opt){
     sv+=`<line x1="0" y1="${gy}" x2="${W}" y2="${gy}" stroke="rgba(255,255,255,.05)" stroke-width="1" stroke-dasharray="4 5"/>`; }
   sv+=`<line x1="0" y1="${yHi.toFixed(1)}" x2="${W}" y2="${yHi.toFixed(1)}" stroke="rgba(224,163,85,.6)" stroke-width="1"/>`;
   sv+=`<line x1="0" y1="${yLo.toFixed(1)}" x2="${W}" y2="${yLo.toFixed(1)}" stroke="rgba(224,104,95,.6)" stroke-width="1"/>`;
-  const step=hrs0<=3?1:hrs0<=6?1:hrs0<=12?2:3;
+  // تیک‌های زمان: گامِ گرد (نیم‌ساعت/۱/۲/۴ ساعت) تا همیشه ۵ تا ۷ برچسبِ منظم بدهد
+  const stepMin=hrs0<=3?30:hrs0<=6?60:hrs0<=12?120:240;
   const ticks=[];
-  for(let d=new Date(+t0); d<=t1; d.setMinutes(0,0,0), d.setHours(d.getHours()+1)){
-    if(d<t0) continue; if(d.getHours()%step) continue;
-    ticks.push(+d); const gx=X(d).toFixed(1);
-    sv+=`<line x1="${gx}" y1="0" x2="${gx}" y2="${H}" stroke="rgba(255,255,255,.05)" stroke-width="1"/>`;
-  }
+  { const d=new Date(+t0); d.setSeconds(0,0);
+    const m0=d.getHours()*60+d.getMinutes();
+    d.setMinutes(d.getMinutes()+((stepMin-(m0%stepMin))%stepMin));
+    for(; +d<=+t1; d.setMinutes(d.getMinutes()+stepMin)){
+      ticks.push(+d); const gx=X(d).toFixed(1);
+      sv+=`<line x1="${gx}" y1="0" x2="${gx}" y2="${H}" stroke="rgba(255,255,255,.05)" stroke-width="1"/>`;
+    } }
   if(mode==='dots'){
     pts.forEach(p=>{ sv+=`<circle cx="${X(p.t).toFixed(2)}" cy="${Y(p.g).toFixed(2)}" r="1.9" fill="${p.src==='bg'?'#e0a355':'#5fd3bd'}"/>`; });
   } else {
@@ -7774,18 +7779,33 @@ function bgcCard(id, pts, t0, t1, opt){
   if(opt.events!==false){
     const list=bgcEvents(t0,t1);
     if(list.length){
-      const rows=[-1,-1]; const H1=21; let maxRow=0; const items=[];
-      list.forEach(e=>{ const L=((e.t-(+t0))/span)*100; if(L<0||L>100) return;
-        let r=0; if(rows[0]>=0 && L-rows[0]<5.5) r=(rows[1]<0||L-rows[1]>=5.5)?1:0;
-        rows[r]=L; if(r>maxRow) maxRow=r;
-        items.push(`<span class="bgc-ev" style="left:${L.toFixed(2)}%;top:${r*H1}px;background:${e.col}" title="${escVision(e.lbl)}">${e.ic}</span>`); });
+      const GAP=6.6;           // فاصلهٔ لازم بینِ دو ایکون (٪ عرضِ نمودار)
+      const ROWS=3, H1=20;
+      // ۱) رویدادهای هم‌نوع و نزدیک‌به‌هم در یک ایکون با شمارنده ادغام می‌شوند
+      const mg=[];
+      list.forEach(e=>{ const L=((e.t-(+t0))/span)*100; if(L<-1||L>101) return;
+        const m=mg.find(x=>x.ic===e.ic && Math.abs(x.L-L)<GAP);
+        if(m){ m.n++; m.L=(m.L*(m.n-1)+L)/m.n; if(m.lbls.length<5) m.lbls.push(e.lbl); }
+        else mg.push({ic:e.ic,col:e.col,L:Math.max(0,Math.min(100,L)),n:1,lbls:[e.lbl]}); });
+      mg.sort((a,b)=>a.L-b.L);
+      // ۲) چیدن در حداکثر سه ردیف؛ اگر جا نشد کمی به راست هل داده می‌شود تا هرگز روی هم نیفتند
+      const rowLast=new Array(ROWS).fill(-99); let maxRow=0; const items=[];
+      mg.forEach(m=>{
+        let r=0; while(r<ROWS && m.L-rowLast[r]<GAP) r++;
+        if(r>=ROWS){ r=0; for(let k=1;k<ROWS;k++) if(rowLast[k]<rowLast[r]) r=k;
+                     m.L=Math.min(100,rowLast[r]+GAP); }
+        rowLast[r]=m.L; if(r>maxRow) maxRow=r;
+        const ttl=m.lbls.join(' · ')+(m.n>m.lbls.length?' …':'');
+        items.push(`<span class="bgc-ev" style="left:${m.L.toFixed(2)}%;top:${r*H1}px;background:${m.col}" title="${escVision(ttl)}">${m.ic}${m.n>1?('<i>'+faDigits(m.n)+'</i>'):''}</span>`); });
       evs=`<div class="bgc-evs" style="height:${(maxRow+1)*H1+2}px">${items.join('')}</div>`;
     }
   }
   const p2=n=>String(n).padStart(2,'0');
-  const axN=Math.min(6,Math.max(3,ticks.length));
-  const stepT=Math.max(1,Math.ceil(ticks.length/axN));
-  const ax=ticks.filter((_,k)=>k%stepT===0).map(t=>`<span>${faDigits(p2(new Date(t).getHours())+':00')}</span>`).join('');
+  // برچسب‌ها دقیقاً سرِ خطِ عمودیِ خودشان می‌نشینند (نه space-between) تا منظم بمانند
+  const ax=ticks.map(t=>{ const d=new Date(t);
+    const L=((t-(+t0))/span)*100;
+    const pos=L<4.5?'left:0':(L>95.5?'left:100%;transform:translateX(-100%)':`left:${L.toFixed(2)}%;transform:translateX(-50%)`);
+    return `<span style="${pos}">${faDigits(p2(d.getHours())+':'+p2(d.getMinutes()))}</span>`; }).join('');
   return `<div class="bgc" id="${id}">${head}${evs}
     <div class="bgc-wrap" data-bgc="${id}">${yax}
       <div class="bgc-plot">${sv}
