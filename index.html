@@ -323,7 +323,6 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .wd-face-img{width:100%;height:100%;object-fit:cover;display:block}
 .wd-face-photo{object-position:50% 15%;transform:scale(1.12)}
 .wd-face-emo{font-size:28px}
-.wd-face-chip{position:absolute;bottom:-7px;left:-7px;width:25px;height:25px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12.5px;background:var(--panel-2);border:1px solid var(--wc-brd,var(--line));box-shadow:0 2px 6px rgba(0,0,0,.3)}
 @keyframes wdNod{0%,100%{transform:translateY(0) rotate(0)}45%{transform:translateY(2.5px) rotate(-2deg)}}
 @keyframes wdShake{0%,6%{transform:rotate(0)}12%{transform:rotate(-5deg)}18%{transform:rotate(4deg)}24%{transform:rotate(-3deg)}30%,100%{transform:rotate(0)}}
 @keyframes wdThink{0%,100%{transform:rotate(-2.5deg)}50%{transform:rotate(2.5deg)}}
@@ -2393,7 +2392,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۸.۴</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۸.۵</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3689,10 +3688,10 @@ function _jLabel(d){ try{ const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()
    می‌شود، برای هر حالت **یک‌بار** یک «نیم‌تنه» رندر و در localStorage کش می‌شود.
    اگر سه‌بعدی نبود از عکسِ کش‌شدهٔ مجری (_pod.avImg) و اگر آن هم نبود از ایموجی. */
 const WD_MOODS={
-  good:{gest:'openBoth', head:[-0.07,0,0],    chip:'👏', morph:{smile:0.8,browUp:0.35},  anim:'wd-nod'},
-  flat:{gest:'chestR',   head:[0.05,0.13,0.05],chip:'🤔', morph:{browUp:0.2},            anim:'wd-think'},
-  warn:{gest:'indexR',   head:[-0.02,-0.07,0], chip:'☝️', morph:{browUp:0.55},            anim:'wd-alert'},
-  bad: {gest:'reachOut', head:[0.11,0,0],     chip:'😟', morph:{frown:0.65,browDown:0.5},anim:'wd-shake'}
+  good:{gest:'openBoth', head:[-0.07,0,0],    morph:{smile:0.8,browUp:0.35},  anim:'wd-nod'},
+  flat:{gest:'chestR',   head:[0.05,0.13,0.05],morph:{browUp:0.2},            anim:'wd-think'},
+  warn:{gest:'indexR',   head:[-0.02,-0.07,0], morph:{browUp:0.55},            anim:'wd-alert'},
+  bad: {gest:'reachOut', head:[0.11,0,0],     morph:{frown:0.65,browDown:0.5},anim:'wd-shake'}
 };
 // نامِ blendshapeها بین مدل‌ها فرق دارد؛ همهٔ نام‌های رایج امتحان می‌شوند
 const WD_MORPH_ALIAS={
@@ -3766,7 +3765,7 @@ function wdFaceHTML(tone){
   if(bust) inner=`<img class="wd-face-img" src="${bust}" alt="">`;
   else if(typeof _pod!=='undefined'&&_pod.avImg) inner=`<img class="wd-face-img wd-face-photo" src="${_pod.avImg}" alt="">`;
   else inner=`<span class="wd-face-emo">${emo}</span>`;
-  return `<div class="wd-face ${M.anim}"><div class="wd-face-in">${inner}</div><span class="wd-face-chip">${M.chip}</span></div>`;
+  return `<div class="wd-face ${M.anim}"><div class="wd-face-in">${inner}</div></div>`;
 }
 function renderWatchdogCard(){
   let r; try{ r=buildYesterdayReview(); }catch(e){ return ''; }
