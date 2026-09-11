@@ -2379,7 +2379,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۸.۱</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۸.۲</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -7227,8 +7227,11 @@ function renderDashboard(){
   let slides=[heroHTML]; if(summaryHTML) slides.push(summaryHTML);
   try{ slides=slides.concat(dashExtraSlides()); }catch(e){}
   // اعمالِ چیدمانِ ذخیره‌شدهٔ کاربر
-  let slObjs=slides.map(html=>({key:_slideMeta(html).key, html}));
+  let slObjs=slides.map(html=>{ const m=_slideMeta(html); return {key:m.key, title:m.title, icon:m.icon, html}; });
   try{ slObjs=applyDashOrder(slObjs); }catch(e){}
+  // نگه‌داشتنِ فهرستِ کاملِ اسلایدها (حتی مخفی‌ها) برای منوی ویرایشِ چیدمان
+  try{ const _dh=dashGetHidden(); window._dashSlidesAll=slObjs.map(o=>({key:o.key,title:o.title,icon:o.icon,hidden:_dh.indexOf(o.key)>=0}));
+       slObjs=slObjs.filter(o=>_dh.indexOf(o.key)<0); }catch(e){}
   slides=slObjs.map(o=>o.html);
   let sliderHtml='';
   if(slides.length>1){
@@ -7257,7 +7260,7 @@ function renderDashboard(){
   </div>`;
   // بخش‌های اصلیِ خانه با ترتیبِ دلخواهِ کاربر
   const secHtml={ slider:sliderHtml, doctor:dashAiDoctorCard(), podcast:`<div id="homePodcast"></div>`, watchdog:renderWatchdogCard(), today:todayHtml, shortcuts:shortcutsHtml, aipanel:`<div id="homeAiPanel"></div>` };
-  h+= homeSectionsOrdered().map(s=>secHtml[s.key]||'').join('');
+  { const _hh=homeGetHidden(); h+= homeSectionsOrdered().filter(s=>_hh.indexOf(s.key)<0).map(s=>secHtml[s.key]||'').join(''); }
   h+=`<div class="dash-note">⚕️ این داشبورد فقط آینه‌ی گذشته است تا آگاه‌تر باشی و بهتر با پزشکت صحبت کنی — تشخیص و هر تصمیم درمانی فقط با پزشک است.</div>`;
   box.innerHTML=h;
   try{ bgcBindAll(); }catch(e){}
@@ -7274,6 +7277,10 @@ function dashSlideTo(i){ const sl=document.getElementById('dashSlider'); if(!sl)
   else sl.scrollTo({left:i*(sl.clientWidth||0),behavior:'smooth'}); }
 function dashSliderInit(){
   const sl=document.getElementById('dashSlider'); if(!sl || sl._init) return; sl._init=true;
+  // بازگرداندنِ اسلایدِ فعال بعد از رندرِ دوباره (مثلاً با تغییرِ منبعِ قند) تا به اولی نپرد
+  if(window._dashSlideWant>0){ const w=window._dashSlideWant; window._dashSlideWant=0;
+    requestAnimationFrame(()=>{ const ch=sl.children[w]; if(ch&&ch.scrollIntoView) ch.scrollIntoView({inline:'start',block:'nearest'});
+      const dd=document.querySelectorAll('#dashDots .dash-dot'); dd.forEach((d,k)=>d.classList.toggle('on',k===w)); }); }
   const dots=Array.from(document.querySelectorAll('#dashDots .dash-dot'));
   const upd=()=>{ const i=Math.min(dots.length-1, dashSlideIndex(sl)); dots.forEach((d,k)=>d.classList.toggle('on',k===i)); };
   sl.addEventListener('scroll',()=>{ if(sl._raf) return; sl._raf=requestAnimationFrame(()=>{ sl._raf=0; upd(); }); },{passive:true});
@@ -7305,6 +7312,8 @@ const HOME_SECTIONS=[
   {key:'aipanel', title:'🤖 تحلیلِ هوش مصنوعیِ خانه'},
 ];
 function homeGetOrder(){ try{ const a=JSON.parse(localStorage.getItem('home_order_v1')||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function homeGetHidden(){ try{ const a=JSON.parse(localStorage.getItem('home_hidden_v1')||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function dashGetHidden(){ try{ const a=JSON.parse(localStorage.getItem('dash_hidden_v1')||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
 function homeSaveOrder(keys){ try{ localStorage.setItem('home_order_v1', JSON.stringify(keys)); }catch(e){} }
 function applyHomeOrder(objs){ const ord=homeGetOrder(); if(!ord.length) return objs; const idx=k=>{ const i=ord.indexOf(k); return i<0?9999:i; };
   return objs.map((o,i)=>({o,i})).sort((a,b)=>{ const d=idx(a.o.key)-idx(b.o.key); return d!==0?d:a.i-b.i; }).map(x=>x.o); }
@@ -7316,9 +7325,8 @@ function applyDashOrder(objs){ const ord=dashGetOrder(); if(!ord.length) return 
   return objs.map((o,i)=>({o,i})).sort((a,b)=>{ const d=idx(a.o.key)-idx(b.o.key); return d!==0?d:a.i-b.i; }).map(x=>x.o); }
 let _dashReorder=[], _homeReorder=[], _dashReTab='slider';
 function dashOpenReorder(){
-  const sl=document.getElementById('dashSlider');
-  _dashReorder = sl ? [...sl.querySelectorAll('.dash-slide')].map(s=>_slideMeta(s.innerHTML)) : [];
-  _homeReorder = homeSectionsOrdered();
+  _dashReorder = (window._dashSlidesAll||[]).map(m=>Object.assign({},m));
+  { const _hh=homeGetHidden(); _homeReorder = homeSectionsOrdered().map(x=>Object.assign({},x,{hidden:_hh.indexOf(x.key)>=0})); }
   _dashReTab='slider';
   try{ ensureChatCss&&ensureChatCss(); }catch(e){}
   const old=document.getElementById('dashReBg'); if(old) old.remove();
@@ -7329,7 +7337,7 @@ function dashOpenReorder(){
       <button id="dashTabSlider" class="on" onclick="dashReTab('slider')">📊 اسلایدرِ بالا</button>
       <button id="dashTabHome" onclick="dashReTab('home')">🏠 کلِ صفحهٔ خانه</button>
     </div>
-    <div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:8px" id="dashReHint">با فلش‌ها ترتیبِ کارت‌های اسلایدر را بالا/پایین کن، بعد «پایان» را بزن.</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:8px" id="dashReHint">با فلش‌ها ترتیب را بالا/پایین کن و با 👁️ نمایشِ هر مورد را روشن/خاموش کن، بعد «پایان» را بزن.</div>
     <div id="dashReList" style="max-height:48vh;overflow:auto"></div>
     <div class="chat-rename-btns" style="margin-top:12px">
       <button type="button" class="crn-btn crn-cancel" onclick="dashResetOrder()">بازگردانی به پیش‌فرض</button>
@@ -7346,16 +7354,21 @@ function dashRenderReorder(){
   const c=document.getElementById('dashReList'); if(!c) return;
   const arr = _dashReTab==='home' ? _homeReorder : _dashReorder;
   if(!arr.length){ c.innerHTML='<div style="color:var(--muted);font-size:12.5px;text-align:center;padding:20px">موردی برای چیدمان نیست.</div>'; return; }
-  c.innerHTML=arr.map((m,i)=>`<div style="display:flex;align-items:center;gap:9px;padding:9px 8px;border-bottom:1px solid var(--line)">
+  c.innerHTML=arr.map((m,i)=>`<div style="display:flex;align-items:center;gap:7px;padding:9px 8px;border-bottom:1px solid var(--line);opacity:${m.hidden?.5:1}">
+    <button type="button" onclick="dashToggleHide(${i})" title="${m.hidden?'نمایش':'پنهان'}" style="width:34px;height:32px;border:1px solid var(--line);background:${m.hidden?'var(--field)':'rgba(63,185,163,.14)'};color:var(--ink);border-radius:9px;cursor:pointer;font-size:15px">${m.hidden?'🚫':'👁️'}</button>
     <span style="font-size:17px">${m.icon||'▫️'}</span>
-    <span style="flex:1;font-size:13.5px;font-weight:700">${escVision(m.title)}</span>
-    <button type="button" onclick="dashMove(${i},-1)" ${i===0?'disabled':''} style="width:34px;height:32px;border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:9px;cursor:pointer;font-size:15px;opacity:${i===0?.35:1}">↑</button>
-    <button type="button" onclick="dashMove(${i},1)" ${i===arr.length-1?'disabled':''} style="width:34px;height:32px;border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:9px;cursor:pointer;font-size:15px;opacity:${i===arr.length-1?.35:1}">↓</button>
+    <span style="flex:1;font-size:13.5px;font-weight:700;${m.hidden?'text-decoration:line-through':''}">${escVision(m.title)}</span>
+    <button type="button" onclick="dashMove(${i},-1)" ${i===0?'disabled':''} style="width:32px;height:32px;border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:9px;cursor:pointer;font-size:15px;opacity:${i===0?.35:1}">↑</button>
+    <button type="button" onclick="dashMove(${i},1)" ${i===arr.length-1?'disabled':''} style="width:32px;height:32px;border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:9px;cursor:pointer;font-size:15px;opacity:${i===arr.length-1?.35:1}">↓</button>
   </div>`).join('');
 }
 function dashMove(i,dir){ const arr=_dashReTab==='home'?_homeReorder:_dashReorder; const j=i+dir; if(j<0||j>=arr.length) return; const t=arr[i]; arr[i]=arr[j]; arr[j]=t; dashRenderReorder(); }
-function dashSaveReorder(){ dashSaveOrder(_dashReorder.map(m=>m.key)); homeSaveOrder(_homeReorder.map(m=>m.key)); const b=document.getElementById('dashReBg'); if(b) b.remove(); if(typeof renderDashboard==='function') renderDashboard(); uiToast&&uiToast('✓ چیدمان ذخیره و قفل شد'); }
-function dashResetOrder(){ try{ if(_dashReTab==='home') localStorage.removeItem('home_order_v1'); else localStorage.removeItem('dash_order_v1'); }catch(e){} const b=document.getElementById('dashReBg'); if(b) b.remove(); if(typeof renderDashboard==='function') renderDashboard(); uiToast&&uiToast('✓ چیدمانِ این تب به پیش‌فرض برگشت'); }
+function dashToggleHide(i){ const arr=_dashReTab==='home'?_homeReorder:_dashReorder; if(!arr[i]) return; arr[i].hidden=!arr[i].hidden; dashRenderReorder(); }
+function dashSaveReorder(){ dashSaveOrder(_dashReorder.map(m=>m.key)); homeSaveOrder(_homeReorder.map(m=>m.key));
+  try{ localStorage.setItem('dash_hidden_v1', JSON.stringify(_dashReorder.filter(m=>m.hidden).map(m=>m.key))); }catch(e){}
+  try{ localStorage.setItem('home_hidden_v1', JSON.stringify(_homeReorder.filter(m=>m.hidden).map(m=>m.key))); }catch(e){}
+  const b=document.getElementById('dashReBg'); if(b) b.remove(); if(typeof renderDashboard==='function') renderDashboard(); uiToast&&uiToast('✓ چیدمان ذخیره و قفل شد'); }
+function dashResetOrder(){ try{ if(_dashReTab==='home'){ localStorage.removeItem('home_order_v1'); localStorage.removeItem('home_hidden_v1'); } else { localStorage.removeItem('dash_order_v1'); localStorage.removeItem('dash_hidden_v1'); } }catch(e){} const b=document.getElementById('dashReBg'); if(b) b.remove(); if(typeof renderDashboard==='function') renderDashboard(); uiToast&&uiToast('✓ چیدمانِ این تب به پیش‌فرض برگشت'); }
 // ── کارت‌های شیشه‌ایِ اسلایدرِ خانه ──────────────────────────────
 function _gc(icon,title,sub,body){ return `<div class="gcard"><div class="gcard-h"><div class="gcard-ic">${icon}</div><div class="gcard-t">${title}${sub?`<small>${sub}</small>`:''}</div></div><div class="gcard-body">${body}</div></div>`; }
 function _gce(msg){ return `<div class="gcard-empty">${msg}</div>`; }
@@ -7687,8 +7700,10 @@ function bgcSetRange(id,h){ try{ localStorage.setItem(BGC_RANGE_KEY,String(h)); 
 // همهٔ خوانش‌های قند (CGM + دستی) در یک بازه
 function bgcPoints(t0,t1){
   const out=[];
-  try{ (window._cgmReadings||[]).forEach(r=>{ const d=r&&r.t&&r.t.dateObj; if(d&&d>=t0&&d<=t1) out.push({t:+d,g:+r.glu,src:'cgm'}); }); }catch(e){}
-  try{ (typeof loadBG==='function'?loadBG():[]).forEach(x=>{ if(!x||!x.iso||x.glu==null) return; const d=new Date(x.iso); if(d>=t0&&d<=t1) out.push({t:+d,g:+x.glu,src:'bg'}); }); }catch(e){}
+  // منبعِ انتخاب‌شده: cgm فقط سنسور، meter فقط گلوکومترِ دستی، auto هر دو
+  const src=(typeof getBgSource==='function')?getBgSource():'auto';
+  if(src!=='meter'){ try{ (window._cgmReadings||[]).forEach(r=>{ const d=r&&r.t&&r.t.dateObj; if(d&&d>=t0&&d<=t1) out.push({t:+d,g:+r.glu,src:'cgm'}); }); }catch(e){} }
+  if(src!=='cgm'){ try{ (typeof loadBG==='function'?loadBG():[]).forEach(x=>{ if(!x||!x.iso||x.glu==null) return; const d=new Date(x.iso); if(d>=t0&&d<=t1) out.push({t:+d,g:+x.glu,src:'bg'}); }); }catch(e){} }
   return out.filter(p=>isFinite(p.g)&&p.g>0).sort((a,b)=>a.t-b.t);
 }
 function bgcTimeFa(ms){ const d=new Date(ms); const p=n=>String(n).padStart(2,'0');
@@ -8330,7 +8345,9 @@ function effectiveBgSource(){ const s=getBgSource(); if(s==='cgm'||s==='meter') 
 // تصمیم بر اساس دادهٔ همان زمینه: در حالت خودکار اگر CGM باشد CGM وگرنه گلوکومتر
 function resolveBgSrc(hasCgm,hasMeter){ const s=getBgSource(); if(s==='cgm')return 'cgm'; if(s==='meter')return 'meter'; return hasCgm?'cgm':(hasMeter?'meter':'cgm'); }
 function setBgSource(v){ try{ localStorage.setItem('bg_source',v); }catch(e){} closeBgSrc();
-  ['home','overview','daily'].forEach(n=>{ const pg=document.getElementById('page-'+n); if(pg&&pg.classList.contains('active')){ if(n==='home')renderDashboard(); if(n==='overview')renderOverview(); if(n==='daily')renderDailyReport(); } }); }
+  ['home','overview','daily'].forEach(n=>{ const pg=document.getElementById('page-'+n); if(pg&&pg.classList.contains('active')){
+    if(n==='home'){ try{ const sl=document.getElementById('dashSlider'); if(sl) window._dashSlideWant=dashSlideIndex(sl); }catch(e){} renderDashboard(); }
+    if(n==='overview')renderOverview(); if(n==='daily')renderDailyReport(); } }); }
 function bgSrcChip(){ const s=getBgSource(); const lbl=s==='cgm'?'CGM':s==='meter'?'گلوکومتر':'خودکار'; return `<button class="bgsrc-chip" onclick="openBgSrc()"><span class="bgs-ic">📟</span>منبع قند: <b>${lbl}</b> <span class="bgs-caret">▾</span></button>`; }
 function openBgSrc(){ renderBgSrcOpts(); const o=document.getElementById('bgSrcOverlay'); if(o) o.classList.add('show'); }
 function closeBgSrc(){ const o=document.getElementById('bgSrcOverlay'); if(o) o.classList.remove('show'); }
