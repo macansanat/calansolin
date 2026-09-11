@@ -318,7 +318,21 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .wd-card{position:relative;overflow:hidden;margin:0 0 16px;padding:18px;border-radius:20px;background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line)}
 .wd-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--wc),transparent)}
 .wd-head{display:flex;align-items:center;gap:11px;margin-bottom:14px}
-.wd-emo{flex:0 0 auto;width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:21px;background:var(--wc-soft,rgba(255,255,255,.05));border:1px solid var(--wc-brd,var(--line))}
+.wd-face{position:relative;flex:0 0 auto;width:66px;height:66px;border-radius:19px;display:flex;align-items:center;justify-content:center;background:var(--wc-soft,rgba(255,255,255,.05));border:1px solid var(--wc-brd,var(--line))}
+.wd-face-in{width:100%;height:100%;border-radius:18px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.wd-face-img{width:100%;height:100%;object-fit:cover;display:block}
+.wd-face-photo{object-position:50% 15%;transform:scale(1.12)}
+.wd-face-emo{font-size:28px}
+.wd-face-chip{position:absolute;bottom:-7px;left:-7px;width:25px;height:25px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12.5px;background:var(--panel-2);border:1px solid var(--wc-brd,var(--line));box-shadow:0 2px 6px rgba(0,0,0,.3)}
+@keyframes wdNod{0%,100%{transform:translateY(0) rotate(0)}45%{transform:translateY(2.5px) rotate(-2deg)}}
+@keyframes wdShake{0%,6%{transform:rotate(0)}12%{transform:rotate(-5deg)}18%{transform:rotate(4deg)}24%{transform:rotate(-3deg)}30%,100%{transform:rotate(0)}}
+@keyframes wdThink{0%,100%{transform:rotate(-2.5deg)}50%{transform:rotate(2.5deg)}}
+@keyframes wdAlert{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.wd-face.wd-nod{animation:wdNod 3.2s ease-in-out infinite}
+.wd-face.wd-shake{animation:wdShake 4.2s ease-in-out infinite}
+.wd-face.wd-think{animation:wdThink 5s ease-in-out infinite}
+.wd-face.wd-alert{animation:wdAlert 2.8s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.wd-face{animation:none!important}}
 .wd-ttl{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
 .wd-ttl b{font-size:15px;font-weight:800;color:var(--ink);line-height:1.3}
 .wd-sub{font-size:10.5px;color:var(--muted);font-weight:600}
@@ -2379,7 +2393,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۸.۳</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۸.۴</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3670,6 +3684,90 @@ function buildYesterdayReview(){
   return {show:true, score, tone, dayLabel:_jLabel(y), warns:warns.slice(0,4), goods:goods.slice(0,3)};
 }
 function _jLabel(d){ try{ const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); return faDigits(jDateStr(j[0],j[1],j[2])); }catch(e){ return ''; } }
+/* ═══ چهرهٔ ناظر (۲۸.۴) — همان شخصیتِ مجریِ پادکست، با ژست و حالتِ متناسبِ امتیاز ═══
+   هزینهٔ تکرارشونده ندارد: از همان صحنهٔ سه‌بعدیِ زنده‌ای که در کارتِ پادکست اجرا
+   می‌شود، برای هر حالت **یک‌بار** یک «نیم‌تنه» رندر و در localStorage کش می‌شود.
+   اگر سه‌بعدی نبود از عکسِ کش‌شدهٔ مجری (_pod.avImg) و اگر آن هم نبود از ایموجی. */
+const WD_MOODS={
+  good:{gest:'openBoth', head:[-0.07,0,0],    chip:'👏', morph:{smile:0.8,browUp:0.35},  anim:'wd-nod'},
+  flat:{gest:'chestR',   head:[0.05,0.13,0.05],chip:'🤔', morph:{browUp:0.2},            anim:'wd-think'},
+  warn:{gest:'indexR',   head:[-0.02,-0.07,0], chip:'☝️', morph:{browUp:0.55},            anim:'wd-alert'},
+  bad: {gest:'reachOut', head:[0.11,0,0],     chip:'😟', morph:{frown:0.65,browDown:0.5},anim:'wd-shake'}
+};
+// نامِ blendshapeها بین مدل‌ها فرق دارد؛ همهٔ نام‌های رایج امتحان می‌شوند
+const WD_MORPH_ALIAS={
+  smile:['mouthSmile','mouthSmileLeft','mouthSmileRight','Smile','viseme_E'],
+  frown:['mouthFrown','mouthFrownLeft','mouthFrownRight','Frown'],
+  browUp:['browInnerUp','browOuterUpLeft','browOuterUpRight','BrowsUp'],
+  browDown:['browDownLeft','browDownRight','BrowsDown']
+};
+function wdBustKey(mood){ let u=''; try{ u=podCfg().av3dUrl||''; }catch(e){} return 'wdbust:'+u+':'+mood; }
+function wdBustGet(mood){ try{ return localStorage.getItem(wdBustKey(mood))||''; }catch(e){ return ''; } }
+// یک فریمِ «نیم‌تنه» با ژستِ این حالت می‌گیرد و کش می‌کند. صحنهٔ پادکست دست‌نخورده برمی‌گردد.
+function wdGrabBust(mood){
+  const st=(typeof _pod3d!=='undefined')?_pod3d:null; const T=window.THREE;
+  const M=WD_MOODS[mood];
+  if(!st||!T||!M||!st.ready||!st.gltf||!st.ren||!st.cam||!st.gbones||st.frameHx==null) return false;
+  const cam=st.cam, G=st.gbones;
+  const sPos=cam.position.clone(), sNear=cam.near, sFar=cam.far;
+  const sQ={}; Object.keys(G).forEach(k=>{ try{ sQ[k]=G[k].b.quaternion.clone(); }catch(e){} });
+  const sInfl=(st.morphs||[]).map(m=>Array.prototype.slice.call(m.infl));
+  let ok=false;
+  try{
+    const pose=POD_GEST_POSES.filter(x=>x.n===M.gest)[0]||POD_GEST_POSES[0];
+    const La=G['LeftArm'],Lf=G['LeftForeArm'],Lh=G['LeftHand'],Ra=G['RightArm'],Rf=G['RightForeArm'],Rh=G['RightHand'];
+    const aim=(A,B,dir)=>{ if(!A||!B) return; const tl=pod3dAimTargetLocal(A.b,B.b,dir,A.q); if(tl) A.b.quaternion.copy(tl); };
+    aim(La,Lf,pose.LA); aim(Lf,Lh,pose.LF); aim(Ra,Rf,pose.RA); aim(Rf,Rh,pose.RF);
+    const eul=(o,e)=>{ if(!o) return; o.b.quaternion.copy(o.q).multiply(new T.Quaternion().setFromEuler(new T.Euler(e[0],e[1],e[2],'XYZ'))); };
+    eul(Lh,pose.LH); eul(Rh,pose.RH); eul(G['Head'],M.head);
+    try{ const sh=pod3dPoseFingers(pose); pod3dApplyFingers(sh[0],sh[1],1); }catch(e){}
+    Object.keys(M.morph||{}).forEach(k=>{ (WD_MORPH_ALIAS[k]||[]).forEach(n=>{ try{ pod3dSetMorph(n,M.morph[k]); }catch(e){} }); });
+    // کادرِ نیم‌تنه: سر تا حدودِ سینه
+    // همان نسبتِ کادرِ سرِ موتور (۰.۱۸)، فقط تنگ‌تر تا نیم‌تنه شود
+    const viewH=(st.frameViewH0||1.12)*0.62, hx=st.frameHx, hy=st.frameHy;
+    const aimY=hy-viewH*0.18, dist=Math.max(0.12,(viewH/2)/Math.tan(((cam.fov||28)*Math.PI/180)/2));
+    cam.position.set(hx,aimY,dist); cam.near=Math.max(0.01,dist/100); cam.far=dist*100+10;
+    cam.updateProjectionMatrix(); cam.lookAt(hx,aimY,0);
+    st.ren.render(st.scene,cam);
+    const src=st.ren.domElement, S=Math.min(src.width,src.height);
+    const c=document.createElement('canvas'); c.width=c.height=144;
+    c.getContext('2d').drawImage(src,(src.width-S)/2,0,S,S,0,0,144,144);
+    const data=c.toDataURL('image/png');
+    if(data&&data.length>800){ try{ localStorage.setItem(wdBustKey(mood),data); ok=true; }catch(e){} }
+  }catch(e){}
+  // بازگرداندنِ دوربین/استخوان/چهره تا کارتِ پادکست به‌هم نریزد
+  try{ cam.position.copy(sPos); cam.near=sNear; cam.far=sFar; cam.updateProjectionMatrix(); }catch(e){}
+  Object.keys(sQ).forEach(k=>{ try{ G[k].b.quaternion.copy(sQ[k]); }catch(e){} });
+  (st.morphs||[]).forEach((m,i)=>{ const v=sInfl[i]; if(v) for(let j=0;j<v.length;j++) m.infl[j]=v[j]; });
+  return ok;
+}
+// نیم‌تنه‌های نداشته را یکی‌یکی می‌گیرد (با صبر تا لودِ مدل)
+function wdBustEnsure(tries){
+  tries=(tries==null)?12:tries;
+  try{
+    const miss=Object.keys(WD_MOODS).filter(m=>!wdBustGet(m));
+    if(!miss.length) return;
+    const st=(typeof _pod3d!=='undefined')?_pod3d:null;
+    if(!(st&&st.ready&&st.gltf&&st.gbones&&window.THREE)){ if(tries>0) setTimeout(()=>wdBustEnsure(tries-1),1600); return; }
+    let i=0, any=false;
+    const step=()=>{ if(i>=miss.length){
+        if(any){ try{ const pg=document.getElementById('page-home'); if(pg&&pg.classList.contains('active')) renderDashboard(); }catch(e){} }
+        return; }
+      if(wdGrabBust(miss[i++])) any=true;
+      setTimeout(step,140); };
+    setTimeout(step,300);
+  }catch(e){}
+}
+function wdFaceHTML(tone){
+  const M=WD_MOODS[tone]||WD_MOODS.flat;
+  const emo=tone==='good'?'🎉':tone==='bad'?'🚨':tone==='warn'?'⚠️':'📝';
+  const bust=wdBustGet(tone);
+  let inner;
+  if(bust) inner=`<img class="wd-face-img" src="${bust}" alt="">`;
+  else if(typeof _pod!=='undefined'&&_pod.avImg) inner=`<img class="wd-face-img wd-face-photo" src="${_pod.avImg}" alt="">`;
+  else inner=`<span class="wd-face-emo">${emo}</span>`;
+  return `<div class="wd-face ${M.anim}"><div class="wd-face-in">${inner}</div><span class="wd-face-chip">${M.chip}</span></div>`;
+}
 function renderWatchdogCard(){
   let r; try{ r=buildYesterdayReview(); }catch(e){ return ''; }
   if(!r||!r.show) return '';
@@ -3685,7 +3783,7 @@ function renderWatchdogCard(){
   }
   const scoreChip = (r.score!=null)?`<span class="wd-score" style="color:${col};border-color:${col}55;background:${col}18">امتیاز دیروز: ${faDigits(r.score)}</span>`:'';
   return `<div class="wd-card" style="--wc:${col};--wc-soft:${col}22;--wc-brd:${col}55;border-color:${col}3a">
-    <div class="wd-head"><span class="wd-emo">${emo}</span><div class="wd-ttl"><b>${escVision(hdr)}</b><span class="wd-sub">مرورِ دیروز · ${r.dayLabel}</span></div>${scoreChip}</div>
+    <div class="wd-head">${wdFaceHTML(r.tone)}<div class="wd-ttl"><b>${escVision(hdr)}</b><span class="wd-sub">مرورِ دیروز · ${r.dayLabel}</span></div>${scoreChip}</div>
     ${body}
   </div>`;
 }
@@ -7268,6 +7366,7 @@ function renderDashboard(){
   renderHealthAiPanel('home');
   try{ renderPodcastCard(); }catch(e){}
   try{ podAvatarLoad(); }catch(e){}   // اگر چهره در کش هست، بدونِ هزینه نشان بده
+  try{ wdBustEnsure(); }catch(e){}   // نیم‌تنهٔ ناظر را یک‌بار از صحنهٔ زنده بگیر و کش کن
 }
 // اسلایدرِ بالای خانه — نقطه‌ها + درگِ ماوس (تاچ به‌صورتِ بومی کار می‌کند)
 // خواندنِ ایندکس مستقل از علامتِ RTL؛ اسکرولِ برنامه‌ای با scrollIntoView (خودِ مرورگر جهتِ RTL را می‌داند)
