@@ -2572,7 +2572,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۰.۲</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۰.۳</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -8415,12 +8415,16 @@ function renderPodcastCard(){
   try{ const stray=document.querySelector('body > #podAvatar'); if(stray) stray.remove(); _pod._avHome=null; }catch(e){}
   const rec=podCurRec(); const c=podCfg(); const viewing=!!_pod._viewRec; const fresh=rec&&rec.script&&(viewing||rec.dateKey===podTodayKey());
   const mode=_pod.mode; const playing=mode==='playing', paused=mode==='paused', loading=mode==='loading';
-  const prov=podTTSProvider(); const cloud=!!prov;
-  const provLabel = prov==='gemini'?'Gemini':prov==='openai'?'ChatGPT':'صدای گوشی';
-  const provIco = prov?'🎙️':'🔈';
+  const prov=podTTSProvider();
+  const active = playing||paused;
+  // ⚠️ حینِ پخش ملاکْ وضعیتِ واقعیِ موتور است، نه در دسترس‌بودنِ سرویس: صوتِ کش‌شده
+  // حتی بی‌کلید/آفلاین هم پخش و اسکراب می‌شود (وگرنه دکمه‌های پرش بی‌جهت خاموش می‌مانند).
+  const cloud = active ? !!_pod.cloud : !!prov;
+  const provNow = (active && _pod.cloud && _pod.ttsProv) ? _pod.ttsProv : prov;
+  const provLabel = provNow==='gemini'?'Gemini':provNow==='openai'?'ChatGPT':'صدای گوشی';
+  const provIco = provNow?'🎙️':'🔈';
   const btn = loading?'···' : (playing?'❚❚':'▶');
   const total = cloud?podTotalKnown():_pod.estDur;
-  const active = playing||paused;
   const el = active?(cloud?podElapsed():((Date.now()-_pod.t0)/1000)):0;
   const stateTxt = loading?'در حالِ ساختِ متنِ امروز…' : _pod.prep?'در حالِ آماده‌سازیِ صدا…' : playing?(_pod.spk?'خواندنِ پاسخِ هوش مصنوعی':'در حالِ پخش') : paused?'مکث' : (fresh?('آماده · حدود '+faDigits(c.minutes)+' دقیقه'):'اپیزودِ امروز ساخته نشده');
   const sliderOn = cloud&&active;   // اسکراب فقط با صدای ابری
