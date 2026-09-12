@@ -2572,7 +2572,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۰.۱</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۰.۲</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5599,8 +5599,8 @@ function podCapPlan(){
   const sig=n+'|'+sd.length+'|'+audioN+'|'+Math.round(total)+'|'+String(segs[0]||'').length;
   if(_podCap.sig===sig && _podCap.spans) return _podCap;
   let spans=null;
-  if(sd.length===n){ let a=0; spans=sd.map(d=>{ const x=a; a+=(d||0); return [x,a]; }); if(a<=0) spans=null; }
-  if(!spans && audioN===n){ spans=segs.map((t,i)=>[cum[i]||0,(cum[i+1]!=null?cum[i+1]:total)]); }
+  if(sd.length===n && sd.every(d=>d>0)){ let a=0; spans=sd.map(d=>{ const x=a; a+=d; return [x,a]; }); }
+  if(!spans && audioN===n && (cum[n]||0)>0){ spans=segs.map((t,i)=>[cum[i]||0,(cum[i+1]!=null?cum[i+1]:total)]); }
   if(!spans){
     const wt=segs.map(_podCapW);
     if(audioN>0 && audioN<n && !_pod.elSingle){   // بخشی بار شده: بقیه به نسبتِ متن روی زمانِ باقی‌مانده
@@ -5612,6 +5612,10 @@ function podCapPlan(){
       const S=wt.reduce((a,b)=>a+b,0)||1; let a=0;
       spans=wt.map(x=>{ const z=a; a+=total*x/S; return [z,a]; });
     }
+  }
+  if(spans && spans.length && (_pod.allFetched || !_pod.cloud)){
+    const end=spans[spans.length-1][1];
+    if(end>0 && Math.abs(end-total)/total>0.15){ const k=total/end; spans=spans.map(x=>[x[0]*k,x[1]*k]); }
   }
   _podCap.sig=sig; _podCap.segs=segs; _podCap.spans=spans; _podCap.seg=-1;
   return _podCap;
