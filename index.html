@@ -275,13 +275,16 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .pod-cap{position:relative;margin:7px auto 0;width:100%;max-width:min(100%,360px);background:rgba(10,18,26,.66);border:1px solid var(--glass-brd);border-radius:11px;padding:6px 10px;display:flex;align-items:flex-end;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .pod-cap-t{flex:1;min-width:0;height:2.9em;font-size:11.5px;line-height:1.45;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
 #podCapText{font-size:11.5px;line-height:1.45;color:var(--ink);text-align:center}
-#podCapText .pcw{display:inline-block;opacity:.55;transition:opacity .25s}
-#podCapText .pcw-new{opacity:1;color:var(--teal);animation:pcwIn .28s ease}
+#podCapText{transition:opacity .3s ease}
+#podCapText.pod-cap-out{opacity:0}
+#podCapText .pcw{display:inline-block;opacity:.38;transition:opacity .22s,color .22s}
+#podCapText .pcw-done{opacity:.72}
+.pod-cap-meas{position:fixed;left:-9999px;top:0;visibility:hidden;white-space:normal;word-wrap:break-word;text-align:center;pointer-events:none}
+#podCapText .pcw-new{opacity:1;color:var(--teal)}
 @keyframes pcwIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 .pod-av--float .pod-cap{display:none}
 .pod-cap-full{overflow:auto;font-size:13px;line-height:2.1;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .pod-cap-full p{margin:0 0 10px}
-@media (prefers-reduced-motion:reduce){#podCapText .pcw-new{animation:none}}
 .pod-av--float{position:fixed;bottom:78px;inset-inline-end:12px;z-index:9997;margin:0;width:calc(120px * var(--fscale,1));touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .pod-av--float:active{cursor:grabbing}
 .pod-av--float .pod-av-stage,.pod-av--float .pod-av-stage canvas,.pod-av--float .pod-3d-host{touch-action:none}
@@ -2572,7 +2575,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۰.۳</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۰.۴</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5657,12 +5660,49 @@ function podCapUpdate(){
   const wc=_podCap.wcum||[]; let upto=0;
   for(let k=0;k<total;k++){ if(wc[k]<=at.p) upto=k+1; else break; }
   upto=Math.max(1,Math.min(total,upto));
-  // پنجرهٔ دوخطی: فقط ~۱۴ کلمهٔ آخر نگه داشته می‌شود تا کادر پر و پاک شود
-  const W=20;
-  const from=Math.max(0,upto-W);
-  const vis=_podCap.words.slice(from,upto);
-  const html=vis.map((w,k)=>`<span class="pcw${k===vis.length-1?' pcw-new':''}">${escVision(w)}</span>`).join(' ');
-  if(box.dataset.k!==String(upto)){ box.dataset.k=String(upto); box.innerHTML=html; }
+  if(_podCap.fadeT) return;                       // در حالِ محوشدنِ صفحه: دست نگه دار
+  const bw=box.clientWidth||0;
+  if(!_podCap.pages || _podCap.pagesSeg!==at.i || _podCap.pagesW!==bw){
+    _podCap.pages=podCapPages(_podCap.words, box); _podCap.pagesSeg=at.i; _podCap.pagesW=bw; }
+  const pg=(()=>{ const P=_podCap.pages; let k=0;
+    for(let j=0;j<P.length;j++){ if(upto-1>=P[j][0]) k=j; else break; } return k; })();
+  const key=at.i+':'+pg;
+  if(_podCap.pkey!==key){
+    if(_podCap.pkey){                             // صفحهٔ پیشین هست ⇒ کلِ دو خط با هم محو شود
+      box.classList.add('pod-cap-out');
+      _podCap.fadeT=setTimeout(()=>{ _podCap.fadeT=0; _podCap.pkey=''; box.dataset.pg=''; box.dataset.cur='';
+        box.innerHTML=''; box.classList.remove('pod-cap-out'); try{ podCapUpdate(); }catch(e){} }, 300);
+      return;
+    }
+    _podCap.pkey=key;
+  }
+  const a=_podCap.pages[pg][0], b=_podCap.pages[pg][1];
+  // کلِ صفحه یک‌بار نوشته می‌شود (بی‌حرکت)؛ فقط رنگِ کلمهٔ در حالِ خواندن جابه‌جا می‌شود
+  if(box.dataset.pg!==key){ box.dataset.pg=key; box.dataset.cur='';
+    box.innerHTML=_podCap.words.slice(a,b).map(w=>`<span class="pcw">${escVision(w)}</span>`).join(' '); }
+  const cur=Math.min(b-1, upto-1);
+  if(box.dataset.cur!==String(cur)){ box.dataset.cur=String(cur);
+    const sp=box.children;
+    for(let k=0;k<sp.length;k++){ const gi=a+k;
+      sp[k].className='pcw'+(gi<cur?' pcw-done':(gi===cur?' pcw-new':'')); } }
+}
+// کلمه‌ها را به «صفحه»های دقیقاً دوخطی می‌شکند (با اندازه‌گیریِ واقعی در همان کادر)
+function podCapPages(words, box){
+  const n=words.length; if(!n) return [[0,0]];
+  let m=document.getElementById('podCapMeas');
+  if(!m){ m=document.createElement('div'); m.id='podCapMeas'; m.className='pod-cap-meas'; document.body.appendChild(m); }
+  let lh=16, w=box.clientWidth||320;
+  try{ const cs=getComputedStyle(box); m.style.font=cs.font||''; m.style.fontFamily=cs.fontFamily; m.style.fontSize=cs.fontSize;
+    m.style.lineHeight=cs.lineHeight; m.style.direction=cs.direction; lh=parseFloat(cs.lineHeight)||16; }catch(e){}
+  m.style.width=Math.max(120,w)+'px';
+  const maxH=lh*2+1;
+  const pages=[]; let start=0;
+  for(let i=0;i<n;i++){
+    m.textContent=words.slice(start,i+1).join(' ');
+    if(m.scrollHeight>maxH && i>start){ pages.push([start,i]); start=i; }
+  }
+  pages.push([start,n]);
+  return pages;
 }
 function podCapFull(){
   const rec=(typeof podCurRec==='function')?podCurRec():null;
