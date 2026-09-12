@@ -2342,6 +2342,16 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
   <div class="profile-form" id="profileForm">
     <!-- هویت (اختیاری) -->
     <div class="row"><div><label>نام (اختیاری)</label><input id="pfFirst" placeholder="نام"></div><div><label>نام خانوادگی (اختیاری)</label><input id="pfLast" placeholder="نام خانوادگی"></div></div>
+    <div class="row" style="margin-top:12px"><div><label>پزشکِ معالجِ اصلی</label><input id="pfDoc" placeholder="نامِ پزشک"></div><div><label>تخصصِ پزشک</label><input id="pfDocSpec" placeholder="مثلاً غدد و متابولیسم" list="qvisitSpecList"></div></div>
+    <div class="row" style="margin-top:12px"><div><label>تلفن/مطبِ پزشک (اختیاری)</label><input id="pfDocPhone" placeholder="شماره یا نشانیِ مطب" style="direction:ltr;text-align:left"></div><div><label>مدتِ ابتلا</label><input id="pfDx" placeholder="مثلاً از ۱۳۹۸"></div></div>
+    <div style="margin-top:16px;border:1px dashed var(--line);border-radius:12px;padding:12px">
+      <div style="font-weight:800;font-size:13px;color:var(--teal);margin-bottom:6px">🎯 محدودهٔ هدفِ قند</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.9;margin-bottom:10px">این محدوده در <b style="color:var(--teal)">همهٔ نمودارها، آمارِ «زمان در محدوده»، گزارش‌ها و هشدارها</b> به‌کار می‌رود. پیش‌فرضِ استاندارد ۷۰ تا ۱۸۰ است؛ اگر پزشکت محدودهٔ دیگری گفته همان را بگذار.</div>
+      <div class="row"><div><label>حدِ پایین (mg/dL)</label><input type="number" id="pfBgLow" placeholder="۷۰" min="50" max="120" oninput="bgRangeHint()"></div><div><label>حدِ بالا (mg/dL)</label><input type="number" id="pfBgHigh" placeholder="۱۸۰" min="120" max="300" oninput="bgRangeHint()"></div></div>
+      <div class="row" style="margin-top:10px"><div><label>افتِ شدید زیرِ</label><input type="number" id="pfBgVLow" placeholder="۵۴" min="40" max="90" oninput="bgRangeHint()"></div><div><label>اوجِ شدید بالای</label><input type="number" id="pfBgVHigh" placeholder="۲۵۰" min="180" max="500" oninput="bgRangeHint()"></div></div>
+      <div class="formula-note" id="bgRangeOut" style="margin-top:10px"></div>
+      <label style="margin-top:12px;display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer"><input type="checkbox" id="pfBgAlert" style="width:auto;margin:0"> هشدار وقتی قندِ ثبت‌شده خارج از محدوده است</label>
+    </div>
     <div class="row" style="margin-top:12px"><div><label>موبایل (اختیاری)</label><input id="pfMobile" inputmode="tel" placeholder="۰۹…" style="direction:ltr;text-align:left"></div><div><label>ایمیل (اختیاری)</label><input id="pfEmail" inputmode="email" placeholder="you@example.com" style="direction:ltr;text-align:left"></div></div>
 
     <!-- کتابخانهٔ بیماری‌ها -->
@@ -2531,7 +2541,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۹.۳</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۹.۴</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3751,8 +3761,9 @@ function dashAgo(date){
   const days=Math.round(hrs/24); return faDigits(days)+' روز پیش';
 }
 function dashGluStatus(v){
-  if(v<70) return {k:'low',c:'#9fc0f0',t:'پایین'};
-  if(v>180) return {k:'high',c:'#f0a29b',t:'بالای محدوده'};
+  { const _t=bgT();
+    if(v<_t.lo) return {k:'low',c:'#9fc0f0',t:'پایین'};
+    if(v>_t.hi) return {k:'high',c:'#f0a29b',t:'بالای محدوده'}; }
   return {k:'in',c:'#6fd39a',t:'در محدوده'};
 }
 /* ====== ناظرِ دیروز (سختگیر ولی منصف) — قاعده‌محور، آفلاین و بدون توکن ======
@@ -3776,7 +3787,7 @@ function buildDayReview(y){
   try{ (window._cgmReadings||[]).forEach(r=>{ if(r&&r.t&&r.t.dateObj&&dayKey(r.t.dateObj)===key) bgVals.push(r.glu); }); }catch(e){}
   if(bgVals.length<3){ try{ loadBG().forEach(x=>{ if(x.iso&&sameDay(x.iso)) bgVals.push(x.glu); }); }catch(e){} }
   const bgAvg=bgVals.length?Math.round(bgVals.reduce((a,b)=>a+b,0)/bgVals.length):null;
-  const bgLow=bgVals.some(g=>g<70);
+  const bgLow=bgVals.some(g=>g<bgT().lo);
   // ورزش
   let exSess=0;
   try{ (loadExLog().entries||[]).forEach(e=>{ if(e.ts&&sameDay(e.ts)) exSess++; }); }catch(e){}
@@ -3800,7 +3811,7 @@ function buildDayReview(y){
   // قند
   if(bgVals.length===0){ score-=12; warns.push('دیروز قندت را اندازه نگرفتی؛ بدون آن نمی‌شود کنترل را سنجید.'); }
   else{
-    if(bgAvg>180){ score-=25; warns.push('میانگین قند دیروز بالا بود (~'+faDigits(bgAvg)+') — امروز سبک‌تر بخور و بعد از غذا حرکت کن.'); }
+    if(bgAvg>bgT().hi){ score-=25; warns.push('میانگین قند دیروز بالا بود (~'+faDigits(bgAvg)+') — امروز سبک‌تر بخور و بعد از غذا حرکت کن.'); }
     else if(bgAvg>154){ score-=12; warns.push('میانگین قند دیروز کمی بالا بود (~'+faDigits(bgAvg)+').'); }
     else goods.push('قندت دیروز در محدوده‌ی خوبی بود (~'+faDigits(bgAvg)+') 👏');
     if(bgLow){ score-=10; warns.push('دیروز افت قند (زیر ۷۰) داشتی — علتش را با پزشک بررسی کن.'); }
@@ -3955,19 +3966,20 @@ function dsBuild(k,t0,t1){
     const src=resolveBgSrc(cg.length>=10, mn.length>0);
     const use=(src==='meter')?mn:cg;
     if(!use.length){ R.empty=true; R.note='در این بازه قندی ثبت نشده.'; return R; }
+    const _t=bgT();
     const g=use.map(x=>x.g), n=g.length, avg=g.reduce((a,b)=>a+b,0)/n;
     const pc=f=>Math.round(g.filter(f).length/n*100);
     const sd=Math.sqrt(g.reduce((a,b)=>a+(b-avg)*(b-avg),0)/n);
     R.stats=[['منبع', src==='meter'?'گلوکومترِ دستی':'CGM'],['تعدادِ اندازه‌گیری',faDigits(n)],
       ['میانگین', _dsNum(avg)+' mg/dL'],['HbA1c تخمینی (GMI)', _dsNum(3.31+0.02392*avg,1)+'٪'],
-      ['در محدوده ۷۰–۱۸۰', faDigits(pc(x=>x>=70&&x<=180))+'٪'],
-      ['زیر ۷۰', faDigits(pc(x=>x<70))+'٪'],['زیر ۵۴ (شدید)', faDigits(pc(x=>x<54))+'٪'],
-      ['بالای ۱۸۰', faDigits(pc(x=>x>180))+'٪'],['بالای ۲۵۰', faDigits(pc(x=>x>250))+'٪'],
+      ['در محدوده '+faDigits(_t.lo)+'–'+faDigits(_t.hi), faDigits(pc(x=>x>=_t.lo&&x<=_t.hi))+'٪'],
+      ['زیر '+faDigits(_t.lo), faDigits(pc(x=>x<_t.lo))+'٪'],['زیر '+faDigits(_t.vlo)+' (شدید)', faDigits(pc(x=>x<_t.vlo))+'٪'],
+      ['بالای '+faDigits(_t.hi), faDigits(pc(x=>x>_t.hi))+'٪'],['بالای '+faDigits(_t.vhi)+' (شدید)', faDigits(pc(x=>x>_t.vhi))+'٪'],
       ['کمترین / بیشترین', _dsNum(Math.min.apply(null,g))+' / '+_dsNum(Math.max.apply(null,g))],
       ['نوسان (CV)', _dsNum(sd/avg*100)+'٪']];
     const by={}; use.forEach(x=>{ const kk=dayKey(new Date(x.t)); (by[kk]=by[kk]||[]).push(x.g); });
     const rows=Object.keys(by).sort().reverse().map(kk=>{ const a=by[kk]; const av=a.reduce((s,v)=>s+v,0)/a.length;
-      const tir=Math.round(a.filter(v=>v>=70&&v<=180).length/a.length*100);
+      const tir=Math.round(a.filter(v=>v>=_t.lo&&v<=_t.hi).length/a.length*100);
       return [_dsJ(_dayFromKey(kk)), faDigits(a.length), _dsNum(av), faDigits(tir)+'٪',
               _dsNum(Math.min.apply(null,a)), _dsNum(Math.max.apply(null,a))]; });
     R.tables.push({cap:'تفکیکِ روزانه', head:['تاریخ','تعداد','میانگین','در محدوده','کمترین','بیشترین'], rows});
@@ -4232,7 +4244,8 @@ function dsGlu(t0,t1){ const A=+t0,B=+t1; const inR=t=>t>=A&&t<=B;
   if(!use.length) return null;
   const g=use.map(x=>x.g), n=g.length, avg=g.reduce((a,b)=>a+b,0)/n;
   const pc=f=>g.filter(f).length/n*100; const sd=Math.sqrt(g.reduce((a,b)=>a+(b-avg)*(b-avg),0)/n);
-  return {src,n,avg,pts:use,tir:pc(x=>x>=70&&x<=180),tbr:pc(x=>x<70),tar:pc(x=>x>180),
+  const _t=bgT();
+  return {src,n,avg,pts:use,lo:_t.lo,hi:_t.hi,tir:pc(x=>x>=_t.lo&&x<=_t.hi),tbr:pc(x=>x<_t.lo),tar:pc(x=>x>_t.hi),
     cv:sd/avg*100, gmi:3.31+0.02392*avg, min:Math.min.apply(null,g), max:Math.max.apply(null,g)}; }
 
 // ── SVGهای مستقلِ رنگی برای سندِ چاپ (تمِ روشن) ──
@@ -4257,7 +4270,7 @@ function dsGaugeSVG(key,m){ const D=DS_GAUGE_DEFS[key]; if(!D||!m) return '';
     <text x="${cx}" y="${cy-14}" text-anchor="middle" font-size="21" font-weight="800" fill="${col}">${faDigits(disp)}${D.unit}</text>
   </svg><div class="gauge-l">${D.label}</div></div>`; }
 function dsTIRBarSVG(m){ if(!m) return '';
-  const segs=[[m.tbr,'#e0685f','زیر ۷۰'],[m.tir,'#3fa06f','در محدوده'],[m.tar,'#e0a355','بالای ۱۸۰']];
+  const segs=[[m.tbr,'#e0685f','زیر '+faDigits(bgT().lo)],[m.tir,'#3fa06f','در محدوده'],[m.tar,'#e0a355','بالای '+faDigits(bgT().hi)]];
   let x=0; const W=560,H=26; let bar='';
   segs.forEach(s=>{ const w=Math.max(0,s[0]/100*W); if(w>0.5){ bar+=`<rect x="${x.toFixed(1)}" y="0" width="${w.toFixed(1)}" height="${H}" fill="${s[1]}"/>`;
     if(w>44) bar+=`<text x="${(x+w/2).toFixed(1)}" y="${H/2+4}" text-anchor="middle" font-size="11" fill="#fff" font-weight="700">${faDigits(Math.round(s[0]))}٪</text>`; } x+=w; });
@@ -4411,7 +4424,7 @@ function dsAGPPanel(t0,t1,dark){
     <div class="dleg"><span><b style="background:${(agpColors().median||'#2a7d70')}"></b>میانه</span>
       <span><b style="background:${(agpColors().band2575||'#8fd0c0')}"></b>۲۵–۷۵٪</span>
       <span><b style="background:${(agpColors().band0595||'#cfe8e2')}"></b>۵–۹۵٪</span>
-      <span><b style="background:rgba(63,185,163,.25)"></b>محدودهٔ هدف ۷۰–۱۸۰</span></div></div>`;
+      <span><b style="background:rgba(63,185,163,.25)"></b>محدودهٔ هدف ${faDigits(bgT().lo)}–${faDigits(bgT().hi)}</span></div></div>`;
 }
 // نوارِ روزبه‌روزِ TIR — هر روز یک میله‌ی انباشته (زیر/در محدوده/بالا)
 function dsDailyStrip(t0,t1){
@@ -4421,7 +4434,7 @@ function dsDailyStrip(t0,t1){
   let keys=Object.keys(by).sort(); if(!keys.length) return '';
   if(keys.length>31) keys=keys.slice(-31);
   const bars=keys.map(k=>{ const a=by[k]; const n=a.length;
-    const lo=a.filter(g=>g<70).length/n*100, hi=a.filter(g=>g>180).length/n*100, inr=100-lo-hi;
+    const _t=bgT(); const lo=a.filter(g=>g<_t.lo).length/n*100, hi=a.filter(g=>g>_t.hi).length/n*100, inr=100-lo-hi;
     const d=_dayFromKey(k); const lbl=d?faDigits(String(d.getDate())):'';
     return `<div class="dsb"><div class="dsb-b"><i style="height:${hi.toFixed(1)}%;background:#e0a355"></i><i style="height:${inr.toFixed(1)}%;background:#3fa06f"></i><i style="height:${lo.toFixed(1)}%;background:#e0685f"></i></div><span>${lbl}</span></div>`; }).join('');
   return `<div class="tile t-4"><div class="dpt">زمان در محدوده — روزبه‌روز <span>${faDigits(keys.length)} روز</span></div>
@@ -4459,7 +4472,7 @@ function dsDashboardHTML(t0,t1,over){
   }
   // ── نوارِ TIR ──
   if(m && c.charts.tirBar){
-    const segs=[[m.tbr,'#e0685f','زیر ۷۰'],[m.tir,'#3fa06f','در محدوده'],[m.tar,'#e0a355','بالای ۱۸۰']];
+    const segs=[[m.tbr,'#e0685f','زیر '+faDigits(bgT().lo)],[m.tir,'#3fa06f','در محدوده'],[m.tar,'#e0a355','بالای '+faDigits(bgT().hi)]];
     T+=`<div class="tile t-4"><div class="dpt">زمان در محدوده‌ها <span>${faDigits(m.n)} اندازه‌گیری · ${faDigits(days)} روز</span></div>
       <div class="dbar">`+segs.map(s=>s[0]>0.5?`<i style="width:${s[0].toFixed(1)}%;background:${s[1]}">${s[0]>9?faDigits(Math.round(s[0]))+'٪':''}</i>`:'').join('')+`</div>
       <div class="dleg">`+segs.map(s=>`<span><b style="background:${s[1]}"></b>${s[2]} ${faDigits(Math.round(s[0]))}٪</span>`).join('')+`</div></div>`;
@@ -4469,7 +4482,7 @@ function dsDashboardHTML(t0,t1,over){
     const agp=(days>=10)?dsAGPPanel(t0,t1,dark):'';
     if(agp) T+=agp;
     else if(m.pts.length>=2)
-      T+=`<div class="tile t-4 dchart"><div class="dpt">روندِ قند <span>${_dsJ(t0)} تا ${_dsJ(t1)}</span></div>${dsLineSVG('',_dsThin(m.pts,420),{band:[70,180],color:c.accent,gMin:0,bare:1})}</div>`;
+      T+=`<div class="tile t-4 dchart"><div class="dpt">روندِ قند <span>${_dsJ(t0)} تا ${_dsJ(t1)}</span></div>${dsLineSVG('',_dsThin(m.pts,420),{band:[bgT().lo,bgT().hi],color:c.accent,gMin:0,bare:1})}</div>`;
   }
   // ── نوارِ روزبه‌روز ──
   if(m && c.charts.tirBar && days>=3){ const ds=dsDailyStrip(t0,t1); if(ds) T+=ds; }
@@ -4486,6 +4499,52 @@ function dsDashboardHTML(t0,t1,over){
   }
   if(!T) return '';
   return `<div class="dsdash"><div class="bento">${T}</div></div>`;
+}
+
+/* ── سرصفحهٔ «پروندهٔ بیمار»: هویت، سوابق، داروها، انسولین، پزشکِ معالج ── */
+function dsPatient(){
+  let p={}; try{ p=profGet()||{}; }catch(e){}
+  const nm=[p.firstName,p.lastName].filter(Boolean).join(' ').trim();
+  const conds=[];
+  try{ (p.conditions||[]).forEach(id=>{ const c=PROFILE_CONDITIONS.filter(x=>x.id===id)[0]; if(c) conds.push(c.fa); });
+       (p.condCustom||[]).forEach(x=>{ if(x) conds.push(String(x)); }); }catch(e){}
+  const meds=[]; try{ (myMedsGet()||[]).forEach(m=>{ if(m&&m.name) meds.push(m.name+(m.dose?(' — '+m.dose):'')+(m.timing?(' ('+m.timing+')'):'')); }); }catch(e){}
+  const ins=[];
+  if(p.basalInsulin) ins.push('پایه: '+p.basalInsulin);
+  if(p.insulinType) ins.push('سریع: '+p.insulinType);
+  if(p.tdd) ins.push('TDD: '+faDigits(p.tdd)+' واحد');
+  if(p.ic) ins.push('I:C = ۱:'+faDigits(p.ic));
+  if(p.isf) ins.push('ISF = '+faDigits(p.isf));
+  const t=bgT();
+  return {nm, p, conds, meds, ins, t,
+    doc:[p.docName,p.docSpec].filter(Boolean).join(' · '), docPhone:p.docPhone||'',
+    ident:[ p.age?('سن '+faDigits(p.age)):'', p.gender?String(p.gender):'',
+            p.diabetesType?('دیابت '+p.diabetesType):'', p.dxSince?('از '+faDigits(p.dxSince)):'',
+            p.weight?('وزن '+faDigits(p.weight)+' کیلو'):'' ].filter(Boolean) };
+}
+// بلوکِ HTMLِ پروندهٔ بیمار برای سندِ چاپ
+function dsPatientHTML(P,AC,FS){
+  const D=dsPatient();
+  const cell=(t,v)=>v?`<div class="pf-c"><span>${t}</span><b>${v}</b></div>`:'';
+  const rows=[
+    cell('بیمار', D.nm?escVision(D.nm):'—'),
+    cell('مشخصات', D.ident.length?escVision(D.ident.join(' · ')):'—'),
+    cell('پزشکِ معالج', D.doc?escVision(D.doc)+(D.docPhone?(' — '+escVision(D.docPhone)):''):'—'),
+    cell('محدودهٔ هدفِ قند', faDigits(D.t.lo)+' – '+faDigits(D.t.hi)+' mg/dL'),
+    cell('سوابق و بیماری‌ها', D.conds.length?escVision(D.conds.join(' · ')):'—'),
+    cell('انسولین', D.ins.length?escVision(D.ins.join(' · ')):'—'),
+    cell('داروهای ثابت', D.meds.length?escVision(D.meds.join(' · ')):'—')
+  ].filter(Boolean).join('');
+  return `<div class="pfile"><div class="pf-t">پروندهٔ بیمار</div><div class="pf-g">${rows}</div></div>`;
+}
+function dsPatientCSS(P,AC,FS){
+  return `.pfile{border:1px solid ${P.line};border-radius:12px;padding:10px 12px;margin-bottom:10px;background:${P.panel||'#fff'}}
+.pf-t{font-size:${FS-0.5}px;font-weight:800;color:${AC};margin-bottom:8px}
+.pf-g{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+.pf-c{display:flex;gap:7px;align-items:baseline;font-size:${FS-1.5}px;line-height:1.8;border-bottom:1px dashed ${P.line};padding-bottom:4px}
+.pf-c span{color:${P.mut||P.muted};flex:0 0 auto;min-width:88px}
+.pf-c b{font-weight:700}
+.pf-c:nth-last-child(-n+1){grid-column:1/-1}`;
 }
 
 /* ── لوگوی سربرگ ── */
@@ -4554,10 +4613,11 @@ function renderDossierStudio(){ const box=document.getElementById('dsStudioBody'
 function dsFindings(t0,t1){
   const F=[]; const m=dsGlu(t0,t1);
   if(m){
-    if(m.tir>=70) F.push(['good','زمان در محدوده مطلوب است ('+faDigits(Math.round(m.tir))+'٪ ≥ ۷۰٪).']);
-    else F.push(['warn','زمان در محدوده کمتر از هدف است ('+faDigits(Math.round(m.tir))+'٪ در برابر هدفِ ۷۰٪).']);
-    if(m.tbr>4) F.push(['bad','زمانِ افتِ قند بالاتر از حدِ مجاز است ('+faDigits(Math.round(m.tbr))+'٪ زیرِ ۷۰؛ هدف < ۴٪).']);
-    if(m.tar>25) F.push(['warn','زمانِ قندِ بالا زیاد است ('+faDigits(Math.round(m.tar))+'٪ بالای ۱۸۰).']);
+    const _t=bgT();
+    if(m.tir>=70) F.push(['good','زمان در محدوده ('+faDigits(_t.lo)+'–'+faDigits(_t.hi)+') مطلوب است ('+faDigits(Math.round(m.tir))+'٪ ≥ ۷۰٪).']);
+    else F.push(['warn','زمان در محدوده ('+faDigits(_t.lo)+'–'+faDigits(_t.hi)+') کمتر از هدف است ('+faDigits(Math.round(m.tir))+'٪ در برابر هدفِ ۷۰٪).']);
+    if(m.tbr>4) F.push(['bad','زمانِ افتِ قند بالاتر از حدِ مجاز است ('+faDigits(Math.round(m.tbr))+'٪ زیرِ '+faDigits(_t.lo)+'؛ هدف < ۴٪).']);
+    if(m.tar>25) F.push(['warn','زمانِ قندِ بالا زیاد است ('+faDigits(Math.round(m.tar))+'٪ بالای '+faDigits(_t.hi)+').']);
     if(m.cv>36) F.push(['warn','نوسانِ قند بالاست (CV '+faDigits(Math.round(m.cv))+'٪؛ هدف < ۳۶٪).']);
     else F.push(['good','نوسانِ قند پایدار است (CV '+faDigits(Math.round(m.cv))+'٪).']);
     F.push(['info','HbA1c تخمینی (GMI): '+faDigits((Math.round(m.gmi*10)/10).toFixed(1))+'٪ · میانگین '+faDigits(Math.round(m.avg))+' mg/dL.']);
@@ -4586,12 +4646,13 @@ function dsAGPCompact(t0,t1,P,AC){
   const X=i=>padL+(i/47)*pw, Y=g=>padT+ph-((Math.max(yMin,Math.min(yMax,g))-yMin)/(yMax-yMin))*ph;
   const band=(a,b)=>'M'+v.map(p=>`${X(p.x).toFixed(1)},${Y(p[b]).toFixed(1)}`).join(' L')+' L'+
     v.slice().reverse().map(p=>`${X(p.x).toFixed(1)},${Y(p[a]).toFixed(1)}`).join(' L')+' Z';
-  let g=`<rect x="${padL}" y="${Y(180).toFixed(1)}" width="${pw}" height="${(Y(70)-Y(180)).toFixed(1)}" fill="${AC}14"/>`;
+  const _t=bgT();
+  let g=`<rect x="${padL}" y="${Y(_t.hi).toFixed(1)}" width="${pw}" height="${(Y(_t.lo)-Y(_t.hi)).toFixed(1)}" fill="${AC}14"/>`;
   const ticks=[]; for(let t=Math.ceil(yMin/50)*50;t<=yMax;t+=50) ticks.push(t);
   ticks.forEach(t=>{ const y=Y(t);
     g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="${P.line}" stroke-width=".8" stroke-dasharray="2 4"/>`+
        `<text x="${padL-7}" y="${(y+3.5).toFixed(1)}" text-anchor="end" font-size="10" fill="${P.mut}">${faDigits(t)}</text>`; });
-  [[70,'#e0685f'],[180,'#e0a355']].forEach(t=>{ const y=Y(t[0]);
+  [[_t.lo,'#e0685f'],[_t.hi,'#e0a355']].forEach(t=>{ const y=Y(t[0]);
     g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="${t[1]}" stroke-width="1.3"/>`; });
   g+=`<path d="${band('p5','p95')}" fill="${AC}22"/><path d="${band('p25','p75')}" fill="${AC}4d"/>`;
   g+=`<path d="M`+v.map(p=>`${X(p.x).toFixed(1)},${Y(p.p50).toFixed(1)}`).join(' L')+`" fill="none" stroke="${AC}" stroke-width="2.4" stroke-linejoin="round"/>`;
@@ -4632,7 +4693,7 @@ function dsPrintSummary(){
 
   // ── نوارِ TIR ──
   let tir='';
-  if(m){ const segs=[[m.tbr,'#e0685f','زیر ۷۰'],[m.tir,'#3fa06f','در محدوده'],[m.tar,'#e0a355','بالای ۱۸۰']];
+  if(m){ const segs=[[m.tbr,'#e0685f','زیر '+faDigits(bgT().lo)],[m.tir,'#3fa06f','در محدوده'],[m.tar,'#e0a355','بالای '+faDigits(bgT().hi)]];
     tir=`<div class="box w12"><div class="bt">زمان در محدوده‌ها<span>${faDigits(m.n)} اندازه‌گیری · ${faDigits(days)} روز</span></div>
       <div class="bar">`+segs.map(s=>s[0]>0.6?`<i style="width:${s[0].toFixed(1)}%;background:${s[1]}">${s[0]>10?faDigits(Math.round(s[0]))+'٪':''}</i>`:'').join('')+`</div>
       <div class="lg">`+segs.map(s=>`<span><b style="background:${s[1]}"></b>${s[2]} ${faDigits(Math.round(s[0]))}٪</span>`).join('')+`</div></div>`; }
@@ -4648,7 +4709,7 @@ function dsPrintSummary(){
       const k=dayKey(d); (by[k]=by[k]||[]).push(r.glu); });
     let keys=Object.keys(by).sort(); if(keys.length>31) keys=keys.slice(-31);
     if(keys.length>=3){ strip=`<div class="box w12"><div class="bt">زمان در محدوده — روزبه‌روز<span>${faDigits(keys.length)} روز</span></div><div class="sbars">`+
-      keys.map((k,ix)=>{ const a=by[k],n=a.length; const lo=a.filter(g=>g<70).length/n*100, hi=a.filter(g=>g>180).length/n*100;
+      keys.map((k,ix)=>{ const _t=bgT(); const a=by[k],n=a.length; const lo=a.filter(g=>g<_t.lo).length/n*100, hi=a.filter(g=>g>_t.hi).length/n*100;
         const d=_dayFromKey(k);
         const every=keys.length>16?5:2;
         const lbl=(d && (ix%every===0))?faDigits(String(d.getDate())):'';
@@ -4709,6 +4770,7 @@ function dsPrintSummary(){
        display:flex;flex-direction:column;align-items:center;gap:3px}
     .k svg{display:block}
     .k-l{font-size:${FS-1.5}px;color:${P.mut};font-weight:700;text-align:center;line-height:1.35}
+    ${dsPatientCSS(P,AC,FS)}
     /* نوار */
     .bar{display:flex;height:22px;border-radius:6px;overflow:hidden}
     .bar i{display:flex;align-items:center;justify-content:center;font-size:${FS-3}px;font-weight:700;color:#fff;font-style:normal}
@@ -4746,6 +4808,7 @@ function dsPrintSummary(){
     <div><h1>خلاصهٔ پرونده${name?(' — '+escVision(name)):''}</h1>
     <div class="s">${[age?('سن '+faDigits(age)):'',sex?escVision(sex):''].filter(Boolean).join(' · ')||'گزارشِ فشرده برای ویزیت'}</div></div></div>
     <div class="mt">${_dsJ(t0)} تا ${_dsJ(t1)}<br>${faDigits(days)} روز · ${_dsJ(new Date())}</div></div>
+  ${dsPatientHTML(P,AC,FS)}
   ${kpis?`<div class="kr">${kpis}</div>`:''}
   <div class="g">${tir}${agp}${strip}${wt}${avgs}${finds}${nums}${qBox}</div>
   <div class="ft">این خلاصه از داده‌هایی ساخته شده که بیمار خودش در یک اپِ شخصی ثبت کرده است و آموزشی است — جایگزینِ گزارشِ رسمیِ دستگاه یا نظرِ پزشک نیست.</div>
@@ -4844,6 +4907,7 @@ function dsPrint(only){
     *{font-family:Vazirmatn,sans-serif;box-sizing:border-box}
     body{margin:0;padding:20px;color:${PP.ink};background:${PP.bg};font-size:${FS}px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     ${dsDashCSS(dc)}
+    ${dsPatientCSS(PP,AC,FS)}
     .rhead{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid ${AC};padding-bottom:10px;margin-bottom:16px;gap:12px}
     .rhead .hleft{display:flex;align-items:center;gap:12px}
     .rlogo{flex:0 0 auto;display:flex;align-items:center}
@@ -4884,6 +4948,7 @@ function dsPrint(only){
     <div class="hleft">${logo?`<div class="rlogo">${logo}</div>`:''}<h1>${escVision(title)}${name?(' — '+escVision(name)):''}</h1></div>
     <div class="meta">بازه: ${_dsJ(t0)} تا ${_dsJ(t1)} (${faDigits(dsRange())} روز)<br>تولید: ${_dsJ(new Date())}</div>
   </div>
+  ${only?'':dsPatientHTML(PP,AC,FS)}
   ${dash}
   ${body}
   <div class="foot">
@@ -8898,8 +8963,9 @@ function renderDailyReport(){
     const dayR=window._cgmReadings.filter(r=>r.t&&r.t.dateObj&&dayKey(r.t.dateObj)===key).sort((a,b)=>a.t.dateObj-b.t.dateObj);
     if(dayR.length){ const rs=dayR.map(r=>r.glu); const N=rs.length; const avg=rs.reduce((a,b)=>a+b,0)/N;
       const pc=f=>rs.filter(f).length/N*100;
-      cgmDay={avg,min:Math.min(...rs),max:Math.max(...rs),tir:Math.round(pc(g=>g>=70&&g<=180)),
-        vlo:pc(g=>g<54), lo:pc(g=>g>=54&&g<70), inr:pc(g=>g>=70&&g<=180), hi:pc(g=>g>180&&g<=250), vhi:pc(g=>g>250)};
+      const _t=bgT();
+      cgmDay={avg,min:Math.min(...rs),max:Math.max(...rs),tir:Math.round(pc(g=>g>=_t.lo&&g<=_t.hi)),
+        vlo:pc(g=>g<_t.vlo), lo:pc(g=>g>=_t.vlo&&g<_t.lo), inr:pc(g=>g>=_t.lo&&g<=_t.hi), hi:pc(g=>g>_t.hi&&g<=_t.vhi), vhi:pc(g=>g>_t.vhi)};
       sparkPts=dayR.map(r=>({m:hourMin(r.t.dateObj), g:r.glu})); }
   }
   // قند دستیِ این روز + منبع مؤثر
@@ -8955,7 +9021,7 @@ function renderDailyReport(){
   if(daySrc==='meter' && dayBGpts.length){
     const dbs=bgStats(dayBGpts);
     h+=`<div class="dash-sec-t">🩸 قند دستی این روز <span class="dash-sec-s">(${faDigits(dbs.n)} اندازه‌گیری)</span></div>`;
-    h+=`<div class="dspark-card">${bgScatterSVG(dayBGpts)}<div class="dspark-lgnd"><span><i class="agl" style="background:rgba(111,211,154,.5)"></i>محدوده‌ی هدف ۷۰–۱۸۰</span></div></div>`;
+    h+=`<div class="dspark-card">${bgScatterSVG(dayBGpts)}<div class="dspark-lgnd"><span><i class="agl" style="background:rgba(111,211,154,.5)"></i>محدوده‌ی هدف ${faDigits(bgT().lo)}–${faDigits(bgT().hi)}</span></div></div>`;
     h+=`<div class="dash-tiles" style="margin-top:10px">
       <div class="dash-tile"><div class="dt-v" style="color:#5fd3bd">${faDigits(Math.round(dbs.avg))}</div><div class="dt-l">میانگین</div></div>
       <div class="dash-tile"><div class="dt-v" style="color:#6fd39a">${faDigits(dbs.inRange)}<span style="font-size:13px;color:var(--muted)"> از ${faDigits(dbs.n)}</span></div><div class="dt-l">در محدوده</div></div>
@@ -8969,7 +9035,7 @@ function renderDailyReport(){
       const _dq=String(key).split('-').map(Number);
       const _d0=new Date(_dq[0],_dq[1]-1,_dq[2],0,0,0,0), _d1=new Date(_dq[0],_dq[1]-1,_dq[2],23,59,59,999);
       h+=bgcCard('dailyBgChart', bgcPoints(_d0,_d1), _d0, _d1, {title:'قندِ این روز'})
-        +`<div class="dspark-lgnd" style="margin-top:8px"><span><i style="background:rgba(111,211,154,.5)"></i>محدوده‌ی هدف ۷۰–۱۸۰</span></div>`;
+        +`<div class="dspark-lgnd" style="margin-top:8px"><span><i style="background:rgba(111,211,154,.5)"></i>محدوده‌ی هدف ${faDigits(bgT().lo)}–${faDigits(bgT().hi)}</span></div>`;
     }
     // نوار محدوده‌ی این روز
     const dseg=[[cgmDay.vlo,'#7d2d2d'],[cgmDay.lo,'#e0685f'],[cgmDay.inr,'#6fd39a'],[cgmDay.hi,'#e0a355'],[cgmDay.vhi,'#b5622a']];
@@ -8989,7 +9055,7 @@ function renderDailyReport(){
         const mxA=Math.max(280,...bars.filter(b=>b.avg!=null).map(b=>b.avg));
         h+=`<div class="dash-sec-t">📊 روند ساعتی قند <span class="dash-sec-s">(میانگین هر ۳ ساعت)</span></div><div class="ov-trend">`;
         bars.forEach(b=>{ if(b.avg==null){ h+=`<div class="ovt-col"><div class="ovt-cval">—</div><div class="ovt-track"></div><div class="ovt-clbl">${b.label}</div></div>`; return; }
-          const hp=Math.max(6,Math.round(b.avg/mxA*100)); const col=b.avg<70?'#9fc0f0':b.avg>180?'#e0a355':'#6fd39a';
+          const _t=bgT(); const hp=Math.max(6,Math.round(b.avg/mxA*100)); const col=b.avg<_t.lo?'#9fc0f0':b.avg>_t.hi?'#e0a355':'#6fd39a';
           h+=`<div class="ovt-col"><div class="ovt-cval">${faDigits(Math.round(b.avg))}</div><div class="ovt-track"><div class="ovt-fill" style="height:${hp}%;background:${col}"></div></div><div class="ovt-clbl">${b.label}</div></div>`; });
         h+=`</div><div class="ov-trend-note">میانگین قند در هر بازه‌ی ۳ ساعته · سبز = در محدوده · زرد = بالا · آبی = پایین</div>`;
       }
@@ -9077,7 +9143,7 @@ function bgcCard(id, pts, t0, t1, opt){
   _bgc[id]={pts,t0:+t0,t1:+t1,W,H,PT:0,PB:0,gMin,gMax,ranged:!!opt.ranged,title:opt.title||''};
   const segs=opt.ranged?('<div class="bgc-segs">'+BG_RANGES.map(r=>`<button type="button" class="bgc-seg ${bgcRange()===r[0]?'on':''}" onclick="bgcSetRange('${id}',${r[0]})">${r[1]}</button>`).join('')+'</div>'):'';
   const last=pts.length?pts[pts.length-1]:null;
-  const col=g=>g<70?'#9fc0f0':(g>180?'#f0a29b':'#6fd39a');
+  const _t=bgT(); const col=g=>g<_t.lo?'#9fc0f0':(g>_t.hi?'#f0a29b':'#6fd39a');
   let head=`<div class="bgc-top">`;
   if(last) head+=`<span class="bgc-now" style="color:${col(last.g)}">${faDigits(Math.round(last.g))}</span><span class="bgc-unit">mg/dL</span>`;
   head+=`<span class="bgc-sub">${escVision(opt.title||'قندِ امروز')}${last?(' · '+bgcTimeFa(last.t).split('·')[1].trim()):''}</span>${segs}</div>`;
@@ -9085,7 +9151,7 @@ function bgcCard(id, pts, t0, t1, opt){
   const span=Math.max(1,(+t1)-(+t0));
   const X=t=>(((+t)-(+t0))/span)*W;
   const Y=g=>(1-(Math.max(gMin,Math.min(gMax,g))-gMin)/(gMax-gMin))*H;
-  const yLo=Y(70), yHi=Y(180);
+  const _ty=bgT(); const yLo=Y(_ty.lo), yHi=Y(_ty.hi);
   let sv=`<svg class="bgc-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">`;
   sv+=`<rect x="0" y="${yHi.toFixed(1)}" width="${W}" height="${(yLo-yHi).toFixed(1)}" fill="rgba(111,211,154,.12)"/>`;
   // خطوطِ افقیِ مقیاس (هر ۵۰)
@@ -9649,11 +9715,12 @@ function ovComputeStats(readings){
   if(!readings||!readings.length) return null;
   const vals=readings.map(r=>r.glu); const n=vals.length;
   const avg=vals.reduce((a,b)=>a+b,0)/n;
-  const tir=vals.filter(v=>v>=70&&v<=180).length/n*100;
-  const tar=vals.filter(v=>v>180).length/n*100;
-  const tbr=vals.filter(v=>v<70).length/n*100;
-  const veryLow=vals.filter(v=>v<54).length/n*100;
-  const veryHigh=vals.filter(v=>v>250).length/n*100;
+  const _t=bgT();
+  const tir=vals.filter(v=>v>=_t.lo&&v<=_t.hi).length/n*100;
+  const tar=vals.filter(v=>v>_t.hi).length/n*100;
+  const tbr=vals.filter(v=>v<_t.lo).length/n*100;
+  const veryLow=vals.filter(v=>v<_t.vlo).length/n*100;
+  const veryHigh=vals.filter(v=>v>_t.vhi).length/n*100;
   const gmi=3.31+0.02392*avg;
   const sd=Math.sqrt(vals.reduce((a,v)=>a+(v-avg)*(v-avg),0)/n);
   return {n,avg,tir,tar,tbr,veryLow,veryHigh,gmi,cv:sd/avg*100};
@@ -9664,7 +9731,7 @@ function ovDailyAverages(readings,maxDays){
   readings.forEach(r=>{ if(r.t&&r.t.dateObj){ const k=dayKey(r.t.dateObj); (map[k]=map[k]||[]).push(r.glu); } });
   let keys=Object.keys(map).sort(); if(maxDays) keys=keys.slice(-maxDays);
   return keys.map(k=>{ const a=map[k]; const p=k.split('-'); const jd=g2j(+p[0],+p[1],+p[2]);
-    const inr=a.filter(g=>g>=70&&g<=180).length; return {avg:a.reduce((x,y)=>x+y,0)/a.length, tir:Math.round(inr/a.length*100), label:faDigits(jd[2])}; });
+    const _t=bgT(); const inr=a.filter(g=>g>=_t.lo&&g<=_t.hi).length; return {avg:a.reduce((x,y)=>x+y,0)/a.length, tir:Math.round(inr/a.length*100), label:faDigits(jd[2])}; });
 }
 /* ====== منبع نمایش قند: CGM یا گلوکومتر ====== */
 function getBgSource(){ try{ return localStorage.getItem('bg_source')||'auto'; }catch(e){ return 'auto'; } }
@@ -9694,7 +9761,7 @@ function ovRangeBG(){
   const latest=all[all.length-1].t; const c=new Date(latest); c.setHours(0,0,0,0); c.setDate(c.getDate()-(_ovRange-1));
   return all.filter(x=>x.t>=c.getTime());
 }
-function bgStats(pts){ if(!pts||!pts.length) return null; const v=pts.map(p=>p.g); const avg=v.reduce((a,b)=>a+b,0)/v.length; return {n:v.length, avg, min:Math.min(...v), max:Math.max(...v), inRange:v.filter(g=>g>=70&&g<=180).length}; }
+function bgStats(pts){ if(!pts||!pts.length) return null; const _t=bgT(); const v=pts.map(p=>p.g); const avg=v.reduce((a,b)=>a+b,0)/v.length; return {n:v.length, avg, min:Math.min(...v), max:Math.max(...v), inRange:v.filter(g=>g>=_t.lo&&g<=_t.hi).length}; }
 // نمودار نقطه‌ای قند دستی روی محور زمان (اسکترِ ساده، مقیاس یکنواخت تا دایره‌ها گرد بمانند)
 function bgScatterSVG(pts){
   if(!pts||pts.length<1) return '';
@@ -9704,13 +9771,13 @@ function bgScatterSVG(pts){
   const gMax=Math.max(260, Math.ceil(Math.max.apply(null,pts.map(p=>p.g))/20)*20), gMin=40;
   const X=t=> pts.length<2 ? padL+plotW/2 : padL+((t-from)/span)*plotW;
   const Y=g=>{ const c=Math.max(gMin,Math.min(gMax,g)); return padT+plotH-(c-gMin)/(gMax-gMin)*plotH; };
-  const yLo=Y(70), yHi=Y(180);
+  const _ty=bgT(); const yLo=Y(_ty.lo), yHi=Y(_ty.hi);
   let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">`;
   s+=`<rect x="0" y="${yHi.toFixed(1)}" width="${W}" height="${(yLo-yHi).toFixed(1)}" fill="rgba(111,211,154,.13)"/>`;
   s+=`<line x1="0" y1="${yHi.toFixed(1)}" x2="${W}" y2="${yHi.toFixed(1)}" stroke="rgba(111,211,154,.4)" stroke-width="1" stroke-dasharray="4 4"/>`;
   s+=`<line x1="0" y1="${yLo.toFixed(1)}" x2="${W}" y2="${yLo.toFixed(1)}" stroke="rgba(159,192,240,.4)" stroke-width="1" stroke-dasharray="4 4"/>`;
   if(pts.length>1){ const line=pts.map(p=>X(p.t).toFixed(1)+','+Y(p.g).toFixed(1)).join(' '); s+=`<polyline points="${line}" fill="none" stroke="rgba(95,211,189,.28)" stroke-width="1.2"/>`; }
-  pts.forEach(p=>{ const c=p.g<70?'#9fc0f0':p.g>180?'#e0a355':'#6fd39a'; s+=`<circle cx="${X(p.t).toFixed(1)}" cy="${Y(p.g).toFixed(1)}" r="2.8" fill="${c}" stroke="var(--panel)" stroke-width="0.7"/>`; });
+  const _tb=bgT(); pts.forEach(p=>{ const c=p.g<_tb.lo?'#9fc0f0':p.g>_tb.hi?'#e0a355':'#6fd39a'; s+=`<circle cx="${X(p.t).toFixed(1)}" cy="${Y(p.g).toFixed(1)}" r="2.8" fill="${c}" stroke="var(--panel)" stroke-width="0.7"/>`; });
   s+=`</svg>`;
   return s;
 }
@@ -9726,7 +9793,7 @@ function ovMeterView(){
   h+=`<div class="ov-hero"><div class="ovh-big" style="color:#5fd3bd">${faDigits(Math.round(bs.avg))}<span class="ovh-pct" style="font-size:16px"> mg/dL</span></div>
     <div class="ovh-sub">میانگین ${faDigits(bs.n)} اندازه‌گیری دستی</div>
     <div class="ovh-span">${faDigits(jDateStr(fj[0],fj[1],fj[2]))} تا ${faDigits(jDateStr(tj[0],tj[1],tj[2]))}</div></div>`;
-  h+=`<div class="dspark-card">${bgScatterSVG(pts)}<div class="dspark-lgnd"><span><i class="agl" style="background:rgba(111,211,154,.5)"></i>محدوده‌ی هدف ۷۰–۱۸۰</span><span><i class="agl" style="background:#6fd39a;border-radius:50%"></i>هر نقطه یک اندازه‌گیری</span></div></div>`;
+  h+=`<div class="dspark-card">${bgScatterSVG(pts)}<div class="dspark-lgnd"><span><i class="agl" style="background:rgba(111,211,154,.5)"></i>محدوده‌ی هدف ${faDigits(bgT().lo)}–${faDigits(bgT().hi)}</span><span><i class="agl" style="background:#6fd39a;border-radius:50%"></i>هر نقطه یک اندازه‌گیری</span></div></div>`;
   h+=`<div class="dash-tiles" style="margin-top:10px">
     <div class="dash-tile"><div class="dt-v" style="color:#6fd39a">${faDigits(bs.inRange)}<span style="font-size:14px;color:var(--muted)"> از ${faDigits(bs.n)}</span></div><div class="dt-l">در محدوده‌ (۷۰–۱۸۰)</div></div>
     <div class="dash-tile"><div class="dt-v" style="color:#9fc0f0">${faDigits(Math.round(bs.min))}</div><div class="dt-l">کمترین</div></div>
@@ -9791,7 +9858,7 @@ function renderOverview(){
     if(avgs.length>=2){
       const mxA=Math.max(280, ...avgs.map(a=>a.avg));
       h+=`<div class="dash-sec-t">📅 روند میانگین قند <span class="dash-sec-s">(${faDigits(avgs.length)} روز)</span></div><div class="ov-trend">`;
-      avgs.forEach(a=>{ const hp=Math.max(6,Math.round(a.avg/mxA*100)); const col=a.avg<70?'#9fc0f0':a.avg>180?'#e0a355':'#6fd39a';
+      const _t=bgT(); avgs.forEach(a=>{ const hp=Math.max(6,Math.round(a.avg/mxA*100)); const col=a.avg<_t.lo?'#9fc0f0':a.avg>_t.hi?'#e0a355':'#6fd39a';
         h+=`<div class="ovt-col"><div class="ovt-cval">${faDigits(Math.round(a.avg))}</div><div class="ovt-track"><div class="ovt-fill" style="height:${hp}%;background:${col}"></div></div><div class="ovt-clbl">${a.label}</div></div>`; });
       h+=`</div><div class="ov-trend-note">رنگ سبز = میانگین در محدوده · زرد = بالا · آبی = پایین</div>`;
     }
@@ -10890,6 +10957,7 @@ function saveQuickBG(){
   uiToast(`✓ قند ${faDigits(String(v))} ثبت شد`);
   const st=document.getElementById('dataStats'); if(st) renderDataStats();
   if(typeof renderDashboard==='function') renderDashboard();
+  try{ bgAlertCheck(v); }catch(e){}
 }
 /* توست کوتاه */
 let _toastTimer=null;
@@ -11316,6 +11384,61 @@ const PROFILE_CONDITIONS=[
 ];
 const COND_FA={}; PROFILE_CONDITIONS.forEach(c=>COND_FA[c.id]=c.fa);
 let _pfConds=new Set(), _pfCustom=[];
+/* ═══ 🎯 محدودهٔ هدفِ قندِ بیمار (۲۹.۴) — یک منبعِ واحد برای کلِ برنامه ═══
+   همه‌جا به‌جای ۷۰/۱۸۰ ثابت، از bgT() خوانده می‌شود. */
+function bgT(){
+  let p={}; try{ p=profGet()||{}; }catch(e){}
+  const n=v=>{ const f=parseFloat(faToEnDigits(String(v==null?'':v))); return isFinite(f)?f:NaN; };
+  let lo=n(p.bgLow), hi=n(p.bgHigh);
+  if(!(lo>=50&&lo<=120)) lo=70;
+  if(!(hi>=120&&hi<=300)) hi=180;
+  if(hi<=lo){ lo=70; hi=180; }
+  let vlo=n(p.bgVeryLow); if(!(vlo>=40&&vlo<lo)) vlo=Math.min(54,lo-10);
+  let vhi=n(p.bgVeryHigh); if(!(vhi>hi&&vhi<=500)) vhi=Math.max(250,hi+50);
+  return {lo,hi,vlo,vhi,custom:(lo!==70||hi!==180)};
+}
+function bgRangeHint(){
+  const el=document.getElementById('bgRangeOut'); if(!el) return;
+  const g=id=>((document.getElementById(id)||{}).value||'').trim();
+  const n=v=>{ const f=parseFloat(faToEnDigits(v)); return isFinite(f)?f:NaN; };
+  const lo=n(g('pfBgLow'))||70, hi=n(g('pfBgHigh'))||180;
+  if(hi<=lo){ el.innerHTML='<span style="color:var(--red)">حدِ بالا باید از حدِ پایین بیشتر باشد.</span>'; return; }
+  el.innerHTML=`محدودهٔ هدف: <b style="color:var(--teal)">${faDigits(lo)} تا ${faDigits(hi)}</b> mg/dL`+
+    ((lo!==70||hi!==180)?' — غیرِ استاندارد؛ فقط اگر پزشکت گفته.':' (استاندارد)');
+}
+// وضعیتِ یک قند نسبت به محدودهٔ بیمار
+function bgLevel(g){ const t=bgT(); g=parseFloat(g); if(!isFinite(g)) return null;
+  if(g<t.vlo) return {k:'vlow',fa:'افتِ شدید',col:'#e0685f'};
+  if(g<t.lo)  return {k:'low',fa:'پایین‌تر از محدوده',col:'#9fc0f0'};
+  if(g>t.vhi) return {k:'vhigh',fa:'اوجِ شدید',col:'#b5622a'};
+  if(g>t.hi)  return {k:'high',fa:'بالاتر از محدوده',col:'#e0a355'};
+  return {k:'in',fa:'در محدوده',col:'#6fd39a'};
+}
+function bgAlertOn(){ try{ const p=profGet()||{}; return p.bgAlert!==false; }catch(e){ return true; } }
+// هشدارِ خارج از محدوده بعد از ثبتِ قند
+function bgAlertCheck(g){
+  if(!bgAlertOn()) return;
+  const L=bgLevel(g); if(!L||L.k==='in') return;
+  const t=bgT();
+  const tip = L.k==='vlow' ? 'همین حالا قندِ سریع بخور (حبه قند/آبمیوه) و ۱۵ دقیقه بعد دوباره اندازه بگیر.'
+    : L.k==='low' ? 'یک میان‌وعدهٔ سبک بخور و دوباره چک کن.'
+    : L.k==='vhigh' ? 'آب بنوش، فعالیتِ سنگین نکن و اگر ادامه داشت با پزشکت تماس بگیر.'
+    : 'آب بنوش و اگر می‌توانی کمی پیاده‌روی کن.';
+  try{ uiToast&&uiToast('⚠️ '+L.fa+' ('+faDigits(Math.round(g))+')'); }catch(e){}
+  setTimeout(()=>{ try{
+    const old=document.getElementById('bgAlertBg'); if(old) old.remove();
+    const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='bgAlertBg';
+    bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
+    bg.innerHTML=`<div class="chat-rename" style="max-width:360px;border-color:${L.col}">
+      <h4 style="color:${L.col}">⚠️ ${escVision(L.fa)}</h4>
+      <div style="font-size:26px;font-weight:800;text-align:center;color:${L.col};margin:6px 0 4px;direction:ltr">${faDigits(Math.round(g))} <span style="font-size:13px;color:var(--muted)">mg/dL</span></div>
+      <div style="font-size:11.5px;color:var(--muted);text-align:center;margin-bottom:10px">محدودهٔ هدفِ تو: ${faDigits(t.lo)}–${faDigits(t.hi)}</div>
+      <div style="font-size:12.5px;line-height:1.95;background:var(--field);border:1px solid var(--line);border-radius:11px;padding:10px 12px">${tip}</div>
+      <div style="font-size:10.5px;color:var(--muted);line-height:1.8;margin-top:9px">آموزشی است — در علائمِ شدید یا تکرارِ آن حتماً با پزشک تماس بگیر.</div>
+      <div class="chat-rename-btns" style="margin-top:12px"><button type="button" class="crn-btn crn-ok" onclick="document.getElementById('bgAlertBg').remove()">فهمیدم</button></div></div>`;
+    document.body.appendChild(bg);
+  }catch(e){} },260);
+}
 function profHasDiabetes(){ return _pfConds.has('diabetes'); }
 function condToggle(id){ if(_pfConds.has(id)) _pfConds.delete(id); else _pfConds.add(id); renderCondPicker(); if(id==='diabetes') updateInsSection(); }
 function condAddCustom(){ const inp=document.getElementById('condCustomIn'); if(!inp) return; const v=(inp.value||'').trim().slice(0,40); if(v && _pfCustom.indexOf(v)<0){ _pfCustom.push(v); } inp.value=''; renderCondPicker(); }
@@ -11352,6 +11475,9 @@ function qmedUseSaved(i){ const m=myMedsGet()[i]; if(!m) return; const nm=docume
 async function saveProfile(){
   const p={diabetesType:val('diabetesType'),basalInsulin:val('basalInsulin'),insulinType:val('insulinType'),age:val('age'),weight:val('weight'),weightStart:val('weightStart'),gender:val('gender'),tdd:val('tdd'),ic:val('icRatio'),isf:val('isf'),
     firstName:val('pfFirst').trim(),lastName:val('pfLast').trim(),mobile:val('pfMobile').trim(),email:val('pfEmail').trim(),
+    docName:val('pfDoc').trim(),docSpec:val('pfDocSpec').trim(),docPhone:val('pfDocPhone').trim(),dxSince:val('pfDx').trim(),
+    bgLow:val('pfBgLow'),bgHigh:val('pfBgHigh'),bgVeryLow:val('pfBgVLow'),bgVeryHigh:val('pfBgVHigh'),
+    bgAlert:!!(document.getElementById('pfBgAlert')||{}).checked,
     conditions:[..._pfConds], condCustom:_pfCustom.slice()};
   profSet(p); await storageSet(PKEY,JSON.stringify(p)); showSaved(p);
   if(typeof updateProfileCardTitle==='function') updateProfileCardTitle();
@@ -11437,6 +11563,10 @@ async function loadProfile(){
     // هویت
     const sv=(id,v)=>{ const e=document.getElementById(id); if(e) e.value=v||''; };
     sv('pfFirst',p.firstName); sv('pfLast',p.lastName); sv('pfMobile',p.mobile); sv('pfEmail',p.email);
+    sv('pfDoc',p.docName); sv('pfDocSpec',p.docSpec); sv('pfDocPhone',p.docPhone); sv('pfDx',p.dxSince);
+    sv('pfBgLow',p.bgLow); sv('pfBgHigh',p.bgHigh); sv('pfBgVLow',p.bgVeryLow); sv('pfBgVHigh',p.bgVeryHigh);
+    try{ const cb=document.getElementById('pfBgAlert'); if(cb) cb.checked=(p.bgAlert!==false); }catch(e){}
+    try{ bgRangeHint(); }catch(e){}
     // بیماری‌ها (سازگاری با نسخهٔ قدیم: اگر نوعِ دیابت داشت، دیابت را فعال کن)
     _pfConds=new Set(Array.isArray(p.conditions)?p.conditions:[]);
     if(p.diabetesType && !_pfConds.size) _pfConds.add('diabetes');
@@ -13483,7 +13613,7 @@ function collectCalibMeals(){
       const hasFood = Array.isArray(m.foods) && m.foods.length>0;
       if(hasFood && carb>0 && ins>0 && !isNaN(bgA) && !isNaN(bgB)){
         // وعده‌ی «موفق»: قند ۲ ساعته ۷۰-۱۸۰ باشد
-        let good = bgA>=70 && bgA<=180;
+        const _t=bgT(); let good = bgA>=_t.lo && bgA<=_t.hi;
         // پیک فقط اگر واقعاً بالا باشد (بالای ۲۵۰) رد می‌شود — پیک ۱۸۰-۲۵۰ بعد از غذا طبیعی است
         if(!isNaN(peak) && peak>250) good=false;
         // دره فقط اگر افت واقعی باشد (زیر ۶۰) رد می‌شود — ۶۰-۷۰ نوسان طبیعی است
@@ -13810,11 +13940,12 @@ function runCGMAnalysis(){
   const vals=readings.map(r=>r.glu);
   const n=vals.length;
   const avg=vals.reduce((a,b)=>a+b,0)/n;
-  const tir=vals.filter(v=>v>=70&&v<=180).length/n*100;
-  const tar=vals.filter(v=>v>180).length/n*100;
-  const tbr=vals.filter(v=>v<70).length/n*100;
-  const veryLow=vals.filter(v=>v<54).length/n*100;
-  const veryHigh=vals.filter(v=>v>250).length/n*100;
+  const _t=bgT();
+  const tir=vals.filter(v=>v>=_t.lo&&v<=_t.hi).length/n*100;
+  const tar=vals.filter(v=>v>_t.hi).length/n*100;
+  const tbr=vals.filter(v=>v<_t.lo).length/n*100;
+  const veryLow=vals.filter(v=>v<_t.vlo).length/n*100;
+  const veryHigh=vals.filter(v=>v>_t.vhi).length/n*100;
   const gmi=3.31+0.02392*avg;
   const mean=avg;
   const sd=Math.sqrt(vals.reduce((a,v)=>a+(v-mean)*(v-mean),0)/n);
@@ -14070,7 +14201,7 @@ function dailyProfilesSVG(){
     </div>`;
   });
   html+='</div>';
-  html+='<div style="font-size:10px;color:#999;margin-top:8px;text-align:center">محور عمودی: قند (mg/dL) · محور افقی: ساعت شبانه‌روز (۰۰:۰۰ تا ۲۴:۰۰) · نوار خاکستری: محدوده‌ی هدف ۷۰–۱۸۰</div>';
+  html+='<div style="font-size:10px;color:#999;margin-top:8px;text-align:center">محور عمودی: قند (mg/dL) · محور افقی: ساعت شبانه‌روز (۰۰:۰۰ تا ۲۴:۰۰) · نوار خاکستری: محدوده‌ی هدف ${faDigits(bgT().lo)}–${faDigits(bgT().hi)}</div>';
   return html;
 }
 function mealsInsulinReport(){
