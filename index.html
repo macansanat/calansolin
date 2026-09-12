@@ -358,6 +358,31 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .ds-qadd{display:flex;gap:7px;margin-top:11px}
 .ds-qadd input{flex:1;min-width:0}
 .ds-sum{margin-top:8px;background:linear-gradient(135deg,var(--teal),var(--teal-dim));color:#04120e}
+.exp{margin-top:4px}
+.exp-s{width:100%;padding:11px 12px;border-radius:11px;border:1px solid var(--line);background:var(--field);color:var(--ink);font-family:inherit;font-size:13px}
+.exp-cats{display:flex;gap:6px;overflow-x:auto;padding:9px 0 3px;scrollbar-width:none}
+.exp-cats::-webkit-scrollbar{display:none}
+.exp-cat{flex:0 0 auto;background:var(--field);border:1px solid var(--line);color:var(--muted);font-family:inherit;font-size:11.5px;font-weight:700;padding:6px 11px;border-radius:20px;cursor:pointer;white-space:nowrap}
+.exp-cat.on{background:var(--teal);border-color:var(--teal);color:#04120e}
+.exp-res{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px;max-height:300px;overflow-y:auto}
+.exp-i{text-align:right;background:var(--field);border:1px solid var(--line);border-radius:11px;padding:9px 10px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;gap:3px;min-width:0}
+.exp-i:active{background:var(--teal-dim)}
+.exp-n{font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.4}
+.exp-m{font-size:10px;color:var(--muted)}
+.exp-none{grid-column:1/-1;font-size:11.5px;color:var(--muted);text-align:center;padding:12px 6px;line-height:1.8}
+.exp-cust{margin-top:10px;font-size:12px;color:var(--muted)}
+.exp-cust summary{cursor:pointer;padding:6px 0}
+.exp-cust-b{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.exp-cust-b input{flex:1;min-width:110px}
+.vs-row{background:var(--field);border:1px solid var(--line);border-radius:13px;padding:10px 11px;margin-bottom:9px}
+.vs-h{display:flex;align-items:center;gap:8px}
+.vs-ic{font-size:16px}
+.vs-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.vs-t b{font-size:13px;font-weight:800}
+.vs-t span{font-size:10.5px;color:var(--muted)}
+.vs-b{background:transparent;border:none;color:var(--muted);font-size:14px;cursor:pointer;font-family:inherit;padding:2px 4px}
+.vs-s{font-size:11.5px;line-height:1.9;color:var(--ink);margin-top:6px}
+.vs-s i{font-style:normal;color:var(--muted);font-weight:700}
 .ds-note2{font-size:10.5px;color:var(--muted);line-height:1.85;margin-top:8px;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .ds-covers{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
 .ds-cov{padding:0;background:var(--field);border:2px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;font-family:inherit;text-align:right}
@@ -1259,6 +1284,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <button class="qa-item" onclick="quickAdd('vitals')"><span class="qa-ico" style="background:rgba(224,104,95,.16);color:#f0a29b">❤️</span>فشار و ضربان</button>
       <button class="qa-item" onclick="quickAdd('weight')"><span class="qa-ico" style="background:rgba(63,185,163,.16);color:#6fd39a">⚖️</span>وزن فعلی</button>
       <button class="qa-item" onclick="quickAdd('journal')"><span class="qa-ico" style="background:rgba(224,163,85,.14);color:#e9b877">📓</span>دفترچه</button>
+      <button class="qa-item" onclick="quickAdd('visit')"><span class="qa-ico" style="background:rgba(63,185,163,.16);color:#5fd3bd">🩺</span>مراجعه پزشک</button>
     </div>
     <div class="qa-subt">هوش مصنوعی</div>
     <div class="qa-grid">
@@ -1504,6 +1530,38 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <!-- فرم سریع وزن فعلی -->
+<div class="qbg-modal" id="qvisitModal" onclick="if(event.target===this)closeQEntry('qvisitModal')">
+  <div class="qbg-box">
+    <button class="qbg-x" onclick="closeQEntry('qvisitModal')" title="بستن">✕</button>
+    <div class="qbg-head"><span class="qbg-badge" style="background:rgba(63,185,163,.18)">🩺</span><div><div class="qbg-title">مراجعه به پزشک</div><div class="qbg-sub">تاریخِ ویزیت، نام و تخصصِ پزشک، تجویزها و نظرِ خودِ پزشک را ثبت کن تا در پرونده‌ی پزشکی و گزارش‌ها بماند.</div></div></div>
+    <div style="display:flex;justify-content:flex-end;margin:-2px 0 12px"><button type="button" class="mini-btn" onclick="visitHistOpen()">🗂 تاریخچهٔ مراجعه‌ها</button></div>
+    <div class="qbg-grid">
+      <div><label class="qbg-lbl">تاریخِ مراجعه (شمسی)</label><div id="qvisitDateWrap"></div></div>
+      <div><label class="qbg-lbl">ساعت</label><input type="time" id="qvisitTime" class="qbg-in"></div>
+    </div>
+    <label class="qbg-lbl" style="margin-top:12px">نامِ پزشک</label>
+    <input type="text" id="qvisitDoc" class="qbg-in" placeholder="مثلاً دکتر احمدی">
+    <label class="qbg-lbl" style="margin-top:12px">تخصص</label>
+    <input type="text" id="qvisitSpec" class="qbg-in" placeholder="مثلاً غدد و متابولیسم" list="qvisitSpecList">
+    <datalist id="qvisitSpecList">
+      <option value="غدد و متابولیسم"><option value="داخلی"><option value="تغذیه"><option value="چشم‌پزشکی"><option value="قلب و عروق"><option value="کلیه (نفرولوژی)"><option value="اعصاب (نورولوژی)"><option value="پا و زخم"><option value="روان‌پزشکی"><option value="زنان و زایمان"><option value="عمومی">
+    </datalist>
+    <label class="qbg-lbl" style="margin-top:12px">علتِ مراجعه</label>
+    <input type="text" id="qvisitReason" class="qbg-in" placeholder="مثلاً بررسیِ قندِ صبحگاهی">
+    <label class="qbg-lbl" style="margin-top:12px">تشخیص</label>
+    <input type="text" id="qvisitDx" class="qbg-in" placeholder="تشخیصی که پزشک گفت">
+    <label class="qbg-lbl" style="margin-top:12px">💊 تجویزها (هر مورد یک خط)</label>
+    <textarea id="qvisitRx" class="qbg-in" rows="3" placeholder="مثلاً:&#10;متفورمین ۵۰۰ — دو بار در روز&#10;لانتوس ۲۲ واحد شب"></textarea>
+    <label class="qbg-lbl" style="margin-top:12px">🗒 نظر و توصیه‌های پزشک</label>
+    <textarea id="qvisitNote" class="qbg-in" rows="3" placeholder="آنچه پزشک گفت — توصیه‌ها، هشدارها، تغییرِ دوز…"></textarea>
+    <div class="qbg-grid" style="margin-top:12px">
+      <div><label class="qbg-lbl">مراجعهٔ بعدی (اختیاری)</label><div id="qvisitNextWrap"></div></div>
+      <div><label class="qbg-lbl">آزمایشِ درخواستی</label><input type="text" id="qvisitLab" class="qbg-in" placeholder="مثلاً HbA1c"></div>
+    </div>
+    <div class="qbg-actions"><button class="qbg-cancel" onclick="closeQEntry('qvisitModal')">لغو</button><button class="qbg-save" onclick="saveQuickVisit()">💾 ذخیره</button></div>
+  </div>
+</div>
+
 <div class="qbg-modal" id="qwtModal" onclick="if(event.target===this)closeQEntry('qwtModal')">
   <div class="qbg-box">
     <button class="qbg-x" onclick="closeQEntry('qwtModal')" title="بستن">✕</button>
@@ -2473,7 +2531,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۹.۲</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۹.۳</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3766,6 +3824,81 @@ function buildDayReview(y){
   return {show:true, score, tone, dayLabel:_jLabel(y), warns:warns.slice(0,4), goods:goods.slice(0,3)};
 }
 function _jLabel(d){ try{ const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); return faDigits(jDateStr(j[0],j[1],j[2])); }catch(e){ return ''; } }
+/* ═══════════ 🩺 مراجعه‌های پزشک، تجویزها و نظرِ پزشک (۲۹.۳) ═══════════ */
+const VISIT_KEY='visits_v1';
+let _editVisitIso=null;
+function visitsAll(){ try{ const a=JSON.parse(localStorage.getItem(VISIT_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function visitsSave(a){ try{ localStorage.setItem(VISIT_KEY, JSON.stringify(a)); }catch(e){} }
+function openQuickVisit(){ _editVisitIso=null;
+  openQEntry('qvisitModal','qvisitDateWrap','qvisitTime',['qvisitDoc','qvisitSpec','qvisitReason','qvisitDx','qvisitRx','qvisitNote','qvisitLab'],'qvisitDoc');
+  try{ const w=document.getElementById('qvisitNextWrap'); if(w) w.innerHTML=jDateFieldHTML('qvisitNext','');
+       const t=document.querySelector('#qvisitModal .qbg-title'); if(t) t.textContent='مراجعه به پزشک'; }catch(e){}
+}
+function saveQuickVisit(){
+  const g=id=>((document.getElementById(id)||{}).value||'').trim();
+  const doc=g('qvisitDoc'), spec=g('qvisitSpec'), rx=g('qvisitRx'), note=g('qvisitNote');
+  if(!doc && !spec && !rx && !note){ alert('حداقل نامِ پزشک یا تجویز/نظر را بنویس.'); return; }
+  const dt=qDateTimeISO('qvisitDate','qvisitTime'); if(!dt){ alert('تاریخِ مراجعه را انتخاب کن.'); return; }
+  let next=''; try{ const pj=parseJDate(g('qvisitNext')); if(pj){ const gg=j2g(pj[0],pj[1],pj[2]); next=new Date(gg[0],gg[1]-1,gg[2],9,0,0).toISOString(); } }catch(e){}
+  const rec={iso:dt.iso, date:dt.sh, doctor:doc, spec, reason:g('qvisitReason'), dx:g('qvisitDx'),
+             rx, note, lab:g('qvisitLab'), next};
+  const a=visitsAll();
+  if(_editVisitIso){ const i=a.findIndex(x=>x&&x.iso===_editVisitIso); if(i>=0) a[i]=rec; else a.push(rec); }
+  else a.push(rec);
+  visitsSave(a);
+  const wasEdit=!!_editVisitIso; _editVisitIso=null;
+  closeQEntry('qvisitModal'); uiToast(wasEdit?'✓ مراجعه ویرایش شد':'✓ مراجعه ثبت شد'); afterQuickLog();
+  if(wasEdit){ try{ visitHistOpen(); }catch(e){} }
+}
+function _vLines(t){ return String(t||'').split('\n').map(x=>x.trim()).filter(Boolean); }
+function visitHistOpen(){
+  try{ ensureChatCss&&ensureChatCss(); }catch(e){}
+  const old=document.getElementById('vsHistBg'); if(old) old.remove();
+  const a=visitsAll().slice().sort((x,y)=>new Date(y.iso)-new Date(x.iso));
+  const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='vsHistBg'; bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
+  let rows='';
+  if(!a.length) rows=`<div style="color:var(--muted);font-size:12.5px;text-align:center;padding:22px">هنوز مراجعه‌ای ثبت نشده.</div>`;
+  else rows=a.map(v=>{
+    const rx=_vLines(v.rx), nt=String(v.note||'').trim();
+    return `<div class="vs-row">
+      <div class="vs-h"><span class="vs-ic">🩺</span>
+        <div class="vs-t"><b>${escVision(v.doctor||'پزشک')}${v.spec?(' · '+escVision(v.spec)):''}</b>
+          <span>${faDigits(String(v.date||''))}${v.reason?(' · '+escVision(v.reason)):''}</span></div>
+        <button class="vs-b" onclick="visitHistEdit('${v.iso}')">✏️</button>
+        <button class="vs-b" onclick="visitHistDel('${v.iso}')">🗑</button></div>
+      ${v.dx?`<div class="vs-s"><i>تشخیص:</i> ${escVision(v.dx)}</div>`:''}
+      ${rx.length?`<div class="vs-s"><i>💊 تجویز:</i> ${rx.map(x=>escVision(x)).join(' • ')}</div>`:''}
+      ${nt?`<div class="vs-s"><i>🗒 نظرِ پزشک:</i> ${escVision(nt)}</div>`:''}
+      ${v.lab?`<div class="vs-s"><i>🧪 آزمایش:</i> ${escVision(v.lab)}</div>`:''}
+      ${v.next?`<div class="vs-s"><i>📅 مراجعهٔ بعدی:</i> ${_dsJ(new Date(v.next))}</div>`:''}
+    </div>`; }).join('');
+  bg.innerHTML=`<div class="chat-rename" role="dialog" aria-modal="true" style="max-width:430px;max-height:84vh;overflow:auto">
+    <h4>🩺 تاریخچهٔ مراجعه‌ها</h4>
+    <div style="font-size:12px;color:var(--muted);line-height:1.85;margin-bottom:10px">تجویزها و نظرِ پزشکِ معالج — در «پرونده برای پزشک» و گزارش‌ها هم می‌آید.</div>
+    ${rows}
+    <div class="chat-rename-btns" style="margin-top:12px">
+      <button type="button" class="crn-btn crn-cancel" onclick="document.getElementById('vsHistBg').remove()">بستن</button>
+      <button type="button" class="crn-btn crn-ok" onclick="document.getElementById('vsHistBg').remove(); openQuickVisit()">＋ مراجعهٔ تازه</button></div></div>`;
+  document.body.appendChild(bg);
+}
+function visitHistDel(iso){ if(!confirm('این مراجعه حذف شود؟')) return;
+  visitsSave(visitsAll().filter(x=>x&&x.iso!==iso)); visitHistOpen(); try{ afterQuickLog(); }catch(e){} }
+function visitHistEdit(iso){
+  const v=visitsAll().find(x=>x&&x.iso===iso); if(!v) return;
+  const bg=document.getElementById('vsHistBg'); if(bg) bg.remove();
+  openQuickVisit(); _editVisitIso=iso;
+  const st=(id,val)=>{ const el=document.getElementById(id); if(el) el.value=val||''; };
+  try{
+    st('qvisitDoc',v.doctor); st('qvisitSpec',v.spec); st('qvisitReason',v.reason); st('qvisitDx',v.dx);
+    st('qvisitRx',v.rx); st('qvisitNote',v.note); st('qvisitLab',v.lab);
+    const d=new Date(v.iso); const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate());
+    st('qvisitDate', jDateStr(j[0],j[1],j[2]));
+    const p=n=>String(n).padStart(2,'0'); st('qvisitTime', p(d.getHours())+':'+p(d.getMinutes()));
+    if(v.next){ const n=new Date(v.next); const nj=g2j(n.getFullYear(),n.getMonth()+1,n.getDate()); st('qvisitNext', jDateStr(nj[0],nj[1],nj[2])); }
+    const t=document.querySelector('#qvisitModal .qbg-title'); if(t) t.textContent='ویرایشِ مراجعه';
+  }catch(e){}
+}
+
 /* ═══════════ 🗂 پروندهٔ پزشک (۲۸.۶) ═══════════
    یک جای واحد که کلِ روندِ کاربر را قسمت‌قسمت برای پزشک آماده می‌کند.
    خروجی PDF دقیقاً با همان روشِ گزارشِ AGP است: یک پنجرهٔ سفیدِ مستقل با
@@ -3779,6 +3912,7 @@ const DS_SECTIONS=[
   {k:'labs',     ic:'🧪', t:'آزمایش‌ها'},
   {k:'body',     ic:'⚖️', t:'وزن، فشار و ضربان'},
   {k:'notes',    ic:'📓', t:'یادداشت‌ها، خواب و حال'},
+  {k:'visits',   ic:'🩺', t:'مراجعه‌ها، تجویزها و نظرِ پزشک'},
   {k:'watchdog', ic:'🕵️', t:'ناظرِ روزانه (امتیاز و توصیه‌ها)'},
   {k:'podcast',  ic:'🎧', t:'متنِ پادکست‌های روزانه'},
   {k:'questions',ic:'❓', t:'سؤال‌های من از پزشک'}
@@ -3963,6 +4097,21 @@ function dsBuild(k,t0,t1){
         (x.tags||[]).join('، ')||'—', String(x.note||'—')])});
     if(sl.length) R.tables.push({cap:'خواب', head:['تاریخ','ساعت'],
       rows:sl.sort((a,b)=>b.d-a.d).map(x=>[_dsJ(x.d), isFinite(x.h)?faDigits(String(x.h)):'—'])});
+  }
+  else if(k==='visits'){
+    // مراجعه‌ها عمداً بازه‌محور نیستند: تجویزِ پزشک تا وقتی عوض نشده معتبر است
+    const all=visitsAll().filter(x=>x&&x.iso).sort((a,b)=>new Date(b.iso)-new Date(a.iso));
+    if(!all.length){ R.empty=true; R.note='هنوز مراجعه‌ای ثبت نشده. از ＋ ← «مراجعه پزشک» ثبتش کن تا تجویزها و نظرِ پزشک در پرونده بماند.'; return R; }
+    const inR2=all.filter(x=>inR(+new Date(x.iso)));
+    const last=all[0];
+    R.stats.push(['کلِ مراجعه‌ها',faDigits(all.length)],['در این بازه',faDigits(inR2.length)],
+      ['آخرین مراجعه',faDigits(String(last.date||''))+(last.spec?(' · '+last.spec):'')]);
+    const nx=all.map(x=>x.next).filter(Boolean).sort();
+    const fut=nx.filter(x=>+new Date(x)>=Date.now())[0];
+    if(fut) R.stats.push(['مراجعهٔ بعدی',_dsJ(new Date(fut))]);
+    R.tables.push({cap:'مراجعه‌ها، تجویزها و نظرِ پزشک', head:['تاریخ','پزشک / تخصص','تشخیص','💊 تجویز','🗒 نظرِ پزشک'],
+      rows:all.slice(0,20).map(v=>[faDigits(String(v.date||'')), (v.doctor||'—')+(v.spec?('\n'+v.spec):''),
+        v.dx||'—', _vLines(v.rx).join('\n')||'—', String(v.note||'—')]), wide:4});
   }
   else if(k==='watchdog'){
     const days=_dsDays(t0,t1); const rows=[]; let sum=0, ns=0;
@@ -9714,6 +9863,7 @@ function quickAdd(type){
       if(c){ c.classList.remove('closed'); c.scrollIntoView({behavior:'smooth',block:'start'}); }
     },80);
   };
+  if(type==='visit') return openQuickVisit();
   if(type==='dossier') switchTab('dossier');
   if(type==='meal') openQuickMeal();
   else if(type==='insulin') openQuickInsulin();
@@ -11300,7 +11450,7 @@ async function loadProfile(){
 // کلیدهای localStorage که در بکاپ گنجانده می‌شوند (نقشه‌ی داده‌ی کاربر).
 // از مقادیر رشته‌ای مستقیم استفاده می‌شود چون بعضی از این const‌ها (CGMKEY, BGKEY, ...)
 // پایین‌تر در فایل تعریف شده‌اند و ارجاع به خودِ متغیر اینجا TDZ می‌دهد.
-const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','skip_log_v1','sleep_log_v1','mood_log_v1','vitals_v1','journal_v1','weight_log_v1','custom_foods_v1','custom_meds_v1','custom_exercises_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','ai_model_frozen_v1','ai_section_model_v1','journeys_v1','pod_cfg_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1','ai_prompts_v1','chat_role_model_v1','chat_autoread_v1','chat_cfg_v1'];
+const BACKUP_KEYS=['insulin_profile_v1','weekly_plan_v1','cgm_data_v1','cgm_files_v1','bg_manual_v1','exercise_v1','exercise_log_v1','labs_data_v1','cgm_cal_v1','agp_colors','coll_state','calib_filters','med_log_v1','skip_log_v1','sleep_log_v1','mood_log_v1','vitals_v1','journal_v1','weight_log_v1','visits_v1','custom_foods_v1','custom_meds_v1','custom_exercises_v1','food_overrides_v1','ai_history_v1','ai_last_v1','ai_chats_v1','ai_section_provider_v1','ai_memory_v1','ai_frozen_v1','ai_model_frozen_v1','ai_section_model_v1','journeys_v1','pod_cfg_v1','app_theme_v1','chat_layout_v1','chat_persona_v1','chat_suggest_v1','ai_prompts_v1','chat_role_model_v1','chat_autoread_v1','chat_cfg_v1'];
 
 async function renderProfileTab(){
   // فرم پروفایل (c-profile) حالا خودش داخل این تب است و وضعیت ذخیره‌شده را نشان می‌دهد.
@@ -15414,14 +15564,14 @@ const EX_LIBRARY={
     {id:'wu_knee',name:'بالا آوردن آرام زانو',pose:'march',set:'۱ دقیقه',desc:'درجا راه برو و زانوها را تا کمر بالا بیاور، آرام و ریتمیک.',benefit:'ضربان قلب را کم‌کم بالا می‌برد و پاها را گرم می‌کند.'},
     {id:'wu_ankle',name:'چرخش مچ پا',pose:'heel',set:'۱۰ بار هر پا',desc:'روی یک پا بایست (به دیوار تکیه بده)، مچ پای دیگر را دایره‌وار بچرخان.',benefit:'مچ پا را روان می‌کند — مهم برای پیشگیری از پیچ‌خوردگی.'},
     {id:'wu_legswing',name:'تاب دادن پا',pose:'leg_raise',set:'۱۰ بار هر پا',desc:'به دیوار تکیه بده و یک پا را آرام جلو و عقب تاب بده.',benefit:'عضلات ران و پشت پا را برای حرکات پرفشار آماده می‌کند.'},
-    {id:'wu_jack',name:'جامپینگ‌جکِ سبک',pose:'jumpingjack',set:'۳۰-۴۵ ثانیه',desc:'آرام و کنترل‌شده جامپینگ‌جک بزن تا کلِ بدن گرم شود.',benefit:'کل بدن را گرم و قلب را برای ورزش اصلی آماده می‌کند.'},
+    {id:'wu_jack',name:'جامپینگ‌جکِ سبک',alt:'پروانه سبک',pose:'jumpingjack',set:'۳۰-۴۵ ثانیه',desc:'آرام و کنترل‌شده جامپینگ‌جک بزن تا کلِ بدن گرم شود.',benefit:'کل بدن را گرم و قلب را برای ورزش اصلی آماده می‌کند.'},
   ]},
   aerobic:{cat:'🚶 هوازی سبک',items:[
     {id:'walk_meal',name:'پیاده‌روی بعد از غذا',pose:'walk',set:'۱۰-۱۵ دقیقه، بعد از هر وعده‌ی اصلی',desc:'آرام تا متوسط قدم بزن. بهترین زمان: ۱۵-۳۰ دقیقه بعد از غذا.',benefit:'یکی از مؤثرترین کارها برای پایین آوردن قند بعد غذا و کمک به انسولین. عضله قند را مستقیم مصرف می‌کند.'},
     {id:'march',name:'درجا راه رفتن (مارش)',pose:'march',set:'۳ ست × ۱ دقیقه',desc:'سرجایت بایست و زانوها را یکی‌یکی بالا بیاور، دست‌ها همراه حرکت کنند.',benefit:'هوازی خانگی بدون نیاز به فضا. ضربان قلب و مصرف قند را بالا می‌برد.'},
     {id:'heel',name:'بالا آمدن روی پنجه‌ی پا',pose:'heel',set:'۳ ست × ۱۵ بار',desc:'صاف بایست، روی پنجه‌ها بلند شو و آرام پایین بیا. برای تعادل به دیوار تکیه بده.',benefit:'عضلات ساق را فعال می‌کند و گردش خون پا را بهتر می‌کند — در دیابت مهم است.'},
     {id:'stairs',name:'بالا و پایین رفتن از پله',pose:'walk',set:'۵-۱۰ دقیقه',desc:'اگر پله در دسترس داری، آرام بالا و پایین برو.',benefit:'هوازی قوی که قلب و عضلات بزرگ پا را درگیر می‌کند.'},
-    {id:'jumping_jack',name:'جامپینگ جک',pose:'jumpingjack',set:'۳ ست × ۳۰ ثانیه',desc:'بپر و هم‌زمان دست‌ها را بالای سر و پاها را به طرفین باز کن، بعد جمع کن.',benefit:'هوازیِ تمام‌بدن؛ قلب و مصرف قند را سریع بالا می‌برد.'},
+    {id:'jumping_jack',name:'جامپینگ جک',alt:'پروانه پروانه‌ای جهشی',pose:'jumpingjack',set:'۳ ست × ۳۰ ثانیه',desc:'بپر و هم‌زمان دست‌ها را بالای سر و پاها را به طرفین باز کن، بعد جمع کن.',benefit:'هوازیِ تمام‌بدن؛ قلب و مصرف قند را سریع بالا می‌برد.'},
     {id:'high_knees',name:'دویدن درجا با زانوی بلند',pose:'march',set:'۳ ست × ۳۰ ثانیه',desc:'درجا بدو و زانوها را تند تا ارتفاع کمر بالا بیاور.',benefit:'ضربان قلب را بالا می‌برد و عضلات مرکزی و پا را فعال می‌کند.'},
     {id:'butt_kicks',name:'لگد به باسن (درجا)',pose:'march',set:'۳ ست × ۳۰ ثانیه',desc:'درجا بدو و پاشنه‌ها را به سمت باسن بزن.',benefit:'هوازیِ سبک که پشت ران را هم گرم و فعال می‌کند.'},
     {id:'mountain_climber',name:'کوهنورد (مانتین کلایمبر)',pose:'plank',set:'۳ ست × ۲۰ ثانیه',desc:'در حالت پلانک، زانوها را یکی‌یکی سریع به سمت سینه بیاور.',benefit:'هوازیِ شدید + تقویت مرکز بدن؛ مصرف قند بالا.'},
@@ -15468,6 +15618,46 @@ const EX_LIBRARY={
     {id:'cd_child',name:'وضعیتِ کودک (یوگا)',pose:'plank',set:'۱ دقیقه',desc:'روی زانوها بنشین، بالاتنه را جلو و پایین ببر و دست‌ها را دراز کن، آرام نفس بکش.',benefit:'کمر و لگن را آزاد و ذهن را آرام می‌کند.'},
     {id:'cd_catcow',name:'گربه-گاو',pose:'plank',set:'۱۰ بار آرام',desc:'چهار‌دست‌وپا، پشت را با دم قوس بده و با بازدم گرد کن.',benefit:'انعطافِ ستون فقرات و کاهشِ تنشِ کمر.'},
     {id:'cd_breath',name:'تنفسِ عمیقِ پایانی',pose:'breath',set:'۵ بار',desc:'نشسته یا خوابیده، آرام و عمیق نفس بکش تا بدن به آرامش برگردد.',benefit:'ضربان و کورتیزول را پایین می‌آورد و ریکاوری را بهتر می‌کند.'},
+  ]},
+  home_resist:{cat:'🏋️ مقاومتیِ خانگی (کش / دمبل / بطریِ آب)',items:[
+    {id:'hr_fly',name:'قفسهٔ سینه پروانه‌ای (فلای)',alt:'پروانه فلای سینه دمبل',pose:'pushup',set:'۳ ست × ۱۲ بار',desc:'به پشت روی زمین دراز بکش، یک بطریِ آب در هر دست، دست‌ها را از طرفین مثلِ بالِ پروانه باز کن و آرام جمع کن.',benefit:'عضلهٔ سینه را می‌سازد؛ عضلهٔ بیشتر یعنی مصرفِ قندِ بیشتر.'},
+    {id:'hr_band_fly',name:'پروانه با کشِ ورزشی',alt:'پروانه کش باند سینه',pose:'stretch',set:'۳ ست × ۱۵ بار',desc:'کش را دورِ پشت بگیر و دست‌ها را از جلو به هم نزدیک کن، مثلِ بستنِ بال.',benefit:'سینه و جلوی شانه را بدونِ وزنه تقویت می‌کند.'},
+    {id:'hr_press',name:'پرسِ سینه با بطری',alt:'پرس سینه دمبل',pose:'pushup',set:'۳ ست × ۱۲ بار',desc:'خوابیده، بطری‌ها را از سطحِ سینه به بالا فشار بده و آرام برگردان.',benefit:'سینه و پشتِ بازو را می‌سازد.'},
+    {id:'hr_shoulder',name:'پرسِ سرشانه با بطری',alt:'سرشانه پرس بالای سر',pose:'stretch',set:'۳ ست × ۱۰ بار',desc:'نشسته یا ایستاده، بطری‌ها را از کنارِ شانه به بالای سر فشار بده.',benefit:'سرشانه را قوی و وضعیتِ بدن را بهتر می‌کند.'},
+    {id:'hr_lateral',name:'نشرِ جانب (بازکردنِ دست‌ها)',alt:'نشر جانب شانه',pose:'stretch',set:'۳ ست × ۱۵ بار',desc:'ایستاده، بطری‌ها را از کنارِ بدن تا ارتفاعِ شانه بالا بیاور و آرام پایین ببر.',benefit:'شانه را پهن و قوی می‌کند.'},
+    {id:'hr_curl',name:'جلو بازو با بطری',alt:'جلو بازو بایسپس',pose:'stretch',set:'۳ ست × ۱۲ بار',desc:'آرنج‌ها کنارِ بدن ثابت، بطری‌ها را به سمتِ شانه بالا بیاور.',benefit:'بازو را تقویت می‌کند.'},
+    {id:'hr_kickback',name:'پشتِ بازو (کیک‌بک)',alt:'پشت بازو ترایسپس',pose:'plank',set:'۳ ست × ۱۲ بار',desc:'کمی از کمر خم شو، آرنج را بالا نگه دار و ساعد را به عقب صاف کن.',benefit:'پشتِ بازو را سفت می‌کند.'},
+    {id:'hr_row',name:'پارویی خم با بطری',alt:'زیربغل پارویی',pose:'plank',set:'۳ ست × ۱۲ بار',desc:'از کمر خم شو (پشت صاف)، بطری‌ها را به سمتِ پهلو بالا بکش.',benefit:'عضلاتِ پشت را می‌سازد و قوزِ پشت را کم می‌کند.'},
+    {id:'hr_band_row',name:'زیربغل با کش (قایقی)',alt:'قایقی کش زیربغل',pose:'stretch',set:'۳ ست × ۱۵ بار',desc:'کش را دورِ پا یا دستگیرهٔ در بینداز و به سمتِ شکم بکش، کتف‌ها را جمع کن.',benefit:'پشت و کتف را قوی می‌کند — مناسبِ کارِ پشتِ میز.'},
+    {id:'hr_rdl',name:'ددلیفتِ رومانیایی با بطری',alt:'ددلیفت پشت پا همسترینگ',pose:'squat',set:'۳ ست × ۱۲ بار',desc:'پاها کمی باز، زانو کمی خم، بطری‌ها را نزدیکِ پا به پایین ببر و با فشارِ باسن بلند شو. پشت صاف بماند.',benefit:'پشتِ ران و باسن — از بزرگ‌ترین مصرف‌کننده‌های قند.'},
+    {id:'hr_goblet',name:'اسکات با بطری (گابلت)',alt:'اسکات گابلت وزنه',pose:'squat',set:'۳ ست × ۱۲ بار',desc:'یک بطریِ سنگین را جلوی سینه بگیر و اسکات بزن.',benefit:'نسخهٔ سنگین‌ترِ اسکات برای ساختِ عضلهٔ بیشتر.'},
+    {id:'hr_lunge_w',name:'لانج با وزنه',alt:'لانج دمبل',pose:'lunge',set:'۳ ست × ۱۰ بار هر پا',desc:'بطری در هر دست، یک قدمِ بلند بردار و پایین برو.',benefit:'ران، باسن و تعادل را هم‌زمان تقویت می‌کند.'},
+    {id:'hr_bridge_w',name:'پلِ باسن با وزنه',alt:'پل باسن وزنه گلوت',pose:'bridge',set:'۳ ست × ۱۵ بار',desc:'خوابیده با زانوی خم، یک بطری روی لگن بگذار و باسن را بالا ببر.',benefit:'باسن و پشتِ ران، بدونِ فشار به زانو.'},
+    {id:'hr_band_squat',name:'اسکات با کش دورِ زانو',alt:'اسکات کش مینی باند',pose:'squat',set:'۳ ست × ۱۵ بار',desc:'کشِ حلقه‌ای را بالای زانو بینداز و اسکات بزن؛ زانوها را به بیرون فشار بده.',benefit:'سرینیِ میانی را فعال می‌کند و زانو را در جای درست نگه می‌دارد.'},
+  ]},
+  core:{cat:'🎯 شکم و مرکزِ بدن (خانگی)',items:[
+    {id:'co_rev_crunch',name:'کرانچِ معکوس',alt:'شکم زیر کرانچ معکوس',pose:'situp',set:'۳ ست × ۱۲ بار',desc:'به پشت دراز بکش، زانوها خم، لگن را با عضلهٔ شکم از زمین بلند کن.',benefit:'شکمِ پایین را هدف می‌گیرد، با فشارِ کمتر روی گردن.'},
+    {id:'co_bicycle',name:'کرانچِ دوچرخه',alt:'دوچرخه شکم پهلو',pose:'situp',set:'۳ ست × ۲۰ بار',desc:'خوابیده، آرنجِ مخالف را به زانوی خم‌شده نزدیک کن و پاها را مثلِ رکاب زدن عوض کن.',benefit:'شکم و پهلو را هم‌زمان کار می‌دهد.'},
+    {id:'co_side_plank',name:'پلانکِ پهلو',alt:'پلانک بغل پهلو',pose:'plank',set:'۳ ست × ۲۰ ثانیه هر طرف',desc:'روی یک ساعد و پهلو بایست و بدن را صاف نگه دار.',benefit:'عضلاتِ پهلو و ثباتِ کمر را می‌سازد.'},
+    {id:'co_flutter',name:'قیچی (فلاتر کیک)',alt:'قیچی پا شکم',pose:'leg_raise',set:'۳ ست × ۳۰ ثانیه',desc:'خوابیده، پاها را کمی از زمین بلند کن و مثلِ قیچی بالا و پایین ببر.',benefit:'شکمِ پایین و خم‌کننده‌های لگن.'},
+    {id:'co_leg_raise',name:'بالا آوردنِ پا (خوابیده)',alt:'بالا آوردن پا شکم زیر',pose:'leg_raise',set:'۳ ست × ۱۲ بار',desc:'به پشت دراز بکش، پاها صاف، هر دو پا را تا ۹۰ درجه بالا ببر و آرام پایین بیاور.',benefit:'شکمِ پایین را قوی می‌کند.'},
+    {id:'co_russian',name:'چرخشِ روسی',alt:'روسی توییست پهلو',pose:'situp',set:'۳ ست × ۲۰ بار',desc:'نشسته با زانوی خم و بالاتنهٔ کمی عقب، دست‌ها را به چپ و راست بچرخان (می‌توانی بطری بگیری).',benefit:'پهلوها و چرخشِ تنه را تقویت می‌کند.'},
+    {id:'co_shoulder_tap',name:'پلانک با لمسِ شانه',alt:'پلانک شانه تپ',pose:'plank',set:'۳ ست × ۲۰ بار',desc:'در پلانکِ روی دست، هر بار یک دست را بردار و شانهٔ مخالف را لمس کن؛ لگن نچرخد.',benefit:'ثباتِ مرکزِ بدن و شانه.'},
+    {id:'co_hollow',name:'نگه‌داشتنِ توخالی (هالو)',alt:'هالو هولد شکم',pose:'situp',set:'۳ ست × ۲۰ ثانیه',desc:'به پشت دراز بکش، دست و پا را کمی از زمین بلند کن و کمر را به زمین بچسبان.',benefit:'کلِ جدارِ شکم را درگیر می‌کند.'},
+  ]},
+  stretch_home:{cat:'🤸 کشش‌های خانگی',items:[
+    {id:'sh_butterfly',name:'کششِ پروانه (نشسته)',alt:'پروانه کشش کشاله ران',pose:'breath',set:'۳۰-۶۰ ثانیه',desc:'بنشین، کفِ پاها را به هم بچسبان و زانوها را آرام به سمتِ زمین ببر؛ فشار نیاور.',benefit:'کشالهٔ ران و لگن را باز می‌کند — برای کسی که زیاد می‌نشیند عالی است.'},
+    {id:'sh_hamstring',name:'کششِ پشتِ ران (نشسته)',alt:'همسترینگ کشش نشسته',pose:'stretch',set:'۳۰ ثانیه هر پا',desc:'نشسته، یک پا صاف جلو، آرام به سمتِ نوکِ پا خم شو.',benefit:'پشتِ ران را نرم می‌کند و کمردرد را کم.'},
+    {id:'sh_cobra',name:'کششِ کبرا',alt:'کبرا کشش کمر شکم',pose:'plank',set:'۳۰ ثانیه',desc:'روی شکم، دست‌ها زیرِ شانه، بالاتنه را آرام بالا بیاور و قفسهٔ سینه را باز کن.',benefit:'جلوی بدن و شکم را می‌کشد و قوزِ پشت را کم می‌کند.'},
+    {id:'sh_quad_lie',name:'کششِ جلوی ران (خوابیده به پهلو)',alt:'چهارسر کشش ران',pose:'heel',set:'۳۰ ثانیه هر پا',desc:'به پهلو دراز بکش، مچِ پای رویی را بگیر و پاشنه را به باسن نزدیک کن.',benefit:'جلوی ران را باز می‌کند — امن‌تر از حالتِ ایستاده.'},
+    {id:'sh_figure4',name:'کششِ سرینی (فیگورِ ۴)',alt:'سرینی باسن کشش فیگور چهار',pose:'bridge',set:'۳۰ ثانیه هر پا',desc:'به پشت بخواب، مچِ یک پا را روی زانوی دیگر بگذار و ران را به سمتِ سینه بکش.',benefit:'باسن و عصبِ سیاتیک را آزاد می‌کند.'},
+    {id:'sh_supine_twist',name:'پیچشِ خوابیده',alt:'پیچش کمر خوابیده توییست',pose:'bridge',set:'۳۰ ثانیه هر طرف',desc:'به پشت بخواب، زانوها را جمع و به یک طرف بینداز، سر را به طرفِ مخالف بچرخان.',benefit:'کمر و ستونِ فقرات را آزاد می‌کند.'},
+    {id:'sh_cross_shoulder',name:'کششِ شانهٔ متقاطع',alt:'شانه کشش متقاطع',pose:'stretch',set:'۳۰ ثانیه هر دست',desc:'یک دست را صاف از جلوی سینه عبور بده و با دستِ دیگر به بدن فشار بده.',benefit:'پشتِ شانه را باز می‌کند.'},
+    {id:'sh_triceps',name:'کششِ پشتِ بازو (بالای سر)',alt:'ترایسپس کشش بالای سر',pose:'stretch',set:'۳۰ ثانیه هر دست',desc:'دست را از بالای سر خم کن و آرنج را با دستِ دیگر به عقب فشار بده.',benefit:'پشتِ بازو و پهلوی بالاتنه را می‌کشد.'},
+    {id:'sh_doorway_chest',name:'کششِ سینه در چارچوبِ در',alt:'سینه کشش چارچوب در',pose:'stretch',set:'۳۰ ثانیه',desc:'ساعدها را روی چارچوبِ در بگذار و یک قدم جلو برو تا کششِ سینه را حس کنی.',benefit:'سینهٔ جمع‌شده از نشستن را باز می‌کند.'},
+    {id:'sh_wrist',name:'کششِ مچ و ساعد',alt:'مچ دست ساعد کشش',pose:'stretch',set:'۲۰ ثانیه هر دست',desc:'دست را صاف جلو بگیر و انگشتان را با دستِ دیگر آرام به بالا و پایین بکش.',benefit:'برای کسی که با موبایل/کیبورد زیاد کار می‌کند — و مچِ حساسِ دیابتی.'},
+    {id:'sh_foot',name:'کششِ کفِ پا',alt:'کف پا کشش خار پاشنه',pose:'heel',set:'۳۰ ثانیه هر پا',desc:'نشسته، پا را روی زانوی دیگر بگذار و انگشتانِ پا را آرام به سمتِ بالا بکش.',benefit:'کفِ پا و پاشنه — در دیابت که پا حساس است، خیلی مهم.'},
+    {id:'sh_hip_lunge',name:'کششِ لگن (لانجِ کششی)',alt:'لگن کشش لانج خم کننده',pose:'lunge',set:'۳۰ ثانیه هر پا',desc:'در حالتِ لانج، زانوی عقب را روی زمین بگذار و لگن را آرام به جلو ببر.',benefit:'خم‌کننده‌های لگن که با نشستنِ طولانی کوتاه می‌شوند را باز می‌کند.'},
   ]},
   senior:{cat:'👵 مخصوص سالمندان',items:[
     {id:'chair_march',name:'مارش نشسته روی صندلی',pose:'breath',set:'۲ ست × ۱ دقیقه',desc:'روی صندلی بنشین و پاها را یکی‌یکی مثل راه رفتن بالا بیاور.',benefit:'هوازی امن و کم‌فشار برای سالمندان یا کسانی که تعادل ضعیف دارند.'},
@@ -15592,22 +15782,60 @@ function renderExLogEntry(){
       </select>
     </div>
   </div>`;
-  h+=`<div style="font-size:12px;color:var(--muted);margin-bottom:6px">حرکت‌هایی که امروز انجام دادی را انتخاب کن (ست/زمان و تعدادش را می‌توانی ویرایش کنی):</div>`;
-  h+=`<select id="exAddSelect" style="width:65%"><option value="">— انتخاب حرکت —</option>`;
-  for(const g in EX_LIBRARY){ h+=`<optgroup label="${EX_LIBRARY[g].cat}">`; EX_LIBRARY[g].items.forEach(ex=>{ h+=`<option value="${ex.id}">${ex.name}</option>`; }); h+=`</optgroup>`; }
-  h+=`</select> <button class="quick-btn" style="font-size:11px" onclick="addExToToday()">افزودن</button>`;
-  // ورزش دلخواه
-  h+=`<div style="margin-top:8px"><input type="text" id="exCustomName" placeholder="یا ورزش دلخواه..." style="width:45%"> <input type="text" id="exCustomSet" placeholder="ست/زمان" style="width:30%"> <button class="quick-btn" style="font-size:11px" onclick="addCustomEx()">+</button></div>`;
+  h+=`<div style="font-size:12px;color:var(--muted);margin-bottom:7px">حرکت را جستجو کن یا از دسته‌ها انتخاب کن — با یک لمس اضافه می‌شود:</div>`;
+  h+=`<div class="exp">
+    <input type="search" id="exSearch" class="exp-s" placeholder="🔎 جستجو… مثلاً پروانه، کشش، شنا، کش" oninput="exPickRender()" autocomplete="off">
+    <div class="exp-cats" id="exCats"></div>
+    <div class="exp-res" id="exResults"></div>
+    <details class="exp-cust"><summary>✏️ ورزشِ دلخواه (در لیست نبود)</summary>
+      <div class="exp-cust-b"><input type="text" id="exCustomName" placeholder="نامِ ورزش"><input type="text" id="exCustomSet" placeholder="ست/زمان">
+      <button class="quick-btn" style="font-size:11px" onclick="addCustomEx()">افزودن</button></div></details>
+  </div>`;
   h+=`<div id="exTodayList" style="margin-top:10px"></div>`;
   h+=`<button class="quick-btn" id="exSaveBtn" style="width:100%;margin-top:10px" onclick="saveExToday()">💾 ثبت ورزش</button>`;
   h+=`<button class="quick-btn" id="exCancelEdit" style="width:100%;margin-top:6px;display:none" onclick="exEditCancel()">↩︎ لغو ویرایش</button>`;
   box.innerHTML=h;
   window._exToday=window._exToday||[];
+  try{ exPickRender(); }catch(e){}
   renderExTodayList();
   if(window._editExTs){   // اگر وسطِ ویرایش بودیم، حالتِ ویرایش را دوباره نشان بده
     const b=document.getElementById('exSaveBtn'); if(b) b.textContent='✅ ذخیرهٔ ویرایش';
     const c=document.getElementById('exCancelEdit'); if(c) c.style.display='';
   }
+}
+/* ── انتخابگرِ جستجوشوندهٔ ورزش (۲۹.۳) — به‌جای لیستِ کشویی با ~۹۵ گزینه ── */
+let _exPickCat='';
+function exPickCat(c){ _exPickCat=(_exPickCat===c)?'':c; exPickRender(); }
+function _exNorm(t){ return String(t||'').replace(/[ىي]/g,'ی').replace(/ك/g,'ک').replace(/[\u064B-\u0652\u200c]/g,'').toLowerCase(); }
+function exPickRender(){
+  const res=document.getElementById('exResults'), cats=document.getElementById('exCats');
+  if(!res) return;
+  const q=_exNorm((document.getElementById('exSearch')||{}).value||'').trim();
+  if(cats){ cats.innerHTML=Object.keys(EX_LIBRARY).map(g=>
+    `<button type="button" class="exp-cat${_exPickCat===g?' on':''}" onclick="exPickCat('${g}')">${EX_LIBRARY[g].cat}</button>`).join(''); }
+  const out=[];
+  for(const g in EX_LIBRARY){
+    if(_exPickCat && g!==_exPickCat) continue;
+    EX_LIBRARY[g].items.forEach(ex=>{
+      if(q){ const hay=_exNorm([ex.name,ex.alt,ex.desc,ex.benefit,EX_LIBRARY[g].cat].join(' '));
+             if(q.split(/\s+/).some(w=>hay.indexOf(w)<0)) return; }
+      out.push({ex,g});
+    });
+  }
+  if(!out.length){ res.innerHTML=`<div class="exp-none">چیزی پیدا نشد. نامِ دیگری امتحان کن یا از «ورزشِ دلخواه» اضافه کن.</div>`; return; }
+  const cap=q?60:(_exPickCat?60:14);
+  res.innerHTML=out.slice(0,cap).map(o=>
+    `<button type="button" class="exp-i" onclick="exPickAdd('${o.ex.id}')">
+      <span class="exp-n">${escVision(o.ex.name)}</span>
+      <span class="exp-m">${escVision(o.ex.set||'')}</span></button>`).join('')
+    + (out.length>cap?`<div class="exp-none">${faDigits(out.length-cap)} موردِ دیگر — برای دیدنشان جستجو کن یا دسته را انتخاب کن.</div>`:'');
+}
+function exPickAdd(id){
+  const ex=findEx(id); if(!ex) return;
+  window._exToday=window._exToday||[];
+  window._exToday.push({name:ex.name, set:ex.set, id:ex.id});
+  renderExTodayList();
+  try{ uiToast&&uiToast('✓ '+ex.name+' اضافه شد'); }catch(e){}
 }
 function addExToToday(){
   const sel=document.getElementById('exAddSelect'); if(!sel||!sel.value) return;
@@ -19139,6 +19367,7 @@ function buildDataPacket(days, parts){
   if(parts.indexOf('lab')>=0){
     try{ const lc=buildLabAIContext(); if(lc) secs.push('🧪 آخرین برگهٔ آزمایش ('+lc.date+'): '+lc.lines.slice(0,45).join(' ؛ ')); }catch(e){}
     try{ const lt=buildLabTrend(); if(lt) secs.push(lt); }catch(e){}
+    try{ const vb=buildVisitsBrief(3); if(vb) secs.push(vb); }catch(e){}
   }
   if(parts.indexOf('ins')>=0){ try{ const w=_scopeWindow('chat'); const reg=buildInsulinRegimen(w); if(reg) secs.push(reg); }catch(e){} }
   // ⚠️ درسِ ۲۶.۱: بدونِ «گزارشِ پوشش»، مدل فرض می‌کند داده‌ی بیشتری هست و در حلقهٔ
@@ -19199,6 +19428,20 @@ function chatDataSend(){
   chatSend({text:txt, packet:chip});
 }
 // روندِ آزمایش‌ها در چند برگهٔ آخر (نه فقط آخرین برگه)
+// مراجعه‌های واقعیِ پزشکِ معالج: تجویز و نظر — تا AI خلافِ پزشک چیزی نگوید
+function buildVisitsBrief(n){
+  try{ const a=visitsAll().filter(x=>x&&x.iso).sort((x,y)=>new Date(y.iso)-new Date(x.iso)).slice(0,n||3);
+    if(!a.length) return '';
+    const rows=a.map(v=>{ const p=[];
+      p.push(faDigits(String(v.date||'')));
+      if(v.doctor||v.spec) p.push((v.doctor||'')+(v.spec?(' ('+v.spec+')'):''));
+      if(v.dx) p.push('تشخیص: '+v.dx);
+      const rx=_vLines(v.rx); if(rx.length) p.push('تجویز: '+rx.join('؛ '));
+      if(v.note) p.push('نظرِ پزشک: '+String(v.note).replace(/\n/g,' '));
+      return '— '+p.join(' | '); });
+    return '🩺 مراجعه‌های پزشکِ معالج (جدید به قدیم) — این‌ها نظرِ پزشکِ واقعیِ بیمار است و بر تحلیلِ تو مقدم است:\n'+rows.join('\n');
+  }catch(e){ return ''; }
+}
 function buildLabTrend(){
   try{
     const d=loadLabs(); const en=[...(d.entries||[])].sort((a,b)=>a.ts-b.ts); if(en.length<2) return '';
@@ -19358,6 +19601,7 @@ function buildHealthSnapshot(scope, opts){
   // رژیمِ انسولین (نام‌ها) — بدونِ این، مدل نامِ انسولین را حدس می‌زند
   try{ const reg=buildInsulinRegimen(w); if(reg) L.push(reg); }catch(e){}
   try{ const lt=buildLabTrend(); if(lt) L.push(lt); }catch(e){}
+  try{ const vb=buildVisitsBrief(3); if(vb) L.push(vb); }catch(e){}
   // خطِ زمانیِ روزبه‌روز — فقط وقتی صریحاً خواسته شود (چت)، تا هزینهٔ توکنِ پادکست/گزارش بالا نرود
   if(opts.timelineDays){ try{ const tl=buildDayTimeline(opts.timelineDays); if(tl) L.push(tl); }catch(e){} }
   return { label:w.label, text:L.join('\n') };
