@@ -1284,6 +1284,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
       <button class="qa-item" onclick="quickAdd('vitals')"><span class="qa-ico" style="background:rgba(224,104,95,.16);color:#f0a29b">❤️</span>فشار و ضربان</button>
       <button class="qa-item" onclick="quickAdd('weight')"><span class="qa-ico" style="background:rgba(63,185,163,.16);color:#6fd39a">⚖️</span>وزن فعلی</button>
       <button class="qa-item" onclick="quickAdd('journal')"><span class="qa-ico" style="background:rgba(224,163,85,.14);color:#e9b877">📓</span>دفترچه</button>
+      <button class="qa-item" onclick="quickAdd('exercise')"><span class="qa-ico" style="background:rgba(91,143,214,.18);color:#9fc0f0">🏃</span>ثبت ورزش</button>
       <button class="qa-item" onclick="quickAdd('visit')"><span class="qa-ico" style="background:rgba(63,185,163,.16);color:#5fd3bd">🩺</span>مراجعه پزشک</button>
     </div>
     <div class="qa-subt">هوش مصنوعی</div>
@@ -1530,6 +1531,22 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <!-- فرم سریع وزن فعلی -->
+<div class="qbg-modal" id="qexModal" onclick="if(event.target===this)closeQEntry('qexModal')">
+  <div class="qbg-box">
+    <button class="qbg-x" onclick="closeQEntry('qexModal')" title="بستن">✕</button>
+    <div class="qbg-head"><span class="qbg-badge" style="background:rgba(91,143,214,.18)">🏃</span><div><div class="qbg-title">ثبتِ ورزش</div><div class="qbg-sub">حرکت را جستجو کن و با یک لمس اضافه کن. ست و زمانش قابلِ ویرایش است.</div></div></div>
+    <div style="display:flex;justify-content:flex-end;margin:-2px 0 10px"><button type="button" class="mini-btn" onclick="exHistOpen()">🗂 تاریخچهٔ ورزش</button></div>
+    <div id="exLogEntry"></div>
+  </div>
+</div>
+<div class="qbg-modal" id="qexHistModal" onclick="if(event.target===this)closeQEntry('qexHistModal')">
+  <div class="qbg-box">
+    <button class="qbg-x" onclick="closeQEntry('qexHistModal')" title="بستن">✕</button>
+    <div class="qbg-head"><span class="qbg-badge" style="background:rgba(91,143,214,.18)">🏅</span><div><div class="qbg-title">تاریخچه و پیشرفتِ ورزش</div><div class="qbg-sub">همهٔ جلسه‌هایی که ثبت کرده‌ای — قابلِ ویرایش و حذف.</div></div></div>
+    <div id="exHistory"></div>
+    <div class="qbg-actions"><button class="qbg-cancel" onclick="closeQEntry('qexHistModal')">بستن</button><button class="qbg-save" onclick="closeQEntry('qexHistModal'); openQuickExercise()">＋ ثبتِ تازه</button></div>
+  </div>
+</div>
 <div class="qbg-modal" id="qvisitModal" onclick="if(event.target===this)closeQEntry('qvisitModal')">
   <div class="qbg-box">
     <button class="qbg-x" onclick="closeQEntry('qvisitModal')" title="بستن">✕</button>
@@ -2219,14 +2236,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <h2 onclick="toggleCard('c-ex-library')"><span>📚 کتابخانه‌ی حرکت‌ها</span></h2>
     <div class="card-body"><div id="exLibrary"></div></div>
   </div>
-  <div class="card coll closed" id="c-ex-log">
-    <h2 onclick="toggleCard('c-ex-log')"><span>✍️ ثبت ورزش امروز</span></h2>
-    <div class="card-body"><div id="exLogEntry"></div></div>
-  </div>
-  <div class="card coll closed" id="c-ex-history">
-    <h2 onclick="toggleCard('c-ex-history')"><span>🏅 تاریخچه و پیشرفت</span></h2>
-    <div class="card-body"><div id="exHistory"></div></div>
-  </div>
+  <!-- ۲۹.۵: «ثبت ورزش» و «تاریخچه» موقتاً از این تب برداشته شدند و به دسترسیِ سریع (منوی ＋) منتقل شدند. -->
 </div>
 
 <!-- ============ صفحه‌ی پروفایل کاربر ============ -->
@@ -2541,7 +2551,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۹.۴</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۹.۵</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3835,6 +3845,21 @@ function buildDayReview(y){
   return {show:true, score, tone, dayLabel:_jLabel(y), warns:warns.slice(0,4), goods:goods.slice(0,3)};
 }
 function _jLabel(d){ try{ const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); return faDigits(jDateStr(j[0],j[1],j[2])); }catch(e){ return ''; } }
+/* ── دسترسیِ سریعِ ورزش (۲۹.۵): همان فرم و تاریخچه، حالا در مودال ── */
+function openQuickExercise(){
+  const m=document.getElementById('qexModal'); if(!m) return;
+  try{ exEditUIReset(); }catch(e){}
+  window._exToday=[];
+  try{ renderExLogEntry(); }catch(e){}
+  m.classList.add('show');
+  setTimeout(()=>{ const f=document.getElementById('exSearch'); if(f) f.focus(); },60);
+}
+function exHistOpen(){
+  const m=document.getElementById('qexHistModal'); if(!m) return;
+  closeQEntry('qexModal');
+  try{ renderExHistory(); }catch(e){}
+  m.classList.add('show');
+}
 /* ═══════════ 🩺 مراجعه‌های پزشک، تجویزها و نظرِ پزشک (۲۹.۳) ═══════════ */
 const VISIT_KEY='visits_v1';
 let _editVisitIso=null;
@@ -9934,7 +9959,7 @@ function quickAdd(type){
   if(type==='dossier') switchTab('dossier');
   if(type==='meal') openQuickMeal();
   else if(type==='insulin') openQuickInsulin();
-  else if(type==='exercise') go('exercise','c-ex-log');
+  else if(type==='exercise') openQuickExercise();
   else if(type==='startworkout') go('exercise','c-ex-workout');
   else if(type==='lab') go('labs','c-labs-entry');
   else if(type==='cgmfile') go('profile','c-cgmup');
@@ -16031,8 +16056,9 @@ function saveExToday(){
   exEditUIReset();
   renderExTodayList();
   renderExHistory();
-  const c=document.getElementById('c-ex-history'); if(c) c.classList.remove('closed');
-  document.getElementById('exHistory').scrollIntoView({behavior:'smooth',block:'nearest'});
+  try{ if(typeof renderDashboard==='function') renderDashboard(); }catch(e){}
+  try{ uiToast&&uiToast('✓ ورزش ثبت شد'); }catch(e){}
+  closeQEntry('qexModal'); exHistOpen();
 }
 /* حالت تعاملی تمرین: انتخاب ترتیب + کرنومتر معکوس + تیک */
 let _wkList=[];       // {id,name,sets,dur,rest,done}
@@ -16536,12 +16562,15 @@ function exHistEdit(ts){
   const d=loadExLog(); const e=(d.entries||[]).find(x=>x.ts===ts); if(!e) return;
   window._exToday=(e.items||[]).map(it=>Object.assign({},it));
   window._editExTs=ts;
+  try{ renderExLogEntry(); }catch(e2){}   // فرم باید پیش از پرکردن ساخته شده باشد
   const di=document.getElementById('exDate'); if(di) di.value=e.date||'';
   const ti=document.getElementById('exTime'); if(ti) ti.value=e.time||'';
   const si=document.getElementById('exSlot'); if(si) si.value=e.slot||'';
   const b=document.getElementById('exSaveBtn'); if(b) b.textContent='✅ ذخیرهٔ ویرایش';
   const c=document.getElementById('exCancelEdit'); if(c) c.style.display='';
   renderExTodayList();
+  closeQEntry('qexHistModal');
+  const m=document.getElementById('qexModal'); if(m) m.classList.add('show');
   const box=document.getElementById('exLogEntry'); if(box&&box.scrollIntoView) box.scrollIntoView({behavior:'smooth',block:'center'});
 }
 function exEditCancel(){ window._exToday=[]; exEditUIReset(); renderExTodayList(); }
@@ -16557,8 +16586,6 @@ function renderExerciseTab(){
   renderExPlan();
   renderExWorkout();
   renderExLibrary();
-  renderExLogEntry();
-  renderExHistory();
 }
 /* ===== تب آزمایش‌ها: کتابخانه‌ی کامل + بسته‌ها + ثبت + روند ===== */
 // هر آزمایش: کلید، نام فارسی، واحد، محدوده‌ی نرمال [min,max] یا null، جهت هشدار، توضیح، معنی خارج از محدوده
