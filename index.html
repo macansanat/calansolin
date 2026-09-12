@@ -2572,7 +2572,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۹.۹</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۰.۰</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5351,6 +5351,16 @@ function podGlucoseWindowSnap(days){ const save=_ovRange; _ovRange=days; let t='
 // خلاصهٔ کاملِ یک روزِ مشخص (offset=۰ امروز، ۱- دیروز): تاریخِ روزانه را موقتاً جابه‌جا می‌کند
 function podDaySnap(offset){ const save=_dailyDate; try{ const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()+(offset||0)); _dailyDate=d; }catch(e){}
   let t=''; try{ t=(buildHealthSnapshot('daily')||{}).text||''; }catch(e){} _dailyDate=save; return t; }
+// تاریخِ بازه‌ای که پادکست مرور می‌کند — باید حتماً بعد از احوال‌پرسی گفته شود
+function podRangeSay(gr){
+  const d=o=>{ const x=new Date(); x.setHours(0,0,0,0); x.setDate(x.getDate()+o); return _jLabel(x); };
+  if(gr==='yesterday'){ const y=d(-1);
+    return { say:'دیروز، '+y, rule:'صریح بگو که «دیروز، '+y+'» را با هم مرور می‌کنیم.' }; }
+  if(gr && gr!=='today'){ const n=+gr||7, a=d(-(n-1)), b=d(0);
+    return { say:'از '+a+' تا '+b, rule:'صریح بگو که بازهٔ '+faDigits(n)+' روزه، «از '+a+' تا '+b+'» را با هم مرور می‌کنیم — هر دو تاریخِ ابتدا و انتهای بازه را بگو.' }; }
+  const t=d(0);
+  return { say:'امروز، '+t, rule:'صریح بگو که «امروز، '+t+'» را با هم مرور می‌کنیم.' };
+}
 const POD_SCRIPT_SYS="تو گویندهٔ پادکستِ روزانهٔ نرم‌افزارِ «{APP}» (یک اپِ آموزشیِ دیابت) به فارسی هستی. نامِ نرم‌افزار دقیقاً «{APP}» است؛ اگر خواستی خوشامد بگویی همین نام را به کار ببر و هرگز نامِ دیگری برای اپ نساز. یک متنِ گفتاری بنویس که وقتی با صدا خوانده شود حدود {MINS} دقیقه شود.\n"
  +"طولِ متن مهم است: حدودِ {WORDS} کلمهٔ فارسی — یعنی بینِ {WLOW} تا {WHIGH} کلمه برای {MINS} دقیقه گفتار. نه کوتاه‌تر از {WLOW} و «نه بلندتر از {WHIGH} کلمه». وقتی به این اندازه رسیدی، جمع‌بندی کن و ادامه نده. هر موضوع را با یک «چرا» و یک مثالِ کوتاه باز کن، ولی از این بازهٔ طول عبور نکن و متن را بیش از حد کش نده.\n"
  +"جوری بنویس که شنونده جذب شود و تا آخر گوش بدهد.";
@@ -5383,13 +5393,15 @@ function podPrompt(mins){
   if(C.labs) cover.push('نتایجِ آخرین آزمایش‌ها و مواردِ نیازمندِ توجه');
   if(C.weight) cover.push('روندِ وزن (کاهش/افزایش نسبت به شروع) و یک تشویق یا راهنماییِ کوتاه');
   if(C.plan) cover.push('برنامهٔ هفتگیِ پیشِ‌رو (وعده/انسولین/ورزشِ برنامه‌ریزی‌شده) و یادآوریِ آن');
-  const jd=_jLabel(new Date());
-  let struct="ساختار (پیوسته و روان، بدونِ نوشتنِ تیتر یا شماره): "+(yest?'یک سلامِ گرم و بگو که چون امروز هنوز کامل نشده، امروز با هم «دیروز» را مرور می‌کنیم (تاریخِ امروز را نگو یا فقط کوتاه اشاره کن). ':'یک سلامِ گرم و اشاره به امروز («امروز '+jd+'»). ');
+  const RG=podRangeSay(gr);
+  let struct="ساختار (پیوسته و روان، بدونِ نوشتنِ تیتر یا شماره): یک سلام و احوال‌پرسیِ گرم و کوتاه، و بلافاصله بعد از آن "+RG.rule+" "
+    +(yest?'همان‌جا اشاره کن که چون امروز هنوز کامل نشده سراغِ دیروز رفته‌ایم؛ دربارهٔ امروز صحبت نکن. ':'');
   if(cover.length) struct+="سپس "+(yest?'فقط و فقط مرورِ «دیروز» را بگو (نه امروز) و فقط ':'فقط ')+"همین موضوع‌ها را مرور کن (نه بیشتر، و هر کدام که داده‌اش نبود سراغش نرو): "+cover.join('؛ ')+". به عددهای واقعی اشاره کن، تشویق کن و اگر جایی خوب نبود با مهربانی و بدونِ سرزنش راهنمایی کن. ";
   else struct+="چون کاربر مرورِ داده را خاموش کرده، سراغِ عددها نرو و فقط گرم و آموزشی صحبت کن. ";
   if(C.tip) struct+="یک نکتهٔ آموزشیِ مفیدِ امروز دربارهٔ دیابت یا متابولیسم که هر روز متفاوت و کاربردی باشد. ";
   if(C.step) struct+="یک قدمِ کوچکِ عملی برای امروز یا فردا. ";
   struct+="در پایان یک جملهٔ کوتاهِ دلگرم‌کننده و خداحافظی.\n";
+  struct+="⚠️ الزامی: تاریخِ بازهٔ مرور («"+RG.say+"») باید در همان جمله‌های آغازینِ پادکست، درست بعد از سلام و احوال‌پرسی، گفته شود؛ به هیچ عنوان حذفش نکن و به «امروز/دیروز» بدونِ تاریخ اکتفا نکن.\n";
   return pTxt('pod.script', POD_SCRIPT_SYS).split('{APP}').join(APP_NAME).split('{MINS}').join(mins).split('{WORDS}').join(words).split('{WLOW}').join(wLow).split('{WHIGH}').join(wHigh)+"\n"+
   ((POD_TONES[C.tone]||POD_TONES.casual).prompt+"\n")+
   struct+
