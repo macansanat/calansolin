@@ -269,18 +269,19 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .pod-av--full{position:fixed;inset:0;z-index:9998;margin:0;background:#0b1210;display:flex;align-items:center;justify-content:center}
 .pod-av--full .pod-av-stage{width:100vw;width:100dvw;height:100dvh;max-width:none;border-radius:0;transition:none!important}
 .pod-av--full.pod-av--3d .pod-av-stage{height:100dvh}
+.pod-av--full .pod-cap{position:absolute;left:14px;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));margin:0;max-width:none;z-index:5}
 /* مینی‌پلیرِ شناور (داخلِ همین صفحه، حینِ اسکرول) */
 .pod-cap[hidden]{display:none}
-.pod-cap{position:relative;margin:8px auto 0;width:100%;max-width:min(100%,520px);background:rgba(10,18,26,.72);border:1px solid var(--glass-brd);border-radius:13px;padding:10px 12px 10px 42px;min-height:52px;display:flex;align-items:center;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
-.pod-cap-t{flex:1;min-width:0;font-size:13px;line-height:1.95;color:var(--ink);text-align:center;max-height:52px;overflow:hidden}
-.pod-cap-t .pcw{display:inline-block;opacity:.55;transition:opacity .25s}
-.pod-cap-t .pcw-new{opacity:1;color:var(--teal);animation:pcwIn .28s ease}
+.pod-cap{position:relative;margin:7px auto 0;width:100%;max-width:min(100%,360px);background:rgba(10,18,26,.66);border:1px solid var(--glass-brd);border-radius:11px;padding:6px 10px;display:flex;align-items:flex-end;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.pod-cap-t{flex:1;min-width:0;height:2.9em;font-size:11.5px;line-height:1.45;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
+#podCapText{font-size:11.5px;line-height:1.45;color:var(--ink);text-align:center}
+#podCapText .pcw{display:inline-block;opacity:.55;transition:opacity .25s}
+#podCapText .pcw-new{opacity:1;color:var(--teal);animation:pcwIn .28s ease}
 @keyframes pcwIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-.pod-cap-b{position:absolute;top:50%;left:9px;transform:translateY(-50%);width:28px;height:28px;border-radius:9px;border:1px solid var(--glass-brd);background:var(--field);color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit}
 .pod-av--float .pod-cap{display:none}
 .pod-cap-full{overflow:auto;font-size:13px;line-height:2.1;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .pod-cap-full p{margin:0 0 10px}
-@media (prefers-reduced-motion:reduce){.pod-cap-t .pcw-new{animation:none}}
+@media (prefers-reduced-motion:reduce){#podCapText .pcw-new{animation:none}}
 .pod-av--float{position:fixed;bottom:78px;inset-inline-end:12px;z-index:9997;margin:0;width:calc(120px * var(--fscale,1));touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .pod-av--float:active{cursor:grabbing}
 .pod-av--float .pod-av-stage,.pod-av--float .pod-av-stage canvas,.pod-av--float .pod-3d-host{touch-action:none}
@@ -2571,7 +2572,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۹.۸</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۹.۹</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5608,7 +5609,7 @@ function podCapUpdate(){
   const total=_podCap.words.length; if(!total) return;
   const upto=Math.max(1,Math.min(total,Math.round(at.p*total)));
   // پنجرهٔ دوخطی: فقط ~۱۴ کلمهٔ آخر نگه داشته می‌شود تا کادر پر و پاک شود
-  const W=14;
+  const W=20;
   const from=Math.max(0,upto-W);
   const vis=_podCap.words.slice(from,upto);
   const html=vis.map((w,k)=>`<span class="pcw${k===vis.length-1?' pcw-new':''}">${escVision(w)}</span>`).join(' ');
@@ -8385,8 +8386,7 @@ function renderPodcastCard(){
       <div class="pod-av-stage" onclick="podAvShowControls()">${avInner}<div class="pod-av-ring"></div><div class="pod-av-eq"><i></i><i></i><i></i><i></i><i></i></div>
         <button class="pod-av-fs" onclick="podAvToggleFull(event)" title="تمام‌صفحه">⛶</button>
         <button class="pod-av-dock" onclick="podAvDock(event)" title="بازگشت">✕</button></div>
-      <div class="pod-cap" id="podCap" hidden><div class="pod-cap-t" id="podCapText"></div>
-        <button class="pod-cap-b" onclick="podCapFull()" title="متنِ کامل">📄</button></div>
+      <div class="pod-cap" id="podCap" hidden><div class="pod-cap-t"><div id="podCapText"></div></div></div>
     </div>` : '';
   const dlOn = podHasDownload();
   box.innerHTML=`<div class="pod-card">
