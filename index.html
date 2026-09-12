@@ -262,6 +262,16 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .pod-av--full .pod-av-stage{width:100vw;width:100dvw;height:100dvh;max-width:none;border-radius:0;transition:none!important}
 .pod-av--full.pod-av--3d .pod-av-stage{height:100dvh}
 /* مینی‌پلیرِ شناور (داخلِ همین صفحه، حینِ اسکرول) */
+.pod-cap{position:relative;margin:8px auto 0;max-width:min(100%,520px);background:rgba(10,18,26,.72);border:1px solid var(--glass-brd);border-radius:13px;padding:10px 42px 10px 12px;min-height:52px;display:flex;align-items:center;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.pod-cap-t{flex:1;min-width:0;font-size:13px;line-height:1.95;color:var(--ink);text-align:center;max-height:52px;overflow:hidden}
+.pod-cap-t .pcw{display:inline-block;opacity:.55;transition:opacity .25s}
+.pod-cap-t .pcw-new{opacity:1;color:var(--teal);animation:pcwIn .28s ease}
+@keyframes pcwIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.pod-cap-b{position:absolute;top:50%;left:9px;transform:translateY(-50%);width:28px;height:28px;border-radius:9px;border:1px solid var(--glass-brd);background:var(--field);color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit}
+.pod-av--float .pod-cap{display:none}
+.pod-cap-full{overflow:auto;font-size:13px;line-height:2.1;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.pod-cap-full p{margin:0 0 10px}
+@media (prefers-reduced-motion:reduce){.pod-cap-t .pcw-new{animation:none}}
 .pod-av--float{position:fixed;bottom:78px;inset-inline-end:12px;z-index:9997;margin:0;width:calc(120px * var(--fscale,1));touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .pod-av--float:active{cursor:grabbing}
 .pod-av--float .pod-av-stage,.pod-av--float .pod-av-stage canvas,.pod-av--float .pod-3d-host{touch-action:none}
@@ -440,6 +450,7 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .wd-score{flex:0 0 auto;font-size:11px;font-weight:800;padding:6px 12px;border-radius:20px;border:1px solid;white-space:nowrap}
 .wd-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
 .wd-list li{padding:10px 13px 10px 12px;font-size:12.8px;line-height:1.8;color:var(--ink);background:var(--field);border-radius:12px;border:1px solid var(--line);border-right:3px solid var(--wc)}
+.wd-why{font-size:11.5px;font-weight:800;color:var(--wc);margin:12px 0 7px}
 .wd-goods{margin-top:12px;padding:11px 13px;border-radius:12px;background:rgba(111,211,154,.09);border:1px solid rgba(111,211,154,.24);font-size:11.8px;color:var(--ink);line-height:1.9}
 .wd-praise{font-size:13.2px;line-height:1.95;color:var(--ink);padding:12px 14px;border-radius:12px;background:rgba(111,211,154,.09);border:1px solid rgba(111,211,154,.24)}
 /* ===== داشبورد خانه ===== */
@@ -2551,7 +2562,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۲۹.۵</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۲۹.۶</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3841,7 +3852,9 @@ function buildDayReview(y){
   else if(medsY>0) goods.push('داروهایت را ثبت کردی.');
 
   score=Math.max(0,Math.min(100,Math.round(score)));
-  const tone = score>=80?'good' : score>=55?'warn' : 'bad';
+  let tone = score>=80?'good' : score>=55?'warn' : 'bad';
+  // افتِ قند از نظرِ بالینی مهم است — روزی که هایپو داشته «عالی» نیست
+  if(bgLow && tone==='good') tone='warn';
   return {show:true, score, tone, dayLabel:_jLabel(y), warns:warns.slice(0,4), goods:goods.slice(0,3)};
 }
 function _jLabel(d){ try{ const j=g2j(d.getFullYear(),d.getMonth()+1,d.getDate()); return faDigits(jDateStr(j[0],j[1],j[2])); }catch(e){ return ''; } }
@@ -5087,6 +5100,9 @@ function renderWatchdogCard(){
   let body='';
   if(r.tone==='good' && r.goods.length){
     body=`<div class="wd-praise">${isY?'دیروز':'این روز'} (${r.dayLabel}) خوب مدیریت کردی: ${r.goods.join(' · ')}. همین‌طور ادامه بده! 💪</div>`;
+    // ⚠️ حتی در روزِ خوب هم اگر نکته‌ای امتیاز کم کرده باید دیده شود
+    if(r.warns.length) body+=`<div class="wd-why">چرا امتیاز کامل نشد:</div><ul class="wd-list">`+
+      r.warns.map(w=>`<li>${escVision(w)}</li>`).join('')+`</ul>`;
   } else {
     if(r.warns.length) body+=`<ul class="wd-list">`+r.warns.map(w=>`<li>${escVision(w)}</li>`).join('')+`</ul>`;
     if(r.goods.length && r.tone!=='flat') body+=`<div class="wd-goods">✅ نکات مثبت: ${escVision(r.goods.join(' · '))}</div>`;
@@ -5544,6 +5560,62 @@ function podElapsed(){ if(_pod.elMode){ const a=_pod.audioEl; return (_pod.cum[_
 function podTotalKnown(){ return _pod.allFetched? _pod.totalDur : Math.max(_pod.totalDur, _pod.estDur); }
 function podProgressStart(){ podProgressStop(); _pod.timer=setInterval(podTick, 250); podTick(); }
 function podProgressStop(){ if(_pod.timer){ clearInterval(_pod.timer); _pod.timer=0; } }
+/* ═══════════ 📝 زیرنویسِ زندهٔ پادکست (۲۹.۶) ═══════════
+   متنی که مجری می‌خواند، کلمه‌کلمه و دوخطی نوشته می‌شود؛ خط که پر شد پاک
+   می‌شود و ادامه می‌آید. موقعیت از همان `podElapsed()` و مدتِ هر قطعه می‌آید. */
+let _podCap={seg:-1, words:[], shown:0, box:null};
+function podCapSegAt(el){          // شمارهٔ قطعهٔ در حالِ پخش و پیشرفتِ داخلش
+  const cum=_pod.cum||[0], n=(_pod.visSegTexts||[]).length;
+  if(!n) return null;
+  for(let i=0;i<n;i++){
+    const a=cum[i]||0, b=(cum[i+1]!=null)?cum[i+1]:(a+(_pod.durs&&_pod.durs[i]||0));
+    if(el>=a && (el<b || i===n-1)) return {i, p:(b>a)?Math.max(0,Math.min(1,(el-a)/(b-a))):0};
+  }
+  return {i:n-1, p:1};
+}
+function podCapUpdate(){
+  const box=document.getElementById('podCapText'); if(!box) return;
+  const wrap=document.getElementById('podCap');
+  if(_pod.mode!=='playing' && _pod.mode!=='paused'){ if(wrap) wrap.hidden=true; return; }
+  const segs=_pod.visSegTexts||[]; if(!segs.length){ if(wrap) wrap.hidden=true; return; }
+  if(wrap) wrap.hidden=false;
+  const el=_pod.cloud?podElapsed():((Date.now()-_pod.t0)/1000);
+  const at=podCapSegAt(el); if(!at) return;
+  if(_podCap.seg!==at.i){
+    _podCap.seg=at.i;
+    _podCap.words=String(segs[at.i]||'').replace(/\s+/g,' ').trim().split(' ').filter(Boolean);
+  }
+  const total=_podCap.words.length; if(!total) return;
+  const upto=Math.max(1,Math.min(total,Math.round(at.p*total)));
+  // پنجرهٔ دوخطی: فقط ~۱۴ کلمهٔ آخر نگه داشته می‌شود تا کادر پر و پاک شود
+  const W=14;
+  const from=Math.max(0,upto-W);
+  const vis=_podCap.words.slice(from,upto);
+  const html=vis.map((w,k)=>`<span class="pcw${k===vis.length-1?' pcw-new':''}">${escVision(w)}</span>`).join(' ');
+  if(box.dataset.k!==String(upto)){ box.dataset.k=String(upto); box.innerHTML=html; }
+}
+function podCapFull(){
+  const rec=(typeof podCurRec==='function')?podCurRec():null;
+  const txt=(rec&&rec.script)?podPlainText(rec.script):'';
+  if(!txt){ uiToast&&uiToast('متنی برای نمایش نیست'); return; }
+  try{ ensureChatCss&&ensureChatCss(); }catch(e){}
+  const old=document.getElementById('podCapBg'); if(old) old.remove();
+  const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='podCapBg';
+  bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
+  bg.innerHTML=`<div class="chat-rename" role="dialog" aria-modal="true" style="max-width:440px;max-height:84vh;display:flex;flex-direction:column">
+    <h4>📝 متنِ کاملِ پادکست</h4>
+    <div class="pod-cap-full">${txt.split('\n').filter(x=>x.trim()).map(x=>`<p>${escVision(x)}</p>`).join('')}</div>
+    <div class="chat-rename-btns" style="margin-top:10px">
+      <button type="button" class="crn-btn crn-cancel" onclick="document.getElementById('podCapBg').remove()">بستن</button>
+      <button type="button" class="crn-btn crn-ok" onclick="podCapCopy()">📋 کپیِ متن</button></div></div>`;
+  document.body.appendChild(bg);
+}
+function podCapCopy(){
+  const rec=(typeof podCurRec==='function')?podCurRec():null;
+  const txt=(rec&&rec.script)?podPlainText(rec.script):''; if(!txt) return;
+  try{ navigator.clipboard.writeText(txt); uiToast&&uiToast('✓ متن کپی شد'); }catch(e){ uiToast&&uiToast('کپی نشد'); }
+}
+
 function podTick(){
   const cloud=_pod.cloud; const total=cloud?podTotalKnown():_pod.estDur;
   const el=cloud?podElapsed():((Date.now()-_pod.t0)/1000);
@@ -5552,6 +5624,7 @@ function podTick(){
   const tot=document.getElementById('podTot'); if(tot) tot.textContent=(cloud&&!_pod.allFetched?'~':'')+podFmtTime(total);
   const st=document.getElementById('podState'); if(st) st.textContent=_pod.prep?'در حالِ آماده‌سازیِ صدا…':(_pod.mode==='playing'?(_pod.spk?'خواندنِ پاسخِ هوش مصنوعی':'در حالِ پخش'):(_pod.mode==='paused'?'مکث':''));
   if(_pod.elMode) podMediaPos();
+  try{ podCapUpdate(); }catch(e){}
 }
 // گِینِ خروجیِ پادکست را برای کانتکستِ فعلی می‌سازد/بازمی‌سازد (بعد از بازسازیِ کانتکست حیاتی است)
 function podVoiceOut(ctx){
@@ -5689,6 +5762,75 @@ function podcastStopAll(){ _pod.spk=false; _podTTSOv=null; podProgressStop(); po
 // همگی روی `_pod` سوارند؛ ساختِ موتورِ دوم یعنی دوباره‌کاری و دو حالتِ ناسازگار.
 const POD_CHAT_CAP=1200;   // سقفِ نویسه فقط در «خواندنِ خودکار» — TTS بر اساسِ نویسه هزینه دارد
 // متنِ AI را برای «خوانده‌شدن» تمیز می‌کند: مارک‌داون، جدول، لینک، ایموجی و خط‌های فرمانِ داخلی حذف
+/* ═══════════ 🔢 عدد → واژهٔ فارسی برای گفتار (۲۹.۶) ═══════════
+   موتورهای TTS اعداد را بد می‌خوانند (به‌ویژه تاریخ، بازه و اعشار).
+   پیش از ارسال به TTS همهٔ عددها به حروف نوشته می‌شوند. */
+const _FA_ONES=['','یک','دو','سه','چهار','پنج','شش','هفت','هشت','نه'];
+const _FA_TEEN=['ده','یازده','دوازده','سیزده','چهارده','پانزده','شانزده','هفده','هجده','نوزده'];
+const _FA_TENS=['','','بیست','سی','چهل','پنجاه','شصت','هفتاد','هشتاد','نود'];
+const _FA_HUND=['','صد','دویست','سیصد','چهارصد','پانصد','ششصد','هفتصد','هشتصد','نهصد'];
+const _FA_MONTH=['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+function _fa3(n){                      // ۰ تا ۹۹۹
+  const p=[]; const h=Math.floor(n/100), r=n%100;
+  if(h) p.push(_FA_HUND[h]);
+  if(r){ if(r<10) p.push(_FA_ONES[r]);
+    else if(r<20) p.push(_FA_TEEN[r-10]);
+    else { const t=Math.floor(r/10), o=r%10; p.push(_FA_TENS[t]); if(o) p.push(_FA_ONES[o]); } }
+  return p.join(' و ');
+}
+function numToFa(n){
+  n=Math.trunc(Math.abs(Number(n)||0));
+  if(n===0) return 'صفر';
+  const parts=[]; const units=[[1000000000,'میلیارد'],[1000000,'میلیون'],[1000,'هزار']];
+  let rest=n;
+  units.forEach(u=>{ const q=Math.floor(rest/u[0]); if(q){ parts.push((q===1&&u[0]===1000?'':_fa3(q)+' ')+u[1]); rest%=u[0]; } });
+  if(rest) parts.push(_fa3(rest));
+  return parts.join(' و ').replace(/\s+/g,' ').trim();
+}
+function _faOrd(n){ n=Number(n)||0;
+  if(n===1) return 'اول'; if(n===3) return 'سوم'; if(n===30) return 'سی‌ام';
+  const w=numToFa(n); return /ی$/.test(w)? w+'‌ام' : w+'م';
+}
+function _faDec(s){                     // «۷.۵» ⇒ «هفت و نیم» یا «هفت ممیز پنج»
+  const m=String(s).split('.');
+  const a=numToFa(m[0]);
+  if(m.length<2||!m[1]) return a;
+  const frac=m[1].replace(/0+$/,'');
+  if(!frac) return a;
+  if(frac==='5') return a+' و نیم';
+  return a+' ممیز '+frac.split('').map(d=>numToFa(d)).join(' ');
+}
+/* متنِ آمادهٔ گفتار: همهٔ عددها به حروف */
+function podSpeakNum(text){
+  let t=String(text||'');
+  t=faToEnDigits(t);
+  t=t.replace(/(\d)[,،](?=\d{3}\b)/g,'$1');                       // جداکنندهٔ هزار
+  // تاریخِ شمسی ۱۴۰۵/۰۶/۲۱
+  t=t.replace(/\b(1[34]\d{2})\/(\d{1,2})\/(\d{1,2})\b/g,(m,y,mo,d)=>{
+    const mi=Math.min(12,Math.max(1,+mo));
+    return _faOrd(+d)+' '+_FA_MONTH[mi-1]+' '+numToFa(+y); });
+  // نامِ نسبت‌ها پیش از قاعدهٔ ساعت (وگرنه «۱:۱۰» ساعت خوانده می‌شود)
+  t=t.replace(/\bI\s*:\s*C\b/gi,' نسبت آی‌سی ').replace(/\bISF\b/gi,' ضریبِ اصلاحی ').replace(/\bTDD\b/gi,' انسولینِ کلِ روزانه ');
+  t=t.replace(/(نسبت[^0-9]{0,14})(\d+)\s*:\s*(\d+)/g,(m,pre,a2,b2)=>pre+numToFa(+a2)+' به '+numToFa(+b2));
+  // ساعت ۰۸:۳۰ — اگر خودِ متن «ساعت» داشت دوباره اضافه نشود
+  t=t.replace(/(ساعتِ?\s+)?\b(\d{1,2}):(\d{2})\b/g,(m,pre,h,mi)=>
+    (pre||'ساعت ')+numToFa(+h)+(+mi? (' و '+numToFa(+mi)+' دقیقه'):''));
+  // واحدها پیش از تبدیلِ عدد
+  t=t.replace(/\bmg\s*\/\s*dL\b/gi,' میلی‌گرم بر دسی‌لیتر ');
+  t=t.replace(/\bg\b/g,' گرم ').replace(/\bkg\b/gi,' کیلوگرم ').replace(/\bbpm\b/gi,' ضربه در دقیقه ');
+  // بازه‌ها: ۷۰-۱۸۰ یا ۷۰ تا ۱۸۰
+  t=t.replace(/(\d+(?:\.\d+)?)\s*[-–—]\s*(\d+(?:\.\d+)?)/g,(m,a,b)=>_faDec(a)+' تا '+_faDec(b));
+  // درصد
+  t=t.replace(/(\d+(?:\.\d+)?)\s*[٪%]/g,(m,a)=>_faDec(a)+' درصد');
+  t=t.replace(/[٪%]/g,' درصد ');
+  // تقریب — «حدودِ» موجود دوباره نوشته نشود
+  t=t.replace(/(حدودِ?\s*)?~\s*/g,'حدود ');
+  // بقیهٔ اعداد (اعشاری و صحیح)
+  t=t.replace(/\d+\.\d+/g,m=>_faDec(m));
+  t=t.replace(/\d+/g,m=>numToFa(m));
+  return t.replace(/\s{2,}/g,' ').trim();
+}
+
 function podPlainText(text, cap){
   let t=String(text||'');
   t=t.replace(/@@(SUGGEST|MEAL|WORKOUT|PLAN|INSULIN|NEEDDATA|LAB|STEPDONE)@@[\s\S]*?(\n|$)/g,'\n');      // خط‌های فرمانِ داخلی
@@ -5791,7 +5933,8 @@ function podSpeakNext(){
   if(_pod.mode!=='playing'){ return; }
   const q=_pod.utterQueue||[]; if(_pod.uIdx>=q.length){ podcastEnded(); return; }
   try{ wkEnsureAudio(); }catch(e){}   // نگه‌داشتنِ موزیک زنده کنارِ صدای گوشی
-  const u=new SpeechSynthesisUtterance(q[_pod.uIdx]); u.lang='fa-IR'; u.rate=0.97; u.pitch=1.03; if(_pod.faVoice) u.voice=_pod.faVoice;
+  let _sq=q[_pod.uIdx]; try{ _sq=podSpeakNum(_sq); }catch(e){}
+  const u=new SpeechSynthesisUtterance(_sq); u.lang='fa-IR'; u.rate=0.97; u.pitch=1.03; if(_pod.faVoice) u.voice=_pod.faVoice;
   u.onend=()=>{ if(_pod.mode==='paused') return; _pod.uIdx++; podSpeakNext(); };
   u.onerror=()=>{ _pod.uIdx++; if(_pod.mode==='playing') podSpeakNext(); };
   _pod.utter=u; try{ speechSynthesis.speak(u); }catch(e){ podcastEnded(); }
@@ -5812,6 +5955,7 @@ async function _podTTSOne(pv, text){
   throw lastErr;
 }
 async function podTTSFetch(text){
+  try{ text=podSpeakNum(text); }catch(e){}   // عددها به حروف، وگرنه TTS بد می‌خواند
   const okp=p=>hasAnyKey(p)&&!aiFrozen(p);
   const cur=_pod.ttsProv||'';
   const order=[]; if(cur&&okp(cur)) order.push(cur);
@@ -8186,6 +8330,8 @@ function renderPodcastCard(){
       <div class="pod-av-stage" onclick="podAvShowControls()">${avInner}<div class="pod-av-ring"></div><div class="pod-av-eq"><i></i><i></i><i></i><i></i><i></i></div>
         <button class="pod-av-fs" onclick="podAvToggleFull(event)" title="تمام‌صفحه">⛶</button>
         <button class="pod-av-dock" onclick="podAvDock(event)" title="بازگشت">✕</button></div>
+      <div class="pod-cap" id="podCap" hidden><div class="pod-cap-t" id="podCapText"></div>
+        <button class="pod-cap-b" onclick="podCapFull()" title="متنِ کامل">📄</button></div>
     </div>` : '';
   const dlOn = podHasDownload();
   box.innerHTML=`<div class="pod-card">
