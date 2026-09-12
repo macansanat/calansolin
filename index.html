@@ -2572,7 +2572,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۰.۰</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۰.۱</b> · انتشار: ۱۴۰۵/۰۶/۱۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5585,41 +5585,74 @@ function podProgressStop(){ if(_pod.timer){ clearInterval(_pod.timer); _pod.time
 /* ═══════════ 📝 زیرنویسِ زندهٔ پادکست (۲۹.۶) ═══════════
    متنی که مجری می‌خواند، کلمه‌کلمه و دوخطی نوشته می‌شود؛ خط که پر شد پاک
    می‌شود و ادامه می‌آید. موقعیت از همان `podElapsed()` و مدتِ هر قطعه می‌آید. */
-let _podCap={seg:-1, words:[], shown:0, box:null};
+let _podCap={seg:-1, words:[], shown:0, box:null, sig:'', segs:null, spans:null, wcum:null};
+// وزنِ زمانیِ یک متن = طولِ چیزی که واقعاً «خوانده» می‌شود (عددها به حروف باز می‌شوند و زمان می‌برند)
+function _podCapW(t){ let x=String(t||''); try{ x=podSpeakNum(x); }catch(e){} return Math.max(1,x.length); }
+// بازهٔ زمانیِ هر قطعهٔ متن. ⚠️ podElConsolidate آرایهٔ cum را تک‌عنصری می‌کند،
+// پس تکیه‌گاهِ اصلی segDurs است که دست‌نخورده می‌ماند؛ وگرنه تقسیمِ نسبتی.
+function podCapPlan(){
+  const segs=_pod.cloud ? (_pod.visSegTexts||[]) : (_podCap.devSegs||[]);
+  const n=segs.length; if(!n) return null;
+  const cum=_pod.cum||[0], sd=_pod.segDurs||[];
+  const audioN=Math.max(0,cum.length-1);
+  const total=Math.max(1, _pod.cloud?podTotalKnown():(_pod.estDur||1));
+  const sig=n+'|'+sd.length+'|'+audioN+'|'+Math.round(total)+'|'+String(segs[0]||'').length;
+  if(_podCap.sig===sig && _podCap.spans) return _podCap;
+  let spans=null;
+  if(sd.length===n){ let a=0; spans=sd.map(d=>{ const x=a; a+=(d||0); return [x,a]; }); if(a<=0) spans=null; }
+  if(!spans && audioN===n){ spans=segs.map((t,i)=>[cum[i]||0,(cum[i+1]!=null?cum[i+1]:total)]); }
+  if(!spans){
+    const wt=segs.map(_podCapW);
+    if(audioN>0 && audioN<n && !_pod.elSingle){   // بخشی بار شده: بقیه به نسبتِ متن روی زمانِ باقی‌مانده
+      spans=[]; for(let i=0;i<audioN;i++) spans.push([cum[i]||0, cum[i+1]||0]);
+      const base=cum[audioN]||0; const rest=Math.max(0,total-base);
+      let S=0; for(let i=audioN;i<n;i++) S+=wt[i]; S=S||1; let a=base;
+      for(let i=audioN;i<n;i++){ const x=a; a+=rest*wt[i]/S; spans.push([x,a]); }
+    } else {
+      const S=wt.reduce((a,b)=>a+b,0)||1; let a=0;
+      spans=wt.map(x=>{ const z=a; a+=total*x/S; return [z,a]; });
+    }
+  }
+  _podCap.sig=sig; _podCap.segs=segs; _podCap.spans=spans; _podCap.seg=-1;
+  return _podCap;
+}
 function podCapSegAt(el){          // شمارهٔ قطعهٔ در حالِ پخش و پیشرفتِ داخلش
-  const cum=_pod.cum||[0], n=(_pod.visSegTexts||[]).length;
-  if(!n) return null;
-  for(let i=0;i<n;i++){
-    const a=cum[i]||0, b=(cum[i+1]!=null)?cum[i+1]:(a+(_pod.durs&&_pod.durs[i]||0));
+  const P=podCapPlan(); if(!P) return null;
+  const sp=P.spans, n=sp.length;
+  for(let i=0;i<n;i++){ const a=sp[i][0], b=sp[i][1];
     if(el>=a && (el<b || i===n-1)) return {i, p:(b>a)?Math.max(0,Math.min(1,(el-a)/(b-a))):0};
   }
-  return {i:n-1, p:1};
+  return {i:0, p:0};
 }
 function podCapUpdate(){
   const box=document.getElementById('podCapText'); if(!box) return;
   const wrap=document.getElementById('podCap');
   if(_pod.mode!=='playing' && _pod.mode!=='paused'){ if(wrap) wrap.hidden=true; return; }
-  const segs=_pod.visSegTexts||[]; if(!segs.length && _pod.cloud){ if(wrap) wrap.hidden=true; return; }
-  const el=_pod.cloud?podElapsed():((Date.now()-_pod.t0)/1000);
-  // صدای گوشی قطعه‌بندی/زمانِ واقعی ندارد ⇒ کلِ متن یک قطعه، با پیشرفتِ تخمینی
-  const at=_pod.cloud ? podCapSegAt(el)
-                      : {i:0, p:Math.max(0,Math.min(1, el/Math.max(1,_pod.estDur||1)))};
-  if(!at) { if(wrap) wrap.hidden=true; return; }
+  if(_pod.cloud && !(_pod.visSegTexts||[]).length){ if(wrap) wrap.hidden=true; return; }
+  // ⚠️ متنِ صدای گوشی باید «پیش از» ساختنِ نقشه آماده باشد، وگرنه نقشه کهنه می‌ماند
   if(!_pod.cloud){
     const sig='dev'+(_pod.script||'').length;
-    if(_podCap.devSig!==sig){ _podCap.devSig=sig; _podCap.seg=-1;
+    if(_podCap.devSig!==sig){ _podCap.devSig=sig; _podCap.seg=-1; _podCap.sig='';
       let t=''; try{ t=podPlainText(_pod.script||''); }catch(e){ t=_pod.script||''; }
       _podCap.devSegs=[t]; }
   }
-  const src=_pod.cloud?segs:(_podCap.devSegs||['']);
+  const el=_pod.cloud?podElapsed():((Date.now()-_pod.t0)/1000);
+  const at=podCapSegAt(el);
+  if(!at) { if(wrap) wrap.hidden=true; return; }
+  const src=(_podCap.segs||[]);
   if(!String(src[at.i]||'').trim()){ if(wrap) wrap.hidden=true; return; }
   if(wrap) wrap.hidden=false;
   if(_podCap.seg!==at.i){
     _podCap.seg=at.i;
     _podCap.words=String(src[at.i]||'').replace(/\s+/g,' ').trim().split(' ').filter(Boolean);
+    // مرزِ زمانیِ هر کلمه به نسبتِ طولِ خوانده‌شده‌اش (نه شمارشِ یکنواخت)
+    const w=_podCap.words.map(x=>_podCapW(x)+1); const S=w.reduce((a,b)=>a+b,0)||1;
+    let a=0; _podCap.wcum=w.map(x=>{ a+=x; return a/S; });
   }
   const total=_podCap.words.length; if(!total) return;
-  const upto=Math.max(1,Math.min(total,Math.round(at.p*total)));
+  const wc=_podCap.wcum||[]; let upto=0;
+  for(let k=0;k<total;k++){ if(wc[k]<=at.p) upto=k+1; else break; }
+  upto=Math.max(1,Math.min(total,upto));
   // پنجرهٔ دوخطی: فقط ~۱۴ کلمهٔ آخر نگه داشته می‌شود تا کادر پر و پاک شود
   const W=20;
   const from=Math.max(0,upto-W);
@@ -6212,7 +6245,7 @@ function podElConsolidate(playFromZero){
   const pos=playFromZero?0:podElapsed();
   let url=''; try{ url=URL.createObjectURL(blob); }catch(e){ return false; }
   (_pod.elUrls||[]).forEach(u=>{ try{ URL.revokeObjectURL(u); }catch(e){} });
-  _pod.elUrls=[url]; _pod.durs=[_pod.totalDur]; _pod.cum=[0,_pod.totalDur]; _pod.elIdx=0; _pod.elSingle=true;
+  _pod.elUrls=[url]; _pod.durs=[_pod.totalDur]; _pod.cum=[0,_pod.totalDur]; _pod.elIdx=0; _pod.elSingle=true; _podCap.sig='';
   if(_pod.mode==='playing') podElLoadPlay(0, Math.max(0,Math.min(pos,_pod.totalDur-0.05)));
   return true;
 }
