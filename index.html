@@ -2608,7 +2608,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۱.۵</b> · انتشار: ۱۴۰۵/۰۶/۲۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۱.۶</b> · انتشار: ۱۴۰۵/۰۶/۲۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -3571,10 +3571,10 @@ const DB = {
     "شکر رژیمی (سوکرالوز)":{ "ساشه":0,"قاشق چای‌خوری":0 }
   },
   "کاله پرو (پروتئینی، بدون قند افزوده)":{
-    "پرو بستنی شکلاتی کاله (۱۰۰گ)":{ "عدد":14 },
-    "پرو بستنی وانیلی کاله (۱۰۰گ)":{ "عدد":14 },
-    "پرو بستنی شاتوت کاله (۱۰۰گ)":{ "عدد":14 },
-    "پرو بستنی چیزکیک لیمو کاله (۱۰۰گ)":{ "عدد":13 },
+    "پرو بستنی شکلاتی کاله":{ "عدد":14 },
+    "پرو بستنی وانیلی کاله":{ "عدد":14 },
+    "پرو بستنی شاتوت کاله":{ "عدد":14 },
+    "پرو بستنی چیزکیک لیمو کاله":{ "عدد":13 },
     "پرو بستنی چوبی شکلاتی کاله":{ "عدد":9 },
     "پرو بستنی چوبی قهوه کاله":{ "عدد":9 },
     "پرو شیر شکلاتی کاله (شیر پروتئینی)":{ "پاکت":13,"لیوان":12 },
@@ -3597,12 +3597,12 @@ const DB = {
     "پنکیک پروتئینی آماده":{ "عدد":15 }
   },
   "بستنی یخی الکترولیت و الکترولیت":{
-    "بستنی یخی الکترولیت شاتوت کاله (۶۴گ)":{ "عدد":13 },
-    "بستنی یخی الکترولیت انبه کاله (۶۴گ)":{ "عدد":14 },
-    "بستنی یخی الکترولیت موهیتو کاله (۶۴گ)":{ "عدد":13 },
-    "بستنی یخی الکترولیت پرتقال کاله (۶۴گ)":{ "عدد":13 },
-    "بستنی یخی الکترولیت آلوجیتو کاله (۶۴گ)":{ "عدد":13 },
-    "بستنی یخی الکترولیت لیمو کاله (۶۴گ)":{ "عدد":13 },
+    "بستنی یخی الکترولیت شاتوت کاله":{ "عدد":13 },
+    "بستنی یخی الکترولیت انبه کاله":{ "عدد":14 },
+    "بستنی یخی الکترولیت موهیتو کاله":{ "عدد":13 },
+    "بستنی یخی الکترولیت پرتقال کاله":{ "عدد":13 },
+    "بستنی یخی الکترولیت آلوجیتو کاله":{ "عدد":13 },
+    "بستنی یخی الکترولیت لیمو کاله":{ "عدد":13 },
     "بستنی یخی الکترولیت (عمومی)":{ "عدد":15 },
     "نوشیدنی الکترولیت/ایزوتونیک":{ "بطری":15,"لیوان":11 },
     "پودر الکترولیت (رقیق‌شده)":{ "لیوان":5,"ساشه":6 },
@@ -9353,6 +9353,35 @@ function onDailyDatePick(str){
   _dailyDate=new Date(g[0],g[1]-1,g[2]); _dailyDate.setHours(0,0,0,0);
   renderDailyReport();
 }
+// ریزِ کربوهیدراتِ یک روز: هر وعده و سهمِ کربِ آن (برای پیداکردنِ ثبت‌های اشتباه مثل «۶۴ عدد»)
+function dailyCarbBreak(key){
+  const arr=(typeof planData!=='undefined'&&Array.isArray(planData[key]))?planData[key]:[];
+  const rows=arr.map(m=>({ type:m.type||'وعده', time:m.time||'', carb:Math.round(+m.carb||0),
+      foods:(m.foods&&m.foods.length)?m.foods.map(f=>String(f.name||f)).join('، '):(m.carb?('کربوهیدرات دستی'):''), id:m.id }))
+    .filter(r=>r.carb>0||r.foods);
+  rows.sort((a,b)=>b.carb-a.carb);
+  const tot=rows.reduce((s,r)=>s+r.carb,0);
+  try{ ensureChatCss&&ensureChatCss(); }catch(e){}
+  const old=document.getElementById('carbBreakBg'); if(old) old.remove();
+  const bg=document.createElement('div'); bg.className='chat-rename-bg'; bg.id='carbBreakBg';
+  bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
+  const body = rows.length ? rows.map(r=>{
+      const big=r.carb>=100;
+      return `<div style="display:flex;align-items:flex-start;gap:8px;padding:9px 2px;border-bottom:1px solid var(--line)">
+        <b style="flex:0 0 auto;min-width:58px;text-align:center;color:${big?'var(--amber)':'var(--teal)'};font-variant-numeric:tabular-nums">${faDigits(r.carb)} گ</b>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:800;font-size:12.5px">${escVision(r.type)}${r.time?` <span style="color:var(--muted);font-weight:600">· ${faDigits(r.time)}</span>`:''}${big?' <span style="color:var(--amber);font-size:11px">⚠️ خیلی زیاد</span>':''}</div>
+          <div style="color:var(--muted);font-size:11.5px;line-height:1.7;margin-top:2px">${escVision(r.foods||'—')}</div>
+        </div></div>`; }).join('')
+    : '<div class="qbg-sub">برای این روز وعده‌ای با کربوهیدرات ثبت نشده.</div>';
+  bg.innerHTML=`<div class="chat-rename" role="dialog" aria-modal="true" style="max-width:440px;max-height:82vh;display:flex;flex-direction:column">
+    <h4>🍞 ریزِ کربوهیدراتِ این روز</h4>
+    <div class="qbg-sub" style="margin:-4px 0 8px">جمعِ کربِ همهٔ وعده‌ها. اگر عددی غیرعادی دیدی (مثلِ یک وعدهٔ چندصدگرمی)، احتمالاً «تعداد»‌اش اشتباه ثبت شده — از تبِ روزانه همان وعده را ویرایش کن.</div>
+    <div style="overflow:auto">${body}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:2px solid var(--teal-dim)"><b>جمعِ کل</b><b style="color:var(--teal)">${faDigits(tot)} گرم</b></div>
+    <div class="chat-rename-btns" style="margin-top:10px"><button type="button" class="crn-btn crn-cancel" onclick="document.getElementById('carbBreakBg').remove()">بستن</button></div></div>`;
+  document.body.appendChild(bg);
+}
 function renderDailyReport(){
   const box=document.getElementById('dailyReport'); if(!box) return;
   const dref=new Date(_dailyDate); const key=dayKey(dref);
@@ -9366,13 +9395,14 @@ function renderDailyReport(){
   let totProt=0, totFat=0; let rapidIns=[]; let basalIns=null;
   try{ (planData[key]||[]).forEach(m=>{
     let det=[];
-    if(m.foods&&m.foods.length) det.push(m.foods.map(f=>f.name||f).join('، '));
+    if(m.foods&&m.foods.length){ det.push(m.foods.map(f=>f.name||f).join('، '));
+      if(+m.carb>0) det.push('کرب '+faDigits(Math.round(+m.carb))+' گ'); }
     else if(m.carb) det.push('کربوهیدرات '+faDigits(m.carb)+' گرم');
     if(m.insDose) det.push('انسولین '+faDigits(m.insDose)+(m.insType?' واحد ('+m.insType+')':' واحد'));
     if(m.bgBefore) det.push('قند قبل '+faDigits(m.bgBefore));
     if(m.bgAfter) det.push('بعد '+faDigits(m.bgAfter));
     totalCarb+=(+m.carb||0); totalBolus+=(+m.insDose||0);
-    if(+m.insDose>0) rapidIns.push({name:(m.insType||'سریع'), dose:+m.insDose});
+    if(+m.insDose>0) rapidIns.push({name:(m.insType||'سریع'), dose:+m.insDose, meal:m.type||'', time:m.time||''});
     const mm=estMealMacros(m); totProt+=mm.p; totFat+=mm.fat;
     const isIns=(!m.foods||!m.foods.length)&&+m.insDose>0;
     ev.push({sm:smFromT(m.time), time:m.time?faDigits(m.time):'', ico:isIns?'💉':'🍽️', color:isIns?'#5fd3bd':'#e9b877', title:m.type||'وعده', detail:det.join(' · '), kind:'meal', key:key, id:m.id});
@@ -9416,7 +9446,7 @@ function renderDailyReport(){
   if(dHasGlu) h+=`<div class="dash-srcrow" style="margin-top:-4px">${bgSrcChip()}</div>`;
   // نوار خلاصه‌ی روز
   const chips=[];
-  if(totalCarb>0) chips.push(['🍞','کربوهیدرات', faDigits(Math.round(totalCarb))+' گرم']);
+  if(totalCarb>0) chips.push(['🍞','کربوهیدرات', faDigits(Math.round(totalCarb))+' گرم', "dailyCarbBreak('"+key+"')"]);
   if(totalBolus+basalDose>0) chips.push(['💉','انسولین کل', faDigits(Math.round((totalBolus+basalDose)*10)/10)+' واحد']);
   if(totalCarb>0){ const kcal=Math.round(totalCarb*4 + totProt*4 + totFat*9);
     chips.push(['🔥','کالری ~', faDigits(kcal)]);
@@ -9430,7 +9460,7 @@ function renderDailyReport(){
   if(vitLast){ if(vitLast.sys!=null&&vitLast.dia!=null) chips.push(['❤️','فشار', faDigits(vitLast.sys)+'/'+faDigits(vitLast.dia)]); if(vitLast.hr!=null) chips.push(['💓','ضربان', faDigits(vitLast.hr)]); }
   if(jrnRec&&jrnRec.rating) chips.push(['📓','حال روز', JRN_RATING[jrnRec.rating]||jrnRec.rating]);
   try{ const wl=jlog('weight_log_v1').filter(x=>x&&x.iso&&x.kg&&dayKey(new Date(x.iso))===key); if(wl.length){ chips.push(['⚖️','وزن', faDigits(wl[wl.length-1].kg)+' کیلو']); } }catch(e){}
-  if(chips.length){ h+=`<div class="daily-chips">`+chips.map(c=>`<div class="daily-chip"><span class="dc-ico">${c[0]}</span><span class="dc-l">${c[1]}</span><b class="dc-v">${c[2]}</b></div>`).join('')+`</div>`; }
+  if(chips.length){ h+=`<div class="daily-chips">`+chips.map(c=>`<div class="daily-chip"${c[3]?` onclick="${c[3]}" style="cursor:pointer"`:''}><span class="dc-ico">${c[0]}</span><span class="dc-l">${c[1]}${c[3]?' <span style="color:var(--teal)">›</span>':''}</span><b class="dc-v">${c[2]}</b></div>`).join('')+`</div>`; }
   if(jrnRec&&(jrnRec.rating||(jrnRec.tags&&jrnRec.tags.length)||jrnRec.note||jrnRec.doctor)){
     h+=`<div class="jrn-card"><div class="jrn-head"><span style="font-size:17px">📓</span><span class="jrn-rating">دفترچه‌ی روز${jrnRec.rating?' · '+(JRN_RATING[jrnRec.rating]||jrnRec.rating):''}</span></div>`;
     if(jrnRec.tags&&jrnRec.tags.length) h+=`<div class="jrn-tags">`+jrnRec.tags.map(t=>`<span class="jrn-tag">${escVision(t)}</span>`).join('')+`</div>`;
@@ -9442,10 +9472,13 @@ function renderDailyReport(){
   // تفکیک انسولین پایه/سریع (اسم و واحد)
   if(rapidIns.length || basalIns){
     const rapidTotal=rapidIns.reduce((s,r)=>s+r.dose,0);
-    const rg={}; rapidIns.forEach(r=>{ rg[r.name]=(rg[r.name]||0)+r.dose; });
     let rows='';
-    if(basalIns){ rows+=`<div class="insb-row"><span class="insb-tag basal">پایه 🛡️</span><span class="insb-name">${basalIns.name||'—'}</span><b class="insb-u">${faDigits(basalIns.dose)} واحد</b></div>`; }
-    Object.keys(rg).forEach(nm=>{ rows+=`<div class="insb-row"><span class="insb-tag rapid">سریع ⚡</span><span class="insb-name">${nm}</span><b class="insb-u">${faDigits(Math.round(rg[nm]*10)/10)} واحد</b></div>`; });
+    if(basalIns){ rows+=`<div class="insb-row"><span class="insb-tag basal">پایه 🛡️</span><span class="insb-name">${escVision(basalIns.name||'—')}</span><b class="insb-u">${faDigits(basalIns.dose)} واحد</b></div>`; }
+    // ⚠️ هر تزریقِ سریع جداگانه (وعده + ساعت) نمایش داده می‌شود، نه جمعِ بر اساسِ نامِ انسولین
+    rapidIns.slice().sort((a,b)=>smFromT(a.time)-smFromT(b.time)).forEach(r=>{
+      const sub=[r.meal,r.time?faDigits(r.time):''].filter(Boolean).join(' · ');
+      rows+=`<div class="insb-row"><span class="insb-tag rapid">سریع ⚡</span><span class="insb-name">${escVision(r.name)}${sub?` <span style="color:var(--muted);font-weight:600;font-size:10px">· ${escVision(sub)}</span>`:''}</span><b class="insb-u">${faDigits(Math.round(r.dose*10)/10)} واحد</b></div>`;
+    });
     const tot=(basalIns?(+basalIns.dose||0):0)+rapidTotal;
     if(rows) h+=`<div class="insb-card"><div class="insb-head"><span>💉 انسولین امروز</span><b>${faDigits(Math.round(tot*10)/10)} واحد</b></div>${rows}</div>`;
   }
