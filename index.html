@@ -2577,7 +2577,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۰.۵</b> · انتشار: ۱۴۰۵/۰۶/۲۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۰.۶</b> · انتشار: ۱۴۰۵/۰۶/۲۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5204,6 +5204,7 @@ function podCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(POD_CFG_KEY)
     voiceVol:(typeof o.voiceVol==='number'?Math.max(0,Math.min(1.5,o.voiceVol)):1.0),
     musicVol:(typeof o.musicVol==='number'?Math.max(0,Math.min(1,o.musicVol)):0.5),
     musicTrack:((typeof POD_MUSIC_PRESETS!=='undefined'&&POD_MUSIC_PRESETS[o.musicTrack])?o.musicTrack:'calm'),
+    caption:(o.caption!==false),
     content:podContentCfg(o.content) }; }
 // تنظیماتِ محتوایِ پادکست: کدام موضوع‌ها بحث شوند (هر کدام قابلِ فعال/غیرفعال) + بازهٔ مرورِ قند
 function podContentCfg(cc){ cc=cc||{};
@@ -5643,6 +5644,7 @@ function podCapUpdate(){
   const box=document.getElementById('podCapText'); if(!box) return;
   const wrap=document.getElementById('podCap');
   if(_pod.mode!=='playing' && _pod.mode!=='paused'){ if(wrap) wrap.hidden=true; return; }
+  try{ if(!podCfg().caption){ if(wrap) wrap.hidden=true; return; } }catch(e){}
   if(_pod.cloud && !(_pod.visSegTexts||[]).length){ if(wrap) wrap.hidden=true; return; }
   // ⚠️ متنِ صدای گوشی باید «پیش از» ساختنِ نقشه آماده باشد، وگرنه نقشه کهنه می‌ماند
   if(!_pod.cloud){
@@ -8717,6 +8719,9 @@ function renderPodCfg(){
   h+=`<label class="qbg-lbl">مجریِ تصویری بالای پلیر</label>`;
   h+=`<div class="pod-seg">`+[['on','روشن',true],['off','خاموش',false]].map(o=>`<button class="${c.avatar===o[2]?'on':''}" onclick="podCfgPick('avatar',${o[2]})">${o[1]}</button>`).join('')+`</div>`;
   if(c.avatar){
+    h+=`<label class="qbg-lbl" style="margin-top:10px">📝 زیرنویسِ زنده زیرِ مجری</label>`;
+    h+=`<div class="pod-seg">`+[['on','روشن',true],['off','خاموش',false]].map(o=>`<button class="${c.caption===o[2]?'on':''}" onclick="podCfgPick('caption',${o[2]})">${o[1]}</button>`).join('')+`</div>`;
+    h+=`<div class="qbg-sub" style="margin-top:4px">همان متنی که مجری می‌خواند، دوخطی و کلمه‌به‌کلمه زیرِ تصویر نوشته می‌شود.</div>`;
     h+=`<label class="qbg-lbl" style="margin-top:8px">حالتِ مجری</label>`;
     h+=`<div class="pod-seg">`+[['photo','📷 عکسِ واقعی'],['3d','🧑‍🎨 سه‌بعدی (نمونه)']].map(o=>`<button class="${c.avMode===o[0]?'on':''}" onclick="podCfgPick('avMode','${o[0]}')">${o[1]}</button>`).join('')+`</div>`;
     if(c.avMode==='3d'){
