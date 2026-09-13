@@ -2608,7 +2608,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۱.۶</b> · انتشار: ۱۴۰۵/۰۶/۲۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۱.۷</b> · انتشار: ۱۴۰۵/۰۶/۲۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -9394,18 +9394,28 @@ function renderDailyReport(){
   let ev=[]; let totalCarb=0, totalBolus=0, basalDose=0, bgCount=0;
   let totProt=0, totFat=0; let rapidIns=[]; let basalIns=null;
   try{ (planData[key]||[]).forEach(m=>{
-    let det=[];
-    if(m.foods&&m.foods.length){ det.push(m.foods.map(f=>f.name||f).join('، '));
-      if(+m.carb>0) det.push('کرب '+faDigits(Math.round(+m.carb))+' گ'); }
-    else if(m.carb) det.push('کربوهیدرات '+faDigits(m.carb)+' گرم');
-    if(m.insDose) det.push('انسولین '+faDigits(m.insDose)+(m.insType?' واحد ('+m.insType+')':' واحد'));
-    if(m.bgBefore) det.push('قند قبل '+faDigits(m.bgBefore));
-    if(m.bgAfter) det.push('بعد '+faDigits(m.bgAfter));
+    const hasFood=(m.foods&&m.foods.length)|| (+m.carb>0);
+    const hasIns=(+m.insDose>0);
     totalCarb+=(+m.carb||0); totalBolus+=(+m.insDose||0);
-    if(+m.insDose>0) rapidIns.push({name:(m.insType||'سریع'), dose:+m.insDose, meal:m.type||'', time:m.time||''});
     const mm=estMealMacros(m); totProt+=mm.p; totFat+=mm.fat;
-    const isIns=(!m.foods||!m.foods.length)&&+m.insDose>0;
-    ev.push({sm:smFromT(m.time), time:m.time?faDigits(m.time):'', ico:isIns?'💉':'🍽️', color:isIns?'#5fd3bd':'#e9b877', title:m.type||'وعده', detail:det.join(' · '), kind:'meal', key:key, id:m.id});
+    // ۱) کارتِ وعده (بدونِ انسولین)
+    if(hasFood || (!hasFood && !hasIns)){
+      let det=[];
+      if(m.foods&&m.foods.length){ det.push(m.foods.map(f=>f.name||f).join('، '));
+        if(+m.carb>0) det.push('کرب '+faDigits(Math.round(+m.carb))+' گ'); }
+      else if(m.carb) det.push('کربوهیدرات '+faDigits(m.carb)+' گرم');
+      if(m.bgBefore) det.push('قند قبل '+faDigits(m.bgBefore));
+      if(m.bgAfter) det.push('بعد '+faDigits(m.bgAfter));
+      ev.push({sm:smFromT(m.time), time:m.time?faDigits(m.time):'', ico:'🍽️', color:'#e9b877', title:m.type||'وعده', detail:det.join(' · '), kind:'meal', key:key, id:m.id});
+    }
+    // ۲) کارتِ جداگانهٔ انسولین (با ساعت و ویرایشِ خودش) — انسولین غذا نیست
+    if(hasIns){
+      rapidIns.push({name:(m.insType||'سریع'), dose:+m.insDose, meal:m.type||'', time:m.time||''});
+      let idet=['⚡ '+faDigits(m.insDose)+(m.insType?' واحد · '+escVision(m.insType):' واحد')];
+      if(m.type && !/^انسولین/.test(String(m.type))) idet.push('برای «'+escVision(m.type)+'»');
+      if(m.bgBefore) idet.push('قند قبل '+faDigits(m.bgBefore));
+      ev.push({sm:smFromT(m.time), time:m.time?faDigits(m.time):'', ico:'💉', color:'#5fd3bd', title:'انسولین سریع', detail:idet.join(' · '), kind:'ins', key:key, id:m.id});
+    }
   }); }catch(e){}
   try{ const bz=(planData._basal||{})[key]; if(bz){ basalDose=(+bz.dose||0); basalIns={name:bz.type||'', dose:bz.dose}; ev.push({sm:bz.time?smFromT(bz.time):1440, time:bz.time?faDigits(bz.time):'', ico:'🛡️', color:'#5fd3bd', title:'انسولین پایه', detail:(bz.type?bz.type+' · ':'')+faDigits(bz.dose)+' واحد', kind:'basal', key:key}); } }catch(e){}
   try{ loadBG().forEach(x=>{ if(x.iso&&dayKey(new Date(x.iso))===key){ const d=new Date(x.iso); bgCount++; ev.push({sm:hourMin(d), time:fmtHM(d), ico:'🩸', color:'#f0a29b', title:'قند خون', detail:faDigits(x.glu)+' mg/dL', kind:'bg', iso:x.iso}); } }); }catch(e){}
@@ -9774,6 +9784,7 @@ function jFromKey(key){ const q=String(key).split('-'); return g2j(+q[0],+q[1],+
 function evOnclick(e,from){
   const fr=from||'daily';
   if(e.kind==='meal') return `openEventEditor('meal','${e.key}',${e.id},'${fr}')`;
+  if(e.kind==='ins') return `insHistEdit('rapid','${e.key}','${e.id}')`;
   if(e.kind==='basal') return `openEventEditor('basal','${e.key}',null,'${fr}')`;
   if(e.kind==='bg') return `openEventEditor('bg','${e.iso}',null,'${fr}')`;
   if(e.kind==='med') return `openEventEditor('med','${e.iso}',null,'${fr}')`;
