@@ -227,6 +227,7 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .pod-skip svg{width:30px;height:30px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .pod-skip svg path{fill:none}
 .pod-skip svg text{fill:currentColor;stroke:none;font-family:inherit}
+.pod-skip svg .ah{fill:currentColor;stroke:none}
 .pod-skip:active{transform:scale(.9);background:var(--teal-dim);color:#fff}
 .pod-skip:disabled{opacity:.4}
 .pod-slider{flex:1;min-width:0;width:100%;-webkit-appearance:none;appearance:none;height:8px;border-radius:8px;outline:none;cursor:pointer;margin:0;
@@ -290,6 +291,7 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .pod-av-cbtn svg{width:34px;height:34px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .pod-av-cbtn svg path{fill:none}
 .pod-av-cbtn svg text{fill:currentColor;stroke:none;font-family:inherit}
+.pod-av-cbtn svg .ah{fill:currentColor;stroke:none}
 .pod-av-cplay{width:84px;height:84px;background:rgba(90,102,120,.5);border-color:rgba(255,255,255,.5);box-shadow:0 8px 26px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.35)}
 .pod-av-cplay svg{width:38px;height:38px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
 .pod-av-cplay svg *{fill:#fff;stroke:none}
@@ -2598,7 +2600,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۰.۹</b> · انتشار: ۱۴۰۵/۰۶/۲۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۱.۰</b> · انتشار: ۱۴۰۵/۰۶/۲۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5390,8 +5392,8 @@ function podRangeSay(gr){
 }
 // آیکون‌های شیشه‌ایِ نوارِ ابزارِ پادکست (SVG تک‌رنگ، خوش‌سایه)
 const POD_ICON = {
-  back10:'<svg viewBox="0 0 24 24"><path d="M12 6a6 6 0 1 0 5.4 3.3" fill="none"/><path d="M12 2.5 8.6 6l3.4 3.5" fill="none"/><text x="12" y="15" text-anchor="middle" font-size="8" font-weight="800">۱۰</text></svg>',
-  fwd10:'<svg viewBox="0 0 24 24"><path d="M12 6a6 6 0 1 1-5.4 3.3" fill="none"/><path d="M12 2.5 15.4 6l-3.4 3.5" fill="none"/><text x="12" y="15" text-anchor="middle" font-size="8" font-weight="800">۱۰</text></svg>',
+  back10:'<svg viewBox="0 0 24 24"><path d="M12 5.4a6.6 6.6 0 1 0 6.4 5" fill="none"/><path class="ah" d="M12 1.7 8.3 5.4 12 9.1Z"/><text x="12" y="15.2" text-anchor="middle" font-size="8" font-weight="800">۱۰</text></svg>',
+  fwd10:'<svg viewBox="0 0 24 24"><path d="M12 5.4a6.6 6.6 0 1 1-6.4 5" fill="none"/><path class="ah" d="M12 1.7 15.7 5.4 12 9.1Z"/><text x="12" y="15.2" text-anchor="middle" font-size="8" font-weight="800">۱۰</text></svg>',
   play:'<svg viewBox="0 0 24 24"><path d="M8 5.2v13.6L19 12z"/></svg>',
   pause:'<svg viewBox="0 0 24 24"><rect x="7" y="5" width="3.4" height="14" rx="1"/><rect x="13.6" y="5" width="3.4" height="14" rx="1"/></svg>',
   hist:'<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3.5v4.5h4.5"/><path d="M12 7.5V12l3 1.8"/></svg>',
