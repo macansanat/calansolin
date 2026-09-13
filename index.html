@@ -274,7 +274,14 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .pod-av--full{position:fixed;inset:0;z-index:9998;margin:0;background:#0b1210;display:flex;align-items:center;justify-content:center}
 .pod-av--full .pod-av-stage{width:100vw;width:100dvw;height:100dvh;max-width:none;border-radius:0;transition:none!important}
 .pod-av--full.pod-av--3d .pod-av-stage{height:100dvh}
-.pod-av--full .pod-cap{position:absolute;left:14px;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));margin:0;max-width:none;z-index:5}
+.pod-av--full .pod-cap{position:absolute;left:14px;right:14px;bottom:calc(68px + env(safe-area-inset-bottom));margin:0;max-width:none;z-index:5}
+.pod-av-bar{position:absolute;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:6;direction:ltr;display:none;align-items:center;gap:10px;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:8px 14px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.pod-av--full .pod-av-bar{display:flex;opacity:0;pointer-events:none;transition:opacity .32s ease}
+.pod-av--full.pod-av--ui .pod-av-bar{opacity:1;pointer-events:auto}
+.pod-av-t{flex:0 0 auto;min-width:40px;text-align:center;font-size:11px;color:#fff;font-variant-numeric:tabular-nums}
+.pod-av-slider{flex:1;min-width:0;-webkit-appearance:none;appearance:none;height:5px;border-radius:5px;outline:none;cursor:pointer;background:linear-gradient(to right,#fff 0 var(--p,0%),rgba(255,255,255,.28) var(--p,0%) 100%)}
+.pod-av-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.5)}
+.pod-av-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:none}
 .pod-av-ctl{position:absolute;inset:0;z-index:5;direction:ltr;display:none;align-items:center;justify-content:center;gap:30px;pointer-events:none}
 .pod-av--full .pod-av-ctl{display:flex;opacity:0;pointer-events:none;transition:opacity .32s ease}
 .pod-av--full.pod-av--ui .pod-av-ctl{opacity:1;pointer-events:auto}
@@ -283,7 +290,9 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .pod-av-cbtn svg{width:34px;height:34px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .pod-av-cbtn svg path{fill:none}
 .pod-av-cbtn svg text{fill:currentColor;stroke:none;font-family:inherit}
-.pod-av-cplay{width:82px;height:82px;font-size:30px;background:rgba(63,185,163,.9);border-color:rgba(255,255,255,.35);box-shadow:0 8px 26px rgba(63,185,163,.5)}
+.pod-av-cplay{width:84px;height:84px;background:rgba(90,102,120,.5);border-color:rgba(255,255,255,.5);box-shadow:0 8px 26px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.35)}
+.pod-av-cplay svg{width:38px;height:38px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
+.pod-av-cplay svg *{fill:#fff;stroke:none}
 /* مینی‌پلیرِ شناور (داخلِ همین صفحه، حینِ اسکرول) */
 .pod-cap[hidden]{display:none}
 .pod-cap{position:relative;margin:7px auto 0;width:100%;max-width:min(100%,360px);background:rgba(10,18,26,.66);border:1px solid var(--glass-brd);border-radius:11px;padding:6px 10px;display:flex;align-items:flex-end;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
@@ -2589,7 +2598,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۰.۸</b> · انتشار: ۱۴۰۵/۰۶/۲۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۰.۹</b> · انتشار: ۱۴۰۵/۰۶/۲۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5383,6 +5392,8 @@ function podRangeSay(gr){
 const POD_ICON = {
   back10:'<svg viewBox="0 0 24 24"><path d="M12 6a6 6 0 1 0 5.4 3.3" fill="none"/><path d="M12 2.5 8.6 6l3.4 3.5" fill="none"/><text x="12" y="15" text-anchor="middle" font-size="8" font-weight="800">۱۰</text></svg>',
   fwd10:'<svg viewBox="0 0 24 24"><path d="M12 6a6 6 0 1 1-5.4 3.3" fill="none"/><path d="M12 2.5 15.4 6l-3.4 3.5" fill="none"/><text x="12" y="15" text-anchor="middle" font-size="8" font-weight="800">۱۰</text></svg>',
+  play:'<svg viewBox="0 0 24 24"><path d="M8 5.2v13.6L19 12z"/></svg>',
+  pause:'<svg viewBox="0 0 24 24"><rect x="7" y="5" width="3.4" height="14" rx="1"/><rect x="13.6" y="5" width="3.4" height="14" rx="1"/></svg>',
   hist:'<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3.5v4.5h4.5"/><path d="M12 7.5V12l3 1.8"/></svg>',
   txt:'<svg viewBox="0 0 24 24"><path d="M7 3.2h8l4 4v13.6a.9.9 0 0 1-.9.9H7a.9.9 0 0 1-.9-.9V4.1a.9.9 0 0 1 .9-.9z"/><path d="M15 3.2v4h4"/><path d="M9 12h6M9 15.5h4.5"/></svg>',
   dl:'<svg viewBox="0 0 24 24"><path d="M12 3v11"/><path d="M8 11l4 4 4-4"/><path d="M5 20h14"/></svg>',
@@ -5760,6 +5771,9 @@ function podTick(){
   const cur=document.getElementById('podCur'); if(cur) cur.textContent=podFmtTime(el);
   const tot=document.getElementById('podTot'); if(tot) tot.textContent=(cloud&&!_pod.allFetched?'~':'')+podFmtTime(total);
   const st=document.getElementById('podState'); if(st) st.textContent=_pod.prep?'در حالِ آماده‌سازیِ صدا…':(_pod.mode==='playing'?(_pod.spk?'خواندنِ پاسخِ هوش مصنوعی':'در حالِ پخش'):(_pod.mode==='paused'?'مکث':''));
+  const fs=document.getElementById('podFsSlider'); if(fs&&!_pod.seeking){ fs.max=Math.max(1,Math.round(total)); fs.value=Math.min(fs.max,Math.round(el)); try{ fs.style.setProperty('--p',(100*el/Math.max(1,total)).toFixed(1)+'%'); }catch(e){} }
+  const fc=document.getElementById('podFsCur'); if(fc) fc.textContent=podFmtTime(el);
+  const fr=document.getElementById('podFsRem'); if(fr) fr.textContent='-'+podFmtTime(Math.max(0,total-el));
   if(_pod.elMode) podMediaPos();
   try{ podCapUpdate(); }catch(e){}
 }
@@ -5801,6 +5815,12 @@ function podSliderInput(v){ _pod.seeking=true; const cur=document.getElementById
   try{ const sl=document.getElementById('podSlider'); if(sl) sl.style.setProperty('--p',(100*(+v)/Math.max(1,+sl.max))+'%'); }catch(e){} }
 function podSliderChange(v){ _pod.seeking=false; if(_pod.cloud) podSeek(+v); }
 // پرشِ نسبی (±ثانیه) — دقیق و بدونِ گیر
+function podFsInput(v){ _pod.seeking=true; const t=Math.max(0,+v||0); const tot=_pod.cloud?podTotalKnown():_pod.estDur;
+  const c=document.getElementById('podFsCur'); if(c) c.textContent=podFmtTime(t);
+  const r=document.getElementById('podFsRem'); if(r) r.textContent='-'+podFmtTime(Math.max(0,tot-t));
+  const s=document.getElementById('podFsSlider'); if(s) s.style.setProperty('--p',(100*t/Math.max(1,tot)).toFixed(1)+'%');
+  podAvShowControls(); }
+function podFsChange(v){ _pod.seeking=false; podSeek(Math.max(0,+v||0)); podAvShowControls(); }
 function podSkip(d){
   if(!_pod.cloud) return;
   const el=podElapsed(); const t=Math.max(0, el+d);
@@ -8504,9 +8524,14 @@ function renderPodcastCard(){
   const avBlock = avOn ? `<div id="podAvatar" class="pod-av ${active?'live':''} ${paused?'paused':''} ${av3d?'pod-av--3d':''} ${av3d&&playing?'pod-av--play':''}" style="--lv:0">
       <div class="pod-av-stage" onclick="podAvShowControls()">${avInner}<div class="pod-av-ring"></div><div class="pod-av-eq"><i></i><i></i><i></i><i></i><i></i></div>
         <div class="pod-av-ctl">
-          <button class="pod-av-cbtn" onclick="event.stopPropagation();podSkip(10);podAvShowControls()" title="۱۰ ثانیه جلو">${POD_ICON.fwd10}</button>
-          <button class="pod-av-cbtn pod-av-cplay" onclick="event.stopPropagation();podcastToggle();podAvShowControls()" aria-label="پخش/توقف">${btn}</button>
           <button class="pod-av-cbtn" onclick="event.stopPropagation();podSkip(-10);podAvShowControls()" title="۱۰ ثانیه عقب">${POD_ICON.back10}</button>
+          <button class="pod-av-cbtn pod-av-cplay" onclick="event.stopPropagation();podcastToggle();podAvShowControls()" aria-label="پخش/توقف">${playing?POD_ICON.pause:POD_ICON.play}</button>
+          <button class="pod-av-cbtn" onclick="event.stopPropagation();podSkip(10);podAvShowControls()" title="۱۰ ثانیه جلو">${POD_ICON.fwd10}</button>
+        </div>
+        <div class="pod-av-bar">
+          <span class="pod-av-t" id="podFsCur">${podFmtTime(el)}</span>
+          <input id="podFsSlider" class="pod-av-slider" type="range" min="0" max="${Math.max(1,Math.round(total))}" value="${Math.round(el)}" style="--p:${(100*el/Math.max(1,total)).toFixed(1)}%" oninput="podFsInput(this.value)" onchange="podFsChange(this.value)">
+          <span class="pod-av-t" id="podFsRem">-${podFmtTime(Math.max(0,total-el))}</span>
         </div>
         <button class="pod-av-fs" onclick="podAvToggleFull(event)" title="تمام‌صفحه">⛶</button>
         <button class="pod-av-dock" onclick="podAvDock(event)" title="بازگشت">✕</button></div>
