@@ -224,8 +224,9 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .pod-play:active{transform:scale(.93)} .pod-play:disabled{opacity:.6}
 .pod-mid{width:100%;min-width:0}
 .pod-skip{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:54px;height:54px;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:var(--ink);cursor:pointer;font-family:inherit;transition:.14s;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 4px 12px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.14)}
-.pod-skip svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.pod-skip b{font-size:10.5px;font-weight:800;line-height:1;letter-spacing:.2px}
+.pod-skip svg{width:30px;height:30px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.pod-skip svg path{fill:none}
+.pod-skip svg text{fill:currentColor;stroke:none;font-family:inherit}
 .pod-skip:active{transform:scale(.9);background:var(--teal-dim);color:#fff}
 .pod-skip:disabled{opacity:.4}
 .pod-slider{flex:1;min-width:0;width:100%;-webkit-appearance:none;appearance:none;height:8px;border-radius:8px;outline:none;cursor:pointer;margin:0;
@@ -274,6 +275,15 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .pod-av--full .pod-av-stage{width:100vw;width:100dvw;height:100dvh;max-width:none;border-radius:0;transition:none!important}
 .pod-av--full.pod-av--3d .pod-av-stage{height:100dvh}
 .pod-av--full .pod-cap{position:absolute;left:14px;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));margin:0;max-width:none;z-index:5}
+.pod-av-ctl{position:absolute;inset:0;z-index:5;direction:ltr;display:none;align-items:center;justify-content:center;gap:30px;pointer-events:none}
+.pod-av--full .pod-av-ctl{display:flex;opacity:0;pointer-events:none;transition:opacity .32s ease}
+.pod-av--full.pod-av--ui .pod-av-ctl{opacity:1;pointer-events:auto}
+.pod-av-cbtn{flex:0 0 auto;width:66px;height:66px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.13);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);box-shadow:0 7px 20px rgba(0,0,0,.45);transition:transform .12s}
+.pod-av-cbtn:active{transform:scale(.9)}
+.pod-av-cbtn svg{width:34px;height:34px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.pod-av-cbtn svg path{fill:none}
+.pod-av-cbtn svg text{fill:currentColor;stroke:none;font-family:inherit}
+.pod-av-cplay{width:82px;height:82px;font-size:30px;background:rgba(63,185,163,.9);border-color:rgba(255,255,255,.35);box-shadow:0 8px 26px rgba(63,185,163,.5)}
 /* مینی‌پلیرِ شناور (داخلِ همین صفحه، حینِ اسکرول) */
 .pod-cap[hidden]{display:none}
 .pod-cap{position:relative;margin:7px auto 0;width:100%;max-width:min(100%,360px);background:rgba(10,18,26,.66);border:1px solid var(--glass-brd);border-radius:11px;padding:6px 10px;display:flex;align-items:flex-end;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
@@ -2579,7 +2589,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۰.۷</b> · انتشار: ۱۴۰۵/۰۶/۲۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۰.۸</b> · انتشار: ۱۴۰۵/۰۶/۲۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -5371,8 +5381,8 @@ function podRangeSay(gr){
 }
 // آیکون‌های شیشه‌ایِ نوارِ ابزارِ پادکست (SVG تک‌رنگ، خوش‌سایه)
 const POD_ICON = {
-  back10:'<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3.5v4.5h4.5"/></svg>',
-  fwd10:'<svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3.5v4.5h-4.5"/></svg>',
+  back10:'<svg viewBox="0 0 24 24"><path d="M12 6a6 6 0 1 0 5.4 3.3" fill="none"/><path d="M12 2.5 8.6 6l3.4 3.5" fill="none"/><text x="12" y="15" text-anchor="middle" font-size="8" font-weight="800">۱۰</text></svg>',
+  fwd10:'<svg viewBox="0 0 24 24"><path d="M12 6a6 6 0 1 1-5.4 3.3" fill="none"/><path d="M12 2.5 15.4 6l-3.4 3.5" fill="none"/><text x="12" y="15" text-anchor="middle" font-size="8" font-weight="800">۱۰</text></svg>',
   hist:'<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3.5v4.5h4.5"/><path d="M12 7.5V12l3 1.8"/></svg>',
   txt:'<svg viewBox="0 0 24 24"><path d="M7 3.2h8l4 4v13.6a.9.9 0 0 1-.9.9H7a.9.9 0 0 1-.9-.9V4.1a.9.9 0 0 1 .9-.9z"/><path d="M15 3.2v4h4"/><path d="M9 12h6M9 15.5h4.5"/></svg>',
   dl:'<svg viewBox="0 0 24 24"><path d="M12 3v11"/><path d="M8 11l4 4 4-4"/><path d="M5 20h14"/></svg>',
@@ -8493,6 +8503,11 @@ function renderPodcastCard(){
       : `<div class="pod-av-ph">${podAvatarSilhouetteSVG(c.avGender)}</div>`);
   const avBlock = avOn ? `<div id="podAvatar" class="pod-av ${active?'live':''} ${paused?'paused':''} ${av3d?'pod-av--3d':''} ${av3d&&playing?'pod-av--play':''}" style="--lv:0">
       <div class="pod-av-stage" onclick="podAvShowControls()">${avInner}<div class="pod-av-ring"></div><div class="pod-av-eq"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="pod-av-ctl">
+          <button class="pod-av-cbtn" onclick="event.stopPropagation();podSkip(10);podAvShowControls()" title="۱۰ ثانیه جلو">${POD_ICON.fwd10}</button>
+          <button class="pod-av-cbtn pod-av-cplay" onclick="event.stopPropagation();podcastToggle();podAvShowControls()" aria-label="پخش/توقف">${btn}</button>
+          <button class="pod-av-cbtn" onclick="event.stopPropagation();podSkip(-10);podAvShowControls()" title="۱۰ ثانیه عقب">${POD_ICON.back10}</button>
+        </div>
         <button class="pod-av-fs" onclick="podAvToggleFull(event)" title="تمام‌صفحه">⛶</button>
         <button class="pod-av-dock" onclick="podAvDock(event)" title="بازگشت">✕</button></div>
       <div class="pod-cap" id="podCap" hidden><div class="pod-cap-t"><div id="podCapText"></div></div></div>
@@ -8514,9 +8529,9 @@ function renderPodcastCard(){
         <div class="pod-times"><span id="podCur">${podFmtTime(el)}</span><span id="podState" class="pod-state">${escVision(stateTxt)}</span><span id="podTot">${(cloud&&!_pod.allFetched?'~':'')+podFmtTime(total)}</span></div>
       </div>
       <div class="pod-ctrls">
-        <button class="pod-skip" onclick="podSkip(10)" ${sliderOn?'':'disabled'} title="۱۰ ثانیه جلو">${POD_ICON.fwd10}<b>۱۰</b></button>
+        <button class="pod-skip" onclick="podSkip(10)" ${sliderOn?'':'disabled'} title="۱۰ ثانیه جلو">${POD_ICON.fwd10}</button>
         <button class="pod-play" onclick="podcastToggle()" ${loading?'disabled':''}>${btn}</button>
-        <button class="pod-skip" onclick="podSkip(-10)" ${sliderOn?'':'disabled'} title="۱۰ ثانیه عقب">${POD_ICON.back10}<b>۱۰</b></button>
+        <button class="pod-skip" onclick="podSkip(-10)" ${sliderOn?'':'disabled'} title="۱۰ ثانیه عقب">${POD_ICON.back10}</button>
       </div>
       <div class="pod-tools">
         <button class="pod-tool" onclick="podOpenHist()" title="تاریخچهٔ پادکست‌ها" aria-label="تاریخچه">${POD_ICON.hist}</button>
