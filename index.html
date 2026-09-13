@@ -266,7 +266,8 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 @media (prefers-reduced-motion:reduce){.pod-av-img,.pod-av-ph,.pod-av-eq i{animation:none!important}}
 /* دکمه‌های آواتار: تمام‌صفحه (پایین-راست) و بازگشت */
 .pod-av-fs,.pod-av-dock{position:absolute;z-index:6;width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.44);color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
-.pod-av-fs{bottom:10px;right:10px}
+.pod-av-fs{bottom:58px;right:10px}
+.pod-av--full .pod-av-fs{bottom:calc(76px + env(safe-area-inset-bottom));right:14px}
 .pod-av-dock{top:8px;right:8px;display:none}
 /* کنترل‌ها بعد از چند ثانیه محو می‌شوند؛ با لمسِ صحنه دوباره ظاهر */
 .pod-av-fs,.pod-3d-zoom{opacity:0;transition:opacity .35s ease;pointer-events:none}
@@ -275,26 +276,33 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .pod-av--full{position:fixed;inset:0;z-index:9998;margin:0;background:#0b1210;display:flex;align-items:center;justify-content:center}
 .pod-av--full .pod-av-stage{width:100vw;width:100dvw;height:100dvh;max-width:none;border-radius:0;transition:none!important}
 .pod-av--full.pod-av--3d .pod-av-stage{height:100dvh}
-.pod-av--full .pod-cap{position:absolute;left:14px;right:14px;bottom:calc(68px + env(safe-area-inset-bottom));margin:0;max-width:none;z-index:5}
-.pod-av-bar{position:absolute;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:6;direction:ltr;display:none;align-items:center;gap:10px;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:8px 14px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-.pod-av--full .pod-av-bar{display:flex;opacity:0;pointer-events:none;transition:opacity .32s ease}
-.pod-av--full.pod-av--ui .pod-av-bar{opacity:1;pointer-events:auto}
+.pod-av--full .pod-cap{position:absolute;left:14px;right:14px;bottom:calc(130px + env(safe-area-inset-bottom));margin:0;max-width:none;z-index:5}
+.pod-av-bar{position:absolute;left:10px;right:10px;bottom:10px;z-index:6;direction:ltr;display:flex;align-items:center;gap:9px;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.14);border-radius:13px;padding:6px 11px;opacity:0;pointer-events:none;transition:opacity .32s ease;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.pod-av--ui .pod-av-bar{opacity:1;pointer-events:auto}
+.pod-av--full .pod-av-bar{left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));border-radius:16px;padding:8px 14px;gap:10px}
 .pod-av-t{flex:0 0 auto;min-width:40px;text-align:center;font-size:11px;color:#fff;font-variant-numeric:tabular-nums}
 .pod-av-slider{flex:1;min-width:0;-webkit-appearance:none;appearance:none;height:5px;border-radius:5px;outline:none;cursor:pointer;background:linear-gradient(to right,#fff 0 var(--p,0%),rgba(255,255,255,.28) var(--p,0%) 100%)}
 .pod-av-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.5)}
 .pod-av-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:none}
-.pod-av-ctl{position:absolute;inset:0;z-index:5;direction:ltr;display:none;align-items:center;justify-content:center;gap:30px;pointer-events:none}
-.pod-av--full .pod-av-ctl{display:flex;opacity:0;pointer-events:none;transition:opacity .32s ease}
-.pod-av--full.pod-av--ui .pod-av-ctl{opacity:1;pointer-events:auto}
-.pod-av-cbtn{flex:0 0 auto;width:70px;height:70px;border-radius:50%;border:1px solid rgba(255,255,255,.42);background:radial-gradient(120% 120% at 30% 18%, rgba(255,255,255,.30), rgba(255,255,255,.11) 55%, rgba(255,255,255,.05));color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);box-shadow:0 8px 24px rgba(0,0,0,.45),inset 0 1px 1px rgba(255,255,255,.5),inset 0 -8px 18px rgba(255,255,255,.06);transition:transform .12s}
+.pod-av-ctl{position:absolute;inset:0;z-index:5;direction:ltr;display:flex;align-items:center;justify-content:center;gap:20px;opacity:0;pointer-events:none;transition:opacity .32s ease}
+.pod-av--ui .pod-av-ctl{opacity:1;pointer-events:auto}
+.pod-av--full .pod-av-ctl{gap:30px}
+
+.pod-av-cbtn{flex:0 0 auto;width:52px;height:52px;border-radius:50%;border:1px solid rgba(255,255,255,.42);background:radial-gradient(120% 120% at 30% 18%, rgba(255,255,255,.30), rgba(255,255,255,.11) 55%, rgba(255,255,255,.05));color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);box-shadow:0 8px 24px rgba(0,0,0,.45),inset 0 1px 1px rgba(255,255,255,.5),inset 0 -8px 18px rgba(255,255,255,.06);transition:transform .12s}
 .pod-av-cbtn:active{transform:scale(.9)}
-.pod-av-cbtn svg{width:40px;height:40px;stroke:currentColor;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+
+.pod-av-cbtn svg{width:30px;height:30px;stroke:currentColor;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .pod-av-cbtn svg path{fill:none}
 .pod-av-cbtn svg text{fill:currentColor;stroke:none;font-family:inherit}
 .pod-av-cbtn svg .ah{fill:currentColor;stroke:none}
-.pod-av-cplay{width:84px;height:84px;background:rgba(90,102,120,.5);border-color:rgba(255,255,255,.5);box-shadow:0 8px 26px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.35)}
-.pod-av-cplay svg{width:38px;height:38px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
-.pod-av-cplay svg *{fill:#fff;stroke:none}
+
+.pod-av-cplay{width:62px;height:62px;background:rgba(90,102,120,.5);border-color:rgba(255,255,255,.5);box-shadow:0 8px 26px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.35)}
+.pod-av-cplay svg{width:28px;height:28px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
+.pod-av--full .pod-av-cbtn{width:70px;height:70px}
+.pod-av--full .pod-av-cbtn svg{width:40px;height:40px}
+.pod-av--full .pod-av-cplay{width:84px;height:84px}
+.pod-av--full .pod-av-cplay svg{width:38px;height:38px}
+.pod-av-cbtn.pod-av-cplay svg path,.pod-av-cbtn.pod-av-cplay svg rect{fill:#fff;stroke:none}
 /* مینی‌پلیرِ شناور (داخلِ همین صفحه، حینِ اسکرول) */
 .pod-cap[hidden]{display:none}
 .pod-cap{position:relative;margin:7px auto 0;width:100%;max-width:min(100%,360px);background:rgba(10,18,26,.66);border:1px solid var(--glass-brd);border-radius:11px;padding:6px 10px;display:flex;align-items:flex-end;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
@@ -316,7 +324,7 @@ input[type=time].qbg-in,input[type=date].qbg-in{-webkit-appearance:none;appearan
 .pod-av--float .pod-3d-bg{display:none}
 .pod-av--float .pod-av-stage{width:calc(120px * var(--fscale,1));height:calc(152px * var(--fscale,1));max-width:none;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.16);transition:none!important}
 .pod-av--float.pod-av--3d .pod-av-stage{height:calc(152px * var(--fscale,1))}
-.pod-av--float .pod-av-fs,.pod-av--float .pod-3d-zoom{display:none}
+.pod-av--float .pod-av-fs,.pod-av--float .pod-3d-zoom,.pod-av--float .pod-av-ctl,.pod-av--float .pod-av-bar{display:none}
 /* × مینی‌پلیر: پیش‌فرض محو، با لمس (کلاسِ pod-av--ui) چند ثانیه ظاهر می‌شود */
 .pod-av--float .pod-av-dock{display:flex;width:26px;height:26px;font-size:13px;top:4px;right:4px;opacity:0;pointer-events:none;transition:opacity .35s ease}
 .pod-av--float.pod-av--ui .pod-av-dock{opacity:1;pointer-events:auto}
@@ -2600,7 +2608,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۱.۱</b> · انتشار: ۱۴۰۵/۰۶/۲۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۱.۲</b> · انتشار: ۱۴۰۵/۰۶/۲۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -8532,7 +8540,7 @@ function renderPodcastCard(){
         </div>
         <div class="pod-av-bar">
           <span class="pod-av-t" id="podFsCur">${podFmtTime(el)}</span>
-          <input id="podFsSlider" class="pod-av-slider" type="range" min="0" max="${Math.max(1,Math.round(total))}" value="${Math.round(el)}" style="--p:${(100*el/Math.max(1,total)).toFixed(1)}%" oninput="podFsInput(this.value)" onchange="podFsChange(this.value)">
+          <input id="podFsSlider" class="pod-av-slider" type="range" min="0" max="${Math.max(1,Math.round(total))}" value="${Math.round(el)}" ${sliderOn?'':'disabled'} style="--p:${(100*el/Math.max(1,total)).toFixed(1)}%" oninput="podFsInput(this.value)" onchange="podFsChange(this.value)">
           <span class="pod-av-t" id="podFsRem">-${podFmtTime(Math.max(0,total-el))}</span>
         </div>
         <button class="pod-av-fs" onclick="podAvToggleFull(event)" title="تمام‌صفحه">⛶</button>
