@@ -2608,7 +2608,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۱.۷</b> · انتشار: ۱۴۰۵/۰۶/۲۲ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۱.۸</b> · انتشار: ۱۴۰۵/۰۶/۲۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -11156,8 +11156,8 @@ function medSaveCustom(arr){ try{ localStorage.setItem(custom_meds_key,JSON.stri
 let MED_INDEX=[];
 function buildMedIndex(){
   MED_INDEX=[];
-  Object.keys(MED_DB).forEach(cat=>{ MED_DB[cat].forEach(m=>{ MED_INDEX.push({cat,n:m.n,u:m.u,b:m.b,d:m.d,t:m.t,s:m.s,no:m.no,custom:false,norm:normalizeFa(m.n)}); }); });
-  medLoadCustom().forEach(m=>{ MED_INDEX.push({cat:m.cat||'داروهای من',n:m.n,u:m.u||'',b:m.b||'',d:m.d||'',t:m.t||'',s:m.s||'',no:m.no||'',custom:true,norm:normalizeFa(m.n)}); });
+  Object.keys(MED_DB).forEach(cat=>{ MED_DB[cat].forEach(m=>{ MED_INDEX.push({cat,n:m.n,u:m.u,b:m.b,d:m.d,t:m.t,s:m.s,no:m.no,custom:false,norm:normalizeFa(m.n),hay:srchNorm(m.n+' '+cat)}); }); });
+  medLoadCustom().forEach(m=>{ const mc=m.cat||'داروهای من'; MED_INDEX.push({cat:mc,n:m.n,u:m.u||'',b:m.b||'',d:m.d||'',t:m.t||'',s:m.s||'',no:m.no||'',custom:true,norm:normalizeFa(m.n),hay:srchNorm(m.n+' '+mc)}); });
 }
 function medEmoji(cat){ return MED_CAT_EMOJI[cat]||'💊'; }
 function medEsc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -11168,7 +11168,7 @@ function medDoSearch(prefix){
   const box=document.getElementById(prefix+'Results'); if(!box) return;
   const q=normalizeFa(inp.value.trim());
   if(!q){ box.classList.remove('show'); box.innerHTML=''; return; }
-  const matches=MED_INDEX.filter(x=>x.norm.includes(q)).slice(0,40);
+  const matches=srchRank(MED_INDEX, inp.value.trim(), 40);
   let h='';
   if(matches.length===0){
     h='<div class="search-empty">در کتابخانه نبود — می‌توانی همین نام را دستی ثبت کنی.</div>';
@@ -11305,7 +11305,7 @@ function openQuickMeal(){
 }
 function qmealSearch(input){ const box=document.getElementById('qmealResults'); const q=normalizeFa(input.value);
   if(!q){ box.classList.remove('show'); box.innerHTML=''; return; }
-  const matches=SEARCH_INDEX.filter(x=>x.norm.includes(q)).slice(0,40);
+  const matches=srchRank(SEARCH_INDEX, input.value, 40);
   if(!matches.length){ box.innerHTML='<div class="search-empty">موردی پیدا نشد</div>'; box.classList.add('show'); return; }
   box.innerHTML=matches.map(m=>`<div class="search-item" onclick="qmealPick('${m.cat.replace(/'/g,"\\'")}','${m.item.replace(/'/g,"\\'")}')"><span>${itemEmoji(m.cat,m.item)} ${m.item}</span><span class="cat">${(CAT_EMOJI[m.cat]||'')} ${m.cat}</span></div>`).join('');
   box.classList.add('show'); }
@@ -12367,19 +12367,57 @@ function buildSearchIndex(){
   SEARCH_INDEX=[];
   Object.keys(DB).forEach(cat=>{
     Object.keys(DB[cat]).forEach(item=>{
-      SEARCH_INDEX.push({cat,item,norm:normalizeFa(item)});
+      SEARCH_INDEX.push({cat,item,norm:normalizeFa(item),hay:srchNorm(item+' '+cat)});
     });
   });
 }
 function normalizeFa(s){
   return s.replace(/ي/g,'ی').replace(/ك/g,'ک').replace(/‌/g,' ').replace(/\u200c/g,' ').replace(/\s+/g,' ').trim();
 }
+/* ===== موتورِ جستجوی مشترک (توکنی، بی‌ترتیب، رتبه‌بندی‌شده) — یک هستهٔ واحد برای همهٔ سرچ‌ها ===== */
+function srchNorm(s){
+  return String(s==null?'':s)
+    .replace(/[ىيﯼﯽﻱﻲ]/g,'ی').replace(/[كﻙﻚﻛﻜ]/g,'ک')
+    .replace(/[ۀةﺔ]/g,'ه').replace(/[أإآٱ]/g,'ا').replace(/ؤ/g,'و').replace(/ئ/g,'ی')
+    .replace(/[ً-ْٰ]/g,'')
+    .replace(/[۰-۹]/g,function(d){return String.fromCharCode(d.charCodeAt(0)-0x06F0+48);})
+    .replace(/[٠-٩]/g,function(d){return String.fromCharCode(d.charCodeAt(0)-0x0660+48);})
+    .replace(/[​-‏‪-‮⁦-⁩]/g,' ')
+    .replace(/[()\[\]{}«»"'`،؛,.\/\\\-_+*:;؟?!]/g,' ')
+    .replace(/\s+/g,' ').trim().toLowerCase();
+}
+function srchTokens(q){ return srchNorm(q).split(' ').filter(Boolean); }
+function srchScore(hay, tokens){
+  if(!tokens || !tokens.length) return -1;
+  let score=0;
+  for(let k=0;k<tokens.length;k++){
+    const t=tokens[k]; const i=hay.indexOf(t);
+    if(i<0) return -1;
+    if(i===0) score+=100;
+    else if(hay[i-1]===' ') score+=60;
+    else score+=25;
+    score+=Math.max(0,20-i*0.5);
+    score+=t.length;
+  }
+  score-=hay.length*0.12;
+  return score;
+}
+function srchRank(list, rawq, cap){
+  const tokens=srchTokens(rawq); if(!tokens.length || !list) return [];
+  const out=[];
+  for(let i=0;i<list.length;i++){ const x=list[i];
+    const hay=(x.hay!=null)?x.hay:srchNorm(x.norm||'');
+    const s=srchScore(hay,tokens); if(s>=0) out.push({x,s,i});
+  }
+  out.sort(function(a,b){ return b.s-a.s || a.i-b.i; });
+  return out.slice(0,cap||40).map(function(o){return o.x;});
+}
 function doSearch(input){
   const row=input.closest('.food-row');
   const box=row.querySelector('.search-results');
   const q=normalizeFa(input.value);
   if(!q){ box.classList.remove('show'); box.innerHTML=''; return; }
-  const matches=SEARCH_INDEX.filter(x=>x.norm.includes(q)).slice(0,40);
+  const matches=srchRank(SEARCH_INDEX, input.value, 40);
   if(matches.length===0){
     box.innerHTML='<div class="search-empty">موردی پیدا نشد</div>';
     box.classList.add('show'); return;
@@ -13381,7 +13419,7 @@ function doSearchPlan(input){
   const box=document.getElementById('planSearchResults');
   const q=normalizeFa(input.value);
   if(!q){ box.classList.remove('show'); box.innerHTML=''; return; }
-  const matches=SEARCH_INDEX.filter(x=>x.norm.includes(q)).slice(0,40);
+  const matches=srchRank(SEARCH_INDEX, input.value, 40);
   if(matches.length===0){ box.innerHTML='<div class="search-empty">موردی پیدا نشد</div>'; box.classList.add('show'); return; }
   box.innerHTML=matches.map(m=>
     `<div class="search-item" onclick="pickPlanFood('${m.cat.replace(/'/g,"\\'")}','${m.item.replace(/'/g,"\\'")}')">
@@ -13789,7 +13827,7 @@ function doSearchEdit(input){
   const box=document.getElementById('editSearchResults');
   const q=normalizeFa(input.value);
   if(!q){ box.classList.remove('show'); box.innerHTML=''; return; }
-  const matches=SEARCH_INDEX.filter(x=>x.norm.includes(q)).slice(0,40);
+  const matches=srchRank(SEARCH_INDEX, input.value, 40);
   if(matches.length===0){ box.innerHTML='<div class="search-empty">موردی پیدا نشد</div>'; box.classList.add('show'); return; }
   box.innerHTML=matches.map(m=>
     `<div class="search-item" onclick="pickEditFood('${m.cat.replace(/'/g,"\\'")}','${m.item.replace(/'/g,"\\'")}')">
@@ -16424,16 +16462,25 @@ function exPickRender(){
   const q=_exNorm((document.getElementById('exSearch')||{}).value||'').trim();
   if(cats){ cats.innerHTML=Object.keys(EX_LIBRARY).map(g=>
     `<button type="button" class="exp-cat${_exPickCat===g?' on':''}" onclick="exPickCat('${g}')">${EX_LIBRARY[g].cat}</button>`).join(''); }
+  const toks=q?srchTokens(q):[];
   const out=[];
   for(const g in EX_LIBRARY){
     if(_exPickCat && g!==_exPickCat) continue;
     EX_LIBRARY[g].items.forEach(ex=>{
-      if(q){ const hay=_exNorm([ex.name,ex.alt,ex.desc,ex.benefit,EX_LIBRARY[g].cat].join(' '));
-             if(q.split(/\s+/).some(w=>hay.indexOf(w)<0)) return; }
-      out.push({ex,g});
+      let sc=0;
+      if(toks.length){
+        const nameHay=srchNorm([ex.name,ex.alt,EX_LIBRARY[g].cat].join(' '));
+        sc=srchScore(nameHay,toks);
+        if(sc<0){ // در نام نبود ⇒ در توضیح/فایده جستجو کن ولی پایین‌تر رتبه بده
+          const fullHay=srchNorm([ex.name,ex.alt,ex.desc,ex.benefit,EX_LIBRARY[g].cat].join(' '));
+          sc=srchScore(fullHay,toks); if(sc<0) return; sc-=500;
+        }
+      }
+      out.push({ex,g,sc});
     });
   }
   if(!out.length){ res.innerHTML=`<div class="exp-none">چیزی پیدا نشد. نامِ دیگری امتحان کن یا از «ورزشِ دلخواه» اضافه کن.</div>`; return; }
+  if(toks.length) out.sort((a,b)=>b.sc-a.sc);
   const cap=q?60:(_exPickCat?60:14);
   res.innerHTML=out.slice(0,cap).map(o=>
     `<button type="button" class="exp-i" onclick="exPickAdd('${o.ex.id}')">
@@ -17608,7 +17655,8 @@ function buildLabSearchIndex(){
     for(const k in LAB_LIBRARY[g].items){
       const it=LAB_LIBRARY[g].items[k];
       LAB_SEARCH_INDEX.push({key:k, cat:LAB_LIBRARY[g].cat, fa:it.fa, en:it.en||'',
-        norm:(normalizeFa(it.fa)+' '+(it.en||'')+' '+LAB_LIBRARY[g].cat).toLowerCase()});
+        norm:(normalizeFa(it.fa)+' '+(it.en||'')+' '+LAB_LIBRARY[g].cat).toLowerCase(),
+        hay:srchNorm(it.fa+' '+(it.en||'')+' '+LAB_LIBRARY[g].cat)});
     }
   }
 }
@@ -17618,7 +17666,7 @@ function doLabSearch(input){
   const q=normalizeFa(input.value).toLowerCase();
   if(!q){ box.classList.remove('show'); box.innerHTML=''; return; }
   const sel=new Set((loadLabs().selected)||[]);
-  const matches=LAB_SEARCH_INDEX.filter(x=>x.norm.includes(q)).slice(0,40);
+  const matches=srchRank(LAB_SEARCH_INDEX, input.value, 40);
   if(!matches.length){ box.innerHTML='<div class="search-empty">آزمایشی با این نام پیدا نشد</div>'; box.classList.add('show'); return; }
   box.innerHTML=matches.map(m=>{
     const added=sel.has(m.key);
