@@ -1268,11 +1268,11 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .wk-move-btn:disabled{color:#555}
 .wk-del-btn{background:var(--red-dim,#5a2b28);border:none;color:#f2b8b3;cursor:pointer;font-size:16px;width:36px;height:36px;border-radius:9px;flex:0 0 auto;display:flex;align-items:center;justify-content:center}
 .wk-del-btn:active{background:#7a3b36}
-.wk-ctrl-label{font-size:12px;color:var(--muted);margin-bottom:5px}
-.wk-step{display:flex;align-items:center;justify-content:center;gap:8px}
-.wk-step button{background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:8px;width:38px;height:38px;cursor:pointer;font-size:20px;font-weight:800;-webkit-tap-highlight-color:transparent}
+.wk-ctrl-label{font-size:11px;color:var(--muted);margin-bottom:5px;white-space:nowrap}
+.wk-step{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:nowrap}
+.wk-step button{background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:8px;width:33px;height:33px;flex:0 0 auto;cursor:pointer;font-size:18px;font-weight:800;-webkit-tap-highlight-color:transparent}
 .wk-step button:active{background:var(--teal-dim);color:#fff}
-.wk-step .wk-step-val{font-size:17px;font-weight:800;min-width:52px;text-align:center;cursor:pointer;border-bottom:1.5px dashed var(--teal-dim);padding:2px 4px;border-radius:4px}
+.wk-step .wk-step-val{font-size:15px;font-weight:800;min-width:38px;text-align:center;cursor:pointer;border-bottom:1.5px dashed var(--teal-dim);padding:2px 2px;border-radius:4px}
 .wk-step .wk-step-val:active{background:var(--teal-dim)}
 /* ===== اسپینر چرخشی عدد (ست/ثانیه) ===== */
 .spin-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}
@@ -1307,6 +1307,12 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .wk-ring-bg{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0}
 .wk-ring-3d{position:absolute;inset:0;z-index:1}
 .wk-ring-3d canvas{width:100%!important;height:100%!important;display:block}
+/* تا مدلِ درست لود نشده، بومِ سه‌بعدی پنهان است (وگرنه یک لحظه مدلِ قبلی دیده می‌شود) */
+.pod3d-swap canvas{opacity:0!important}
+.pod3d-swap{position:relative}
+.pod3d-swap::after{content:'';position:absolute;left:50%;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;
+  border:2.5px solid rgba(127,227,208,.25);border-top-color:#7fe3d0;border-radius:50%;animation:pod3dSpin .8s linear infinite}
+@keyframes pod3dSpin{to{transform:rotate(360deg)}}
 /* ── پاپ‌آپِ تمام‌صفحهٔ جلسه تمرینی + مینی‌پلیرِ کشیدنی ── */
 .wkrun-ov{position:fixed;inset:0;z-index:9500}
 .wkrun-ov[hidden]{display:none}
@@ -1317,7 +1323,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .wkrun-card .wk-ring .trk,.wkrun-card .wk-ring .prg{stroke-width:7}
 /* قابِ گردِ «ساعتِ هوشمند»: کلِ محتوا داخلِ یک دیسکِ بزرگِ تیره */
 .wkrun-dial{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
-  width:min(90vw,44vh,400px);height:min(90vw,44vh,400px);border-radius:50%;
+  flex:0 0 auto;aspect-ratio:1;width:min(90vw,44vh,400px);height:min(90vw,44vh,400px);border-radius:50%;
   background:radial-gradient(circle at 50% 30%,#1b2b3c 0%,#121b27 55%,#0b1119 100%);
   border:1px solid rgba(120,160,190,.16);box-shadow:0 26px 70px rgba(0,0,0,.6),inset 0 2px 20px rgba(140,190,220,.07)}
 .wkrun-dial .wkrun-name{font-size:16px}
@@ -2698,7 +2704,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۲.۹</b> · انتشار: ۱۴۰۵/۰۶/۲۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۳.۰</b> · انتشار: ۱۴۰۵/۰۶/۲۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -17225,8 +17231,8 @@ function renderWkList(){
           <button class="wk-move-btn" onclick="wkMove(${i},1)" ${i===_wkList.length-1?'disabled':''}>▼</button>
         </div>
         <button class="wk-del-btn" onclick="wkRemove(${i})" title="حذف">✕</button></div>
-      <div style="display:flex;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
-        <div style="flex:1;text-align:center">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
+        <div style="flex:1 1 30%;min-width:0;text-align:center">
           <div class="wk-ctrl-label">تعداد ست</div>
           <div class="wk-step">
             <button onclick="wkSets(${i},-1)">−</button>
@@ -17234,7 +17240,7 @@ function renderWkList(){
             <button onclick="wkSets(${i},1)">+</button>
           </div>
         </div>
-        <div style="flex:1;text-align:center">
+        <div style="flex:1 1 30%;min-width:0;text-align:center">
           <div class="wk-ctrl-label">زمان هر ست</div>
           <div class="wk-step">
             <button onclick="wkDur(${i},-10)">−</button>
@@ -17242,7 +17248,7 @@ function renderWkList(){
             <button onclick="wkDur(${i},10)">+</button>
           </div>
         </div>
-        <div style="flex:1;text-align:center">
+        <div style="flex:1 1 30%;min-width:0;text-align:center">
           <div class="wk-ctrl-label">استراحتِ بینِ ست</div>
           <div class="wk-step">
             <button onclick="wkRest(${i},-5)">−</button>
@@ -17400,6 +17406,7 @@ function wkAvatarMount(){
            const nb=h.querySelector('.pod-3d-badge'); if(nb) nb.classList.add('fadeout'); }catch(e){}
       try{ wkCoachRestPose(); }catch(e){}
       try{ pod3dResize(); }catch(e){}
+      try{ pod3dSwapGuard(h, want); }catch(e){}
       if(want && _pod3d.srcUrl!==want){ pod3dLoadModel(want,'female'); }   // شخصیتِ مخصوصِ تمرین
       else { try{ pod3dApplyFrame(); }catch(e){} if(!_pod3d.raf) pod3dStartLoop(); }
       if(wkCfg().bg){ try{ pod3dBgStart(); }catch(e){} } else { try{ pod3dBgStop(); }catch(e){} }
@@ -17546,7 +17553,7 @@ function wkCheckMoves(){
 try{ setTimeout(wkCheckMoves, 2500); }catch(e){}
 /* ═══ موتورِ پوزِ مربی: هر حرکت با جهت‌های جهانی ═══ */
 function wkPlayMove(mv,t,X){
-  const {aim,v,set,fing,hipsDrop,G,bh,legLen}=X;
+  const {aim,v,set,fing,hipsDrop,G,bh,legLen}=X; const T=X.T, k=X.k;
   const H=WK_HEAD_DIR, F=-WK_HEAD_DIR;
   const A=(l,r,lf,rf)=>{ aim(G.LeftArm,G.LeftForeArm,l); aim(G.RightArm,G.RightForeArm,r);
                          aim(G.LeftForeArm,G.LeftHand,lf||l); aim(G.RightForeArm,G.RightHand,rf||r); };
@@ -17605,11 +17612,29 @@ function wkPlayMove(mv,t,X){
     case 'legside': { const p=sw(1.8),pp=Math.max(0,p),pn=Math.max(0,-p);
       L(v(0.10+0.80*pp,-0.94,0.05),v(-0.10-0.80*pn,-0.94,0.05));
       A(v(0.55,-0.78,0.18),v(-0.55,-0.78,0.18)); fing('open','open'); break; }
-    case 'wallpush': { const c=osc(2.2);   // نیم‌رخ رو به دیوار: دست‌ها روی دیوار، آرنج خم/راست
-      A(v(H*0.94,-0.20,0.18),v(H*0.94,-0.20,-0.18),
-        v(H*(0.96-0.42*c),-0.12-0.30*c,0.14),v(H*(0.96-0.42*c),-0.12-0.30*c,-0.14));
-      L(v(-H*0.10,-0.99,0.05),v(-H*0.10,-0.99,-0.05));
-      set('Spine',0.05*c,0,0); fing('flat','flat'); break; }
+    case 'wallpush': { const c=osc(2.2);
+      // ⚠️ کفِ دست باید روی دیوار «قفل» بماند و فقط بدن جلو/عقب برود. با aim نمی‌شد
+      //    (مچ همراهِ آرنج جابه‌جا می‌شد)، پس از IKِ دو-استخوانهٔ `pod3dReach` استفاده می‌کنیم:
+      //    هدفِ مچ نقطهٔ ثابتی روی دیوار است و آرنج خودش خم می‌شود.
+      // ⚠️ فاصلهٔ دیوار باید از «طولِ دست» بیاید نه قدِ بدن، وگرنه هدفِ IK دور از دسترس
+      //    می‌ماند و مچ اصلاً روی دیوار ننشیند.
+      let armL=bh*0.30;
+      try{ armL=G.LeftForeArm.b.position.length()+G.LeftHand.b.position.length(); }catch(e){}
+      const C0=_pod3d.bodyC||{x:0,y:bh*0.5,z:0};
+      const wallX=C0.x + H*armL*0.95;
+      _pod3d.wallX=wallX;
+      try{ if(_pod3d.modelRoot) _pod3d.modelRoot.position.x += H*armL*0.36*c; }catch(e){}
+      L(v(-H*0.12,-0.99,0.05),v(-H*0.12,-0.99,-0.05));
+      try{
+        if(_pod3d.root&&_pod3d.root.updateMatrixWorld) _pod3d.root.updateMatrixWorld(true);
+        const sL=new T.Vector3(), sR=new T.Vector3();
+        G.LeftArm.b.getWorldPosition(sL); G.RightArm.b.getWorldPosition(sR);
+        const pole=new T.Vector3(0,-1,0);
+        const kIK=Math.min(1, k*4);   // قفلِ سریع‌ترِ کفِ دست (شانه هر فریم جابه‌جا می‌شود)
+        pod3dReach('L', new T.Vector3(wallX, sL.y+bh*0.015, sL.z), pole, kIK);
+        pod3dReach('R', new T.Vector3(wallX, sR.y+bh*0.015, sR.z), pole, kIK);
+      }catch(e){}
+      set('Spine',0.04*c,0,0); fing('flat','flat'); break; }
     case 'curl': { const c=osc(2.6);
       A(v(0.30,-0.94,0.10),v(-0.30,-0.94,0.10),v(0.22,-0.30+1.05*c,0.55),v(-0.22,-0.30+1.05*c,0.55));
       standLegs(); fing('grip','grip'); break; }
@@ -17731,8 +17756,11 @@ function wkPlayMove(mv,t,X){
     /* ── به پشت ── */
     case 'crunch': { const c=osc(2.0);
       L(v(F*0.72,0.69,0.08),v(F*0.72,0.69,-0.08),v(F*0.45,-0.89,0.05),v(F*0.45,-0.89,-0.05));
-      A(v(H*0.45,0.80,0.18),v(H*0.45,0.80,-0.18),v(H*0.86,0.38,0.22),v(H*0.86,0.38,-0.22));
-      set('Spine1',0.16*c,0,0); set('Spine2',0.14*c,0,0); set('Neck',0.10*c,0,0);
+      // دست‌ها با بالاآمدنِ تنه به سمتِ زانو کشیده می‌شوند
+      A(v(H*(0.45-0.95*c),0.80-0.35*c,0.18),v(H*(0.45-0.95*c),0.80-0.35*c,-0.18),
+        v(H*(0.86-1.30*c),0.38-0.30*c,0.22),v(H*(0.86-1.30*c),0.38-0.30*c,-0.22));
+      // ⚠️ جمع‌شدنِ کاملِ تنه (قبلاً ۰٫۴۰ رادیان ≈ ۲۳° بود و حرکت نصفه دیده می‌شد)
+      set('Spine',0.62*c,0,0); set('Spine1',0.64*c,0,0); set('Spine2',0.52*c,0,0); set('Neck',0.20*c,0,0);
       fing('relax','relax'); break; }
     case 'bridge': { const c=osc(1.8);
       L(v(F*0.70,0.71,0.08),v(F*0.70,0.71,-0.08),v(F*0.50,-0.87,0.05),v(F*0.50,-0.87,-0.05));
@@ -17839,6 +17867,24 @@ function wkPropsEnsure(){
   _pod3d.root.add(grp);
   P={grp,mat,matE,wall,wallE}; _pod3d.wkProps=P; return P;
 }
+/* ⚠️ بوم بینِ مجریِ پادکست و مربی مشترک است؛ هنگامِ تعویضِ مدل یک لحظه مدلِ قبلی دیده
+   می‌شد. تا لودِ مدلِ درست، بوم پنهان و یک اسپینر نشان داده می‌شود. */
+function pod3dSwapGuard(hostEl, wantUrl){
+  try{
+    if(!hostEl) return;
+    if(!wantUrl || _pod3d.srcUrl===wantUrl){ hostEl.classList.remove('pod3d-swap'); return; }
+    hostEl.classList.add('pod3d-swap');
+    if(_pod3d._swapT) clearInterval(_pod3d._swapT);
+    let n=0;
+    _pod3d._swapT=setInterval(function(){
+      n++;
+      const done = (_pod3d.srcUrl===wantUrl) || n>80;   // حداکثر ~۸ ثانیه
+      if(done){ clearInterval(_pod3d._swapT); _pod3d._swapT=0;
+        try{ hostEl.classList.remove('pod3d-swap');
+             document.querySelectorAll('.pod3d-swap').forEach(function(x){ x.classList.remove('pod3d-swap'); }); }catch(e){} }
+    },100);
+  }catch(e){}
+}
 function wkPropsHide(){ try{ const P=_pod3d&&_pod3d.wkProps; if(P&&P.grp) P.grp.visible=false; }catch(e){} }
 function wkPropsUpdate(posture, G){
   const P=wkPropsEnsure(); if(!P) return; const T=THREE;
@@ -17862,7 +17908,7 @@ function wkPropsUpdate(posture, G){
     P.mat.position.set(C.x, y, C.z); P.matE.position.copy(P.mat.position);
   }
   if(wallOn){
-    const x=C.x + WK_HEAD_DIR*bh*0.42;
+    const x=(posture==='side'&&_pod3d.wallX!=null) ? _pod3d.wallX : (C.x + WK_HEAD_DIR*bh*0.30);
     P.wall.position.set(x, floorY+bh*0.58, C.z);
     P.wall.rotation.set(0, -WK_HEAD_DIR*Math.PI/2, 0);
     P.wallE.position.copy(P.wall.position); P.wallE.rotation.copy(P.wall.rotation);
@@ -17909,7 +17955,10 @@ function wkAvatarUnmount(){
   wkCoachReset();
   try{ const back=document.getElementById('pod3dHost'); const cv=_pod3d&&_pod3d.ren&&_pod3d.ren.domElement;
        if(back&&cv){ back.appendChild(cv); _pod3d.host=back; try{ pod3dResize(); pod3dApplyFrame(); }catch(e){} } }catch(e){}
-  try{ if((_pod.avMode||'photo')==='3d'){ pod3dEnsure(); if(podCfg().avBg) pod3dBgStart(); else pod3dBgStop(); }
+  try{ if((_pod.avMode||'photo')==='3d'){
+         const ph=document.getElementById('pod3dHost');
+         try{ pod3dSwapGuard(ph, podCfg().av3dUrl||pod3dDefaultUrl()); }catch(e){}
+         pod3dEnsure(); if(podCfg().avBg) pod3dBgStart(); else pod3dBgStop(); }
        else { pod3dStopLoop(); pod3dBgStop(); } }catch(e){}
 }
 /* موتورِ پوزِ مربی — هر فریم صدا زده می‌شود */
@@ -17976,7 +18025,7 @@ function pod3dCoachGesture(t, energy, set, G, T){
   }
   // ── فازِ کار: حرکتِ اختصاصیِ همان ورزش ──
   hipsDrop(0);
-  try{ wkPlayMove(mv, t, {aim,v,set,fing,hipsDrop,G,bh:(_pod3d.bodyH||1.7),legLen,orient}); }catch(e){}
+  try{ wkPlayMove(mv, t, {aim,v,set,fing,hipsDrop,G,bh:(_pod3d.bodyH||1.7),legLen,orient,T,k}); }catch(e){}
 }
 /* آپدیتِ هر ثانیه: عددِ وسط + زاویهٔ حلقه (بدونِ رندرِ کاملِ لیست) */
 function wkPaintClock(){
