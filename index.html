@@ -1300,7 +1300,12 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .wk-ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
 .wk-ring-time{font-size:48px;font-weight:800;letter-spacing:2px;direction:ltr;line-height:1}
 .wk-ring-sub{font-size:12px;color:var(--muted);font-weight:600}
-.wk-run-btns{display:flex;gap:8px;justify-content:center;margin-top:2px}
+.wk-run-btns{display:flex;gap:22px;justify-content:center;align-items:flex-start;margin-top:6px}
+.wk-cbtn{display:inline-flex;flex-direction:column;align-items:center;gap:5px;border:none;background:none;cursor:pointer;color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;-webkit-tap-highlight-color:transparent}
+.wk-cbtn .ic{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:21px;background:var(--panel-2);border:1.5px solid var(--line);transition:transform .12s ease,background .2s;line-height:1}
+.wk-cbtn:active .ic{transform:scale(.9)}
+.wk-cbtn--main{color:var(--teal)}
+.wk-cbtn--main .ic{width:70px;height:70px;font-size:27px;color:#fff;background:linear-gradient(135deg,var(--teal),var(--teal-dim));border-color:transparent;box-shadow:0 7px 20px rgba(63,185,163,.38)}
 .wk-mini{display:flex;align-items:center;gap:9px;background:var(--panel-2);border-radius:10px;padding:8px 11px;margin-bottom:5px}
 .wk-mini .nm{flex:1;min-width:0;font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wk-mini .st{font-size:11.5px;font-weight:800;flex:0 0 auto}
@@ -2635,7 +2640,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۲.۲</b> · انتشار: ۱۴۰۵/۰۶/۲۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۲.۳</b> · انتشار: ۱۴۰۵/۰۶/۲۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -7441,8 +7446,8 @@ function pod3dEnsureLib(cb){
 // گالریِ آواتارهای آماده (رایگان، ریگ‌شده با ویزم/پلک) — از مخزن‌های عمومیِ GitHub با jsDelivr
 // (CORS دارد و کش می‌شود). فایل‌ها در مخزنِ اپ نیستند تا حجمِ index.html بالا نرود.
 const POD_3D_PRESETS=[
-  {id:'w1', g:'female', fa:'👩 زنِ کت‌وشلوار', url:'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/brunette.glb'},
-  {id:'w2', g:'female', fa:'👓 زنِ عینکی',      url:'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/avaturn.glb'}
+  {id:'w1', g:'female', fa:'👓 زنِ عینکی',      url:'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/brunette.glb'},
+  {id:'w2', g:'female', fa:'👩 زنِ کت‌وشلوار', url:'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/avaturn.glb'}
 ];
 function pod3dDefaultUrl(){ return POD_3D_PRESETS[0]?POD_3D_PRESETS[0].url:''; }
 function pod3dPickPreset(url){ podCfgSet({av3dUrl:url}); _pod3d.srcUrl=''; uiToast&&uiToast('در حالِ بارگیریِ آواتار…'); try{ renderPodcastCard(); renderPodCfg(); }catch(e){} }
@@ -17177,8 +17182,10 @@ function renderWkRun(box){
       </div>
     </div>
     <div class="wk-run-btns">
-      ${_wkTimer?`<button class="quick-btn" style="padding:9px 20px" onclick="wkPause()">⏸ مکث</button>`:`<button class="quick-btn" style="padding:9px 20px" onclick="wkResume()">▶️ ادامه</button>`}
-      <button class="quick-btn" style="padding:9px 20px" onclick="wkSkip()">⏭ رد کن</button>
+      ${_wkTimer
+        ?`<button class="wk-cbtn wk-cbtn--main" onclick="wkPause()"><span class="ic">⏸︎</span>مکث</button>`
+        :`<button class="wk-cbtn wk-cbtn--main" onclick="wkResume()"><span class="ic">▶︎</span>ادامه</button>`}
+      <button class="wk-cbtn" onclick="wkSkip()"><span class="ic">⏭︎</span>رد کن</button>
     </div>
   </div>`;
   _wkList.forEach((x,i)=>{
