@@ -1300,6 +1300,10 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .wk-ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
 .wk-ring-time{font-size:48px;font-weight:800;letter-spacing:2px;direction:ltr;line-height:1}
 .wk-ring-sub{font-size:12px;color:var(--muted);font-weight:600}
+/* آواتارِ سه‌بعدیِ زنده وسطِ حلقه (قدمِ اول: ایستادن/تنفس) */
+.wk-ring-av{position:absolute;inset:9px;border-radius:50%;overflow:hidden;display:flex;align-items:flex-end;justify-content:center}
+.wk-ring-av canvas{width:100%!important;height:100%!important;object-fit:contain;display:block}
+.wk-ring-clock-top{font-size:26px;font-weight:800;letter-spacing:1px;direction:ltr;line-height:1}
 .wk-run-btns{display:flex;gap:22px;justify-content:center;align-items:flex-start;margin-top:6px}
 .wk-cbtn{display:inline-flex;flex-direction:column;align-items:center;gap:5px;border:none;background:none;cursor:pointer;color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;-webkit-tap-highlight-color:transparent}
 .wk-cbtn .ic{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:21px;background:var(--panel-2);border:1.5px solid var(--line);transition:transform .12s ease,background .2s;line-height:1}
@@ -2640,7 +2644,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۲.۳</b> · انتشار: ۱۴۰۵/۰۶/۲۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۲.۴</b> · انتشار: ۱۴۰۵/۰۶/۲۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4095,6 +4099,7 @@ function openQuickWorkout(){
   m.classList.add('show');
 }
 function closeQuickWorkout(){
+  try{ wkAvatarUnmount(); }catch(e){}   // canvasِ آواتار را به پادکست برگردان
   const m=document.getElementById('qwkModal'); if(m) m.classList.remove('show');
   const w=document.getElementById('exWorkout'), back=document.querySelector('#c-ex-workout .card-body');
   if(w&&back) back.appendChild(w);   // به تبِ ورزش برگردان تا آنجا خالی نماند
@@ -8589,7 +8594,7 @@ function pod3dStartLoop(){
   _pod3d.blinkNext=performance.now()+1500+Math.random()*2500; _pod3d.blinkAt=-9999;
   const loop=()=>{
     if((_pod.avMode||'photo')!=='3d'||!_pod3d.ready){ _pod3d.raf=0; return; }
-    if(!document.getElementById('pod3dHost')){ _pod3d.raf=0; return; }
+    if(!document.getElementById('pod3dHost') && !document.getElementById('wkAvHost')){ _pod3d.raf=0; return; }
     const now=performance.now();
     _pod3d.dt=Math.min(0.05,(now-(_pod3d.lastT||now))/1000); _pod3d.lastT=now;
     if(_pod.mode!=='playing'){        // بی‌کار: تنفسِ آرام + پلکِ خودکار
@@ -17168,18 +17173,20 @@ function renderWkRun(box){
   const C=2*Math.PI*52, off=C*(1-prog);
   const mm=String(Math.floor(_wkRemain/60)).padStart(2,'0'), ss=String(_wkRemain%60).padStart(2,'0');
   const phaseTxt=isRest?'😮‍💨 استراحت':`ست ${faDigits(_wkSet)} از ${faDigits(it.sets)}`;
+  const av=wkAvAvailable();
   let h=`<div class="wk-run">
     <div class="wk-run-name">${it.name||''}</div>
-    <div class="wk-run-phase" style="color:${col}">${phaseTxt}</div>
+    <div class="wk-run-phase" style="color:${col}">${phaseTxt}${av?` · <span id="wkClock" class="wk-ring-clock-top" style="color:${col}">${faDigits(mm+':'+ss)}</span>`:''}</div>
     <div class="wk-ring-wrap">
       <svg class="wk-ring" viewBox="0 0 120 120">
         <circle class="trk" cx="60" cy="60" r="52"></circle>
         <circle id="wkRingProg" class="prg" cx="60" cy="60" r="52" stroke="${col}" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"></circle>
       </svg>
-      <div class="wk-ring-center">
+      ${av?`<div id="wkAvHost" class="wk-ring-av"></div>`:''}
+      ${av?'':`<div class="wk-ring-center">
         <div id="wkClock" class="wk-ring-time" style="color:${col}">${faDigits(mm+':'+ss)}</div>
         <div class="wk-ring-sub">${isRest?'استراحت کن':'ثانیه'}</div>
-      </div>
+      </div>`}
     </div>
     <div class="wk-run-btns">
       ${_wkTimer
@@ -17196,6 +17203,29 @@ function renderWkRun(box){
   });
   h+=`<button class="quick-btn" style="width:100%;margin-top:10px;border-color:#c66;color:#e88" onclick="wkStop()">■ پایان تمرین</button>`;
   box.innerHTML=h;
+  try{ wkAvatarMount(); }catch(e){}
+}
+/* ── آواتارِ سه‌بعدیِ زنده وسطِ دایره (قدمِ اول) ─────────────────────────────
+   canvasِ زندهٔ صحنهٔ پادکست را — فقط اگر حالتِ سه‌بعدی فعال و مدل لود شده — به
+   وسطِ دایره قرض می‌گیرد و موقعِ خروج به پادکست برمی‌گرداند (کاملاً برگشت‌پذیر). */
+let _wkAvBorrowed=false;
+function wkAvAvailable(){ try{ return (typeof _pod!=='undefined') && (_pod.avMode==='3d') && _pod3d && _pod3d.ready && !!_pod3d.ren; }catch(e){ return false; } }
+function wkAvatarMount(){
+  if(!wkAvAvailable()) return;
+  const host=document.getElementById('wkAvHost'); if(!host) return;
+  try{
+    if(_pod3d.ren.domElement.parentNode!==host){ host.appendChild(_pod3d.ren.domElement); _pod3d.host=host; _wkAvBorrowed=true; }
+    try{ pod3dResize(); }catch(e){}
+    if(!_pod3d.raf){ try{ pod3dStartLoop(); }catch(e){} }   // حلقه را دوباره بیدار کن
+  }catch(e){}
+}
+function wkAvatarUnmount(){
+  if(!_wkAvBorrowed) return;
+  _wkAvBorrowed=false;
+  try{
+    const back=document.getElementById('pod3dHost');
+    if(back && _pod3d && _pod3d.ren){ back.appendChild(_pod3d.ren.domElement); _pod3d.host=back; try{ pod3dResize(); }catch(e){} }
+  }catch(e){}
 }
 /* آپدیتِ هر ثانیه: عددِ وسط + زاویهٔ حلقه (بدونِ رندرِ کاملِ لیست) */
 function wkPaintClock(){
@@ -17376,6 +17406,7 @@ function wkStop(){
   if(_wkTimer){ clearInterval(_wkTimer); _wkTimer=null; }
   wkStopBeat(); wkReleaseLock(); wkMediaSession(false);
   _wkRunning=false; _wkActive=-1; _wkSet=1; _wkPhase='work';
+  try{ wkAvatarUnmount(); }catch(e){}
   renderExWorkout();   // بازگشت به نمای چیدمان (هدر/جستجو برمی‌گردند)
 }
 function wkFinish(){
@@ -17383,6 +17414,7 @@ function wkFinish(){
   wkStopBeat(); wkReleaseLock(); wkMediaSession(false);
   _wkRunning=false; _wkActive=-1; _wkSet=1; _wkPhase='work';
   wkFinishSound();
+  try{ wkAvatarUnmount(); }catch(e){}
   renderExWorkout();   // هدر/جستجو برگردند؛ پیامِ تبریک پایین جایگزین می‌شود
   const done=_wkList.filter(it=>it.done);
   if(done.length){
