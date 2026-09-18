@@ -2686,7 +2686,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۲.۶</b> · انتشار: ۱۴۰۵/۰۶/۲۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۲.۷</b> · انتشار: ۱۴۰۵/۰۶/۲۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -7602,7 +7602,7 @@ function pod3dBuildHead(gender){
   grp.userData={ eyeL,eyeR,lidL,lidR,browL,browR, lowerLip,upperLip,cavity };
   return grp;
 }
-function pod3dBadge(host,txt){ const b=document.createElement('div'); b.className='pod-3d-badge'; b.textContent=txt; host.appendChild(b); }
+function pod3dBadge(host,txt){ const b=document.createElement('div'); b.className='pod-3d-badge'+(window._wkAvOn?' fadeout':''); b.textContent=txt; host.appendChild(b); }
 // فقط صحنه/نور/دوربین را می‌سازد (بدونِ چهره)
 function pod3dInitStage(host){
   const T=THREE; const w=host.clientWidth||300, h=host.clientHeight||210;
@@ -7709,6 +7709,8 @@ function pod3dSetupModel(modelScene, gender, url){
     if(_pod3d.root&&_pod3d.root.updateMatrixWorld) _pod3d.root.updateMatrixWorld(true);
     const box=new T.Box3().setFromObject(modelScene); const size=box.getSize(new T.Vector3()); const center=box.getCenter(new T.Vector3());
     _pod3d.bodyCx=center.x; _pod3d.bodyCy=center.y; _pod3d.bodyH=Math.max(0.4,size.y);
+    try{ _pod3d.bodyC=_pod3d.root?_pod3d.root.worldToLocal(center.clone()):center.clone();
+         _pod3d.rootPos0=modelScene.position.clone(); }catch(e){ _pod3d.bodyC=null; _pod3d.rootPos0=null; }
     let head=null;
     modelScene.traverse(o=>{ if(!head && (o.isBone||o.type==='Bone') && /head/i.test(o.name||'') && !/(top|end|_hair)/i.test(o.name||'')) head=o; });
     if(!head) modelScene.traverse(o=>{ if(!head && /(^|:)head$/i.test(o.name||'')) head=o; });
@@ -7915,7 +7917,7 @@ function pod3dApply(){
     // حرکتِ زندهٔ بدن/دست/سر هنگام صحبت (برای آواتارهای ژست‌شده که انیمیشن ندارند)
     pod3dGesture(open);
     const g=_pod3d.modelRoot;
-    if(g){ if(window._wkAvOn){ g.rotation.set(0,0,0); }   // مربی نباید روی صفحه «بلغزد»
+    if(g){ if(window._wkAvOn){ /* جهتِ بدن (ایستاده/روی زمین) را pod3dBodyOrient تعیین می‌کند */ }
            else { const k=_pod3d.mixer?1.2:4; g.rotation.y=(sw.x||0)*k; g.rotation.x=-(sw.y||0)*(k*0.7); g.rotation.z=(sw.rot||0)*(k*0.5); } }
   } else {
     const P=_pod3d.parts; if(!P) return;
@@ -17407,9 +17409,92 @@ function wkCfgApplyLive(){
         if(w.url && _pod3d.srcUrl!==w.url) pod3dLoadModel(w.url,'female'); else pod3dApplyFrame();
         if(w.bg) pod3dBgStart(); else pod3dBgStop(); } }catch(e){}
 }
+/* حرکاتِ روی زمین — جهت‌ها در فضای جهانی: سر به سمتِ H و پاها به سمتِ F */
+function wkFloorMotion(fk,t,aim,v,set,fing,hipsDrop,G){
+  const H=WK_HEAD_DIR, F=-WK_HEAD_DIR;
+  const LA=G['LeftArm'],LF=G['LeftForeArm'],LH=G['LeftHand'];
+  const RA=G['RightArm'],RF=G['RightForeArm'],RH=G['RightHand'];
+  const LU=G['LeftUpLeg'],LL=G['LeftLeg'],LFt=G['LeftFoot'];
+  const RU=G['RightUpLeg'],RL=G['RightLeg'],RFt=G['RightFoot'];
+  const bh=(_pod3d.bodyH||1.7);
+  hipsDrop(0);
+  if(fk==='plank'){
+    pod3dBodyOrient('down',0);
+    const tr=Math.sin(t*5.0)*0.012;                       // لرزشِ ریزِ نگه‌داشتن
+    aim(LA,LF, v(F*0.12,-1,0));      aim(RA,RF, v(F*0.12,-1,0));      // بازو عمود رو به زمین
+    aim(LF,LH,  v(H,-0.06+tr,0.04)); aim(RF,RH, v(H,-0.06+tr,-0.04)); // ساعد روی زمین رو به سر
+    aim(LU,LL, v(F,-0.04,0.05));     aim(RU,RL, v(F,-0.04,-0.05));    // پاها کشیده به عقب
+    aim(LL,LFt, v(F,-0.10,0.04));    aim(RL,RFt, v(F,-0.10,-0.04));
+    set('Spine', tr*0.5,0,0); fing('flat','flat');
+  } else if(fk==='pushup'){
+    const c=(1-Math.cos(t*2.2))/2;
+    pod3dBodyOrient('down', -bh*0.055*c);                 // بدن پایین و بالا می‌رود
+    aim(LA,LF, v(F*(0.10+0.45*c),-1,0));  aim(RA,RF, v(F*(0.10+0.45*c),-1,0));
+    aim(LF,LH,  v(H*(1-0.35*c),-0.35-0.30*c,0.04));
+    aim(RF,RH,  v(H*(1-0.35*c),-0.35-0.30*c,-0.04));
+    aim(LU,LL, v(F,-0.04,0.05));  aim(RU,RL, v(F,-0.04,-0.05));
+    aim(LL,LFt, v(F,-0.10,0.04)); aim(RL,RFt, v(F,-0.10,-0.04));
+    fing('flat','flat');
+  } else if(fk==='superman'){
+    const c=(1-Math.cos(t*1.6))/2;
+    pod3dBodyOrient('down',0);
+    aim(LA,LF, v(H*0.92,0.10+0.34*c,0.12));  aim(RA,RF, v(H*0.92,0.10+0.34*c,-0.12));
+    aim(LF,LH,  v(H,0.06+0.22*c,0.10));      aim(RF,RH, v(H,0.06+0.22*c,-0.10));
+    aim(LU,LL, v(F*0.95,0.08+0.30*c,0.06));  aim(RU,RL, v(F*0.95,0.08+0.30*c,-0.06));
+    aim(LL,LFt, v(F*0.96,0.05+0.22*c,0.04)); aim(RL,RFt, v(F*0.96,0.05+0.22*c,-0.04));
+    fing('open','open');
+  } else if(fk==='crunch'){
+    const c=(1-Math.cos(t*2.0))/2;
+    pod3dBodyOrient('up',0);
+    aim(LU,LL, v(F*0.72,0.69,0.08));   aim(RU,RL, v(F*0.72,0.69,-0.08));    // زانو بالا
+    aim(LL,LFt, v(F*0.45,-0.89,0.05)); aim(RL,RFt, v(F*0.45,-0.89,-0.05));  // کفِ پا روی زمین
+    aim(LA,LF, v(H*0.45,0.80,0.18));   aim(RA,RF, v(H*0.45,0.80,-0.18));    // دست کنارِ سر
+    aim(LF,LH,  v(H*0.86,0.38,0.22));  aim(RF,RH, v(H*0.86,0.38,-0.22));
+    set('Spine1',0.16*c,0,0); set('Spine2',0.14*c,0,0); set('Neck',0.10*c,0,0);
+    fing('relax','relax');
+  } else if(fk==='bridge'){
+    const c=(1-Math.cos(t*1.8))/2;
+    pod3dBodyOrient('up', bh*0.045*c);                    // لگن بالا می‌رود
+    aim(LU,LL, v(F*0.70,0.71,0.08));   aim(RU,RL, v(F*0.70,0.71,-0.08));
+    aim(LL,LFt, v(F*0.50,-0.87,0.05)); aim(RL,RFt, v(F*0.50,-0.87,-0.05));
+    aim(LA,LF, v(F*0.90,-0.40,0.14));  aim(RA,RF, v(F*0.90,-0.40,-0.14));   // دست‌ها کنارِ بدن
+    aim(LF,LH,  v(F*0.95,-0.28,0.10)); aim(RF,RH, v(F*0.95,-0.28,-0.10));
+    fing('flat','flat');
+  } else {
+    pod3dBodyOrient('down',0); fing('relax','relax');
+  }
+}
+/* جهتِ کلِ بدن: '' ایستاده، 'down' دمر (پلانک/شنا/سوپرمن)، 'up' به پشت (کرانچ/پلِ باسن).
+   سرِ مدل به سمتِ راستِ تصویر (+X) می‌رود و مرکزِ بدن سرِ جایش می‌ماند (چرخش حولِ مرکز). */
+const WK_HEAD_DIR=1;      // +1 سر سمتِ راست، -1 سمتِ چپ (اگر برعکس بود همین را منفی کن)
+function pod3dBodyOrient(mode, lift){
+  const T=THREE, g=_pod3d.modelRoot; if(!T||!g) return;
+  const p0=_pod3d.rootPos0; 
+  if(!mode){ g.quaternion.identity(); if(p0) g.position.copy(p0); return; }
+  const upW=new T.Vector3(WK_HEAD_DIR,0,0);
+  const fwdW=new T.Vector3(0, mode==='up'?1:-1, 0);
+  const xW=new T.Vector3().crossVectors(upW,fwdW).normalize();
+  const m=new T.Matrix4().makeBasis(xW,upW,fwdW);
+  const q=new T.Quaternion().setFromRotationMatrix(m);
+  g.quaternion.copy(q);
+  const C=_pod3d.bodyC;
+  if(C&&p0){ const d=C.clone().sub(p0).applyQuaternion(q); g.position.copy(C).sub(d); }
+  if(lift) g.position.y+=lift;
+}
+/* زیرگونهٔ حرکاتِ روی زمین */
+function wkFloorKind(it){
+  const n=srchNorm(((it&&it.name)||'')+' '+((it&&it.id)||''));
+  if(/پلانک/.test(n)) return 'plank';
+  if(/شنا|پوش اپ/.test(n)) return 'pushup';
+  if(/سوپرمن/.test(n)) return 'superman';
+  if(/دراز و نشست|کرانچ|شکم/.test(n)) return 'crunch';
+  if(/پل باسن|باسن/.test(n)) return 'bridge';
+  return '';
+}
 function wkCoachRestPose(){ try{ const G=_pod3d&&_pod3d.gbones; if(!G) return;
   for(const n in G){ const o=G[n]; if(o&&o.b&&o.q) o.b.quaternion.copy(o.q); } }catch(e){} }
-function wkCoachReset(){ try{ const G=_pod3d&&_pod3d.gbones; if(G&&G['Hips']&&G['Hips'].p) G['Hips'].b.position.copy(G['Hips'].p); }catch(e){} }
+function wkCoachReset(){ try{ pod3dBodyOrient(''); }catch(e){}
+  try{ const G=_pod3d&&_pod3d.gbones; if(G&&G['Hips']&&G['Hips'].p) G['Hips'].b.position.copy(G['Hips'].p); }catch(e){} }
 function wkAvatarUnmount(){
   if(!_wkAvOn && !_wkAvBorrowed) return;
   wkAvSetOn(false); _wkAvBorrowed=false; _wkCount=null;
@@ -17424,6 +17509,7 @@ function wkMotionFamily(it){
   // ⚠️ ترتیب مهم است: الگوهای خاص‌تر اول، وگرنه زیررشته‌ها اشتباه می‌گیرند
   // (مثلاً «ک‌ران‌چ» با الگوی «ران» به اسکات می‌افتاد، و «کشش» با «کش» به بازو).
   const n=srchNorm(((it&&it.name)||'')+' '+((it&&it.id)||''));
+  if(wkFloorKind(it)) return 'floor';          // حرکاتِ روی زمین (پلانک/شنا/کرانچ/پل/سوپرمن)
   if(/شکم|کرانچ|پلانک|دراز و نشست|مرکز بدن|پهلو|تنه/.test(n)) return 'core';
   if(/کشش|استرچ|گردن|نرمش|تنفس|چرخش/.test(n)) return 'stretch';
   if(/بازو|دمبل|شانه|سرشانه|پرس|پارویی|فلای|کش/.test(n)) return 'arms';
@@ -17453,6 +17539,10 @@ function pod3dCoachGesture(t, energy, set, G, T){
   const rest   = running && (typeof _wkPhase!=='undefined') && _wkPhase==='rest';
   const it     = (typeof _wkList!=='undefined' && typeof _wkActive!=='undefined' && _wkActive>=0)?_wkList[_wkActive]:null;
   const counting = _wkCount && performance.now() < _wkCount.until;
+  const fam = running ? wkMotionFamily(it) : '';
+  const fk  = (fam==='floor') ? wkFloorKind(it) : '';
+  const onFloor = !!(fk && running && !paused && !rest && !counting);
+  if(!onFloor) pod3dBodyOrient('');   // شمارش/استراحت/مکث و همهٔ حرکاتِ ایستاده ⇒ بدن ایستاده
 
   // تنفس: در استراحت تندتر و عمیق‌تر (نفس‌نفس)
   const br = rest ? Math.sin(t*3.5)*0.055 : Math.sin(t*1.1)*0.016;
@@ -17485,7 +17575,7 @@ function pod3dCoachGesture(t, energy, set, G, T){
     return;
   }
   // ── فازِ کار: حرکتِ ورزشیِ متناسب با خانوادهٔ همان ورزش ──
-  const fam=wkMotionFamily(it);
+  if(fam==='floor'){ wkFloorMotion(fk,t,aim,v,set,fing,hipsDrop,G); return; }
   if(fam==='squat'){
     const d=(1-Math.cos(t*2.0))/2;                       // عمقِ نشستن ۰..۱
     aim(LU,LL,v(0.10,-1,0.62*d));  aim(RU,RL,v(-0.10,-1,0.62*d));
