@@ -1311,8 +1311,20 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .wkrun-ov{position:fixed;inset:0;z-index:9500}
 .wkrun-ov[hidden]{display:none}
 .wkrun-scrim{position:absolute;inset:0;background:rgba(6,10,16,.86);backdrop-filter:blur(18px) saturate(.85);-webkit-backdrop-filter:blur(18px) saturate(.85)}
-.wkrun-card{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px 16px;overflow-y:auto}
-.wkrun-card .wk-ring-wrap{width:300px;height:300px;max-width:76vw;max-height:76vw}
+.wkrun-card{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:14px 16px;overflow-y:auto}
+.wkrun-list{max-height:26vh;overflow-y:auto}
+.wkrun-card .wk-ring-wrap{width:min(92vw,400px);height:min(92vw,400px);max-width:none;max-height:none}
+.wkrun-card .wk-ring .trk,.wkrun-card .wk-ring .prg{stroke-width:7}
+/* قابِ گردِ «ساعتِ هوشمند»: کلِ محتوا داخلِ یک دیسکِ بزرگِ تیره */
+.wkrun-dial{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  width:min(90vw,44vh,400px);height:min(90vw,44vh,400px);border-radius:50%;
+  background:radial-gradient(circle at 50% 30%,#1b2b3c 0%,#121b27 55%,#0b1119 100%);
+  border:1px solid rgba(120,160,190,.16);box-shadow:0 26px 70px rgba(0,0,0,.6),inset 0 2px 20px rgba(140,190,220,.07)}
+.wkrun-dial .wkrun-name{font-size:16px}
+.wkrun-dial .wkrun-phase{font-size:12.5px;margin-top:1px}
+.wkrun-dial .wk-ring-wrap{position:absolute;inset:0;width:100%;height:100%}
+.wkrun-dial .wkrun-foot{position:absolute;bottom:7%;left:0;right:0;display:flex;justify-content:center;gap:20px;z-index:2}
+.wkrun-dial .wk-ring-av{inset:12%}
 .wkrun-top{display:flex;align-items:center;gap:10px;width:100%;max-width:420px}
 .wkrun-ttl{flex:1;min-width:0;text-align:center}
 .wkrun-name{font-size:17px;font-weight:800;color:var(--ink);line-height:1.4}
@@ -2686,7 +2698,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۲.۷</b> · انتشار: ۱۴۰۵/۰۶/۲۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۲.۸</b> · انتشار: ۱۴۰۵/۰۶/۲۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -16938,6 +16950,7 @@ function saveExToday(){
 }
 /* حالت تعاملی تمرین: انتخاب ترتیب + کرنومتر معکوس + تیک */
 let _wkList=[];       // {id,name,sets,dur,rest,done}
+let _wkRestToNext=false;   // استراحتِ جاری، استراحتِ «بینِ دو حرکت» است
 let _wkTimer=null;
 let _wkActive=-1;     // اندیس حرکت فعال
 let _wkRemain=0;      // ثانیه‌ی باقی‌مانده
@@ -17228,8 +17241,24 @@ function renderWkList(){
             <button onclick="wkDur(${i},10)">+</button>
           </div>
         </div>
+        <div style="flex:1;text-align:center">
+          <div class="wk-ctrl-label">استراحتِ بینِ ست</div>
+          <div class="wk-step">
+            <button onclick="wkRest(${i},-5)">−</button>
+            <span class="wk-step-val" onclick="wkRestSpin(${i})" title="برای انتخاب سریع بزن">${faDigits(it.rest||0)}ث</span>
+            <button onclick="wkRest(${i},5)">+</button>
+          </div>
+        </div>
       </div></div>`;
   });
+  h+=`<div style="display:flex;align-items:center;gap:10px;background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:10px 12px;margin-top:8px">
+    <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700;color:var(--ink)">استراحتِ بینِ دو حرکت</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">پس از تمام‌شدنِ ست‌های هر حرکت</div></div>
+    <div class="wk-step">
+      <button onclick="wkRestEx(-10)">−</button>
+      <span class="wk-step-val" onclick="wkRestExSpin()" title="برای انتخاب سریع بزن">${faDigits(parseInt(wkCfg().restEx,10)||0)}ث</span>
+      <button onclick="wkRestEx(10)">+</button>
+    </div></div>`;
   h+=`<button class="quick-btn" style="width:100%;margin-top:8px;padding:12px;font-size:15px;font-weight:800" onclick="wkStart()">▶️ شروع تمرین</button>`;
   box.innerHTML=h;
 }
@@ -17280,7 +17309,7 @@ function wkRenderRun(){
   const C=2*Math.PI*52, off=C*(1-prog);
   const mm=String(Math.floor(_wkRemain/60)).padStart(2,'0'), ss=String(_wkRemain%60).padStart(2,'0');
   const clock=faDigits(mm+':'+ss);
-  const phaseTxt=isRest?'😮‍💨 استراحت':`ست ${faDigits(_wkSet)} از ${faDigits(it.sets)}`;
+  const phaseTxt=isRest?(_wkRestToNext?'😮‍💨 استراحت — حرکتِ بعدی':'😮‍💨 استراحت'):`ست ${faDigits(_wkSet)} از ${faDigits(it.sets)}`;
   const av=wkAvAvailable();
   const centerClock = (!av) || mini;   // با مربی و در حالتِ بزرگ، زمان بالا می‌نشیند
   const ring=`<div class="wk-ring-wrap">
@@ -17319,7 +17348,7 @@ function wkRenderRun(){
         </div>
         <button class="wkrun-ib" onclick="wkToggleMini()" title="کوچک کردن">⌄</button>
       </div>
-      ${ring}
+      <div class="wkrun-dial">${ring}</div>
       <div class="wk-run-btns">
         ${_wkTimer
           ?`<button class="wk-cbtn wk-cbtn--main" onclick="wkPause()"><span class="ic">⏸︎</span>مکث</button>`
@@ -17346,6 +17375,7 @@ function wkCfg(){ let o={}; try{ o=JSON.parse(localStorage.getItem(WK_CFG_KEY)||
            url:(typeof o.url==='string'&&o.url)?o.url:def,
            zoom:(typeof o.zoom==='number'&&o.zoom>0)?o.zoom:1,
            bg:(o.bg!==false),
+           restEx:(typeof o.restEx==='number'&&o.restEx>=0)?o.restEx:30,
            bgScene:(POD_BG_SCENES[o.bgScene]?o.bgScene:'studio') }; }
 function wkCfgSet(p){ const n=Object.assign({},wkCfg(),p||{}); try{ localStorage.setItem(WK_CFG_KEY,JSON.stringify(n)); }catch(e){} return n; }
 let _wkAvOn=false, _wkAvBorrowed=false, _wkAvFail=false, _wkCount=null;
@@ -17409,59 +17439,340 @@ function wkCfgApplyLive(){
         if(w.url && _pod3d.srcUrl!==w.url) pod3dLoadModel(w.url,'female'); else pod3dApplyFrame();
         if(w.bg) pod3dBgStart(); else pod3dBgStop(); } }catch(e){}
 }
-/* حرکاتِ روی زمین — جهت‌ها در فضای جهانی: سر به سمتِ H و پاها به سمتِ F */
-function wkFloorMotion(fk,t,aim,v,set,fing,hipsDrop,G){
+/* ═══ جدولِ صریحِ «شناسهٔ ورزش → حرکتِ مربی» (حدس از روی نام کافی نبود) ═══ */
+const WK_MOTION={
+  // گرم کردن
+  wu_neck:'neck', wu_arm:'shoulder', wu_twist:'twist', wu_hip:'hip', wu_knee:'knees',
+  wu_ankle:'hip', wu_legswing:'legside', wu_jack:'jack',
+  // هوازی
+  walk_meal:'march', march:'march', heel:'calf', stairs:'stepup', jumping_jack:'jack',
+  high_knees:'knees', butt_kicks:'kick', mountain_climber:'mountain', shadow_box:'punch',
+  dance:'march', jump_rope:'rope', swim:'swimarms',
+  // قدرتی با وزنِ بدن
+  squat:'squat', chair_squat:'squat', wall_pushup:'wallpush', plank:'plank',
+  leg_raise:'legside', lunge:'lunge', reverse_lunge:'lunge', glute_bridge:'bridge',
+  situp:'crunch', crunch:'crunch', knee_pushup:'kneepush', full_pushup:'pushup',
+  wall_sit:'holdsquat', superman:'superman', side_plank:'sideplank', bird_dog:'birddog',
+  chair_dip:'dip', step_up:'stepup', calf_raise:'calf', squat_hold:'holdsquat',
+  // کششی
+  stretch_full:'overhead', neck_shoulder:'neck', breathing:'breathe',
+  side_stretch:'sidebend', spine_twist:'seatedtwist',
+  // سرد کردن
+  cd_walk:'march', cd_ham:'hinge', cd_quad:'quadstretch', cd_calf:'calfstretch',
+  cd_chest:'chestopen', cd_child:'child', cd_catcow:'catcow', cd_breath:'breathe',
+  // مقاومتیِ خانگی
+  hr_fly:'fly', hr_band_fly:'fly', hr_press:'press', hr_shoulder:'press',
+  hr_lateral:'lateral', hr_curl:'curl', hr_kickback:'kickback', hr_row:'row',
+  hr_band_row:'row', hr_rdl:'hinge', hr_goblet:'squat', hr_lunge_w:'lunge',
+  hr_bridge_w:'bridge', hr_band_squat:'squat',
+  // شکم و مرکز
+  co_rev_crunch:'revcrunch', co_bicycle:'bicycle', co_side_plank:'sideplank',
+  co_flutter:'flutter', co_leg_raise:'legraiselie', co_russian:'russian',
+  co_shoulder_tap:'shouldertap', co_hollow:'hollow',
+  // کشش‌های خانگی
+  sh_butterfly:'butterfly', sh_hamstring:'seatedham', sh_cobra:'cobra',
+  sh_quad_lie:'sidelie', sh_figure4:'figure4', sh_supine_twist:'twistlie',
+  sh_cross_shoulder:'crossarm', sh_triceps:'overhead', sh_doorway_chest:'chestopen',
+  sh_wrist:'wrist', sh_foot:'calfstretch', sh_hip_lunge:'lunge',
+  // سالمندان و بارداری
+  chair_march:'seatedmarch', seated_leg:'seatedleg', senior_heel:'calf',
+  senior_stretch:'seated', preg_walk:'march', preg_chair_squat:'squat',
+  preg_stretch:'sidebend', preg_breath:'breathe'
+};
+/* وضعیتِ بدنِ هر حرکت: '' ایستاده · down دمر · up به‌پشت · seat نشسته */
+const WK_POSTURE={
+  plank:'down', sideplank:'down', pushup:'down', kneepush:'down', superman:'down',
+  mountain:'down', birddog:'down', catcow:'down', child:'down', cobra:'down', shouldertap:'down',
+  crunch:'up', bridge:'up', revcrunch:'up', bicycle:'up', flutter:'up',
+  legraiselie:'up', hollow:'up', twistlie:'up', figure4:'up', sidelie:'up',
+  seated:'seat', seatedmarch:'seat', seatedleg:'seat', seatedtwist:'seat',
+  butterfly:'seat', seatedham:'seat', dip:'seat', russian:'seat'
+};
+function wkMoveOf(it){
+  const id=(it&&it.id)||'';
+  if(WK_MOTION[id]) return WK_MOTION[id];
+  const n=srchNorm(((it&&it.name)||'')+' '+id);   // فالبک برای ورزشِ دلخواهِ کاربر
+  if(/پلانک/.test(n)) return 'plank';
+  if(/دراز و نشست|کرانچ/.test(n)) return 'crunch';
+  if(/پل باسن/.test(n)) return 'bridge';
+  if(/شنا/.test(n)) return 'pushup';
+  if(/اسکات|چمباتمه/.test(n)) return 'squat';
+  if(/لانج/.test(n)) return 'lunge';
+  if(/بازو|دمبل|بطری/.test(n)) return 'curl';
+  if(/کشش|استرچ/.test(n)) return 'overhead';
+  if(/گردن/.test(n)) return 'neck';
+  return 'march';
+}
+/* ═══ موتورِ پوزِ مربی: هر حرکت با جهت‌های جهانی ═══ */
+function wkPlayMove(mv,t,X){
+  const {aim,v,set,fing,hipsDrop,G,bh,legLen}=X;
   const H=WK_HEAD_DIR, F=-WK_HEAD_DIR;
-  const LA=G['LeftArm'],LF=G['LeftForeArm'],LH=G['LeftHand'];
-  const RA=G['RightArm'],RF=G['RightForeArm'],RH=G['RightHand'];
-  const LU=G['LeftUpLeg'],LL=G['LeftLeg'],LFt=G['LeftFoot'];
-  const RU=G['RightUpLeg'],RL=G['RightLeg'],RFt=G['RightFoot'];
-  const bh=(_pod3d.bodyH||1.7);
-  hipsDrop(0);
-  if(fk==='plank'){
-    pod3dBodyOrient('down',0);
-    const tr=Math.sin(t*5.0)*0.012;                       // لرزشِ ریزِ نگه‌داشتن
-    aim(LA,LF, v(F*0.12,-1,0));      aim(RA,RF, v(F*0.12,-1,0));      // بازو عمود رو به زمین
-    aim(LF,LH,  v(H,-0.06+tr,0.04)); aim(RF,RH, v(H,-0.06+tr,-0.04)); // ساعد روی زمین رو به سر
-    aim(LU,LL, v(F,-0.04,0.05));     aim(RU,RL, v(F,-0.04,-0.05));    // پاها کشیده به عقب
-    aim(LL,LFt, v(F,-0.10,0.04));    aim(RL,RFt, v(F,-0.10,-0.04));
-    set('Spine', tr*0.5,0,0); fing('flat','flat');
-  } else if(fk==='pushup'){
-    const c=(1-Math.cos(t*2.2))/2;
-    pod3dBodyOrient('down', -bh*0.055*c);                 // بدن پایین و بالا می‌رود
-    aim(LA,LF, v(F*(0.10+0.45*c),-1,0));  aim(RA,RF, v(F*(0.10+0.45*c),-1,0));
-    aim(LF,LH,  v(H*(1-0.35*c),-0.35-0.30*c,0.04));
-    aim(RF,RH,  v(H*(1-0.35*c),-0.35-0.30*c,-0.04));
-    aim(LU,LL, v(F,-0.04,0.05));  aim(RU,RL, v(F,-0.04,-0.05));
-    aim(LL,LFt, v(F,-0.10,0.04)); aim(RL,RFt, v(F,-0.10,-0.04));
-    fing('flat','flat');
-  } else if(fk==='superman'){
-    const c=(1-Math.cos(t*1.6))/2;
-    pod3dBodyOrient('down',0);
-    aim(LA,LF, v(H*0.92,0.10+0.34*c,0.12));  aim(RA,RF, v(H*0.92,0.10+0.34*c,-0.12));
-    aim(LF,LH,  v(H,0.06+0.22*c,0.10));      aim(RF,RH, v(H,0.06+0.22*c,-0.10));
-    aim(LU,LL, v(F*0.95,0.08+0.30*c,0.06));  aim(RU,RL, v(F*0.95,0.08+0.30*c,-0.06));
-    aim(LL,LFt, v(F*0.96,0.05+0.22*c,0.04)); aim(RL,RFt, v(F*0.96,0.05+0.22*c,-0.04));
-    fing('open','open');
-  } else if(fk==='crunch'){
-    const c=(1-Math.cos(t*2.0))/2;
-    pod3dBodyOrient('up',0);
-    aim(LU,LL, v(F*0.72,0.69,0.08));   aim(RU,RL, v(F*0.72,0.69,-0.08));    // زانو بالا
-    aim(LL,LFt, v(F*0.45,-0.89,0.05)); aim(RL,RFt, v(F*0.45,-0.89,-0.05));  // کفِ پا روی زمین
-    aim(LA,LF, v(H*0.45,0.80,0.18));   aim(RA,RF, v(H*0.45,0.80,-0.18));    // دست کنارِ سر
-    aim(LF,LH,  v(H*0.86,0.38,0.22));  aim(RF,RH, v(H*0.86,0.38,-0.22));
-    set('Spine1',0.16*c,0,0); set('Spine2',0.14*c,0,0); set('Neck',0.10*c,0,0);
-    fing('relax','relax');
-  } else if(fk==='bridge'){
-    const c=(1-Math.cos(t*1.8))/2;
-    pod3dBodyOrient('up', bh*0.045*c);                    // لگن بالا می‌رود
-    aim(LU,LL, v(F*0.70,0.71,0.08));   aim(RU,RL, v(F*0.70,0.71,-0.08));
-    aim(LL,LFt, v(F*0.50,-0.87,0.05)); aim(RL,RFt, v(F*0.50,-0.87,-0.05));
-    aim(LA,LF, v(F*0.90,-0.40,0.14));  aim(RA,RF, v(F*0.90,-0.40,-0.14));   // دست‌ها کنارِ بدن
-    aim(LF,LH,  v(F*0.95,-0.28,0.10)); aim(RF,RH, v(F*0.95,-0.28,-0.10));
-    fing('flat','flat');
-  } else {
-    pod3dBodyOrient('down',0); fing('relax','relax');
+  const A=(l,r,lf,rf)=>{ aim(G.LeftArm,G.LeftForeArm,l); aim(G.RightArm,G.RightForeArm,r);
+                         aim(G.LeftForeArm,G.LeftHand,lf||l); aim(G.RightForeArm,G.RightHand,rf||r); };
+  const L=(lu,ru,ll,rl)=>{ aim(G.LeftUpLeg,G.LeftLeg,lu); aim(G.RightUpLeg,G.RightLeg,ru);
+                           aim(G.LeftLeg,G.LeftFoot,ll||lu); aim(G.RightLeg,G.RightFoot,rl||ru); };
+  const osc=(sp)=>(1-Math.cos(t*sp))/2;          // ۰..۱ نرم
+  const sw =(sp)=>Math.sin(t*sp);                // -۱..۱
+  const standLegs=()=>L(v(0.06,-1,0.02),v(-0.06,-1,0.02));
+  const downArms =()=>A(v(0.26,-0.94,0.14),v(-0.26,-0.94,0.14),v(0.20,-0.92,0.30),v(-0.20,-0.92,0.30));
+  switch(mv){
+    /* ── ایستاده ── */
+    case 'march': { const p=sw(3.0),pp=Math.max(0,p),pn=Math.max(0,-p);
+      A(v(0.22,-0.92,0.30*p),v(-0.22,-0.92,-0.30*p),v(0.18,-0.86,0.34+0.18*p),v(-0.18,-0.86,0.34-0.18*p));
+      L(v(0.07,-0.96,0.32*pp),v(-0.07,-0.96,0.32*pn),v(0.05,-0.97,-0.44*pp),v(-0.05,-0.97,-0.44*pn));
+      hipsDrop(legLen*0.02*Math.abs(p)); fing('relax','relax'); break; }
+    case 'knees': { const p=sw(2.6),pp=Math.max(0,p),pn=Math.max(0,-p);
+      A(v(0.30,-0.70,0.55*p),v(-0.30,-0.70,-0.55*p));
+      L(v(0.08,-0.62,0.78*pp+0.04),v(-0.08,-0.62,0.78*pn+0.04),v(0.05,-0.95,-0.30*pp),v(-0.05,-0.95,-0.30*pn));
+      hipsDrop(legLen*0.03); fing('relax','relax'); break; }
+    case 'kick': { const p=sw(2.8),pp=Math.max(0,p),pn=Math.max(0,-p);
+      A(v(0.24,-0.90,0.30*p),v(-0.24,-0.90,-0.30*p));
+      L(v(0.07,-0.99,-0.10),v(-0.07,-0.99,-0.10),v(0.05,-0.42-0.5*(1-pp),-0.86*pp-0.06),v(-0.05,-0.42-0.5*(1-pn),-0.86*pn-0.06));
+      fing('relax','relax'); break; }
+    case 'jack': { const c=osc(2.6);
+      A(v(0.35+0.55*c, -0.92+1.75*c, 0.10), v(-0.35-0.55*c, -0.92+1.75*c, 0.10));
+      L(v(0.10+0.42*c,-0.98,0.02),v(-0.10-0.42*c,-0.98,0.02));
+      hipsDrop(-legLen*0.02*c); fing('open','open'); break; }
+    case 'rope': { const c=osc(4.2);
+      A(v(0.42,-0.70,0.22),v(-0.42,-0.70,0.22),v(0.55,-0.42,0.34),v(-0.55,-0.42,0.34));
+      L(v(0.07,-0.99,0.03),v(-0.07,-0.99,0.03));
+      hipsDrop(-legLen*0.035*c); fing('fist','fist'); break; }
+    case 'calf': { const c=osc(2.2); standLegs(); downArms();
+      hipsDrop(-legLen*0.06*c); fing('relax','relax'); break; }
+    case 'punch': { const p=sw(3.4),pp=Math.max(0,p),pn=Math.max(0,-p);
+      A(v(0.30,-0.42,0.30+0.60*pp),v(-0.30,-0.42,0.30+0.60*pn),v(0.16,-0.18,0.90*pp+0.30),v(-0.16,-0.18,0.90*pn+0.30));
+      standLegs(); fing('fist','fist'); break; }
+    case 'squat': { const d=osc(2.0);
+      L(v(0.10,-1,0.62*d),v(-0.10,-1,0.62*d),v(0.07,-1,-0.55*d),v(-0.07,-1,-0.55*d));
+      hipsDrop(legLen*0.26*d);
+      A(v(0.24,-0.86,0.30+0.55*d),v(-0.24,-0.86,0.30+0.55*d),v(0.16,-0.35,0.86),v(-0.16,-0.35,0.86));
+      set('Spine',0.10*d,0,0); fing('open','open'); break; }
+    case 'holdsquat': { const d=0.82+0.03*sw(4.0);
+      L(v(0.10,-1,0.62*d),v(-0.10,-1,0.62*d),v(0.07,-1,-0.55*d),v(-0.07,-1,-0.55*d));
+      hipsDrop(legLen*0.26*d);
+      A(v(0.24,-0.80,0.55),v(-0.24,-0.80,0.55),v(0.16,-0.30,0.90),v(-0.16,-0.30,0.90));
+      fing('open','open'); break; }
+    case 'lunge': { const d=osc(1.8), s2=(Math.floor(t/3.5)%2)?1:-1;   // پای جلو عوض می‌شود
+      const fr=v(0.08*s2,-0.86,0.50*d+0.06), bk=v(-0.08*s2,-0.92,-0.42*d-0.05);
+      L(s2>0?fr:bk, s2>0?bk:fr, s2>0?v(0.06,-1,-0.30*d):v(0.06,-0.80,-0.60*d), s2>0?v(-0.06,-0.80,-0.60*d):v(-0.06,-1,-0.30*d));
+      hipsDrop(legLen*0.22*d);
+      A(v(0.30,-0.94,0.12),v(-0.30,-0.94,0.12)); fing('relax','relax'); break; }
+    case 'stepup': { const p=sw(2.0),pp=Math.max(0,p);
+      L(v(0.08,-0.72,0.66*pp+0.04),v(-0.08,-0.98,0.04),v(0.05,-0.94,-0.32*pp),v(-0.05,-0.99,0));
+      hipsDrop(-legLen*0.05*pp);
+      A(v(0.26,-0.88,0.32*p),v(-0.26,-0.88,-0.32*p)); fing('relax','relax'); break; }
+    case 'legside': { const p=sw(1.8),pp=Math.max(0,p),pn=Math.max(0,-p);
+      L(v(0.10+0.80*pp,-0.94,0.05),v(-0.10-0.80*pn,-0.94,0.05));
+      A(v(0.55,-0.78,0.18),v(-0.55,-0.78,0.18)); fing('open','open'); break; }
+    case 'wallpush': { const c=osc(2.2);
+      A(v(0.30,-0.18,0.90-0.30*c),v(-0.30,-0.18,0.90-0.30*c),v(0.34+0.30*c,-0.10,0.86-0.45*c),v(-0.34-0.30*c,-0.10,0.86-0.45*c));
+      L(v(0.07,-0.99,0.04),v(-0.07,-0.99,0.04));
+      set('Spine',0.06*c,0,0); fing('flat','flat'); break; }
+    case 'curl': { const c=osc(2.6);
+      A(v(0.30,-0.94,0.10),v(-0.30,-0.94,0.10),v(0.22,-0.30+1.05*c,0.55),v(-0.22,-0.30+1.05*c,0.55));
+      standLegs(); fing('grip','grip'); break; }
+    case 'press': { const c=osc(2.2);
+      A(v(0.42,-0.30+1.10*c,0.22),v(-0.42,-0.30+1.10*c,0.22),v(0.30,0.55+0.42*c,0.30),v(-0.30,0.55+0.42*c,0.30));
+      standLegs(); fing('grip','grip'); break; }
+    case 'lateral': { const c=osc(2.0);
+      A(v(0.30+0.68*c,-0.94+0.92*c,0.10),v(-0.30-0.68*c,-0.94+0.92*c,0.10));
+      standLegs(); fing('grip','grip'); break; }
+    case 'fly': { const c=osc(2.0);
+      A(v(0.25+0.62*c,-0.30,0.86-0.40*c),v(-0.25-0.62*c,-0.30,0.86-0.40*c),v(0.30+0.55*c,-0.20,0.90-0.45*c),v(-0.30-0.55*c,-0.20,0.90-0.45*c));
+      standLegs(); fing('open','open'); break; }
+    case 'row': { const c=osc(2.2);
+      set('Spine',0.30,0,0); set('Spine1',0.14,0,0);
+      A(v(0.26,-0.92,0.28-0.55*c),v(-0.26,-0.92,0.28-0.55*c),v(0.20,-0.86,0.40-0.80*c),v(-0.20,-0.86,0.40-0.80*c));
+      L(v(0.08,-0.98,0.14),v(-0.08,-0.98,0.14)); fing('grip','grip'); break; }
+    case 'kickback': { const c=osc(2.4);
+      set('Spine',0.26,0,0);
+      A(v(0.26,-0.82,-0.42),v(-0.26,-0.82,-0.42),v(0.20,-0.52+0.30*c,-0.70-0.20*c),v(-0.20,-0.52+0.30*c,-0.70-0.20*c));
+      L(v(0.08,-0.98,0.12),v(-0.08,-0.98,0.12)); fing('grip','grip'); break; }
+    case 'hinge': { const c=osc(1.6);
+      set('Spine',0.42*c,0,0); set('Spine1',0.20*c,0,0);
+      A(v(0.24,-0.95,0.12),v(-0.24,-0.95,0.12));
+      L(v(0.08,-0.99,-0.06*c),v(-0.08,-0.99,-0.06*c)); fing('grip','grip'); break; }
+    case 'overhead': { const c=osc(1.3);
+      A(v(0.24,0.86+0.10*c,0.16),v(-0.24,0.86+0.10*c,0.16),v(0.16,0.94,0.22),v(-0.16,0.94,0.22));
+      standLegs(); hipsDrop(-legLen*0.02*c); fing('open','open'); break; }
+    case 'sidebend': { const p=sw(1.1);
+      set('Spine',0,0,p*0.22); set('Spine1',0,0,p*0.16);
+      A(v(0.24+0.30*Math.max(0,p),0.88,0.14),v(-0.24-0.30*Math.max(0,-p),0.88,0.14));
+      standLegs(); fing('open','open'); break; }
+    case 'twist': { const p=sw(1.5);
+      set('Spine1',0,p*0.30,0); set('Spine2',0,p*0.22,0);
+      A(v(0.62,-0.40,0.62),v(-0.62,-0.40,0.62),v(0.50,-0.30,0.80),v(-0.50,-0.30,0.80));
+      standLegs(); fing('relax','relax'); break; }
+    case 'neck': { const p=sw(0.9);
+      set('Neck',0.10*Math.abs(p),p*0.30,p*0.12); set('Head',0.08*Math.abs(p),p*0.22,p*0.10);
+      downArms(); standLegs(); fing('relax','relax'); break; }
+    case 'shoulder': { const a=t*1.6;
+      A(v(0.34,-0.80+0.38*Math.sin(a),0.16+0.38*Math.cos(a)),v(-0.34,-0.80+0.38*Math.sin(a),0.16+0.38*Math.cos(a)));
+      standLegs(); fing('relax','relax'); break; }
+    case 'hip': { const a=t*1.4;
+      set('Spine',0.10*Math.sin(a),0.16*Math.cos(a),0.10*Math.sin(a+1.2));
+      hipsDrop(legLen*0.02*(1+Math.sin(a))/2);
+      A(v(0.50,-0.74,0.16),v(-0.50,-0.74,0.16),v(0.72,-0.34,0.28),v(-0.72,-0.34,0.28));
+      standLegs(); fing('relax','relax'); break; }
+    case 'breathe': { const c=osc(0.55);
+      A(v(0.28,-0.90+1.30*c,0.20),v(-0.28,-0.90+1.30*c,0.20));
+      standLegs(); set('Spine',-0.06*c,0,0); fing('open','open'); break; }
+    case 'swimarms': { const a=t*2.2;
+      A(v(0.30,Math.sin(a)*0.92,Math.cos(a)*0.70),v(-0.30,Math.sin(a+Math.PI)*0.92,Math.cos(a+Math.PI)*0.70));
+      standLegs(); fing('flat','flat'); break; }
+    case 'quadstretch': { const s2=(Math.floor(t/4)%2)?1:-1;
+      L(s2>0?v(0.08,-0.99,-0.10):v(0.08,-0.99,0.02), s2>0?v(-0.08,-0.99,0.02):v(-0.08,-0.99,-0.10),
+        s2>0?v(0.06,-0.30,-0.95):v(0.06,-0.99,0), s2>0?v(-0.06,-0.99,0):v(-0.06,-0.30,-0.95));
+      A(s2>0?v(0.30,-0.70,-0.60):v(0.50,-0.80,0.20), s2>0?v(-0.50,-0.80,0.20):v(-0.30,-0.70,-0.60));
+      fing('grip','grip'); break; }
+    case 'calfstretch': {
+      L(v(0.09,-0.92,0.36),v(-0.09,-0.97,-0.22),v(0.06,-0.99,0.05),v(-0.06,-0.97,-0.16));
+      A(v(0.28,-0.40,0.86),v(-0.28,-0.40,0.86),v(0.22,-0.24,0.94),v(-0.22,-0.24,0.94));
+      set('Spine',0.16,0,0); fing('flat','flat'); break; }
+    case 'chestopen': { const c=osc(1.2);
+      A(v(0.70+0.22*c,-0.22,-0.30-0.30*c),v(-0.70-0.22*c,-0.22,-0.30-0.30*c),v(0.80,-0.10,-0.40-0.24*c),v(-0.80,-0.10,-0.40-0.24*c));
+      standLegs(); set('Spine',-0.10*c,0,0); fing('open','open'); break; }
+    case 'crossarm': { const s2=(Math.floor(t/4)%2)?1:-1;
+      A(s2>0?v(-0.80,-0.10,0.55):v(0.34,-0.90,0.20), s2>0?v(-0.34,-0.90,0.20):v(0.80,-0.10,0.55),
+        s2>0?v(-0.90,-0.06,0.40):v(0.30,-0.60,0.60), s2>0?v(-0.30,-0.60,0.60):v(0.90,-0.06,0.40));
+      standLegs(); fing('relax','relax'); break; }
+    case 'wrist': { const c=osc(1.6);
+      A(v(0.26,-0.36,0.88),v(-0.26,-0.36,0.88),v(0.20,-0.20-0.30*c,0.94),v(-0.20,-0.20-0.30*c,0.94));
+      standLegs(); fing('flat','open'); break; }
+    /* ── دمر (رو به زمین) ── */
+    case 'plank': { const tr=sw(5.0)*0.012;
+      A(v(F*0.12,-1,0),v(F*0.12,-1,0),v(H,-0.06+tr,0.05),v(H,-0.06+tr,-0.05));
+      L(v(F,-0.04,0.05),v(F,-0.04,-0.05),v(F,-0.10,0.04),v(F,-0.10,-0.04));
+      set('Spine',tr*0.5,0,0); fing('flat','flat'); break; }
+    case 'shouldertap': { const p=sw(1.6),pp=Math.max(0,p),pn=Math.max(0,-p);
+      A(v(F*0.12,-1+0.5*pp,0.30*pp),v(F*0.12,-1+0.5*pn,-0.30*pn),
+        v(H*(1-0.7*pp),-0.06-0.5*pp,0.30*pp),v(H*(1-0.7*pn),-0.06-0.5*pn,-0.30*pn));
+      L(v(F,-0.04,0.06),v(F,-0.04,-0.06)); fing('flat','flat'); break; }
+    case 'pushup': case 'kneepush': { const c=osc(2.0);
+      A(v(F*(0.10+0.40*c),-1,0),v(F*(0.10+0.40*c),-1,0),
+        v(H*(1-0.30*c),-0.30-0.30*c,0.05),v(H*(1-0.30*c),-0.30-0.30*c,-0.05));
+      if(mv==='kneepush') L(v(F*0.86,-0.42,0.06),v(F*0.86,-0.42,-0.06),v(F*0.30,-0.94,0.05),v(F*0.30,-0.94,-0.05));
+      else L(v(F,-0.04,0.05),v(F,-0.04,-0.05),v(F,-0.10,0.04),v(F,-0.10,-0.04));
+      X.orient('down',-bh*0.05*c); fing('flat','flat'); break; }
+    case 'mountain': { const p=sw(3.0),pp=Math.max(0,p),pn=Math.max(0,-p);
+      A(v(F*0.10,-1,0),v(F*0.10,-1,0),v(H*0.92,-0.34,0.06),v(H*0.92,-0.34,-0.06));
+      L(v(F*(1-0.85*pp),-0.10-0.45*pp,0.06),v(F*(1-0.85*pn),-0.10-0.45*pn,-0.06),
+        v(F*(1-0.55*pp),-0.14-0.35*pp,0.05),v(F*(1-0.55*pn),-0.14-0.35*pn,-0.05));
+      fing('flat','flat'); break; }
+    case 'birddog': { const p=sw(1.3),pp=Math.max(0,p),pn=Math.max(0,-p);
+      A(v(F*0.08,-1,0.05),v(F*0.08,-1,-0.05),v(H*0.90*pp+0.10,-0.60+0.55*pp,0.06),v(H*0.10,-0.96,-0.06));
+      L(v(F*(0.30+0.66*pn),-0.90+0.80*pn,0.06),v(F*0.30,-0.92,-0.06),
+        v(F*(0.30+0.60*pn),-0.90+0.70*pn,0.05),v(F*0.20,-0.95,-0.05));
+      fing('flat','flat'); break; }
+    case 'catcow': { const c=osc(1.2);
+      A(v(F*0.06,-1,0.05),v(F*0.06,-1,-0.05),v(F*0.02,-1,0.05),v(F*0.02,-1,-0.05));
+      L(v(F*0.55,-0.82,0.06),v(F*0.55,-0.82,-0.06),v(F*0.22,-0.96,0.05),v(F*0.22,-0.96,-0.05));
+      set('Spine',(c-0.5)*0.40,0,0); set('Spine1',(c-0.5)*0.36,0,0); set('Spine2',(c-0.5)*0.30,0,0);
+      set('Neck',(0.5-c)*0.30,0,0); fing('flat','flat'); break; }
+    case 'child': {
+      A(v(H*0.94,-0.30,0.06),v(H*0.94,-0.30,-0.06),v(H*0.98,-0.16,0.05),v(H*0.98,-0.16,-0.05));
+      L(v(F*0.50,-0.86,0.07),v(F*0.50,-0.86,-0.07),v(F*0.10,-0.99,0.05),v(F*0.10,-0.99,-0.05));
+      set('Spine',0.18,0,0); set('Neck',0.16,0,0); hipsDrop(0); fing('flat','flat'); break; }
+    case 'cobra': { const c=osc(1.1);
+      A(v(F*0.10,-1,0.05),v(F*0.10,-1,-0.05),v(H*0.60,-0.78,0.06),v(H*0.60,-0.78,-0.06));
+      L(v(F,-0.06,0.05),v(F,-0.06,-0.05));
+      set('Spine',-0.24*c,0,0); set('Spine1',-0.20*c,0,0); set('Neck',-0.16*c,0,0);
+      fing('flat','flat'); break; }
+    case 'superman': { const c=osc(1.6);
+      A(v(H*0.92,0.10+0.34*c,0.12),v(H*0.92,0.10+0.34*c,-0.12),v(H,0.06+0.22*c,0.10),v(H,0.06+0.22*c,-0.10));
+      L(v(F*0.95,0.08+0.30*c,0.06),v(F*0.95,0.08+0.30*c,-0.06),v(F*0.96,0.05+0.22*c,0.04),v(F*0.96,0.05+0.22*c,-0.04));
+      fing('open','open'); break; }
+    case 'sideplank': { const tr=sw(4.0)*0.015;
+      A(v(0,-1,0.10),v(0,0.96+tr,0.10),v(H*0.55,-0.72,0.30),v(0,0.98,0.06));
+      L(v(F,-0.10,0.02),v(F,-0.06,-0.02));
+      set('Spine',0,0,0.10); fing('flat','open'); break; }
+    /* ── به پشت ── */
+    case 'crunch': { const c=osc(2.0);
+      L(v(F*0.72,0.69,0.08),v(F*0.72,0.69,-0.08),v(F*0.45,-0.89,0.05),v(F*0.45,-0.89,-0.05));
+      A(v(H*0.45,0.80,0.18),v(H*0.45,0.80,-0.18),v(H*0.86,0.38,0.22),v(H*0.86,0.38,-0.22));
+      set('Spine1',0.16*c,0,0); set('Spine2',0.14*c,0,0); set('Neck',0.10*c,0,0);
+      fing('relax','relax'); break; }
+    case 'bridge': { const c=osc(1.8);
+      L(v(F*0.70,0.71,0.08),v(F*0.70,0.71,-0.08),v(F*0.50,-0.87,0.05),v(F*0.50,-0.87,-0.05));
+      A(v(F*0.90,-0.40,0.14),v(F*0.90,-0.40,-0.14),v(F*0.95,-0.28,0.10),v(F*0.95,-0.28,-0.10));
+      X.orient('up',bh*0.045*c); fing('flat','flat'); break; }
+    case 'revcrunch': { const c=osc(2.0);
+      L(v(F*(0.86-0.70*c),0.50+0.40*c,0.08),v(F*(0.86-0.70*c),0.50+0.40*c,-0.08),
+        v(F*(0.30-0.45*c),-0.86+0.30*c,0.05),v(F*(0.30-0.45*c),-0.86+0.30*c,-0.05));
+      A(v(F*0.92,-0.36,0.14),v(F*0.92,-0.36,-0.14));
+      set('Spine1',0.10*c,0,0); fing('flat','flat'); break; }
+    case 'bicycle': { const p=sw(2.4),pp=Math.max(0,p),pn=Math.max(0,-p);
+      L(v(F*(0.90-0.62*pp),0.34+0.52*pp,0.08),v(F*(0.90-0.62*pn),0.34+0.52*pn,-0.08),
+        v(F*(0.55-0.30*pp),-0.72+0.40*pp,0.05),v(F*(0.55-0.30*pn),-0.72+0.40*pn,-0.05));
+      A(v(H*0.45,0.80,0.20),v(H*0.45,0.80,-0.20),v(H*0.84,0.40,0.24),v(H*0.84,0.40,-0.24));
+      set('Spine1',0.12,0,p*0.20); set('Spine2',0.10,0,p*0.16); fing('relax','relax'); break; }
+    case 'flutter': { const p=sw(3.2);
+      L(v(F*0.94,0.22+0.26*p,0.07),v(F*0.94,0.22-0.26*p,-0.07),v(F*0.97,0.14+0.20*p,0.05),v(F*0.97,0.14-0.20*p,-0.05));
+      A(v(F*0.90,-0.40,0.14),v(F*0.90,-0.40,-0.14)); fing('flat','flat'); break; }
+    case 'legraiselie': { const c=osc(1.8);
+      L(v(F*(0.98-0.92*c),0.10+0.92*c,0.07),v(F*(0.98-0.92*c),0.10+0.92*c,-0.07),
+        v(F*(0.99-0.90*c),0.06+0.88*c,0.05),v(F*(0.99-0.90*c),0.06+0.88*c,-0.05));
+      A(v(F*0.92,-0.36,0.14),v(F*0.92,-0.36,-0.14)); fing('flat','flat'); break; }
+    case 'hollow': { const tr=sw(4.0)*0.02;
+      L(v(F*0.90,0.30+tr,0.07),v(F*0.90,0.30+tr,-0.07));
+      A(v(H*0.86,0.44+tr,0.12),v(H*0.86,0.44+tr,-0.12),v(H*0.94,0.30,0.10),v(H*0.94,0.30,-0.10));
+      set('Spine1',0.14,0,0); set('Neck',0.10,0,0); fing('open','open'); break; }
+    case 'twistlie': { const p=sw(0.8);
+      L(v(F*0.70,0.62,0.30*p),v(F*0.70,0.62,0.30*p),v(F*0.40,-0.86,0.28*p),v(F*0.40,-0.86,0.28*p));
+      A(v(0.20,0.10,0.94),v(-0.20,0.10,0.94));
+      set('Spine1',0,p*0.26,0); set('Spine2',0,p*0.20,0); fing('open','open'); break; }
+    case 'figure4': { const c=osc(0.9);
+      L(v(F*0.72,0.66,0.34),v(F*0.74,0.64,-0.10),v(F*0.30,-0.88,0.30),v(F*0.42,-0.88,-0.06));
+      A(v(F*0.55,0.60,0.30),v(F*0.55,0.60,-0.30),v(F*0.30,0.82,0.34),v(F*0.30,0.82,-0.34));
+      set('Spine1',0.08*c,0,0); fing('grip','grip'); break; }
+    case 'sidelie': { const c=osc(0.9);
+      L(v(F*0.90,-0.10,0.20),v(F*(0.60-0.40*c),-0.30-0.40*c,-0.20),v(F*0.94,-0.08,0.16),v(F*(0.20-0.30*c),-0.90,-0.16));
+      A(v(H*0.80,0.30,0.20),v(F*0.40,-0.30,-0.50),v(H*0.90,0.20,0.16),v(F*0.60,-0.40,-0.40));
+      fing('relax','grip'); break; }
+    /* ── نشسته (لگن پایین، زانو خم) ── */
+    case 'seated': { const br=sw(1.0)*0.02;
+      L(v(0.10,-0.52,0.85),v(-0.10,-0.52,0.85),v(0.06,-0.99,0.04),v(-0.06,-0.99,0.04));
+      hipsDrop(legLen*0.45);
+      A(v(0.28,-0.90,0.24),v(-0.28,-0.90,0.24),v(0.22,-0.70,0.66),v(-0.22,-0.70,0.66));
+      set('Spine',br,0,0); fing('relax','relax'); break; }
+    case 'seatedmarch': { const p=sw(2.0),pp=Math.max(0,p),pn=Math.max(0,-p);
+      L(v(0.10,-0.52+0.40*pp,0.85-0.20*pp),v(-0.10,-0.52+0.40*pn,0.85-0.20*pn),
+        v(0.06,-0.99+0.30*pp,0.04+0.30*pp),v(-0.06,-0.99+0.30*pn,0.04+0.30*pn));
+      hipsDrop(legLen*0.45);
+      A(v(0.28,-0.88,0.26+0.20*p),v(-0.28,-0.88,0.26-0.20*p)); fing('relax','relax'); break; }
+    case 'seatedleg': { const c=osc(1.6);
+      L(v(0.10,-0.52,0.85),v(-0.10,-0.52,0.85),
+        v(0.06,-0.99+0.95*c,0.04+0.30*c),v(-0.06,-0.99+0.95*c,0.04+0.30*c));
+      hipsDrop(legLen*0.45);
+      A(v(0.28,-0.90,0.24),v(-0.28,-0.90,0.24)); fing('relax','relax'); break; }
+    case 'seatedtwist': { const p=sw(1.2);
+      L(v(0.10,-0.52,0.85),v(-0.10,-0.52,0.85),v(0.06,-0.99,0.04),v(-0.06,-0.99,0.04));
+      hipsDrop(legLen*0.45);
+      set('Spine1',0,p*0.32,0); set('Spine2',0,p*0.24,0); set('Neck',0,p*0.20,0);
+      A(v(0.55,-0.55,0.62),v(-0.55,-0.55,0.62),v(0.40,-0.40,0.82),v(-0.40,-0.40,0.82));
+      fing('relax','relax'); break; }
+    case 'butterfly': { const c=osc(1.0);
+      L(v(0.86,-0.34,0.38),v(-0.86,-0.34,0.38),v(0.30,-0.50,0.81),v(-0.30,-0.50,0.81));
+      hipsDrop(legLen*0.62);
+      A(v(0.50,-0.66,0.56),v(-0.50,-0.66,0.56),v(0.34,-0.60,0.72),v(-0.34,-0.60,0.72));
+      set('Spine',0.10+0.08*c,0,0); fing('grip','grip'); break; }
+    case 'seatedham': { const c=osc(0.9);
+      L(v(0.10,-0.16,0.98),v(-0.10,-0.16,0.98),v(0.06,-0.10,0.99),v(-0.06,-0.10,0.99));
+      hipsDrop(legLen*0.62);
+      A(v(0.24,-0.40,0.88),v(-0.24,-0.40,0.88),v(0.18,-0.30,0.94),v(-0.18,-0.30,0.94));
+      set('Spine',0.26+0.14*c,0,0); set('Neck',0.10,0,0); fing('open','open'); break; }
+    case 'dip': { const c=osc(2.0);
+      L(v(0.10,-0.60,0.79),v(-0.10,-0.60,0.79),v(0.06,-0.99,0.04),v(-0.06,-0.99,0.04));
+      hipsDrop(legLen*(0.34+0.16*c));
+      A(v(0.24,-0.90,-0.34),v(-0.24,-0.90,-0.34),v(0.18,-0.86-0.06*c,-0.46-0.20*c),v(-0.18,-0.86-0.06*c,-0.46-0.20*c));
+      fing('grip','grip'); break; }
+    case 'russian': { const p=sw(1.6);
+      L(v(0.10,-0.46,0.88),v(-0.10,-0.46,0.88),v(0.06,-0.90,0.42),v(-0.06,-0.90,0.42));
+      hipsDrop(legLen*0.50);
+      set('Spine',0.22,0,0); set('Spine1',0,p*0.34,0); set('Spine2',0,p*0.26,0);
+      A(v(0.34+0.30*p,-0.44,0.82),v(-0.34+0.30*p,-0.44,0.82),v(0.30+0.40*p,-0.34,0.88),v(-0.30+0.40*p,-0.34,0.88));
+      fing('grip','grip'); break; }
+    default: { downArms(); standLegs(); fing('relax','relax'); }
   }
 }
 /* جهتِ کلِ بدن: '' ایستاده، 'down' دمر (پلانک/شنا/سوپرمن)، 'up' به پشت (کرانچ/پلِ باسن).
@@ -17481,16 +17792,6 @@ function pod3dBodyOrient(mode, lift){
   if(C&&p0){ const d=C.clone().sub(p0).applyQuaternion(q); g.position.copy(C).sub(d); }
   if(lift) g.position.y+=lift;
 }
-/* زیرگونهٔ حرکاتِ روی زمین */
-function wkFloorKind(it){
-  const n=srchNorm(((it&&it.name)||'')+' '+((it&&it.id)||''));
-  if(/پلانک/.test(n)) return 'plank';
-  if(/شنا|پوش اپ/.test(n)) return 'pushup';
-  if(/سوپرمن/.test(n)) return 'superman';
-  if(/دراز و نشست|کرانچ|شکم/.test(n)) return 'crunch';
-  if(/پل باسن|باسن/.test(n)) return 'bridge';
-  return '';
-}
 function wkCoachRestPose(){ try{ const G=_pod3d&&_pod3d.gbones; if(!G) return;
   for(const n in G){ const o=G[n]; if(o&&o.b&&o.q) o.b.quaternion.copy(o.q); } }catch(e){} }
 function wkCoachReset(){ try{ pod3dBodyOrient(''); }catch(e){}
@@ -17504,45 +17805,35 @@ function wkAvatarUnmount(){
   try{ if((_pod.avMode||'photo')==='3d'){ pod3dEnsure(); if(podCfg().avBg) pod3dBgStart(); else pod3dBgStop(); }
        else { pod3dStopLoop(); pod3dBgStop(); } }catch(e){}
 }
-/* خانوادهٔ حرکت از روی نامِ ورزش (srchNorm ی/ک عربی را یکدست می‌کند) */
-function wkMotionFamily(it){
-  // ⚠️ ترتیب مهم است: الگوهای خاص‌تر اول، وگرنه زیررشته‌ها اشتباه می‌گیرند
-  // (مثلاً «ک‌ران‌چ» با الگوی «ران» به اسکات می‌افتاد، و «کشش» با «کش» به بازو).
-  const n=srchNorm(((it&&it.name)||'')+' '+((it&&it.id)||''));
-  if(wkFloorKind(it)) return 'floor';          // حرکاتِ روی زمین (پلانک/شنا/کرانچ/پل/سوپرمن)
-  if(/شکم|کرانچ|پلانک|دراز و نشست|مرکز بدن|پهلو|تنه/.test(n)) return 'core';
-  if(/کشش|استرچ|گردن|نرمش|تنفس|چرخش/.test(n)) return 'stretch';
-  if(/بازو|دمبل|شانه|سرشانه|پرس|پارویی|فلای|کش/.test(n)) return 'arms';
-  if(/اسکات|اسکوات|چمباتمه|نشست و برخاست|لانج|زانو|لگن/.test(n)) return 'squat';
-  return 'cardio';
-}
-/* موتورِ حرکتِ مربی — هر فریم صدا زده می‌شود */
+/* موتورِ پوزِ مربی — هر فریم صدا زده می‌شود */
 function pod3dCoachGesture(t, energy, set, G, T){
   const dt=(_pod3d.dt||0.016), k=1-Math.pow(0.02, dt);
   // ⚠️ pod3dAimTargetLocal جهت را به‌صورتِ «آرایه» می‌گیرد نه Vector3 (وگرنه NaN و بی‌اثر)
   const v=(x,y,z)=>{ const m=Math.hypot(x,y,z)||1; return [x/m,y/m,z/m]; };
   const aim=(A,B,dir)=>{ if(!A||!B) return; const tl=pod3dAimTargetLocal(A.b,B.b,dir,A.q); if(tl) A.b.quaternion.slerp(tl,k); };
-  const LA=G['LeftArm'],LF=G['LeftForeArm'],LH=G['LeftHand'],RA=G['RightArm'],RF=G['RightForeArm'],RH=G['RightHand'];
-  const LU=G['LeftUpLeg'],LL=G['LeftLeg'],LFt=G['LeftFoot'],RU=G['RightUpLeg'],RL=G['RightLeg'],RFt=G['RightFoot'];
   if(G['Hips'] && G['Hips'].p===undefined){ try{ G['Hips'].p=G['Hips'].b.position.clone(); }catch(e){ G['Hips'].p=null; } }
   let legLen=0;
-  try{ if(G['Hips']&&LFt){ const a=new T.Vector3(),b2=new T.Vector3(); G['Hips'].b.getWorldPosition(a); LFt.b.getWorldPosition(b2); legLen=a.distanceTo(b2); } }catch(e){}
+  try{ if(G['Hips']&&G['LeftFoot']){ const a=new T.Vector3(),b2=new T.Vector3();
+        G['Hips'].b.getWorldPosition(a); G['LeftFoot'].b.getWorldPosition(b2); legLen=a.distanceTo(b2); } }catch(e){}
   const hipsDrop=(d)=>{ const H=G['Hips']; if(!H||!H.p) return; let sc=1;
     try{ const ws=new T.Vector3(); if(H.b.parent) H.b.parent.getWorldScale(ws); sc=ws.y||1; }catch(e){}
     H.b.position.y = H.p.y - (d/sc); };
-  const legStand=()=>{ aim(LU,LL,v(0.06,-1,0.02)); aim(RU,RL,v(-0.06,-1,0.02)); aim(LL,LFt,v(0.04,-1,0)); aim(RL,RFt,v(-0.04,-1,0)); };
-  const armsDown=()=>{ aim(LA,LF,v(0.26,-0.94,0.14)); aim(RA,RF,v(-0.26,-0.94,0.14)); aim(LF,LH,v(0.20,-0.92,0.30)); aim(RF,RH,v(-0.20,-0.92,0.30)); };
   const fing=(l,r)=>{ try{ pod3dApplyFingers(l,r,k); }catch(e){} };
+  const legStand=()=>{ aim(G.LeftUpLeg,G.LeftLeg,v(0.06,-1,0.02)); aim(G.RightUpLeg,G.RightLeg,v(-0.06,-1,0.02));
+                       aim(G.LeftLeg,G.LeftFoot,v(0.04,-1,0)); aim(G.RightLeg,G.RightFoot,v(-0.04,-1,0)); };
 
   const running=(typeof _wkRunning!=='undefined')&&_wkRunning;
   const paused = running && !(typeof _wkTimer!=='undefined' && _wkTimer);
   const rest   = running && (typeof _wkPhase!=='undefined') && _wkPhase==='rest';
   const it     = (typeof _wkList!=='undefined' && typeof _wkActive!=='undefined' && _wkActive>=0)?_wkList[_wkActive]:null;
   const counting = _wkCount && performance.now() < _wkCount.until;
-  const fam = running ? wkMotionFamily(it) : '';
-  const fk  = (fam==='floor') ? wkFloorKind(it) : '';
-  const onFloor = !!(fk && running && !paused && !rest && !counting);
-  if(!onFloor) pod3dBodyOrient('');   // شمارش/استراحت/مکث و همهٔ حرکاتِ ایستاده ⇒ بدن ایستاده
+  const mv = running ? wkMoveOf(it) : '';
+  const posture = (WK_POSTURE[mv]||'');
+  const active = !!(running && !paused && !rest && !counting);
+  // وضعیتِ بدن: فقط در حرکتِ فعالِ روی‌زمین چرخانده می‌شود؛ بقیهٔ حالت‌ها ایستاده
+  const orient=(m,lift)=>{ try{ pod3dBodyOrient(m==='seat'?'':m, lift); }catch(e){} };
+  if(!active || posture==='seat' || !posture) orient('');
+  else orient(posture,0);
 
   // تنفس: در استراحت تندتر و عمیق‌تر (نفس‌نفس)
   const br = rest ? Math.sin(t*3.5)*0.055 : Math.sin(t*1.1)*0.016;
@@ -17555,66 +17846,29 @@ function pod3dCoachGesture(t, energy, set, G, T){
     const n=Math.max(1,Math.min(5,(_wkCount&&_wkCount.n)||1));
     const shape = n===1?'point': n===2?'cnt2': n===3?'cnt3': n===4?'cnt4':'open';
     hipsDrop(0); legStand();
-    aim(RA,RF,v(-0.30,-0.32,0.60)); aim(RF,RH,v(-0.12,0.92,0.40));
-    aim(LA,LF,v(0.26,-0.93,0.16));  aim(LF,LH,v(0.20,-0.92,0.30));
-    fing('relax',shape);
-    set('Head', 0.02, -0.05, 0);
+    aim(G.RightArm,G.RightForeArm,v(-0.30,-0.32,0.60)); aim(G.RightForeArm,G.RightHand,v(-0.12,0.92,0.40));
+    aim(G.LeftArm,G.LeftForeArm,v(0.26,-0.93,0.16));    aim(G.LeftForeArm,G.LeftHand,v(0.20,-0.92,0.30));
+    fing('relax',shape); set('Head',0.02,-0.05,0);
     return;
   }
   if(rest){
     // 😮‍💨 استراحت: ایستاده و ثابت، دست‌ها روی کمر، نفس‌نفس
     hipsDrop(0); legStand();
-    aim(RA,RF,v(-0.46,-0.80,0.10)); aim(RF,RH,v(-0.72,-0.30,0.30));
-    aim(LA,LF,v(0.46,-0.80,0.10));  aim(LF,LH,v(0.72,-0.30,0.30));
-    fing('relax','relax');
-    set('Head', 0.07+Math.sin(t*3.5)*0.03, 0, 0);
+    aim(G.RightArm,G.RightForeArm,v(-0.46,-0.80,0.10)); aim(G.RightForeArm,G.RightHand,v(-0.72,-0.30,0.30));
+    aim(G.LeftArm,G.LeftForeArm,v(0.46,-0.80,0.10));    aim(G.LeftForeArm,G.LeftHand,v(0.72,-0.30,0.30));
+    fing('relax','relax'); set('Head',0.07+Math.sin(t*3.5)*0.03,0,0);
     return;
   }
   if(!running || paused){
-    hipsDrop(0); legStand(); armsDown(); fing('relax','relax');
+    hipsDrop(0); legStand();
+    aim(G.LeftArm,G.LeftForeArm,v(0.26,-0.94,0.14));  aim(G.RightArm,G.RightForeArm,v(-0.26,-0.94,0.14));
+    aim(G.LeftForeArm,G.LeftHand,v(0.20,-0.92,0.30)); aim(G.RightForeArm,G.RightHand,v(-0.20,-0.92,0.30));
+    fing('relax','relax');
     return;
   }
-  // ── فازِ کار: حرکتِ ورزشیِ متناسب با خانوادهٔ همان ورزش ──
-  if(fam==='floor'){ wkFloorMotion(fk,t,aim,v,set,fing,hipsDrop,G); return; }
-  if(fam==='squat'){
-    const d=(1-Math.cos(t*2.0))/2;                       // عمقِ نشستن ۰..۱
-    aim(LU,LL,v(0.10,-1,0.62*d));  aim(RU,RL,v(-0.10,-1,0.62*d));
-    aim(LL,LFt,v(0.07,-1,-0.55*d)); aim(RL,RFt,v(-0.07,-1,-0.55*d));
-    hipsDrop(legLen*0.26*d);
-    aim(LA,LF,v(0.24,-0.86,0.30+0.55*d)); aim(RA,RF,v(-0.24,-0.86,0.30+0.55*d));
-    aim(LF,LH,v(0.16,-0.35,0.86));        aim(RF,RH,v(-0.16,-0.35,0.86));
-    set('Spine', 0.10*d, 0, 0);
-    fing('open','open');
-  } else if(fam==='arms'){
-    const c=(1-Math.cos(t*2.6))/2;                        // جمع‌کردنِ ساعد
-    aim(LA,LF,v(0.30,-0.94,0.10)); aim(RA,RF,v(-0.30,-0.94,0.10));
-    aim(LF,LH,v(0.22,-0.30+1.05*c,0.55)); aim(RF,RH,v(-0.22,-0.30+1.05*c,0.55));
-    legStand(); hipsDrop(0); fing('grip','grip');
-  } else if(fam==='core'){
-    const w2=Math.sin(t*1.8);                             // چرخشِ تنه
-    aim(LA,LF,v(0.60,0.30,0.22)); aim(RA,RF,v(-0.60,0.30,0.22));
-    aim(LF,LH,v(0.20,0.62,0.45)); aim(RF,RH,v(-0.20,0.62,0.45));
-    legStand(); hipsDrop(legLen*0.03*Math.abs(w2));
-    set('Spine1', 0.10*Math.abs(w2), w2*0.22, 0);
-    set('Spine2', 0.08*Math.abs(w2), w2*0.16, 0);
-    fing('relax','relax');
-  } else if(fam==='stretch'){
-    const sN=Math.sin(t*1.2), up=(sN+1)/2;                // کششِ یک‌درمیانِ بالای سر
-    aim(LA,LF,v(0.34,-0.55+1.35*up,0.20)); aim(RA,RF,v(-0.34,-0.95+0.45*(1-up),0.16));
-    aim(LF,LH,v(0.22,-0.25+1.05*up,0.32)); aim(RF,RH,v(-0.22,-0.85,0.30));
-    legStand(); hipsDrop(0);
-    set('Spine1', 0, 0, -sN*0.10);
-    fing('open','open');
-  } else {
-    // 🏃 هوازی: درجا راه رفتن/دویدن با تابِ دست‌ها
-    const pcy=Math.sin(t*3.0), pp=Math.max(0,pcy), pn=Math.max(0,-pcy);
-    aim(LA,LF,v(0.22,-0.92,0.30*pcy));  aim(RA,RF,v(-0.22,-0.92,-0.30*pcy));
-    aim(LF,LH,v(0.18,-0.86,0.34+0.18*pcy)); aim(RF,RH,v(-0.18,-0.86,0.34-0.18*pcy));
-    aim(LU,LL,v(0.07,-0.96,0.32*pp)); aim(RU,RL,v(-0.07,-0.96,0.32*pn));
-    aim(LL,LFt,v(0.05,-0.97,-0.44*pp)); aim(RL,RFt,v(-0.05,-0.97,-0.44*pn));
-    hipsDrop(legLen*0.02*Math.abs(pcy));
-    fing('relax','relax');
-  }
+  // ── فازِ کار: حرکتِ اختصاصیِ همان ورزش ──
+  hipsDrop(0);
+  try{ wkPlayMove(mv, t, {aim,v,set,fing,hipsDrop,G,bh:(_pod3d.bodyH||1.7),legLen,orient}); }catch(e){}
 }
 /* آپدیتِ هر ثانیه: عددِ وسط + زاویهٔ حلقه (بدونِ رندرِ کاملِ لیست) */
 function wkPaintClock(){
@@ -17711,6 +17965,14 @@ function wkDurSpin(i){
     _wkList[i].dur=v; wkClickUp(); renderWkList();
   });
 }
+function wkRest(i,delta){ const o=_wkList[i]; if(!o) return; const old=o.rest||0;
+  o.rest=Math.max(0,old+delta); if(o.rest!==old){ delta>0?wkClickUp():wkClickDown(); } renderWkList(); }
+function wkRestSpin(i){ const vals=[]; for(let v=0;v<=300;v+=5) vals.push(v);
+  openSpinner('استراحتِ بینِ ست (ثانیه)', vals, _wkList[i].rest||0, v=>faDigits(v)+'ث', v=>{ _wkList[i].rest=v; wkClickUp(); renderWkList(); }); }
+function wkRestEx(delta){ const c=wkCfg(); const old=parseInt(c.restEx,10)||0;
+  const nv=Math.max(0,old+delta); wkCfgSet({restEx:nv}); if(nv!==old){ delta>0?wkClickUp():wkClickDown(); } renderWkList(); }
+function wkRestExSpin(){ const vals=[]; for(let v=0;v<=600;v+=5) vals.push(v);
+  openSpinner('استراحتِ بینِ دو حرکت (ثانیه)', vals, parseInt(wkCfg().restEx,10)||0, v=>faDigits(v)+'ث', v=>{ wkCfgSet({restEx:v}); wkClickUp(); renderWkList(); }); }
 function wkMove(i,dir){ const j=i+dir; if(j<0||j>=_wkList.length) return; [_wkList[i],_wkList[j]]=[_wkList[j],_wkList[i]]; renderWkList(); }
 function wkRemove(i){ _wkList.splice(i,1); renderWkList(); }
 // نگه‌داشتن صفحه روشن حین ورزش (Wake Lock) — روی اندروید و iOS 16.4+ کار می‌کند
@@ -17733,7 +17995,7 @@ function wkMediaSession(on){
 function wkStart(){
   if(!_wkList.length) return;
   _wkList.forEach(it=>it.done=false);
-  _wkRunning=true; _wkActive=0; _wkSet=1; _wkPhase='work'; _wkRemain=_wkList[0].dur;
+  _wkRunning=true; _wkActive=0; _wkSet=1; _wkPhase='work'; _wkRestToNext=false; _wkRemain=_wkList[0].dur;
   wkAcquireLock(); wkMediaSession(true);
   if(_wkAudioCtx&&_wkAudioCtx.state==='suspended') _wkAudioCtx.resume();
   wkStartSound();
@@ -17769,13 +18031,17 @@ function wkAdvance(){
       if(it.rest>0){ _wkPhase='rest'; _wkRemain=it.rest; wkRestSound(); renderWkList(); wkResume(); return; }
       _wkSet++; _wkRemain=it.dur; wkStartBeat(); renderWkList(); wkResume(); return;
     }else{
-      // همه‌ی ست‌های این حرکت تمام شد
+      // همه‌ی ست‌های این حرکت تمام شد ⇒ پیش از حرکتِ بعدی هم استراحت بده
       wkSetDone();
       it.done=true;
+      const nx=_wkList.findIndex(x=>!x.done);
+      const rb=Math.max(0, parseInt(wkCfg().restEx,10)||0);
+      if(nx>=0 && rb>0){ _wkPhase='rest'; _wkRestToNext=true; _wkRemain=rb; wkRestSound(); renderWkList(); wkResume(); return; }
       wkNextExercise(); return;
     }
   }else{
-    // استراحت تمام شد، ست بعدی
+    // استراحت تمام شد: یا ستِ بعدی، یا حرکتِ بعدی
+    if(_wkRestToNext){ _wkRestToNext=false; wkNextExercise(); return; }
     _wkPhase='work'; _wkSet++; _wkRemain=it.dur; wkBeep(587,0.12,'sine',0.18); wkStartBeat(); renderWkList(); wkResume(); return;
   }
 }
@@ -17795,7 +18061,7 @@ function wkSkip(){ // رد کردن ست/فاز فعلی
 function wkStop(){
   if(_wkTimer){ clearInterval(_wkTimer); _wkTimer=null; }
   wkStopBeat(); wkReleaseLock(); wkMediaSession(false);
-  _wkRunning=false; _wkActive=-1; _wkSet=1; _wkPhase='work';
+  _wkRunning=false; _wkActive=-1; _wkSet=1; _wkPhase='work'; _wkRestToNext=false;
   try{ wkAvatarUnmount(); }catch(e){}
   wkShowRun(false);
   renderExWorkout();   // بازگشت به نمای چیدمان (هدر/جستجو برمی‌گردند)
@@ -17803,7 +18069,7 @@ function wkStop(){
 function wkFinish(){
   if(_wkTimer){ clearInterval(_wkTimer); _wkTimer=null; }
   wkStopBeat(); wkReleaseLock(); wkMediaSession(false);
-  _wkRunning=false; _wkActive=-1; _wkSet=1; _wkPhase='work';
+  _wkRunning=false; _wkActive=-1; _wkSet=1; _wkPhase='work'; _wkRestToNext=false;
   wkFinishSound();
   try{ wkAvatarUnmount(); }catch(e){}
   wkShowRun(false);
