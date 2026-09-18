@@ -1287,6 +1287,25 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .spin-foot button{flex:1;border-radius:10px;padding:11px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;border:1px solid var(--line)}
 .spin-ok{background:var(--teal-dim);color:#d6f5ee;border-color:var(--teal-dim)!important}
 .spin-cancel{background:var(--panel-2);color:var(--muted)}
+/* ===== جلسه تمرینی: آیکون راهنما + صفحهٔ گردِ اجرا (ساعت هوشمند) ===== */
+.wk-help-btn{width:27px;height:27px;border-radius:50%;border:1.5px solid var(--teal-dim);background:var(--panel-2);color:var(--teal);font-weight:800;font-style:italic;cursor:pointer;flex:0 0 auto;font-size:14px;line-height:1}
+.wk-help-box{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:12.5px;color:var(--muted);line-height:1.95;margin-bottom:10px}
+.wk-run{display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px 10px 14px;background:radial-gradient(circle at 50% 34%,rgba(63,185,163,.12),transparent 68%);border-radius:18px;margin-bottom:12px}
+.wk-run-name{font-size:16px;font-weight:800;color:var(--ink);text-align:center;line-height:1.4}
+.wk-run-phase{font-size:13px;font-weight:800;letter-spacing:.4px}
+.wk-ring-wrap{position:relative;width:230px;height:230px;max-width:72vw;max-height:72vw}
+.wk-ring{width:100%;height:100%;transform:rotate(-90deg);display:block}
+.wk-ring .trk{fill:none;stroke:var(--line);stroke-width:9}
+.wk-ring .prg{fill:none;stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset .95s linear,stroke .35s}
+.wk-ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.wk-ring-time{font-size:48px;font-weight:800;letter-spacing:2px;direction:ltr;line-height:1}
+.wk-ring-sub{font-size:12px;color:var(--muted);font-weight:600}
+.wk-run-btns{display:flex;gap:8px;justify-content:center;margin-top:2px}
+.wk-mini{display:flex;align-items:center;gap:9px;background:var(--panel-2);border-radius:10px;padding:8px 11px;margin-bottom:5px}
+.wk-mini .nm{flex:1;min-width:0;font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wk-mini .st{font-size:11.5px;font-weight:800;flex:0 0 auto}
+.wk-mini--on{border:1.5px solid var(--teal);background:linear-gradient(135deg,#16302a,#1b2938)}
+.wk-mini--done{opacity:.6}
 </style>
 </head>
 <body>
@@ -2616,7 +2635,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۲.۱</b> · انتشار: ۱۴۰۵/۰۶/۲۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۲.۲</b> · انتشار: ۱۴۰۵/۰۶/۲۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -17026,48 +17045,93 @@ function parseSetInfo(setText){
   else if(repM){ dur=Math.max(20,parseInt(repM[1])*3); }
   return {sets, dur};
 }
+let _wkPickCat='';
+function wkToggleHelp(){ const b=document.getElementById('wkHelpBox'); if(b) b.style.display=(b.style.display==='none'||!b.style.display)?'block':'none'; }
 function renderExWorkout(){
   const box=document.getElementById('exWorkout'); if(!box) return;
-  let h=`<div style="font-size:13px;color:var(--muted);line-height:1.9;margin-bottom:10px">حرکت‌ها را اضافه کن و با ▲▼ ترتیبشان را بچین. برای هرکدام تعداد ست و زمان هر ست را تنظیم کن، بعد «شروع» را بزن. کرنومتر هر ست را می‌شمارد، بین ست‌ها استراحت می‌گذارد و با صدا راهنمایی‌ات می‌کند.</div>`;
-  // ردیف کنترل: انتخاب + صدا
-  h+=`<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-    <select id="wkAddSelect" style="flex:1;min-width:150px"><option value="">— افزودن حرکت —</option>`;
-  for(const g in EX_LIBRARY){ h+=`<optgroup label="${EX_LIBRARY[g].cat}">`; EX_LIBRARY[g].items.forEach(ex=>{ h+=`<option value="${ex.id}">${ex.name}</option>`; }); h+=`</optgroup>`; }
-  h+=`</select> <button class="quick-btn" style="flex:0 0 auto;font-size:13px;padding:9px 14px" onclick="uiDing();wkAdd()">افزودن</button>
-    <button id="wkSoundBtn" class="quick-btn" style="flex:0 0 auto;font-size:15px;padding:9px 11px" onclick="wkToggleSound()" title="صدای راهنما">${_wkSound?'🔊':'🔇'}</button>
-    <button id="wkMusicBtn" class="quick-btn" style="flex:0 0 auto;font-size:15px;padding:9px 11px" onclick="wkToggleMusic()" title="روشن/خاموش موزیک">${_wkMusic?'🎵':'🎵̶'}</button>
-    <button id="wkTrackBtn" class="quick-btn" style="flex:0 0 auto;font-size:15px;padding:9px 11px" onclick="openWkTrack()" title="انتخاب آهنگ">${(WK_TRACKS.find(x=>x.id===getWkTrack())||{emoji:'🎶'}).emoji}</button></div>`;
-  h+=`<div style="margin-top:10px;font-size:13px;color:var(--muted)">یا یک برنامه‌ی آماده:</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">`;
-  for(const pk in EX_PLANS){ h+=`<button class="quick-btn" style="font-size:12px;padding:8px 12px;flex:0 0 auto" onclick="uiDing();wkLoadPlan('${pk}')">${EX_PLANS[pk].icon} ${EX_PLANS[pk].fa}</button>`; }
-  h+=`</div><div id="wkList" style="margin-top:12px"></div>`;
+  let h='';
+  if(!_wkRunning){
+    // سرتیتر جمع‌وجور + آیکونِ راهنما (متنِ طولانیِ قبلی زیرِ i رفت)
+    h+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div style="flex:1;font-size:14px;font-weight:800;color:var(--ink)">🏋️ چیدنِ حرکت‌ها</div>
+      <button class="wk-help-btn" onclick="wkToggleHelp()" title="راهنما">i</button></div>`;
+    h+=`<div id="wkHelpBox" class="wk-help-box" style="display:none">حرکت‌ها را جستجو و اضافه کن و با ▲▼ ترتیبشان را بچین. برای هرکدام تعداد ست و زمانِ هر ست را تنظیم کن، بعد «شروع تمرین» را بزن. کرنومترِ گرد هر ست را می‌شمارد، بین ست‌ها استراحت می‌گذارد و با صدا راهنمایی‌ات می‌کند.</div>`;
+    // انتخابگرِ جستجوشوندهٔ حرکت (به‌جای منوی کشویی)
+    h+=`<div class="exp">
+      <input type="search" id="wkSearch" class="exp-s" placeholder="🔎 جستجوی حرکت… مثلاً شنا، پلانک، کشش، اسکات" oninput="wkPickRender()" autocomplete="off">
+      <div class="exp-cats" id="wkCats"></div>
+      <div class="exp-res" id="wkResults"></div>
+    </div>`;
+    // ردیفِ صدا/موزیک/آهنگ + برنامه‌های آماده در آکاردئونِ جمع‌شونده
+    h+=`<div style="display:flex;gap:6px;align-items:center;margin-top:9px">
+      <button id="wkSoundBtn" class="quick-btn" style="flex:0 0 auto;font-size:15px;padding:8px 11px" onclick="wkToggleSound()" title="صدای راهنما">${_wkSound?'🔊':'🔇'}</button>
+      <button id="wkMusicBtn" class="quick-btn" style="flex:0 0 auto;font-size:15px;padding:8px 11px" onclick="wkToggleMusic()" title="موزیک">${_wkMusic?'🎵':'🎵̶'}</button>
+      <button id="wkTrackBtn" class="quick-btn" style="flex:0 0 auto;font-size:15px;padding:8px 11px" onclick="openWkTrack()" title="انتخاب آهنگ">${(WK_TRACKS.find(x=>x.id===getWkTrack())||{emoji:'🎶'}).emoji}</button>
+      <details style="flex:1;min-width:0"><summary style="cursor:pointer;font-size:12.5px;color:var(--muted);padding:8px 4px;list-style:none">📋 برنامه‌های آماده</summary>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">`;
+    for(const pk in EX_PLANS){ h+=`<button class="quick-btn" style="font-size:12px;padding:7px 11px;flex:0 0 auto" onclick="uiDing();wkLoadPlan('${pk}')">${EX_PLANS[pk].icon} ${EX_PLANS[pk].fa}</button>`; }
+    h+=`</div></details></div>`;
+  }
+  h+=`<div id="wkList" style="margin-top:12px"></div>`;
   box.innerHTML=h;
+  if(!_wkRunning){ try{ wkPickRender(); }catch(e){} }
   renderWkList();
+}
+/* انتخابگرِ جستجوشوندهٔ حرکت برای جلسه تمرینی (هستهٔ srch مشترک) */
+function wkPickCat(c){ _wkPickCat=(_wkPickCat===c)?'':c; wkPickRender(); }
+function wkPickRender(){
+  const res=document.getElementById('wkResults'), cats=document.getElementById('wkCats');
+  if(!res) return;
+  const q=((document.getElementById('wkSearch')||{}).value||'').trim();
+  if(cats){ cats.innerHTML=Object.keys(EX_LIBRARY).map(g=>`<button type="button" class="exp-cat${_wkPickCat===g?' on':''}" onclick="wkPickCat('${g}')">${EX_LIBRARY[g].cat}</button>`).join(''); }
+  const toks=q?srchTokens(q):[];
+  const out=[];
+  for(const g in EX_LIBRARY){
+    if(_wkPickCat && g!==_wkPickCat) continue;
+    EX_LIBRARY[g].items.forEach(ex=>{
+      let sc=0;
+      if(toks.length){
+        const nameHay=srchNorm([ex.name,ex.alt,EX_LIBRARY[g].cat].join(' '));
+        sc=srchScore(nameHay,toks);
+        if(sc<0){ const full=srchNorm([ex.name,ex.alt,ex.desc,ex.benefit,EX_LIBRARY[g].cat].join(' ')); sc=srchScore(full,toks); if(sc<0) return; sc-=500; }
+      }
+      out.push({ex,sc});
+    });
+  }
+  if(!out.length){ res.innerHTML=`<div class="exp-none">چیزی پیدا نشد. نامِ دیگری امتحان کن.</div>`; return; }
+  if(toks.length) out.sort((a,b)=>b.sc-a.sc);
+  const cap=q?60:(_wkPickCat?60:14);
+  res.innerHTML=out.slice(0,cap).map(o=>`<button type="button" class="exp-i" onclick="wkPickAdd('${o.ex.id}')"><span class="exp-n">${escVision(o.ex.name)}</span><span class="exp-m">${escVision(o.ex.set||'')}</span></button>`).join('')
+    + (out.length>cap?`<div class="exp-none">${faDigits(out.length-cap)} موردِ دیگر — برای دیدنشان جستجو کن یا دسته را انتخاب کن.</div>`:'');
+}
+function wkPickAdd(id){
+  const ex=findEx(id); if(!ex) return;
+  const info=parseSetInfo(ex.set||'');
+  _wkList.push({id:ex.id,name:ex.name,sets:info.sets,dur:info.dur,rest:info.sets>1?20:0,done:false});
+  try{ wkClickUp(); }catch(e){}
+  renderWkList();
+  try{ uiToast&&uiToast('✓ '+ex.name+' اضافه شد'); }catch(e){}
 }
 function wkToggleSound(){ _wkSound=!_wkSound; const b=document.getElementById('wkSoundBtn'); if(b) b.textContent=_wkSound?'🔊':'🔇'; if(_wkSound) wkBeep(660,0.1); }
 function renderWkList(){
   const box=document.getElementById('wkList'); if(!box) return;
   if(!_wkList.length){ box.innerHTML='<div style="color:var(--muted);font-size:11.5px">هنوز حرکتی برای تمرین اضافه نشده.</div>'; return; }
+  if(_wkRunning){ renderWkRun(box); return; }   // ← نمای گردِ اجرا (ساعت هوشمند)
   let h='';
   _wkList.forEach((it,i)=>{
-    const active = i===_wkActive;
-    const border = active ? '2px solid var(--teal)' : '1px solid var(--line)';
-    const bg = active ? 'linear-gradient(135deg,#16302a,#1b2938)' : 'var(--panel-2)';
-    h+=`<div style="background:${bg};border:${border};border-radius:11px;padding:12px;margin-bottom:8px">
+    h+=`<div style="background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:10px">
-        <div style="flex:0 0 auto">${stickFigure(findEx(it.id)?findEx(it.id).pose:'stretch', active)}</div>
+        <div style="flex:0 0 auto">${stickFigure(findEx(it.id)?findEx(it.id).pose:'stretch', false)}</div>
         <div style="flex:1;min-width:0">
           <div class="wk-row-name">${it.done?'✅ ':''}${it.name}</div>
           <div class="wk-row-meta">${faDigits(it.sets)} ست × ${faDigits(it.dur)} ثانیه${it.rest?` · استراحت ${faDigits(it.rest)}ث`:''}</div>
-        </div>`;
-    if(!_wkRunning){
-      // دکمه‌های جابه‌جایی ▲▼
-      h+=`<div style="display:flex;flex-direction:column;gap:3px;flex:0 0 auto">
-        <button class="wk-move-btn" onclick="wkMove(${i},-1)" ${i===0?'disabled':''}>▲</button>
-        <button class="wk-move-btn" onclick="wkMove(${i},1)" ${i===_wkList.length-1?'disabled':''}>▼</button>
-      </div>
-      <button class="wk-del-btn" onclick="wkRemove(${i})" title="حذف">✕</button></div>`;
-      // کنترل ست و زمان
-      h+=`<div style="display:flex;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px;flex:0 0 auto">
+          <button class="wk-move-btn" onclick="wkMove(${i},-1)" ${i===0?'disabled':''}>▲</button>
+          <button class="wk-move-btn" onclick="wkMove(${i},1)" ${i===_wkList.length-1?'disabled':''}>▼</button>
+        </div>
+        <button class="wk-del-btn" onclick="wkRemove(${i})" title="حذف">✕</button></div>
+      <div style="display:flex;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
         <div style="flex:1;text-align:center">
           <div class="wk-ctrl-label">تعداد ست</div>
           <div class="wk-step">
@@ -17084,33 +17148,60 @@ function renderWkList(){
             <button onclick="wkDur(${i},10)">+</button>
           </div>
         </div>
-      </div>`;
-    }else{
-      // حالت اجرا: نشان وضعیت
-      let status = it.done?'✅ انجام شد': active?'در حال اجرا':'در نوبت';
-      h+=`<div style="font-size:12.5px;color:${it.done?'#6d6':active?'var(--teal)':'var(--muted)'};flex:0 0 auto;font-weight:700">${status}</div></div>`;
-    }
-    // کرنومتر حرکت فعال
-    if(active && _wkRunning){
-      const mm=String(Math.floor(_wkRemain/60)).padStart(2,'0'), ss=String(_wkRemain%60).padStart(2,'0');
-      const isRest=_wkPhase==='rest';
-      h+=`<div style="text-align:center;margin-top:10px">
-        <div style="font-size:12px;color:${isRest?'var(--amber)':'var(--teal)'};font-weight:700;margin-bottom:2px">${isRest?'😮‍💨 استراحت':`ست ${faDigits(_wkSet)} از ${faDigits(it.sets)}`}</div>
-        <div id="wkClock" style="font-size:44px;font-weight:800;color:${isRest?'var(--amber)':'var(--teal)'};letter-spacing:2px;direction:ltr">${faDigits(mm+':'+ss)}</div>
-        <div style="display:flex;gap:6px;justify-content:center;margin-top:8px">`;
-      if(_wkTimer){ h+=`<button class="quick-btn" style="flex:0 0 auto;padding:8px 18px" onclick="wkPause()">⏸ مکث</button>`; }
-      else { h+=`<button class="quick-btn" style="flex:0 0 auto;padding:8px 18px" onclick="wkResume()">▶️ ادامه</button>`; }
-      h+=`<button class="quick-btn" style="flex:0 0 auto;padding:8px 18px" onclick="wkSkip()">⏭ رد کن</button>`;
-      h+=`</div></div>`;
-    }
-    h+=`</div>`;
+      </div></div>`;
   });
-  if(!_wkRunning){
-    if(_wkList.length) h+=`<button class="quick-btn" style="width:100%;margin-top:8px;padding:11px;font-size:14px" onclick="wkStart()">▶️ شروع تمرین</button>`;
-  }else{
-    h+=`<button class="quick-btn" style="width:100%;margin-top:8px;border-color:#c66;color:#e88" onclick="wkStop()">■ پایان تمرین</button>`;
-  }
+  h+=`<button class="quick-btn" style="width:100%;margin-top:8px;padding:12px;font-size:15px;font-weight:800" onclick="wkStart()">▶️ شروع تمرین</button>`;
   box.innerHTML=h;
+}
+/* نمای گردِ اجرای تمرین — حلقهٔ ساعت‌هوشمندی که پیش می‌رود */
+function renderWkRun(box){
+  const it=_wkList[_wkActive]||{sets:1,dur:1,name:''};
+  const isRest=_wkPhase==='rest';
+  const col=isRest?'var(--amber)':'var(--teal)';
+  const total=Math.max(1,isRest?(it.rest||1):(it.dur||1));
+  const prog=Math.max(0,Math.min(1,(total-_wkRemain)/total));
+  const C=2*Math.PI*52, off=C*(1-prog);
+  const mm=String(Math.floor(_wkRemain/60)).padStart(2,'0'), ss=String(_wkRemain%60).padStart(2,'0');
+  const phaseTxt=isRest?'😮‍💨 استراحت':`ست ${faDigits(_wkSet)} از ${faDigits(it.sets)}`;
+  let h=`<div class="wk-run">
+    <div class="wk-run-name">${it.name||''}</div>
+    <div class="wk-run-phase" style="color:${col}">${phaseTxt}</div>
+    <div class="wk-ring-wrap">
+      <svg class="wk-ring" viewBox="0 0 120 120">
+        <circle class="trk" cx="60" cy="60" r="52"></circle>
+        <circle id="wkRingProg" class="prg" cx="60" cy="60" r="52" stroke="${col}" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"></circle>
+      </svg>
+      <div class="wk-ring-center">
+        <div id="wkClock" class="wk-ring-time" style="color:${col}">${faDigits(mm+':'+ss)}</div>
+        <div class="wk-ring-sub">${isRest?'استراحت کن':'ثانیه'}</div>
+      </div>
+    </div>
+    <div class="wk-run-btns">
+      ${_wkTimer?`<button class="quick-btn" style="padding:9px 20px" onclick="wkPause()">⏸ مکث</button>`:`<button class="quick-btn" style="padding:9px 20px" onclick="wkResume()">▶️ ادامه</button>`}
+      <button class="quick-btn" style="padding:9px 20px" onclick="wkSkip()">⏭ رد کن</button>
+    </div>
+  </div>`;
+  _wkList.forEach((x,i)=>{
+    const on=i===_wkActive;
+    const cls='wk-mini'+(on?' wk-mini--on':(x.done?' wk-mini--done':''));
+    const st=x.done?'✅':(on?'▶':'⏳'), stc=x.done?'#6d6':(on?'var(--teal)':'var(--muted)');
+    h+=`<div class="${cls}"><span class="st" style="color:${stc}">${st}</span><span class="nm">${x.name}</span><span class="st" style="color:var(--muted)">${faDigits(x.sets)}×${faDigits(x.dur)}ث</span></div>`;
+  });
+  h+=`<button class="quick-btn" style="width:100%;margin-top:10px;border-color:#c66;color:#e88" onclick="wkStop()">■ پایان تمرین</button>`;
+  box.innerHTML=h;
+}
+/* آپدیتِ هر ثانیه: عددِ وسط + زاویهٔ حلقه (بدونِ رندرِ کاملِ لیست) */
+function wkPaintClock(){
+  const el=document.getElementById('wkClock');
+  if(!el){ renderWkList(); return; }
+  const mm=String(Math.floor(_wkRemain/60)).padStart(2,'0'), ss=String(_wkRemain%60).padStart(2,'0');
+  el.textContent=faDigits(mm+':'+ss);
+  const ring=document.getElementById('wkRingProg');
+  if(ring){ const it=_wkList[_wkActive]||{}; const isRest=_wkPhase==='rest';
+    const total=Math.max(1,isRest?(it.rest||1):(it.dur||1));
+    const prog=Math.max(0,Math.min(1,(total-_wkRemain)/total));
+    const C=2*Math.PI*52; ring.style.strokeDashoffset=(C*(1-prog)).toFixed(1);
+  }
 }
 function wkAdd(){
   const sel=document.getElementById('wkAddSelect'); if(!sel||!sel.value) return;
@@ -17221,7 +17312,7 @@ function wkStart(){
   if(_wkAudioCtx&&_wkAudioCtx.state==='suspended') _wkAudioCtx.resume();
   wkStartSound();
   setTimeout(()=>wkStartBeat(),300);  // بیت بعد از صدای شروع
-  renderWkList(); wkResume();
+  renderExWorkout(); wkResume();      // کلِ نما به حالتِ اجرا (بدونِ هدر/جستجو) سوییچ می‌شود
 }
 function wkResume(){
   if(_wkTimer) return;
@@ -17234,8 +17325,7 @@ function wkResume(){
     if(_wkRemain<=0){
       wkAdvance();
     }else{
-      const el=document.getElementById('wkClock');
-      if(el){ const mm=String(Math.floor(_wkRemain/60)).padStart(2,'0'),ss=String(_wkRemain%60).padStart(2,'0'); el.textContent=faDigits(mm+':'+ss);} else renderWkList();
+      wkPaintClock();
     }
   },1000);
   renderWkList();
@@ -17279,13 +17369,14 @@ function wkStop(){
   if(_wkTimer){ clearInterval(_wkTimer); _wkTimer=null; }
   wkStopBeat(); wkReleaseLock(); wkMediaSession(false);
   _wkRunning=false; _wkActive=-1; _wkSet=1; _wkPhase='work';
-  renderWkList();
+  renderExWorkout();   // بازگشت به نمای چیدمان (هدر/جستجو برمی‌گردند)
 }
 function wkFinish(){
   if(_wkTimer){ clearInterval(_wkTimer); _wkTimer=null; }
   wkStopBeat(); wkReleaseLock(); wkMediaSession(false);
   _wkRunning=false; _wkActive=-1; _wkSet=1; _wkPhase='work';
   wkFinishSound();
+  renderExWorkout();   // هدر/جستجو برگردند؛ پیامِ تبریک پایین جایگزین می‌شود
   const done=_wkList.filter(it=>it.done);
   if(done.length){
     const today=new Date();
