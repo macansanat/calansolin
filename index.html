@@ -133,6 +133,8 @@ body.nav-bottom{padding-bottom:100px}
 .pod-3d-zoom button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:rgba(20,26,38,.62);color:#eaf0f6;font-size:19px;line-height:1;cursor:pointer;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
 .pod-3d-host canvas{width:100%!important;height:100%!important;display:block}
 .pod-3d-badge{position:absolute;top:8px;right:8px;z-index:3;font-size:10px;background:rgba(20,26,38,.6);color:#cfe;border-radius:8px;padding:2px 7px;pointer-events:none}
+.pod-3d-badge.fadeout{animation:podBadgeOut .5s ease 1.4s forwards}
+@keyframes podBadgeOut{to{opacity:0;visibility:hidden}}
 .pod-3d-url{width:100%;box-sizing:border-box;margin-top:6px;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:var(--field);color:var(--text,#eaf0f6);font-size:12px;direction:ltr;text-align:left}
 .pod-gal{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
 .pod-gal-b{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px;border-radius:12px;border:1px solid var(--line);background:var(--field);color:var(--text,#eaf0f6);font-size:12.5px;cursor:pointer}
@@ -1305,6 +1307,32 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 .wk-ring-bg{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0}
 .wk-ring-3d{position:absolute;inset:0;z-index:1}
 .wk-ring-3d canvas{width:100%!important;height:100%!important;display:block}
+/* ── پاپ‌آپِ تمام‌صفحهٔ جلسه تمرینی + مینی‌پلیرِ کشیدنی ── */
+.wkrun-ov{position:fixed;inset:0;z-index:9500}
+.wkrun-ov[hidden]{display:none}
+.wkrun-scrim{position:absolute;inset:0;background:rgba(6,10,16,.86);backdrop-filter:blur(18px) saturate(.85);-webkit-backdrop-filter:blur(18px) saturate(.85)}
+.wkrun-card{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px 16px;overflow-y:auto}
+.wkrun-card .wk-ring-wrap{width:300px;height:300px;max-width:76vw;max-height:76vw}
+.wkrun-top{display:flex;align-items:center;gap:10px;width:100%;max-width:420px}
+.wkrun-ttl{flex:1;min-width:0;text-align:center}
+.wkrun-name{font-size:17px;font-weight:800;color:var(--ink);line-height:1.4}
+.wkrun-phase{font-size:13px;font-weight:800;margin-top:3px}
+.wkrun-clk{font-size:20px;font-weight:800;direction:ltr;letter-spacing:1px}
+.wkrun-ib{width:38px;height:38px;flex:0 0 auto;border-radius:50%;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit}
+.wkrun-ib:active{background:var(--teal-dim)}
+.wkrun-ib.sm{width:30px;height:30px;font-size:13px}
+.wkrun-list{width:100%;max-width:420px}
+.wkrun-acts{display:flex;gap:8px;width:100%;max-width:420px}
+.wkrun-acts .quick-btn{flex:1}
+.wkrun-ov--mini{pointer-events:none}
+.wkrun-ov--mini .wkrun-scrim{display:none}
+.wkrun-ov--mini .wkrun-card{pointer-events:auto;position:fixed;inset:auto;left:12px;top:110px;width:152px;height:auto;padding:9px;gap:5px;border-radius:20px;background:var(--panel);border:1px solid var(--line);box-shadow:0 12px 34px rgba(0,0,0,.55);overflow:visible;touch-action:none;cursor:grab}
+.wkrun-ov--mini .wk-ring-wrap{width:112px;height:112px;max-width:112px;max-height:112px}
+.wkrun-ov--mini .wk-ring .trk,.wkrun-ov--mini .wk-ring .prg{stroke-width:11}
+.wkrun-mini-top{display:flex;align-items:center;gap:6px;width:100%}
+.wkrun-mini-nm{flex:1;min-width:0;font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wkrun-mini-row{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%}
+.wkrun-mini-clk{font-size:17px;font-weight:800;direction:ltr}
 .wkc-grid{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px}
 .wkc-it{background:var(--panel-2);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:8px 12px;font-family:inherit;font-size:12.5px;cursor:pointer}
 .wkc-it.on{border-color:var(--teal);color:#d6f5ee;background:var(--teal-dim)}
@@ -1652,6 +1680,8 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <div id="wkCfgBody"></div>
   </div>
 </div>
+<!-- پاپ‌آپِ تمام‌صفحهٔ اجرای تمرین (قابلِ کوچک‌شدن به مینی‌پلیر) -->
+<div id="wkRunOverlay" class="wkrun-ov" hidden><div class="wkrun-scrim"></div><div class="wkrun-card" id="wkRunCard"></div></div>
 <div class="qbg-modal" id="qvisitModal" onclick="if(event.target===this)closeQEntry('qvisitModal')">
   <div class="qbg-box">
     <button class="qbg-x" onclick="closeQEntry('qvisitModal')" title="بستن">✕</button>
@@ -2656,7 +2686,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۲.۵</b> · انتشار: ۱۴۰۵/۰۶/۲۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۲.۶</b> · انتشار: ۱۴۰۵/۰۶/۲۸ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4111,7 +4141,7 @@ function openQuickWorkout(){
   m.classList.add('show');
 }
 function closeQuickWorkout(){
-  try{ wkAvatarUnmount(); }catch(e){}   // canvasِ آواتار را به پادکست برگردان
+  if(!(typeof _wkRunning!=='undefined'&&_wkRunning)){ try{ wkAvatarUnmount(); }catch(e){} }   // اگر تمرین در جریان است، مربی بماند
   const m=document.getElementById('qwkModal'); if(m) m.classList.remove('show');
   const w=document.getElementById('exWorkout'), back=document.querySelector('#c-ex-workout .card-body');
   if(w&&back) back.appendChild(w);   // به تبِ ورزش برگردان تا آنجا خالی نماند
@@ -7648,12 +7678,23 @@ function pod3dSetupModel(modelScene, gender, url){
   _pod3d.mixer=null; _pod3d.action=null; _pod3d.posed=false;
   const isTpose=pod3dIsTpose(modelScene);
   _pod3d.gbones=null;
+  // ⚠️ نقشهٔ استخوان باید برای «هر» مدلی ساخته شود (نه فقط T-pose)، وگرنه موتورِ ژست/مربی
+  //    بی‌صدا از کار می‌افتد. (باگِ ۳۲.۵: مربی هیچ حرکتی نمی‌کرد.)
+  try{
+    _pod3d.gbones={}; _pod3d._ge=0; _pod3d.gc=null; _pod3d.gp=null; _pod3d.gmodel=modelScene;
+    _pod3d.fb=undefined; _pod3d.fgs=undefined; _pod3d.htip=undefined; _pod3d.chestD=undefined;
+    _pod3d.flL=undefined; _pod3d.flR=undefined; _pod3d.hfL=undefined; _pod3d.hfR=undefined;
+    _pod3d.pp=null; _pod3d.rd=null; _pod3d.props=null;
+    ['Hips','Spine','Spine1','Spine2','Neck','Head','LeftArm','RightArm','LeftForeArm','RightForeArm','LeftHand','RightHand','LeftUpLeg','RightUpLeg','LeftLeg','RightLeg','LeftFoot','RightFoot']
+      .forEach(function(n){ const b=pod3dBone(modelScene,n); if(b) _pod3d.gbones[n]={b:b,q:b.quaternion.clone()}; });
+  }catch(e){}
   if(isTpose){
     try{ pod3dPoseArmsDown(modelScene, 'LeftArm','LeftForeArm', new T.Vector3(0.25,-1,0.08));
          pod3dPoseArmsDown(modelScene, 'RightArm','RightForeArm', new T.Vector3(-0.25,-1,0.08));
          modelScene.updateMatrixWorld&&modelScene.updateMatrixWorld(true); _pod3d.posed=true;
          // استخوان‌ها را برای «حرکتِ زندهٔ بدن/دست/سر هنگام صحبت» ذخیره کن (کواترنیونِ پایهٔ همین ژست)
-         _pod3d.gbones={}; _pod3d._ge=0; _pod3d.gc=null; _pod3d.gp=null; _pod3d.gmodel=modelScene; _pod3d.fb=undefined; _pod3d.fgs=undefined; _pod3d.htip=undefined; _pod3d.chestD=undefined; _pod3d.flL=undefined; _pod3d.flR=undefined; _pod3d.hfL=undefined; _pod3d.hfR=undefined; _pod3d.pp=null; _pod3d.rd=null; _pod3d.props=null; ['Hips','Spine','Spine1','Spine2','Neck','Head','LeftArm','RightArm','LeftForeArm','RightForeArm','LeftHand','RightHand','LeftUpLeg','RightUpLeg','LeftLeg','RightLeg','LeftFoot','RightFoot'].forEach(n=>{ const b=pod3dBone(modelScene,n); if(b) _pod3d.gbones[n]={b:b, q:b.quaternion.clone()}; });
+         // کواترنیونِ پایه را بعد از «پایین‌آوردنِ دست‌ها» دوباره بگیر (rest-poseِ واقعیِ این حالت)
+         try{ for(const nm in _pod3d.gbones){ const o=_pod3d.gbones[nm]; if(o&&o.b) o.q=o.b.quaternion.clone(); } }catch(e){}
     }catch(e){}
   } else {
     try{ if(_pod3d.idleClip && T.AnimationMixer){
@@ -7851,12 +7892,13 @@ function pod3dInit(host, gender){ pod3dInitStage(host); pod3dInitProcedural(gend
 function pod3dResize(){ try{ const h=_pod3d.host; if(!h||!_pod3d.ren) return; const w=h.clientWidth||300, hh=h.clientHeight||210; _pod3d.ren.setSize(w,hh); _pod3d.cam.aspect=w/hh; _pod3d.cam.updateProjectionMatrix(); }catch(e){} }
 function pod3dApply(){
   if(!_pod3d.ready) return;
-  if(_pod3d.mixer){ try{ _pod3d.mixer.update(_pod3d.dt||0.016); }catch(e){} }   // حرکتِ طبیعیِ بدن
+  if(_pod3d.mixer && !window._wkAvOn){ try{ _pod3d.mixer.update(_pod3d.dt||0.016); }catch(e){} }   // حرکتِ طبیعیِ بدن (در حالتِ مربی خاموش تا با حرکاتِ ورزشی تداخل نکند)
   const M=_pod.avMouth||{vis:'X',open:0}, w=_pod.avW||{}, sw=_pod.avSway||{x:0,y:0,s:1.02,rot:0};
   const vis=M.vis||'X', closed=(vis==='X'||vis==='MB'||vis==='C');
   const open=closed?0:Math.max(0,Math.min(1.1,M.open||0));
   const bl=Math.max(0,Math.min(1,w.BL||0)), br=Math.max(0,Math.min(1,w.BR||0));
-  if(_pod3d.gltf && _pod3d.slots){
+  if(_pod3d.gltf && (_pod3d.slots || window._wkAvOn)){
+    if(_pod3d.slots){
     // درایورِ همگانی: هر اسلات را روی همهٔ مورف‌هایِ متناظرش ست کن (مستقل از نام‌گذاری)
     const S=(k,v)=>{ const a=_pod3d.slots[k]; if(!a) return; for(let n=0;n<a.length;n++){ a[n][0][a[n][1]]=v; } };
     ['open','aa','e','o','f','pp','stretch','funnel','close'].forEach(k=>S(k,0));
@@ -7869,9 +7911,12 @@ function pod3dApply(){
     else if(vis==='F'){ S('f',0.6); }
     else if(vis==='MB'||vis==='X'||vis==='C'){ S('pp',0.25); S('close', open>0?0:0.14); }
     S('blink', bl); S('brow', br);
+    }
     // حرکتِ زندهٔ بدن/دست/سر هنگام صحبت (برای آواتارهای ژست‌شده که انیمیشن ندارند)
     pod3dGesture(open);
-    const g=_pod3d.modelRoot; if(g){ const k=_pod3d.mixer?1.2:4; g.rotation.y=(sw.x||0)*k; g.rotation.x=-(sw.y||0)*(k*0.7); g.rotation.z=(sw.rot||0)*(k*0.5); }
+    const g=_pod3d.modelRoot;
+    if(g){ if(window._wkAvOn){ g.rotation.set(0,0,0); }   // مربی نباید روی صفحه «بلغزد»
+           else { const k=_pod3d.mixer?1.2:4; g.rotation.y=(sw.x||0)*k; g.rotation.x=-(sw.y||0)*(k*0.7); g.rotation.z=(sw.rot||0)*(k*0.5); } }
   } else {
     const P=_pod3d.parts; if(!P) return;
     const wide=vis==='E'?1.4: vis==='O'?0.7: vis==='F'?0.92: 1.0;
@@ -17146,9 +17191,10 @@ function wkPickAdd(id){
 }
 function wkToggleSound(){ _wkSound=!_wkSound; const b=document.getElementById('wkSoundBtn'); if(b) b.textContent=_wkSound?'🔊':'🔇'; if(_wkSound) wkBeep(660,0.1); }
 function renderWkList(){
+  if(_wkRunning){ wkShowRun(true); wkRenderRun(); return; }   // ← اجرا در پاپ‌آپِ تمام‌صفحه
+  wkShowRun(false);
   const box=document.getElementById('wkList'); if(!box) return;
   if(!_wkList.length){ box.innerHTML='<div style="color:var(--muted);font-size:11.5px">هنوز حرکتی برای تمرین اضافه نشده.</div>'; return; }
-  if(_wkRunning){ renderWkRun(box); return; }   // ← نمای گردِ اجرا (ساعت هوشمند)
   let h='';
   _wkList.forEach((it,i)=>{
     h+=`<div style="background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:8px">
@@ -17186,7 +17232,44 @@ function renderWkList(){
   box.innerHTML=h;
 }
 /* نمای گردِ اجرای تمرین — حلقهٔ ساعت‌هوشمندی که پیش می‌رود */
-function renderWkRun(box){
+/* ═══ نمای اجرای تمرین: پاپ‌آپِ تمام‌صفحه با دایرهٔ بزرگ + مینی‌پلیرِ کشیدنی ═══ */
+function wkRunOv(){ return document.getElementById('wkRunOverlay'); }
+function wkIsMini(){ const o=wkRunOv(); return !!(o&&o.classList.contains('wkrun-ov--mini')); }
+function wkMiniPos(){ try{ const p=JSON.parse(localStorage.getItem('wk_mini_pos')||'null'); if(p&&isFinite(p.x)&&isFinite(p.y)) return p; }catch(e){} return {x:12,y:110}; }
+function wkMiniPosSave(x,y){ try{ localStorage.setItem('wk_mini_pos',JSON.stringify({x:x,y:y})); }catch(e){} }
+function wkShowRun(on){
+  const o=wkRunOv(); if(!o) return;
+  if(on) o.hidden=false;
+  else { o.hidden=true; o.classList.remove('wkrun-ov--mini'); }
+}
+function wkToggleMini(){
+  const o=wkRunOv(); if(!o) return;
+  o.classList.toggle('wkrun-ov--mini');
+  const c=document.getElementById('wkRunCard');
+  if(wkIsMini()&&c){ const p=wkMiniPos(); c.style.left=p.x+'px'; c.style.top=p.y+'px'; }
+  else if(c){ c.style.left=''; c.style.top=''; }
+  wkRenderRun();
+  try{ podAvResizeSoon&&podAvResizeSoon(); }catch(e){}
+}
+function wkBackToSetup(){ wkStop(); try{ openQuickWorkout(); }catch(e){} }
+function wkCancelAsk(){ if(!confirm('تمرین لغو شود؟ پیشرفتِ این جلسه ذخیره نمی‌شود.')) return; wkBackToSetup(); }
+function wkMiniDragSetup(){
+  const c=document.getElementById('wkRunCard'); if(!c||c._wkDrag) return; c._wkDrag=1;
+  let sx=0,sy=0,ox=0,oy=0,drag=false;
+  c.addEventListener('pointerdown',function(e){ if(!wkIsMini()) return; if(e.target.closest('button')) return;
+    drag=true; try{ c.setPointerCapture(e.pointerId); }catch(_){}
+    const r=c.getBoundingClientRect(); ox=r.left; oy=r.top; sx=e.clientX; sy=e.clientY; });
+  c.addEventListener('pointermove',function(e){ if(!drag) return;
+    const x=Math.max(4,Math.min(window.innerWidth-c.offsetWidth-4, ox+e.clientX-sx));
+    const y=Math.max(4,Math.min(window.innerHeight-c.offsetHeight-4, oy+e.clientY-sy));
+    c.style.left=x+'px'; c.style.top=y+'px'; });
+  const end=function(){ if(!drag) return; drag=false; const r=c.getBoundingClientRect(); wkMiniPosSave(Math.round(r.left),Math.round(r.top)); };
+  c.addEventListener('pointerup',end); c.addEventListener('pointercancel',end); c.addEventListener('lostpointercapture',end);
+}
+function wkRenderRun(){
+  const card=document.getElementById('wkRunCard'); if(!card) return;
+  if(!_wkRunning){ wkShowRun(false); return; }
+  const mini=wkIsMini();
   const it=_wkList[_wkActive]||{sets:1,dur:1,name:''};
   const isRest=_wkPhase==='rest';
   const col=isRest?'var(--amber)':'var(--teal)';
@@ -17194,37 +17277,61 @@ function renderWkRun(box){
   const prog=Math.max(0,Math.min(1,(total-_wkRemain)/total));
   const C=2*Math.PI*52, off=C*(1-prog);
   const mm=String(Math.floor(_wkRemain/60)).padStart(2,'0'), ss=String(_wkRemain%60).padStart(2,'0');
+  const clock=faDigits(mm+':'+ss);
   const phaseTxt=isRest?'😮‍💨 استراحت':`ست ${faDigits(_wkSet)} از ${faDigits(it.sets)}`;
   const av=wkAvAvailable();
-  let h=`<div class="wk-run">
-    <div class="wk-run-name">${it.name||''}</div>
-    <div class="wk-run-phase" style="color:${col}">${phaseTxt}${av?` · <span id="wkClock" class="wk-ring-clock-top" style="color:${col}">${faDigits(mm+':'+ss)}</span>`:''}</div>
-    <div class="wk-ring-wrap">
+  const centerClock = (!av) || mini;   // با مربی و در حالتِ بزرگ، زمان بالا می‌نشیند
+  const ring=`<div class="wk-ring-wrap">
       <svg class="wk-ring" viewBox="0 0 120 120">
         <circle class="trk" cx="60" cy="60" r="52"></circle>
         <circle id="wkRingProg" class="prg" cx="60" cy="60" r="52" stroke="${col}" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"></circle>
       </svg>
       ${av?`<div class="wk-ring-av">${wkCfg().bg?'<canvas id="wkAvBg" class="wk-ring-bg"></canvas>':''}<div id="wkAvHost" class="wk-ring-3d"></div></div>`:''}
-      ${av?'':`<div class="wk-ring-center">
-        <div id="wkClock" class="wk-ring-time" style="color:${col}">${faDigits(mm+':'+ss)}</div>
-        <div class="wk-ring-sub">${isRest?'استراحت کن':'ثانیه'}</div>
-      </div>`}
-    </div>
-    <div class="wk-run-btns">
-      ${_wkTimer
-        ?`<button class="wk-cbtn wk-cbtn--main" onclick="wkPause()"><span class="ic">⏸︎</span>مکث</button>`
-        :`<button class="wk-cbtn wk-cbtn--main" onclick="wkResume()"><span class="ic">▶︎</span>ادامه</button>`}
-      <button class="wk-cbtn" onclick="wkSkip()"><span class="ic">⏭︎</span>رد کن</button>
-    </div>
-  </div>`;
-  _wkList.forEach((x,i)=>{
-    const on=i===_wkActive;
-    const cls='wk-mini'+(on?' wk-mini--on':(x.done?' wk-mini--done':''));
-    const st=x.done?'✅':(on?'▶':'⏳'), stc=x.done?'#6d6':(on?'var(--teal)':'var(--muted)');
-    h+=`<div class="${cls}"><span class="st" style="color:${stc}">${st}</span><span class="nm">${x.name}</span><span class="st" style="color:var(--muted)">${faDigits(x.sets)}×${faDigits(x.dur)}ث</span></div>`;
-  });
-  h+=`<button class="quick-btn" style="width:100%;margin-top:10px;border-color:#c66;color:#e88" onclick="wkStop()">■ پایان تمرین</button>`;
-  box.innerHTML=h;
+      ${(centerClock&&!mini)?`<div class="wk-ring-center"><div id="wkClock" class="wk-ring-time" style="color:${col}">${clock}</div><div class="wk-ring-sub">${isRest?'استراحت کن':'ثانیه'}</div></div>`:''}
+    </div>`;
+  let h='';
+  if(mini){
+    h=`<div class="wkrun-mini-top">
+        <button class="wkrun-ib sm" onclick="wkToggleMini()" title="بزرگ کردن">⌃</button>
+        <span class="wkrun-mini-nm">${escVision(it.name||'')}</span>
+      </div>
+      ${ring}
+      <div class="wkrun-mini-row">
+        <span id="wkClock" class="wkrun-mini-clk" style="color:${col}">${clock}</span>
+        ${_wkTimer?`<button class="wkrun-ib sm" onclick="wkPause()" title="مکث">⏸︎</button>`
+                  :`<button class="wkrun-ib sm" onclick="wkResume()" title="ادامه">▶︎</button>`}
+      </div>`;
+  } else {
+    let rows='';
+    _wkList.forEach(function(x,i){
+      const on=i===_wkActive;
+      const cls='wk-mini'+(on?' wk-mini--on':(x.done?' wk-mini--done':''));
+      const st=x.done?'✅':(on?'▶':'⏳'), stc=x.done?'#6d6':(on?'var(--teal)':'var(--muted)');
+      rows+=`<div class="${cls}"><span class="st" style="color:${stc}">${st}</span><span class="nm">${escVision(x.name)}</span><span class="st" style="color:var(--muted)">${faDigits(x.sets)}×${faDigits(x.dur)}ث</span></div>`;
+    });
+    h=`<div class="wkrun-top">
+        <button class="wkrun-ib" onclick="wkCancelAsk()" title="لغو تمرین">✕</button>
+        <div class="wkrun-ttl">
+          <div class="wkrun-name">${escVision(it.name||'')}</div>
+          <div class="wkrun-phase" style="color:${col}">${phaseTxt}${av?` · <span id="wkClock" class="wkrun-clk" style="color:${col}">${clock}</span>`:''}</div>
+        </div>
+        <button class="wkrun-ib" onclick="wkToggleMini()" title="کوچک کردن">⌄</button>
+      </div>
+      ${ring}
+      <div class="wk-run-btns">
+        ${_wkTimer
+          ?`<button class="wk-cbtn wk-cbtn--main" onclick="wkPause()"><span class="ic">⏸︎</span>مکث</button>`
+          :`<button class="wk-cbtn wk-cbtn--main" onclick="wkResume()"><span class="ic">▶︎</span>ادامه</button>`}
+        <button class="wk-cbtn" onclick="wkSkip()"><span class="ic">⏭︎</span>رد کن</button>
+      </div>
+      <div class="wkrun-list">${rows}</div>
+      <div class="wkrun-acts">
+        <button class="quick-btn" onclick="wkBackToSetup()">✏️ تغییرِ تمرین</button>
+        <button class="quick-btn" style="border-color:#c66;color:#e88" onclick="wkStop()">■ پایانِ تمرین</button>
+      </div>`;
+  }
+  card.innerHTML=h;
+  wkMiniDragSetup();
   try{ wkAvatarMount(); }catch(e){}
 }
 /* ═════════ 🏋️ مربیِ ورزشِ سه‌بعدی — مستقل از مجریِ پادکست ═════════
@@ -17256,7 +17363,9 @@ function wkAvatarMount(){
       if(!_pod3d.ready){ pod3dInitStage(h); }
       const cv=_pod3d.ren&&_pod3d.ren.domElement;
       if(cv){ if(cv.parentNode!==h) h.appendChild(cv); _pod3d.host=h; _wkAvBorrowed=true; }
-      try{ h.querySelectorAll('.pod-3d-badge').forEach(function(b){ b.remove(); }); pod3dBadge(h,'مربی ورزش'); }catch(e){}
+      try{ h.querySelectorAll('.pod-3d-badge').forEach(function(b){ b.remove(); }); pod3dBadge(h,'مربی ورزش');
+           const nb=h.querySelector('.pod-3d-badge'); if(nb) nb.classList.add('fadeout'); }catch(e){}
+      try{ wkCoachRestPose(); }catch(e){}
       try{ pod3dResize(); }catch(e){}
       if(want && _pod3d.srcUrl!==want){ pod3dLoadModel(want,'female'); }   // شخصیتِ مخصوصِ تمرین
       else { try{ pod3dApplyFrame(); }catch(e){} if(!_pod3d.raf) pod3dStartLoop(); }
@@ -17298,6 +17407,8 @@ function wkCfgApplyLive(){
         if(w.url && _pod3d.srcUrl!==w.url) pod3dLoadModel(w.url,'female'); else pod3dApplyFrame();
         if(w.bg) pod3dBgStart(); else pod3dBgStop(); } }catch(e){}
 }
+function wkCoachRestPose(){ try{ const G=_pod3d&&_pod3d.gbones; if(!G) return;
+  for(const n in G){ const o=G[n]; if(o&&o.b&&o.q) o.b.quaternion.copy(o.q); } }catch(e){} }
 function wkCoachReset(){ try{ const G=_pod3d&&_pod3d.gbones; if(G&&G['Hips']&&G['Hips'].p) G['Hips'].b.position.copy(G['Hips'].p); }catch(e){} }
 function wkAvatarUnmount(){
   if(!_wkAvOn && !_wkAvBorrowed) return;
@@ -17322,7 +17433,8 @@ function wkMotionFamily(it){
 /* موتورِ حرکتِ مربی — هر فریم صدا زده می‌شود */
 function pod3dCoachGesture(t, energy, set, G, T){
   const dt=(_pod3d.dt||0.016), k=1-Math.pow(0.02, dt);
-  const v=(x,y,z)=>new T.Vector3(x,y,z).normalize();
+  // ⚠️ pod3dAimTargetLocal جهت را به‌صورتِ «آرایه» می‌گیرد نه Vector3 (وگرنه NaN و بی‌اثر)
+  const v=(x,y,z)=>{ const m=Math.hypot(x,y,z)||1; return [x/m,y/m,z/m]; };
   const aim=(A,B,dir)=>{ if(!A||!B) return; const tl=pod3dAimTargetLocal(A.b,B.b,dir,A.q); if(tl) A.b.quaternion.slerp(tl,k); };
   const LA=G['LeftArm'],LF=G['LeftForeArm'],LH=G['LeftHand'],RA=G['RightArm'],RF=G['RightForeArm'],RH=G['RightHand'];
   const LU=G['LeftUpLeg'],LL=G['LeftLeg'],LFt=G['LeftFoot'],RU=G['RightUpLeg'],RL=G['RightLeg'],RFt=G['RightFoot'];
@@ -17536,7 +17648,8 @@ function wkStart(){
   if(_wkAudioCtx&&_wkAudioCtx.state==='suspended') _wkAudioCtx.resume();
   wkStartSound();
   setTimeout(()=>wkStartBeat(),300);  // بیت بعد از صدای شروع
-  renderExWorkout(); wkResume();      // کلِ نما به حالتِ اجرا (بدونِ هدر/جستجو) سوییچ می‌شود
+  try{ closeQEntry('qwkModal'); }catch(e){}   // چیدمان بسته می‌شود، اجرا در پاپ‌آپِ تمام‌صفحه
+  wkShowRun(true); wkRenderRun(); wkResume();
 }
 function wkResume(){
   if(_wkTimer) return;
@@ -17594,6 +17707,7 @@ function wkStop(){
   wkStopBeat(); wkReleaseLock(); wkMediaSession(false);
   _wkRunning=false; _wkActive=-1; _wkSet=1; _wkPhase='work';
   try{ wkAvatarUnmount(); }catch(e){}
+  wkShowRun(false);
   renderExWorkout();   // بازگشت به نمای چیدمان (هدر/جستجو برمی‌گردند)
 }
 function wkFinish(){
@@ -17602,6 +17716,8 @@ function wkFinish(){
   _wkRunning=false; _wkActive=-1; _wkSet=1; _wkPhase='work';
   wkFinishSound();
   try{ wkAvatarUnmount(); }catch(e){}
+  wkShowRun(false);
+  try{ const mm2=document.getElementById('qwkModal'); if(mm2) mm2.classList.add('show'); }catch(e){}
   renderExWorkout();   // هدر/جستجو برگردند؛ پیامِ تبریک پایین جایگزین می‌شود
   const done=_wkList.filter(it=>it.done);
   if(done.length){
