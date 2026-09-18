@@ -1353,7 +1353,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     </div>
     <div class="qa-subt">شروع و رفتن به بخش</div>
     <div class="qa-grid">
-      <button class="qa-item" onclick="quickAdd('startworkout')"><span class="qa-ico" style="background:rgba(63,185,163,.18);color:#5fd3bd">🏃</span>شروع ورزش</button>
+      <button class="qa-item" onclick="quickAdd('workout')"><span class="qa-ico" style="background:rgba(63,185,163,.18);color:#5fd3bd">🏋️</span>جلسه تمرینی</button>
       <button class="qa-item" onclick="quickAdd('calc')"><span class="qa-ico" style="background:rgba(63,185,163,.14);color:#5fd3bd">🧮</span>حساب دوز</button>
       <button class="qa-item" onclick="quickAdd('iccalib')"><span class="qa-ico" style="background:rgba(63,185,163,.18);color:#5fd3bd">🎯</span>تخمین I:C</button>
       <button class="qa-item" onclick="quickAdd('plan')"><span class="qa-ico" style="background:rgba(224,163,85,.14);color:#e9b877">📅</span>برنامهٔ هفتگی</button>
@@ -1602,6 +1602,14 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
     <div class="qbg-head"><span class="qbg-badge" style="background:rgba(91,143,214,.18)">🏅</span><div><div class="qbg-title">تاریخچه و پیشرفتِ ورزش</div><div class="qbg-sub">همهٔ جلسه‌هایی که ثبت کرده‌ای — قابلِ ویرایش و حذف.</div></div></div>
     <div id="exHistory"></div>
     <div class="qbg-actions"><button class="qbg-cancel" onclick="closeQEntry('qexHistModal')">بستن</button><button class="qbg-save" onclick="closeQEntry('qexHistModal'); openQuickExercise()">＋ ثبتِ تازه</button></div>
+  </div>
+</div>
+<!-- جلسه تمرینی (شروع تمرین با کرنومتر) به‌صورت دسترسیِ سریع — عنصرِ واقعیِ #exWorkout با reparent اینجا نمایش داده می‌شود -->
+<div class="qbg-modal" id="qwkModal" onclick="if(event.target===this)closeQuickWorkout()">
+  <div class="qbg-box">
+    <button class="qbg-x" onclick="closeQuickWorkout()" title="بستن">✕</button>
+    <div class="qbg-head"><span class="qbg-badge" style="background:rgba(63,185,163,.18)">🏋️</span><div><div class="qbg-title">جلسه تمرینی</div><div class="qbg-sub">حرکت‌ها را بچین، ترتیب و ست/زمان را تنظیم کن و با کرنومتر تمرین را اجرا کن.</div></div></div>
+    <div id="qwkHost"></div>
   </div>
 </div>
 <div class="qbg-modal" id="qvisitModal" onclick="if(event.target===this)closeQEntry('qvisitModal')">
@@ -2608,7 +2616,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۲.۰</b> · انتشار: ۱۴۰۵/۰۶/۲۶ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۲.۱</b> · انتشار: ۱۴۰۵/۰۶/۲۷ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -4052,6 +4060,20 @@ function exHistOpen(){
   closeQEntry('qexModal');
   try{ renderExHistory(); }catch(e){}
   m.classList.add('show');
+}
+/* «جلسه تمرینی» در دسترسیِ سریع: عنصرِ واقعیِ #exWorkout را (با id ثابت) به مودال منتقل
+   می‌کند و هنگام بستن به تبِ ورزش برمی‌گرداند — کرنومتر و بایندها دست‌نخورده می‌مانند. */
+function openQuickWorkout(){
+  const m=document.getElementById('qwkModal'), host=document.getElementById('qwkHost'), w=document.getElementById('exWorkout');
+  if(!m||!host||!w) return;
+  host.appendChild(w);
+  try{ renderExWorkout(); }catch(e){}
+  m.classList.add('show');
+}
+function closeQuickWorkout(){
+  const m=document.getElementById('qwkModal'); if(m) m.classList.remove('show');
+  const w=document.getElementById('exWorkout'), back=document.querySelector('#c-ex-workout .card-body');
+  if(w&&back) back.appendChild(w);   // به تبِ ورزش برگردان تا آنجا خالی نماند
 }
 /* ═══════════ 🩺 مراجعه‌های پزشک، تجویزها و نظرِ پزشک (۲۹.۳) ═══════════ */
 const VISIT_KEY='visits_v1';
@@ -10507,6 +10529,7 @@ function quickAdd(type){
   if(type==='meal') openQuickMeal();
   else if(type==='insulin') openQuickInsulin();
   else if(type==='exercise') openQuickExercise();
+  else if(type==='workout') return openQuickWorkout();
   else if(type==='startworkout') go('exercise','c-ex-workout');
   else if(type==='lab') go('labs','c-labs-entry');
   else if(type==='cgmfile') go('profile','c-cgmup');
@@ -16677,6 +16700,10 @@ function renderExLogEntry(){
       </select>
     </div>
   </div>`;
+  h+=`<div style="margin-bottom:12px">
+    <label style="display:block;font-size:13px;color:var(--muted);margin:0 0 6px">مدتِ کلِ جلسه (دقیقه) — اختیاری:</label>
+    <input type="number" id="exDurMin" inputmode="numeric" min="0" placeholder="اگر نمی‌خواهی، خالی بگذار" style="width:100%;text-align:center;font-size:15px">
+  </div>`;
   h+=`<div style="font-size:12px;color:var(--muted);margin-bottom:7px">حرکت را جستجو کن یا از دسته‌ها انتخاب کن — با یک لمس اضافه می‌شود:</div>`;
   h+=`<div class="exp">
     <input type="search" id="exSearch" class="exp-s" placeholder="🔎 جستجو… مثلاً پروانه، کشش، شنا، کش" oninput="exPickRender()" autocomplete="off">
@@ -16763,12 +16790,15 @@ function renderExTodayList(){
   if(!list.length){ box.innerHTML='<div style="color:var(--muted);font-size:11.5px">هنوز حرکتی اضافه نشده.</div>'; return; }
   let h='';
   list.forEach((it,i)=>{
+    const sv=String(it.set==null?'':it.set).replace(/"/g,'&quot;');
     h+=`<div style="display:flex;align-items:center;gap:6px;background:var(--panel-2);border-radius:6px;padding:6px 8px;margin-bottom:4px">
-      <span style="flex:1;font-size:12px">${it.name} <span style="color:var(--muted);font-size:10.5px">(${it.set})</span></span>
-      <button onclick="rmExToday(${i})" style="background:none;border:none;color:#c66;cursor:pointer;font-size:14px">✕</button></div>`;
+      <span style="flex:1 1 40%;min-width:0;font-size:12px">${it.name}</span>
+      <input type="text" value="${sv}" placeholder="ست/زمان — مثلاً ۳×۱۲ یا ۲۰ دقیقه" oninput="exSetField(${i},this.value)" style="flex:1 1 48%;min-width:0;font-size:11px;padding:5px 7px;border-radius:5px;background:var(--field);border:1px solid var(--line);color:var(--ink);text-align:center">
+      <button onclick="rmExToday(${i})" style="background:none;border:none;color:#c66;cursor:pointer;font-size:14px;flex:0 0 auto">✕</button></div>`;
   });
   box.innerHTML=h;
 }
+function exSetField(i,v){ if(window._exToday && window._exToday[i]) window._exToday[i].set=v; }
 function rmExToday(i){ window._exToday.splice(i,1); renderExTodayList(); }
 // ⭐ تایم‌استامپ را از تاریخِ انتخابیِ کاربر بساز (نه Date.now) — وگرنه ورزشِ دیروز
 // در گزارشِ روزانه/پادکست روی «امروز» می‌افتد (همه از dayKey(ts) می‌خوانند).
@@ -16791,14 +16821,16 @@ function saveExToday(){
   const date=document.getElementById('exDate').value.trim();
   const timeEl=document.getElementById('exTime'); const time=timeEl?timeEl.value:'';
   const slotEl=document.getElementById('exSlot'); const slot=slotEl?slotEl.value:'';
+  const durEl=document.getElementById('exDurMin');
+  const durMin=(durEl&&String(durEl.value).trim()!=='')?Math.max(0,parseInt(faToEnDigits(durEl.value),10)||0):'';
   const ts=exTsFrom(date,time);
   const d=loadExLog(); d.entries=d.entries||[];
   if(window._editExTs){                       // حالتِ ویرایش: رکورد در جا آپدیت می‌شود
     const i=d.entries.findIndex(e=>e.ts===window._editExTs);
-    if(i>=0) d.entries[i]=Object.assign({}, d.entries[i], {date, time, slot, items:[...list], ts});
-    else d.entries.push({date, time, slot, items:[...list], ts});
+    if(i>=0) d.entries[i]=Object.assign({}, d.entries[i], {date, time, slot, durMin, items:[...list], ts});
+    else d.entries.push({date, time, slot, durMin, items:[...list], ts});
     window._editExTs=0;
-  } else d.entries.push({date, time, slot, items:[...list], ts});
+  } else d.entries.push({date, time, slot, durMin, items:[...list], ts});
   saveExLog(d);
   window._exToday=[];
   exEditUIReset();
@@ -17289,7 +17321,7 @@ function renderExHistory(){
   const msgs=['هر قدم می‌ارزد! 💪','ادامه بده، بدنت ازت ممنونه! 🌱','عالی پیش می‌روی! 🔥','پشتکارت تحسین‌برانگیز است! 🏅'];
   h+=`<div style="background:#14312a;border-radius:8px;padding:8px 10px;font-size:12px;color:var(--teal);margin-bottom:12px;text-align:center">${msgs[total%msgs.length]}</div>`;
   entries.slice(0,20).forEach(e=>{
-    const meta=[e.time?faDigits(e.time):'', e.slot||''].filter(Boolean).join(' · ');
+    const meta=[e.time?faDigits(e.time):'', e.slot||'', (e.durMin!=null&&e.durMin!=='')?(faDigits(e.durMin)+' دقیقه'):''].filter(Boolean).join(' · ');
     h+=`<div style="background:var(--panel-2);border-radius:8px;padding:9px;margin-bottom:6px">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
         <div style="flex:1;min-width:0;font-size:12px;font-weight:600;color:var(--teal)">${faDigits(e.date)}${meta?` <span style="color:var(--muted);font-weight:500">— ${meta}</span>`:''}</div>
@@ -17314,6 +17346,7 @@ function exHistEdit(ts){
   const di=document.getElementById('exDate'); if(di) di.value=e.date||'';
   const ti=document.getElementById('exTime'); if(ti) ti.value=e.time||'';
   const si=document.getElementById('exSlot'); if(si) si.value=e.slot||'';
+  const dm=document.getElementById('exDurMin'); if(dm) dm.value=(e.durMin!=null&&e.durMin!=='')?e.durMin:'';
   const b=document.getElementById('exSaveBtn'); if(b) b.textContent='✅ ذخیرهٔ ویرایش';
   const c=document.getElementById('exCancelEdit'); if(c) c.style.display='';
   renderExTodayList();
