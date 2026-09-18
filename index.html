@@ -2698,7 +2698,7 @@ details p{font-size:13.5px;color:var(--muted);margin-top:10px}
 </div>
 
 <div style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
-  نسخه‌ی <b style="color:var(--teal)">۳۲.۸</b> · انتشار: ۱۴۰۵/۰۶/۲۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
+  نسخه‌ی <b style="color:var(--teal)">۳۲.۹</b> · انتشار: ۱۴۰۵/۰۶/۲۹ · آخرین بارگذاری: <span id="loadStamp" style="direction:ltr;display:inline-block"></span>
 </div>
 </div><!-- /zoomContent -->
 </div>
@@ -7722,7 +7722,8 @@ function pod3dSetupModel(modelScene, gender, url){
     const box=new T.Box3().setFromObject(modelScene); const size=box.getSize(new T.Vector3()); const center=box.getCenter(new T.Vector3());
     _pod3d.bodyCx=center.x; _pod3d.bodyCy=center.y; _pod3d.bodyH=Math.max(0.4,size.y);
     try{ _pod3d.bodyC=_pod3d.root?_pod3d.root.worldToLocal(center.clone()):center.clone();
-         _pod3d.rootPos0=modelScene.position.clone(); }catch(e){ _pod3d.bodyC=null; _pod3d.rootPos0=null; }
+         _pod3d.rootPos0=modelScene.position.clone();
+         _pod3d.bodyD=Math.max(0.12,size.z); _pod3d.bodyMinY=box.min.y; _pod3d.wkProps=null; }catch(e){ _pod3d.bodyC=null; _pod3d.rootPos0=null; }
     let head=null;
     modelScene.traverse(o=>{ if(!head && (o.isBone||o.type==='Bone') && /head/i.test(o.name||'') && !/(top|end|_hair)/i.test(o.name||'')) head=o; });
     if(!head) modelScene.traverse(o=>{ if(!head && /(^|:)head$/i.test(o.name||'')) head=o; });
@@ -17485,24 +17486,64 @@ const WK_POSTURE={
   mountain:'down', birddog:'down', catcow:'down', child:'down', cobra:'down', shouldertap:'down',
   crunch:'up', bridge:'up', revcrunch:'up', bicycle:'up', flutter:'up',
   legraiselie:'up', hollow:'up', twistlie:'up', figure4:'up', sidelie:'up',
+  wallpush:'side', holdsquat:'sideback',
   seated:'seat', seatedmarch:'seat', seatedleg:'seat', seatedtwist:'seat',
   butterfly:'seat', seatedham:'seat', dip:'seat', russian:'seat'
 };
+/* ⚠️ هر ورزشِ تازه‌ای که به EX_LIBRARY اضافه می‌شود باید در WK_MOTION هم شناسه‌اش بیاید،
+   وگرنه مربی فقط فالبکِ نامیِ زیر را اجرا می‌کند. `wkCheckMoves()` موارد جاافتاده را
+   در کنسول هشدار می‌دهد (هنگامِ بالاآمدنِ اپ خودکار اجرا می‌شود). */
 function wkMoveOf(it){
   const id=(it&&it.id)||'';
   if(WK_MOTION[id]) return WK_MOTION[id];
-  const n=srchNorm(((it&&it.name)||'')+' '+id);   // فالبک برای ورزشِ دلخواهِ کاربر
-  if(/پلانک/.test(n)) return 'plank';
-  if(/دراز و نشست|کرانچ/.test(n)) return 'crunch';
-  if(/پل باسن/.test(n)) return 'bridge';
-  if(/شنا/.test(n)) return 'pushup';
-  if(/اسکات|چمباتمه/.test(n)) return 'squat';
+  const n=srchNorm(((it&&it.name)||'')+' '+id);   // فالبکِ نامی (ورزشِ دلخواهِ کاربر یا موردِ تازه)
+  if(/پلانک/.test(n)) return /پهلو/.test(n)?'sideplank':'plank';
+  if(/دراز و نشست|کرانچ/.test(n)) return /معکوس/.test(n)?'revcrunch':'crunch';
+  if(/پل باسن|پل /.test(n)) return 'bridge';
+  if(/سوپرمن/.test(n)) return 'superman';
+  if(/کوهنورد|مانتین/.test(n)) return 'mountain';
+  if(/گربه|گاو/.test(n)) return 'catcow';
+  if(/کبرا/.test(n)) return 'cobra';
+  if(/کودک/.test(n)) return 'child';
+  if(/قیچی|فلاتر/.test(n)) return 'flutter';
+  if(/دوچرخه/.test(n)) return 'bicycle';
+  if(/هالو|توخالی/.test(n)) return 'hollow';
+  if(/شنا/.test(n)) return /دیوار/.test(n)?'wallpush':(/زانو/.test(n)?'kneepush':(/استخر/.test(n)?'swimarms':'pushup'));
+  if(/اسکات|چمباتمه/.test(n)) return /دیوار|ایستا|نگه/.test(n)?'holdsquat':'squat';
   if(/لانج/.test(n)) return 'lunge';
-  if(/بازو|دمبل|بطری/.test(n)) return 'curl';
+  if(/نشسته|صندلی/.test(n)) return /چرخش|پیچش/.test(n)?'seatedtwist':(/مارش|پا/.test(n)?'seatedmarch':'seated');
+  if(/دیپ/.test(n)) return 'dip';
+  if(/جامپینگ|پروانه/.test(n)) return /کشش|نشسته/.test(n)?'butterfly':'jack';
+  if(/زانوی بلند|بالا آوردن.*زانو/.test(n)) return 'knees';
+  if(/لگد/.test(n)) return 'kick';
+  if(/طناب/.test(n)) return 'rope';
+  if(/مشت|بوکس/.test(n)) return 'punch';
+  if(/پنجه|ساق/.test(n)) return 'calf';
+  if(/پله|استپ/.test(n)) return 'stepup';
+  if(/پارویی|زیربغل/.test(n)) return 'row';
+  if(/سرشانه|پرس/.test(n)) return 'press';
+  if(/نشر|جانب/.test(n)) return 'lateral';
+  if(/فلای|قفسه/.test(n)) return 'fly';
+  if(/ددلیفت|خم/.test(n)) return 'hinge';
+  if(/بازو|دمبل|بطری|کش/.test(n)) return 'curl';
+  if(/پهلو/.test(n)) return 'sidebend';
+  if(/چرخش.*تنه|پیچش/.test(n)) return 'twist';
+  if(/گردن|شانه/.test(n)) return 'neck';
+  if(/تنفس/.test(n)) return 'breathe';
   if(/کشش|استرچ/.test(n)) return 'overhead';
-  if(/گردن/.test(n)) return 'neck';
+  if(/پیاده|راه رفتن|مارش|رقص/.test(n)) return 'march';
   return 'march';
 }
+/* بررسیِ پوششِ کتابخانه: ورزشِ تازه‌ای که در WK_MOTION نیست را هشدار می‌دهد */
+function wkCheckMoves(){
+  try{
+    const miss=[];
+    for(const g in EX_LIBRARY) EX_LIBRARY[g].items.forEach(function(x){ if(!WK_MOTION[x.id]) miss.push(x.id+' («'+x.name+'» ⇒ فالبک: '+wkMoveOf(x)+')'); });
+    if(miss.length) console.warn('⚠️ مربیِ ورزش: این ورزش‌ها در جدولِ WK_MOTION نیستند و با فالبکِ نامی اجرا می‌شوند:\n  '+miss.join('\n  '));
+    return miss;
+  }catch(e){ return []; }
+}
+try{ setTimeout(wkCheckMoves, 2500); }catch(e){}
 /* ═══ موتورِ پوزِ مربی: هر حرکت با جهت‌های جهانی ═══ */
 function wkPlayMove(mv,t,X){
   const {aim,v,set,fing,hipsDrop,G,bh,legLen}=X;
@@ -17547,10 +17588,10 @@ function wkPlayMove(mv,t,X){
       hipsDrop(legLen*0.26*d);
       A(v(0.24,-0.86,0.30+0.55*d),v(-0.24,-0.86,0.30+0.55*d),v(0.16,-0.35,0.86),v(-0.16,-0.35,0.86));
       set('Spine',0.10*d,0,0); fing('open','open'); break; }
-    case 'holdsquat': { const d=0.82+0.03*sw(4.0);
-      L(v(0.10,-1,0.62*d),v(-0.10,-1,0.62*d),v(0.07,-1,-0.55*d),v(-0.07,-1,-0.55*d));
-      hipsDrop(legLen*0.26*d);
-      A(v(0.24,-0.80,0.55),v(-0.24,-0.80,0.55),v(0.16,-0.30,0.90),v(-0.16,-0.30,0.90));
+    case 'holdsquat': { const tr=0.03*sw(4.0);   // پشت به دیوار: ران افقی، ساق عمود
+      L(v(-H*0.93,-0.30+tr,0.12),v(-H*0.93,-0.30+tr,-0.12),v(H*0.05,-1,0.05),v(H*0.05,-1,-0.05));
+      hipsDrop(legLen*0.30);
+      A(v(-H*0.82,-0.44,0.20),v(-H*0.82,-0.44,-0.20),v(-H*0.93,-0.26,0.16),v(-H*0.93,-0.26,-0.16));
       fing('open','open'); break; }
     case 'lunge': { const d=osc(1.8), s2=(Math.floor(t/3.5)%2)?1:-1;   // پای جلو عوض می‌شود
       const fr=v(0.08*s2,-0.86,0.50*d+0.06), bk=v(-0.08*s2,-0.92,-0.42*d-0.05);
@@ -17564,10 +17605,11 @@ function wkPlayMove(mv,t,X){
     case 'legside': { const p=sw(1.8),pp=Math.max(0,p),pn=Math.max(0,-p);
       L(v(0.10+0.80*pp,-0.94,0.05),v(-0.10-0.80*pn,-0.94,0.05));
       A(v(0.55,-0.78,0.18),v(-0.55,-0.78,0.18)); fing('open','open'); break; }
-    case 'wallpush': { const c=osc(2.2);
-      A(v(0.30,-0.18,0.90-0.30*c),v(-0.30,-0.18,0.90-0.30*c),v(0.34+0.30*c,-0.10,0.86-0.45*c),v(-0.34-0.30*c,-0.10,0.86-0.45*c));
-      L(v(0.07,-0.99,0.04),v(-0.07,-0.99,0.04));
-      set('Spine',0.06*c,0,0); fing('flat','flat'); break; }
+    case 'wallpush': { const c=osc(2.2);   // نیم‌رخ رو به دیوار: دست‌ها روی دیوار، آرنج خم/راست
+      A(v(H*0.94,-0.20,0.18),v(H*0.94,-0.20,-0.18),
+        v(H*(0.96-0.42*c),-0.12-0.30*c,0.14),v(H*(0.96-0.42*c),-0.12-0.30*c,-0.14));
+      L(v(-H*0.10,-0.99,0.05),v(-H*0.10,-0.99,-0.05));
+      set('Spine',0.05*c,0,0); fing('flat','flat'); break; }
     case 'curl': { const c=osc(2.6);
       A(v(0.30,-0.94,0.10),v(-0.30,-0.94,0.10),v(0.22,-0.30+1.05*c,0.55),v(-0.22,-0.30+1.05*c,0.55));
       standLegs(); fing('grip','grip'); break; }
@@ -17775,6 +17817,57 @@ function wkPlayMove(mv,t,X){
     default: { downArms(); standLegs(); fing('relax','relax'); }
   }
 }
+/* ═══ پروپ‌های مربی: پدِ ورزشی (تاتامی) و دیوار ═══
+   تا مربی موقعِ حرکاتِ زمینی روی هوا معلق نباشد و حرکاتِ کنارِ دیوار معلوم شوند. */
+function wkPropsEnsure(){
+  const T=THREE; if(!T||!_pod3d.root) return null;
+  let P=_pod3d.wkProps;
+  if(P&&P.grp&&P.grp.parent===_pod3d.root) return P;
+  const bh=_pod3d.bodyH||1.7;
+  const grp=new T.Group();
+  // تاتامی: صفحهٔ افقی با لبهٔ روشن
+  const mg=new T.PlaneGeometry(bh*1.30, bh*0.64);
+  const mat=new T.Mesh(mg,new T.MeshBasicMaterial({color:0x2c7468,transparent:true,opacity:0.5,side:T.DoubleSide}));
+  mat.rotation.x=-Math.PI/2;
+  const matE=new T.LineSegments(new T.EdgesGeometry(mg),new T.LineBasicMaterial({color:0x7fe3d0,transparent:true,opacity:0.85}));
+  matE.rotation.x=-Math.PI/2;
+  // دیوار: صفحهٔ عمودی
+  const wg=new T.PlaneGeometry(bh*0.95, bh*1.30);
+  const wall=new T.Mesh(wg,new T.MeshBasicMaterial({color:0x35526d,transparent:true,opacity:0.42,side:T.DoubleSide}));
+  const wallE=new T.LineSegments(new T.EdgesGeometry(wg),new T.LineBasicMaterial({color:0x9fc4e4,transparent:true,opacity:0.8}));
+  grp.add(mat); grp.add(matE); grp.add(wall); grp.add(wallE);
+  _pod3d.root.add(grp);
+  P={grp,mat,matE,wall,wallE}; _pod3d.wkProps=P; return P;
+}
+function wkPropsHide(){ try{ const P=_pod3d&&_pod3d.wkProps; if(P&&P.grp) P.grp.visible=false; }catch(e){} }
+function wkPropsUpdate(posture, G){
+  const P=wkPropsEnsure(); if(!P) return; const T=THREE;
+  const bh=_pod3d.bodyH||1.7, bd=_pod3d.bodyD||bh*0.16;
+  const C=_pod3d.bodyC||{x:0,y:bh*0.5,z:0};
+  const floorY=(_pod3d.bodyMinY!=null)?_pod3d.bodyMinY:0;
+  const lying=(posture==='down'||posture==='up');
+  const wallOn=(posture==='side'||posture==='sideback');
+  const seat=(posture==='seat');
+  P.grp.visible=true;
+  P.mat.visible=P.matE.visible=(lying||seat);
+  P.wall.visible=P.wallE.visible=wallOn;
+  if(lying||seat){
+    // ⚠️ ارتفاعِ تاتامی از «پایین‌ترین نقطهٔ واقعیِ بدن» گرفته می‌شود، نه از فرضِ بدنِ کشیده —
+    //    وگرنه در حالتِ چهاردست‌وپا (کوهنورد/گربه-گاو/کودک) بدن زیرِ تاتامی فرو می‌رفت.
+    let low=null;
+    try{ if(G&&T){ ['LeftHand','RightHand','LeftFoot','RightFoot','LeftLeg','RightLeg','LeftForeArm','RightForeArm','Head','Hips']
+      .forEach(function(n){ const o=G[n]; if(!o||!o.b) return; const q=new T.Vector3();
+        o.b.getWorldPosition(q); if(low===null||q.y<low) low=q.y; }); } }catch(e){ low=null; }
+    const y = (low!==null) ? (low - bh*0.035) : (lying ? (C.y - bd*0.5 - bh*0.012) : floorY);
+    P.mat.position.set(C.x, y, C.z); P.matE.position.copy(P.mat.position);
+  }
+  if(wallOn){
+    const x=C.x + WK_HEAD_DIR*bh*0.42;
+    P.wall.position.set(x, floorY+bh*0.58, C.z);
+    P.wall.rotation.set(0, -WK_HEAD_DIR*Math.PI/2, 0);
+    P.wallE.position.copy(P.wall.position); P.wallE.rotation.copy(P.wall.rotation);
+  }
+}
 /* جهتِ کلِ بدن: '' ایستاده، 'down' دمر (پلانک/شنا/سوپرمن)، 'up' به پشت (کرانچ/پلِ باسن).
    سرِ مدل به سمتِ راستِ تصویر (+X) می‌رود و مرکزِ بدن سرِ جایش می‌ماند (چرخش حولِ مرکز). */
 const WK_HEAD_DIR=1;      // +1 سر سمتِ راست، -1 سمتِ چپ (اگر برعکس بود همین را منفی کن)
@@ -17782,6 +17875,19 @@ function pod3dBodyOrient(mode, lift){
   const T=THREE, g=_pod3d.modelRoot; if(!T||!g) return;
   const p0=_pod3d.rootPos0; 
   if(!mode){ g.quaternion.identity(); if(p0) g.position.copy(p0); return; }
+  if(mode==='side'||mode==='sideback'){
+    // نیم‌رخ: بدن ایستاده ولی رو به دیوار (یا پشت به آن) می‌چرخد تا حرکت دیده شود
+    const face=(mode==='side')?WK_HEAD_DIR:-WK_HEAD_DIR;
+    const upW2=new T.Vector3(0,1,0), fwd2=new T.Vector3(face,0,0);
+    const xW2=new T.Vector3().crossVectors(upW2,fwd2).normalize();
+    const m2=new T.Matrix4().makeBasis(xW2,upW2,fwd2);
+    const q2=new T.Quaternion().setFromRotationMatrix(m2);
+    g.quaternion.copy(q2);
+    const C2=_pod3d.bodyC;
+    if(C2&&p0){ const d2=C2.clone().sub(p0).applyQuaternion(q2); g.position.copy(C2).sub(d2); }
+    if(lift) g.position.y+=lift;
+    return;
+  }
   const upW=new T.Vector3(WK_HEAD_DIR,0,0);
   const fwdW=new T.Vector3(0, mode==='up'?1:-1, 0);
   const xW=new T.Vector3().crossVectors(upW,fwdW).normalize();
@@ -17795,6 +17901,7 @@ function pod3dBodyOrient(mode, lift){
 function wkCoachRestPose(){ try{ const G=_pod3d&&_pod3d.gbones; if(!G) return;
   for(const n in G){ const o=G[n]; if(o&&o.b&&o.q) o.b.quaternion.copy(o.q); } }catch(e){} }
 function wkCoachReset(){ try{ pod3dBodyOrient(''); }catch(e){}
+  try{ wkPropsHide(); }catch(e){}
   try{ const G=_pod3d&&_pod3d.gbones; if(G&&G['Hips']&&G['Hips'].p) G['Hips'].b.position.copy(G['Hips'].p); }catch(e){} }
 function wkAvatarUnmount(){
   if(!_wkAvOn && !_wkAvBorrowed) return;
@@ -17834,6 +17941,7 @@ function pod3dCoachGesture(t, energy, set, G, T){
   const orient=(m,lift)=>{ try{ pod3dBodyOrient(m==='seat'?'':m, lift); }catch(e){} };
   if(!active || posture==='seat' || !posture) orient('');
   else orient(posture,0);
+  try{ if(active) wkPropsUpdate(posture, G); else wkPropsHide(); }catch(e){}
 
   // تنفس: در استراحت تندتر و عمیق‌تر (نفس‌نفس)
   const br = rest ? Math.sin(t*3.5)*0.055 : Math.sin(t*1.1)*0.016;
